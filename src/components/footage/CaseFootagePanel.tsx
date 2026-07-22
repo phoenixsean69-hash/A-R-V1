@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { AccidentCaseService } from "../../services/accidentCaseService";
@@ -22,14 +22,9 @@ export default function CaseFootagePanel({
   onChanged,
   showAllLink = true,
 }: CaseFootagePanelProps) {
-  const [version, setVersion] = useState(0);
+  const [, setVersion] = useState(0);
   const [message, setMessage] = useState("");
-  void version;
-
-  const footage = useMemo(
-    () => ReconstructionFootageService.getByCaseId(accidentCase.id),
-    [accidentCase.id, version],
-  );
+  const footage = ReconstructionFootageService.getByCaseId(accidentCase.id);
 
   const refresh = (nextMessage?: string) => {
     setVersion((current) => current + 1);

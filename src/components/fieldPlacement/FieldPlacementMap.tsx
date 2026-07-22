@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
 
@@ -46,11 +46,12 @@ export default function FieldPlacementMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const currentMarkerRef = useRef<MapLibreMarker | null>(null);
+  const [initialCoordinate] = useState(() => current ?? calibration?.origin ?? null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const initial = current ?? calibration?.origin;
+    const initial = initialCoordinate;
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: "https://tiles.openfreemap.org/styles/liberty",
@@ -165,7 +166,7 @@ export default function FieldPlacementMap({
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [initialCoordinate]);
 
   useEffect(() => {
     const map = mapRef.current;

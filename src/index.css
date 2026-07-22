@@ -1,29 +1,159 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", ui-monospace, monospace;
 }
 
 @layer base {
-  html {
-    font-family: var(--font-sans);
-  }
-
-  body,
-  button,
-  input,
-  select,
-  textarea {
-    font-family: inherit;
-  }
+  html { font-family: var(--font-sans); background: #050817; }
+  body { margin: 0; min-width: 320px; background: #050817; color: #d7deeb; }
+  body, button, input, select, textarea { font-family: inherit; }
+  * { box-sizing: border-box; }
+  button, a { -webkit-tap-highlight-color: transparent; }
 }
 
-/* MapLibre ships its own Helvetica font shorthand, so keep map UI on-brand too. */
+@layer components {
+  .ui-panel { @apply rounded-md border border-[#18243f] bg-[#090f20] shadow-[0_12px_35px_rgba(0,0,0,0.18)]; }
+  .ui-panel-header { @apply flex items-center justify-between border-b border-[#18243f] px-4 py-3; }
+  .ui-panel-title { @apply text-[11px] font-bold uppercase tracking-[0.12em] text-slate-300; }
+  .ui-button { @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#29446f] bg-[#111b35] px-3 py-2 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-[#152445] focus:outline-none focus:ring-2 focus:ring-[#315d9d]/60 active:bg-[#0e1930]; }
+  .ui-button-primary { @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#3f78c5] bg-[#163a73] px-3 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#1b4789] focus:outline-none focus:ring-2 focus:ring-[#4d8cf5]/60 active:bg-[#143565]; }
+  .ui-icon-button { @apply grid h-9 w-9 place-items-center rounded-md border border-[#1d2c4b] bg-[#0b1122] text-slate-400 transition-colors duration-150 hover:bg-[#10182d] hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#315d9d]/50 active:bg-[#0d1529]; }
+  .ui-input { @apply rounded-md border border-[#1d2c4b] bg-[#0b1122] px-3 py-2 text-xs text-slate-200 outline-none placeholder:text-slate-600 focus:border-[#3f6daa] focus:ring-1 focus:ring-[#3f6daa]/40; }
+  .ui-badge { @apply inline-flex items-center rounded border border-[#284a7b] bg-[#112241] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-[#7fb1ff]; }
+}
+
+.roadsafe-shell .bg-white,
+.roadsafe-shell .bg-gray-50,
+.roadsafe-shell .bg-gray-100,
+.roadsafe-shell .bg-slate-50,
+.roadsafe-shell .bg-slate-100 { background-color: #090f20 !important; }
+.roadsafe-shell .border-gray-100,
+.roadsafe-shell .border-gray-200,
+.roadsafe-shell .border-gray-300,
+.roadsafe-shell .border-slate-100,
+.roadsafe-shell .border-slate-200,
+.roadsafe-shell .border-slate-300 { border-color: #1a2946 !important; }
+.roadsafe-shell .text-gray-900,
+.roadsafe-shell .text-slate-900,
+.roadsafe-shell .text-slate-950 { color: #eef3fb !important; }
+.roadsafe-shell .text-gray-700,
+.roadsafe-shell .text-slate-700 { color: #c1ccdc !important; }
+.roadsafe-shell .text-gray-600,
+.roadsafe-shell .text-slate-600,
+.roadsafe-shell .text-gray-500,
+.roadsafe-shell .text-slate-500 { color: #7e8ba0 !important; }
+.roadsafe-shell .shadow-sm,
+.roadsafe-shell .shadow,
+.roadsafe-shell .shadow-md,
+.roadsafe-shell .shadow-lg { box-shadow: 0 10px 28px rgba(0,0,0,.18) !important; }
+.ui-button:active,
+.ui-button-primary:active,
+.ui-icon-button:active { opacity: .94; }
+
 .maplibregl-map,
 .maplibregl-map button,
 .maplibregl-map input,
 .maplibregl-map select,
-.maplibregl-map textarea {
-  font-family: var(--font-sans) !important;
+.maplibregl-map textarea { font-family: var(--font-sans) !important; }
+
+/* Reconstruction workspace */
+.reconstruction-editor {
+  color: #cbd5e1;
+}
+.reconstruction-editor input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.reconstruction-editor select,
+.reconstruction-editor textarea {
+  border-color: #1d2c4b !important;
+  background: #070d1a !important;
+  color: #dbe4f0 !important;
+  border-radius: .375rem !important;
+  box-shadow: none !important;
+}
+.reconstruction-editor input::placeholder,
+.reconstruction-editor textarea::placeholder { color: #536178 !important; }
+.reconstruction-editor input:focus,
+.reconstruction-editor select:focus,
+.reconstruction-editor textarea:focus {
+  border-color: #3d6da9 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(61,109,169,.18) !important;
+}
+.reconstruction-editor .rounded-2xl,
+.reconstruction-editor .rounded-xl { border-radius: .45rem !important; }
+.reconstruction-editor .bg-white,
+.reconstruction-editor .bg-gray-50,
+.reconstruction-editor .bg-gray-100,
+.reconstruction-editor .bg-slate-50,
+.reconstruction-editor .bg-slate-100 { background-color: #090f20 !important; }
+.reconstruction-editor .border-gray-100,
+.reconstruction-editor .border-gray-200,
+.reconstruction-editor .border-gray-300,
+.reconstruction-editor .border-slate-100,
+.reconstruction-editor .border-slate-200,
+.reconstruction-editor .border-slate-300 { border-color: #1a2946 !important; }
+.reconstruction-editor .text-gray-900,
+.reconstruction-editor .text-slate-900,
+.reconstruction-editor .text-slate-950 { color: #eef3fb !important; }
+.reconstruction-editor .text-gray-700,
+.reconstruction-editor .text-slate-700 { color: #bcc8d8 !important; }
+.reconstruction-editor .text-gray-600,
+.reconstruction-editor .text-slate-600,
+.reconstruction-editor .text-gray-500,
+.reconstruction-editor .text-slate-500 { color: #7e8ba0 !important; }
+.reconstruction-editor aside::-webkit-scrollbar,
+.reconstruction-editor section::-webkit-scrollbar { width: 7px; }
+.reconstruction-editor aside::-webkit-scrollbar-thumb,
+.reconstruction-editor section::-webkit-scrollbar-thumb { background: #223656; border-radius: 10px; }
+.reconstruction-editor button:not([data-scene-interactive="true"]) {
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease, opacity .12s ease;
+}
+.reconstruction-editor button:not([data-scene-interactive="true"]):active { opacity: .94; }
+.reconstruction-editor [class*="bg-blue-600"],
+.reconstruction-editor [class*="bg-indigo-600"] { background-color: #173c78 !important; }
+.reconstruction-editor [class*="hover:bg-blue-700"]:hover,
+.reconstruction-editor [class*="hover:bg-indigo-700"]:hover { background-color: #1c4789 !important; }
+.reconstruction-editor [class*="bg-emerald-"],
+.reconstruction-editor [class*="bg-green-"] { background-color: #102b2a !important; }
+.reconstruction-editor [class*="text-emerald-"],
+.reconstruction-editor [class*="text-green-"] { color: #8ccdc3 !important; }
+.reconstruction-editor [class*="bg-amber-"] { background-color: #2b2414 !important; }
+.reconstruction-editor [class*="text-amber-"] { color: #d8bd78 !important; }
+.reconstruction-editor [class*="bg-red-"],
+.reconstruction-editor [class*="bg-rose-"] { background-color: #341923 !important; }
+.reconstruction-editor [class*="text-red-"],
+.reconstruction-editor [class*="text-rose-"] { color: #e28b9d !important; }
+.reconstruction-editor [class*="bg-cyan-"] { background-color: #102a36 !important; }
+.reconstruction-editor [class*="text-cyan-"] { color: #79b8d0 !important; }
+.reconstruction-editor input[type="checkbox"],
+.reconstruction-editor input[type="radio"] { accent-color: #4d8cf5; }
+
+.roadsafe-range { accent-color: #4d8cf5; }
+.roadsafe-range::-webkit-slider-runnable-track { height: 3px; border-radius: 999px; background: #203554; }
+.roadsafe-range::-webkit-slider-thumb { margin-top: -5px; }
+
+.reconstruction-3d canvas { display: block; width: 100%; height: 100%; }
+.dashboard-3d-preview .reconstruction-3d { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.dashboard-3d-preview .reconstruction-3d > :first-child { min-height: 42px; }
+
+.maplibregl-ctrl-group,
+.maplibregl-popup-content {
+  border: 1px solid #1d2c4b !important;
+  background: #080e1c !important;
+  color: #dbe4f0 !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.35) !important;
+}
+.maplibregl-ctrl-group button { background-color: #080e1c !important; }
+.maplibregl-ctrl-group button + button { border-top-color: #1d2c4b !important; }
+.maplibregl-ctrl-icon { filter: invert(.8) sepia(.1) saturate(.5); }
+
+@media print {
+  .roadsafe-sidebar,
+  .roadsafe-shell > div > header,
+  .roadsafe-shell > div > main > div:first-child { display: none !important; }
+  .roadsafe-shell > div { padding-left: 0 !important; }
+  .roadsafe-shell main > div:last-child { padding: 0 !important; }
+  .roadsafe-shell,
+  .roadsafe-shell .bg-white { background: white !important; color: black !important; }
 }

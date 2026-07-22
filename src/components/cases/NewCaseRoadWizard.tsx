@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -100,25 +101,6 @@ export default function NewCaseRoadWizard({
   const [detectingRoad, setDetectingRoad] = useState(false);
   const [roadError, setRoadError] = useState("");
   const [creating, setCreating] = useState(false);
-
-  useEffect(() => {
-    if (!selectedCoordinate && geolocation.current) {
-      setSelectedCoordinate({
-        latitude: geolocation.current.latitude,
-        longitude: geolocation.current.longitude,
-        accuracyMetres: geolocation.current.accuracyMetres,
-        capturedAt: geolocation.current.capturedAt,
-      });
-    }
-  }, [geolocation.current, selectedCoordinate]);
-
-  useEffect(() => {
-    if (step !== 3 || !selectedCoordinate || detectionResult || detectingRoad) {
-      return;
-    }
-
-    void detectRoadLayout(false);
-  }, [step, selectedCoordinate, detectionResult, detectingRoad]);
 
   const locationDisplay = useMemo(() => {
     if (!selectedCoordinate) return "No accident position confirmed yet.";
@@ -241,38 +223,70 @@ export default function NewCaseRoadWizard({
     setLocationMessage("Manual coordinate applied. Confirm it on the map.");
   };
 
-  const detectRoadLayout = async (forceRefresh: boolean) => {
-    if (!selectedCoordinate) return;
+  const detectRoadLayout = useCallback(
+    async (forceRefresh: boolean) => {
+      if (!selectedCoordinate) return;
 
-    setDetectingRoad(true);
-    setRoadError("");
+      setDetectingRoad(true);
+      setRoadError("");
 
-    try {
-      const result = await RoadLayoutDetectionService.detectAtCoordinate(
-        selectedCoordinate,
-        80,
-        forceRefresh,
-      );
-      setDetectionResult(result);
-      setSceneSettings(result.detection.suggestedSceneSettings);
+      try {
+        const result = await RoadLayoutDetectionService.detectAtCoordinate(
+          selectedCoordinate,
+          80,
+          forceRefresh,
+        );
+        setDetectionResult(result);
+        setSceneSettings(result.detection.suggestedSceneSettings);
 
-      const detectedLocation = result.detection.address.displayName.trim();
-      if (detectedLocation) {
-        setValues((current) => ({
-          ...current,
-          location: detectedLocation,
-        }));
+        const detectedLocation = result.detection.address.displayName.trim();
+        if (detectedLocation) {
+          setValues((current) => ({
+            ...current,
+            location: detectedLocation,
+          }));
+        }
+      } catch (error) {
+        setRoadError(
+          error instanceof Error
+            ? error.message
+            : "Road-layout detection failed. Select the layout manually.",
+        );
+      } finally {
+        setDetectingRoad(false);
       }
-    } catch (error) {
-      setRoadError(
-        error instanceof Error
-          ? error.message
-          : "Road-layout detection failed. Select the layout manually.",
-      );
-    } finally {
-      setDetectingRoad(false);
+    },
+    [selectedCoordinate],
+  );
+
+  const currentLocation = geolocation.current;
+
+  useEffect(() => {
+    if (selectedCoordinate || !currentLocation) return;
+
+    const timer = window.setTimeout(() => {
+      setSelectedCoordinate({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        accuracyMetres: currentLocation.accuracyMetres,
+        capturedAt: currentLocation.capturedAt,
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [currentLocation, selectedCoordinate]);
+
+  useEffect(() => {
+    if (step !== 3 || !selectedCoordinate || detectionResult || detectingRoad) {
+      return;
     }
-  };
+
+    const timer = window.setTimeout(() => {
+      void detectRoadLayout(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [detectRoadLayout, detectionResult, detectingRoad, selectedCoordinate, step]);
 
   const createCaseAndScene = () => {
     if (!selectedCoordinate || !sceneSettings) return;

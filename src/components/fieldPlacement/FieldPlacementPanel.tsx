@@ -58,6 +58,10 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
+function getTimestampMilliseconds(): number {
+  return Date.now();
+}
+
 function createSingleCapture(
   coordinate: GeoCoordinate,
 ): AveragedLocationResult {
@@ -104,6 +108,12 @@ export default function FieldPlacementPanel({
   onUpdate,
 }: FieldPlacementPanelProps) {
   const geolocation = useLiveGeolocation();
+  const currentLocation = geolocation.current;
+  const startLocation = geolocation.start;
+  const stopLocation = geolocation.stop;
+  const locationSupported = geolocation.supported;
+  const getLocationSamplesSince = geolocation.getSamplesSince;
+
   const [tab, setTab] = useState<FieldTab>(() =>
     initialTarget && reconstruction.fieldCalibration
       ? "Place Item"
@@ -183,13 +193,13 @@ export default function FieldPlacementPanel({
   );
 
   const liveScenePosition = useMemo(() => {
-    if (!geolocation.current || !reconstruction.fieldCalibration) return null;
+    if (!currentLocation || !reconstruction.fieldCalibration) return null;
     return coordinateToScenePosition(
-      geolocation.current,
+      currentLocation,
       reconstruction.fieldCalibration,
       false,
     );
-  }, [geolocation.current, reconstruction.fieldCalibration]);
+  }, [currentLocation, reconstruction.fieldCalibration]);
 
   const traceScenePoints = useMemo(() => {
     if (!reconstruction.fieldCalibration) return [];
@@ -203,62 +213,69 @@ export default function FieldPlacementPanel({
   }, [reconstruction.fieldCalibration, traceCoordinates]);
 
   const guidance = useMemo(() => {
-    if (!geolocation.current || !guidancePlacementId) return null;
+    if (!currentLocation || !guidancePlacementId) return null;
     const placement = reconstruction.fieldPlacements.find(
       (item) => item.id === guidancePlacementId,
     );
     if (!placement) return null;
     return {
       placement,
-      ...getDistanceAndBearing(geolocation.current, placement.coordinate),
+      ...getDistanceAndBearing(currentLocation, placement.coordinate),
     };
   }, [
-    geolocation.current,
+    currentLocation,
     guidancePlacementId,
     reconstruction.fieldPlacements,
   ]);
 
   useEffect(() => {
     if (!open) return;
-    geolocation.start();
-    return () => geolocation.stop();
-  }, [open]);
+    startLocation();
+    return () => stopLocation();
+  }, [open, startLocation, stopLocation]);
 
   useEffect(() => {
-    if (!isTracing || !geolocation.current) return;
-    const coordinate = geolocation.current;
+    if (!isTracing || !currentLocation || currentLocation.accuracyMetres > 25) {
+      return;
+    }
 
-    if (coordinate.accuracyMetres > 25) return;
+    const timer = window.setTimeout(() => {
+      setTraceCoordinates((current) => {
+        const previous = current[current.length - 1];
+        if (
+          previous &&
+          haversineDistanceMetres(previous, currentLocation) < 0.4
+        ) {
+          return current;
+        }
+        return [...current, currentLocation];
+      });
+    }, 0);
 
-    setTraceCoordinates((current) => {
-      const previous = current[current.length - 1];
-      if (
-        previous &&
-        haversineDistanceMetres(previous, coordinate) < 0.4
-      ) {
-        return current;
-      }
-      return [...current, coordinate];
-    });
-  }, [geolocation.current, isTracing]);
+    return () => window.clearTimeout(timer);
+  }, [currentLocation, isTracing]);
 
   useEffect(() => {
-    if (!open) {
+    if (open) return;
+
+    const timer = window.setTimeout(() => {
       setIsTracing(false);
       setTraceCoordinates([]);
       setPendingCapture(null);
       setMessage("");
       setError("");
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   const captureAverage = async (): Promise<AveragedLocationResult> => {
-    if (!geolocation.supported) {
+    if (!locationSupported) {
       throw new Error("This device or browser does not support geolocation.");
     }
 
-    geolocation.start();
-    const startedAt = Date.now();
+    startLocation();
+    const startedAt = getTimestampMilliseconds();
     setIsAveraging(true);
     setAverageProgress(0);
 
@@ -268,14 +285,14 @@ export default function FieldPlacementPanel({
         setAverageProgress(index / 20);
       }
 
-      const samples = geolocation.getSamplesSince(startedAt);
+      const samples = getLocationSamplesSince(startedAt);
       if (samples.length === 0) {
-        if (!geolocation.current) {
+        if (!currentLocation) {
           throw new Error(
             "No GPS samples were received. Move outdoors and keep the device still.",
           );
         }
-        return createSingleCapture(geolocation.current);
+        return createSingleCapture(currentLocation);
       }
 
       return averageGeoCoordinates(samples);

@@ -48,7 +48,7 @@ export default function PhysicsControlsPanel({
 
   return (
     <section className="mt-5 overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm">
-      <div className="border-b border-violet-100 bg-gradient-to-r from-violet-950 via-purple-900 to-indigo-900 p-5 text-white">
+      <div className="border-b border-violet-100 bg-blue-950 p-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">
@@ -64,7 +64,7 @@ export default function PhysicsControlsPanel({
             type="button"
             onClick={onRunPhysics}
             disabled={!settings.enabled || reconstruction.vehicles.length === 0}
-            className="rounded-xl bg-white px-5 py-3 text-sm font-black text-violet-800 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+            className="rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
           >
             Run Physics & Bake Movement Paths
           </button>
@@ -88,8 +88,8 @@ export default function PhysicsControlsPanel({
 
           <label className="flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 p-4">
             <div>
-              <p className="text-sm font-black text-violet-950">Simulate before playback</p>
-              <p className="mt-1 text-xs text-violet-700">
+              <p className="text-sm font-black text-blue-900">Simulate before playback</p>
+              <p className="mt-1 text-xs text-blue-900">
                 Synchronize participants at the collision point and rebuild the impact response whenever playback starts from 0s.
               </p>
             </div>

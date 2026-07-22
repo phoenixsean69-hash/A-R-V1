@@ -25,13 +25,11 @@ export default function AccidentCasePage() {
 
   if (!record) {
     return (
-      <div className="min-h-screen bg-slate-100 p-8">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-10 text-center shadow-sm">
+      <div className="ui-panel mx-auto max-w-3xl p-10 text-center">
           <h1 className="text-2xl font-black text-slate-900">Case not found</h1>
           <Link to="/cases" className="mt-5 inline-block font-bold text-blue-700">
             Return to cases
           </Link>
-        </div>
       </div>
     );
   }
@@ -52,21 +50,21 @@ export default function AccidentCasePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="flex flex-wrap items-start justify-between gap-4">
+    <div className="case-workspace space-y-3">
+      <div className="mx-auto max-w-[1600px] space-y-3">
+        <header className="ui-panel flex flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="font-black text-blue-700">{record.caseNumber}</p>
+              <p className="text-[10px] font-bold tracking-[0.08em] text-[#79adfa]">{record.caseNumber}</p>
               <CaseStatusBadge status={record.status} />
             </div>
-            <h1 className="mt-2 text-3xl font-black text-slate-950">
+            <h1 className="mt-1 text-lg font-bold text-slate-100">
               {record.title}
             </h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-1 text-[10px] text-slate-500">
               {record.location} · {record.accidentDate} at {record.accidentTime}
             </p>
-            <p className="mt-1 text-xs font-semibold text-slate-500">
+            <p className="mt-1 text-[9px] font-semibold text-slate-600">
               Reconstruction last saved: {formatSavedAt(stats.reconstructionLastSavedAt)}
             </p>
           </div>
@@ -74,25 +72,25 @@ export default function AccidentCasePage() {
           <div className="flex flex-wrap gap-2">
             <Link
               to="/cases"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700"
+              className="ui-button"
             >
               ← Cases
             </Link>
             <Link
               to={`/cases/${record.id}/edit`}
-              className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700"
+              className="ui-button"
             >
               Edit Case
             </Link>
             <Link
               to={`/cases/${record.id}/reconstruction`}
-              className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
+              className="ui-button-primary"
             >
               {stats.hasReconstruction ? "Continue Reconstruction" : "Create Reconstruction"}
             </Link>
             <Link
               to={`/cases/${record.id}/report`}
-              className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white"
+              className="ui-button"
             >
               Generate Report
             </Link>
@@ -100,25 +98,25 @@ export default function AccidentCasePage() {
         </header>
 
         {statusMessage && (
-          <div className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+          <div className="rounded-md border border-[#6d5523] bg-[#241d10] p-3 text-[10px] font-semibold text-[#d9bd78]">
             {statusMessage}
           </div>
         )}
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-9">
+        <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-9">
           {statCards.map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="break-words text-xl font-black text-slate-900">{value}</p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">{label}</p>
+            <div key={label} className="ui-panel p-3">
+              <p className="break-words text-lg font-bold text-slate-100">{value}</p>
+              <p className="mt-1 text-[9px] font-semibold text-slate-600">{label}</p>
             </div>
           ))}
         </section>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-5">
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-black text-slate-950">Case Summary</h2>
-              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-3">
+            <section className="ui-panel p-4">
+              <h2 className="ui-panel-title">Case summary</h2>
+              <p className="mt-3 whitespace-pre-wrap text-[11px] leading-6 text-slate-400">
                 {record.summary || "No case summary has been recorded."}
               </p>
             </section>
@@ -131,10 +129,10 @@ export default function AccidentCasePage() {
             />
           </div>
 
-          <aside className="space-y-5">
-            <section className="rounded-2xl bg-white p-5 shadow-sm">
-              <h2 className="font-black text-slate-950">Investigation Details</h2>
-              <dl className="mt-4 space-y-3 text-sm">
+          <aside className="space-y-3">
+            <section className="ui-panel p-4">
+              <h2 className="ui-panel-title">Investigation details</h2>
+              <dl className="mt-4 space-y-3 text-[10px]">
                 <div>
                   <dt className="font-semibold text-slate-500">Officer</dt>
                   <dd className="text-slate-900">
@@ -162,8 +160,8 @@ export default function AccidentCasePage() {
               </dl>
             </section>
 
-            <section className="rounded-2xl bg-white p-5 shadow-sm">
-              <label className="block text-sm font-bold text-slate-700">
+            <section className="ui-panel p-4">
+              <label className="block text-[10px] font-bold text-slate-400">
                 Update status
                 <select
                   value={record.status}
@@ -184,7 +182,7 @@ export default function AccidentCasePage() {
                     setStatusMessage("Case status updated successfully.");
                     setVersion((current) => current + 1);
                   }}
-                  className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                  className="ui-input mt-2 w-full"
                 >
                   {ACCIDENT_CASE_STATUSES.map((status) => (
                     <option key={status} value={status}>
@@ -195,7 +193,7 @@ export default function AccidentCasePage() {
               </label>
 
               {!completion.complete && (
-                <p className="mt-3 text-xs leading-5 text-amber-700">
+                <p className="mt-3 text-[9px] leading-5 text-[#d9bd78]">
                   Reconstruction Complete remains blocked until all checklist items pass.
                 </p>
               )}
@@ -207,7 +205,7 @@ export default function AccidentCasePage() {
                   AccidentCaseService.delete(record.id);
                   navigate("/cases");
                 }}
-                className="mt-4 w-full rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700"
+                className="mt-4 w-full rounded-md border border-[#713646] bg-[#321722] px-4 py-2.5 text-[10px] font-bold text-[#e28b9d] transition-colors hover:bg-[#3b1b28]"
               >
                 Delete Case
               </button>

@@ -1,351 +1,320 @@
+import { lazy, Suspense, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  useMemo,
-  useState,
-} from "react";
+  Activity,
+  Camera,
+  FileText,
+  FolderKanban,
+  MapPinned,
+  Play,
+  Plus,
+  ShieldAlert,
+  Users,
+  Video,
+} from "lucide-react";
+import AccidentMap, { type VisualizationMode } from "../components/map/AccidentMap";
+import ForensicScenePreview from "../components/reconstruction/ForensicScenePreview";
+import { WorkspaceDataService } from "../services/workspaceDataService";
+import { preparePhysicsForPlayback } from "../services/reconstructionPhysicsService";
+import { ReconstructionService } from "../services/reconstructionService";
+import { createDefaultHeatmapFilters } from "../types/heatmap";
+import type { AccidentReconstruction } from "../types/reconstruction";
 
-import {
-  Link,
-} from "react-router-dom";
+const Reconstruction3DViewer = lazy(
+  () => import("../components/reconstruction/Reconstruction3DViewer"),
+);
 
-import DashboardHeader from "../components/dashboard/DashboardHeader";
-import DashboardStats from "../components/dashboard/DashboardStats";
-
-import AccidentMap from "../components/map/AccidentMap";
-
-import type {
-  VisualizationMode,
-} from "../components/map/AccidentMap";
-
-import HeatmapFilterPanel from "../components/map/HeatmapFilterPanel";
-
-import {
-  AccidentService,
-} from "../services/accidentService";
-
-import {
-  AccidentFilterService,
-} from "../services/accidentFilterService";
-
-import type {
-  AccidentHeatmapFilters,
-} from "../types/heatmap";
-
-import {
-  createDefaultHeatmapFilters,
-} from "../types/heatmap";
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
 export default function Dashboard() {
-  const [
-    visualizationMode,
-    setVisualizationMode,
-  ] = useState<VisualizationMode>(
-    "markers",
+  const summary = WorkspaceDataService.getSummary();
+  const monthlyActivity = WorkspaceDataService.getMonthlyActivity().slice(-7);
+  const [mapMode, setMapMode] = useState<VisualizationMode>("heatmap");
+  const [previewMode, setPreviewMode] = useState<"2D" | "3D">("2D");
+  const [previewReconstruction, setPreviewReconstruction] =
+    useState<AccidentReconstruction | null>(summary.latestReconstruction);
+
+  const latestCase = summary.latestCase;
+  const cards = [
+    {
+      label: "Investigation cases",
+      value: summary.totalCases,
+      note: `${summary.activeCases} active`,
+      icon: FolderKanban,
+      to: "/cases",
+    },
+    {
+      label: "Reconstructions",
+      value: summary.reconstructionCount,
+      note: `${summary.completedCases} completed cases`,
+      icon: Activity,
+      to: "/reconstruction",
+    },
+    {
+      label: "Recorded injuries",
+      value: summary.totalInjuries,
+      note: "Verified accident dataset",
+      icon: Users,
+      to: "/analytics",
+    },
+    {
+      label: "High-risk junctions",
+      value: summary.highRiskJunctions,
+      note: "Current blackspot register",
+      icon: ShieldAlert,
+      to: "/scene-map",
+    },
+    {
+      label: "Evidence records",
+      value: summary.evidenceCount,
+      note: `${summary.photoCount} attached photos`,
+      icon: Camera,
+      to: "/evidence",
+    },
+    {
+      label: "Saved footage",
+      value: summary.footageCount,
+      note: "Playable browser recordings",
+      icon: Video,
+      to: "/footage",
+    },
+  ] as const;
+
+  const maxMonthly = Math.max(
+    1,
+    ...monthlyActivity.map((record) => record.accidents + record.cases),
   );
 
-  const [
-    heatmapFilters,
-    setHeatmapFilters,
-  ] =
-    useState<AccidentHeatmapFilters>(
-      createDefaultHeatmapFilters,
-    );
+  const participantCount =
+    previewReconstruction?.vehicles.length ?? 0;
+  const evidenceCount =
+    previewReconstruction?.evidenceRecords.length ?? 0;
 
-  const allAccidents = useMemo(
-    () => AccidentService.getAll(),
-    [],
-  );
+  const runPreviewPhysics = (): AccidentReconstruction => {
+    if (!previewReconstruction) {
+      throw new Error("No reconstruction is available for playback.");
+    }
+    const prepared = preparePhysicsForPlayback(previewReconstruction);
+    const saved = ReconstructionService.save(prepared);
+    setPreviewReconstruction(saved);
+    return saved;
+  };
 
-  const heatmapFilterOptions =
-    useMemo(
-      () =>
-        AccidentFilterService.getOptions(
-          allAccidents,
-        ),
-      [allAccidents],
-    );
-
-  const filteredAccidentCount =
-    useMemo(
-      () =>
-        AccidentFilterService.filter(
-          allAccidents,
-          heatmapFilters,
-        ).length,
-      [
-        allAccidents,
-        heatmapFilters,
-      ],
-    );
-
-  const handleResetHeatmapFilters =
-    () => {
-      setHeatmapFilters(
-        createDefaultHeatmapFilters(),
-      );
-    };
+  const sceneConditions = useMemo(() => {
+    if (!previewReconstruction) return [];
+    const scene = previewReconstruction.scene;
+    return [
+      ["Layout", scene.roadLayout],
+      ["Weather", scene.weather],
+      ["Surface", scene.roadSurface],
+      ["Visibility", scene.visibility],
+      ["Traffic", scene.trafficVolume],
+      ["Speed limit", `${scene.speedLimitKmh} km/h`],
+    ];
+  }, [previewReconstruction]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-        <DashboardHeader />
-
-        <DashboardStats />
-
-        {/* Accident Case Management access */}
-        <div className="mt-6 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-900 to-blue-900 shadow-lg">
-          <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div>
-                <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-50">
-                  Case Management Module
-                </span>
-
-                <h2 className="mt-3 text-2xl font-bold text-white">
-                  Accident Cases and Reports
-                </h2>
-
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-indigo-100">
-                  Create and manage accident cases, connect each case to its
-                  reconstruction, document evidence and measurements, and
-                  generate complete printable investigation reports.
-                </p>
-              </div>
+    <div className="space-y-3">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        {cards.map(({ label, value, note, icon: Icon, to }) => (
+          <Link key={label} to={to} className="ui-panel group flex min-h-24 items-center gap-3 p-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#24395f] bg-[#0c1730] text-[#8bb8ff] transition-colors group-hover:border-[#36598f]">
+              <Icon size={20} strokeWidth={1.55} />
             </div>
-
-            <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
-              <Link
-                to="/cases"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-indigo-700 shadow-md transition hover:bg-indigo-50 active:scale-95"
-              >
-                Open Accident Cases
-
-                <span aria-hidden="true" className="text-lg">
-                  →
-                </span>
-              </Link>
-
-              <Link
-                to="/cases/new"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white shadow-md backdrop-blur-sm transition hover:bg-white/20 active:scale-95"
-              >
-                <span aria-hidden="true" className="text-lg">
-                  +
-                </span>
-
-                New Case
-              </Link>
+            <div className="min-w-0">
+              <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+              <p className="mt-1 text-xl font-bold text-slate-100">{value}</p>
+              <p className="mt-1 truncate text-[9px] text-[#6e9fe8]">{note}</p>
             </div>
+          </Link>
+        ))}
+      </section>
+
+      <section className="grid gap-3 xl:grid-cols-[1.08fr_.95fr_1.35fr]">
+        <article className="ui-panel overflow-hidden">
+          <div className="ui-panel-header">
+            <div>
+              <h2 className="ui-panel-title">Accident intelligence map</h2>
+              <p className="mt-1 text-[9px] text-slate-600">Live from the bundled junction and accident register</p>
+            </div>
+            <span className="ui-badge">{mapMode}</span>
           </div>
+          <div className="h-[360px] min-h-0">
+            <AccidentMap
+              visualizationMode={mapMode}
+              onVisualizationModeChange={setMapMode}
+              heatmapFilters={createDefaultHeatmapFilters()}
+            />
+          </div>
+        </article>
+
+        <div className="space-y-3">
+          <article className="ui-panel">
+            <div className="ui-panel-header">
+              <h2 className="ui-panel-title">Recent investigation cases</h2>
+              <Link to="/cases" className="text-[10px] font-semibold text-[#79adfa]">View all</Link>
+            </div>
+            {summary.cases.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-xs font-semibold text-slate-300">No case records yet</p>
+                <p className="mt-2 text-[10px] leading-5 text-slate-500">Create a case to populate this operational list.</p>
+                <Link to="/cases/new" className="ui-button-primary mt-4"><Plus size={13} />Create case</Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#15233d]">
+                {summary.cases.slice(0, 5).map((record) => (
+                  <Link
+                    key={record.id}
+                    to={`/cases/${record.id}`}
+                    className="grid grid-cols-[1.15fr_1fr_auto] items-center gap-2 px-4 py-3 text-[10px] hover:bg-[#0c1426]"
+                  >
+                    <span className="font-semibold text-slate-300">{record.caseNumber}</span>
+                    <span className="truncate text-slate-500">{record.location}</span>
+                    <span className="text-[#70a8ff]">{record.status}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="ui-panel p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="ui-panel-title">Recorded activity timeline</h2>
+              <span className="text-[9px] text-slate-600">Cases + accident records</span>
+            </div>
+            {monthlyActivity.length === 0 ? (
+              <div className="grid h-32 place-items-center text-[10px] text-slate-600">No dated records available.</div>
+            ) : (
+              <div className="mt-5 flex h-28 items-end gap-3 border-b border-l border-[#233453] px-3 pb-2">
+                {monthlyActivity.map((record) => {
+                  const total = record.accidents + record.cases;
+                  return (
+                    <div key={record.label} className="flex flex-1 flex-col items-center gap-2" title={`${total} record(s)`}>
+                      <div
+                        className="w-full max-w-5 rounded-t-sm bg-gradient-to-t from-[#1d4f95] to-[#76aaff]"
+                        style={{ height: `${Math.max(7, (total / maxMonthly) * 86)}px` }}
+                      />
+                      <span className="whitespace-nowrap text-[7px] text-slate-600">{record.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
         </div>
 
-        {/* Interactive Map Section */}
-        <div className="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="grid min-h-[680px] grid-cols-1 lg:grid-cols-2">
-            {/* Left side */}
-            <div className="overflow-y-auto border-b border-gray-200 bg-white p-6 lg:border-b-0 lg:border-r">
-              <span className="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
-                Road Safety Analysis
-              </span>
-
-              <h2 className="mt-4 text-3xl font-bold text-gray-900">
-                Interactive Accident Map
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                Explore junction risks,
-                accident concentrations and
-                road-safety patterns across
-                Bindura.
-              </p>
-
-              {/* Marker information */}
-              {visualizationMode ===
-                "markers" && (
-                <div className="mt-8">
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      Junction Markers
-                    </h3>
-
-                    <p className="mt-2 text-sm leading-6 text-gray-600">
-                      Markers are automatically
-                      coloured using calculated
-                      risk scores from accident
-                      severity, fatalities,
-                      injuries and accident
-                      frequency.
-                    </p>
-
-                    <div className="mt-5 space-y-4">
-                      <div className="flex items-center gap-3 rounded-lg border border-red-100 bg-red-50 p-3">
-                        <span className="h-4 w-4 shrink-0 rounded-full bg-red-600" />
-
-                        <div>
-                          <p className="text-sm font-bold text-red-900">
-                            High Risk
-                          </p>
-
-                          <p className="text-xs text-red-700">
-                            Risk score of 25 or
-                            higher
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 rounded-lg border border-amber-100 bg-amber-50 p-3">
-                        <span className="h-4 w-4 shrink-0 rounded-full bg-amber-500" />
-
-                        <div>
-                          <p className="text-sm font-bold text-amber-900">
-                            Medium Risk
-                          </p>
-
-                          <p className="text-xs text-amber-700">
-                            Risk score between
-                            10 and 24
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 rounded-lg border border-green-100 bg-green-50 p-3">
-                        <span className="h-4 w-4 shrink-0 rounded-full bg-green-600" />
-
-                        <div>
-                          <p className="text-sm font-bold text-green-900">
-                            Low Risk
-                          </p>
-
-                          <p className="text-xs text-green-700">
-                            Risk score below 10
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-5">
-                    <p className="text-sm font-semibold text-blue-900">
-                      Using the map
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-blue-700">
-                      Click a junction marker to
-                      view its accident
-                      statistics, risk score,
-                      common accident cause and
-                      latest accident record.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 rounded-xl border border-gray-200 p-5">
-                    <h3 className="font-bold text-gray-900">
-                      Available tools
-                    </h3>
-
-                    <div className="mt-4 space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                          1
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            Street and Hybrid
-                          </p>
-
-                          <p className="mt-1 text-xs leading-5 text-gray-500">
-                            Switch between the
-                            road map and satellite
-                            imagery.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-purple-700">
-                          2
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            Markers and Heatmap
-                          </p>
-
-                          <p className="mt-1 text-xs leading-5 text-gray-500">
-                            Compare individual
-                            junction risks or
-                            accident concentration.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
-                          3
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            Select Area
-                          </p>
-
-                          <p className="mt-1 text-xs leading-5 text-gray-500">
-                            Draw a rectangle to
-                            analyse a specific
-                            road-safety area.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+        <article className="ui-panel overflow-hidden">
+          <div className="ui-panel-header">
+            <div>
+              <h2 className="ui-panel-title">Latest reconstruction</h2>
+              <p className="mt-1 text-[9px] text-slate-600">Actual saved participant paths and scene state</p>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => setPreviewMode("2D")} className={previewMode === "2D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}>2D</button>
+              <button onClick={() => setPreviewMode("3D")} className={previewMode === "3D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}>3D</button>
+            </div>
+          </div>
+          <div className="h-[360px] bg-[#070b13]">
+            {!previewReconstruction ? (
+              <div className="grid h-full place-items-center p-8 text-center">
+                <div>
+                  <p className="text-xs font-semibold text-slate-300">No reconstruction available</p>
+                  <p className="mt-2 max-w-xs text-[10px] leading-5 text-slate-500">Create a case and add participant routes to activate this preview.</p>
+                  <Link to="/cases/new" className="ui-button-primary mt-4"><Plus size={13} />New case</Link>
                 </div>
-              )}
-
-              {/* Heatmap filters beside the map */}
-              {visualizationMode ===
-                "heatmap" && (
-                <div className="mt-6">
-                  <HeatmapFilterPanel
-                    filters={
-                      heatmapFilters
-                    }
-                    options={
-                      heatmapFilterOptions
-                    }
-                    filteredAccidentCount={
-                      filteredAccidentCount
-                    }
-                    totalAccidentCount={
-                      allAccidents.length
-                    }
-                    onChange={
-                      setHeatmapFilters
-                    }
-                    onReset={
-                      handleResetHeatmapFilters
-                    }
+              </div>
+            ) : previewMode === "2D" ? (
+              <ForensicScenePreview reconstruction={previewReconstruction} className="h-full" />
+            ) : (
+              <Suspense fallback={<div className="grid h-full place-items-center text-xs text-slate-500">Loading 3D reconstruction…</div>}>
+                <div className="dashboard-3d-preview h-full">
+                  <Reconstruction3DViewer
+                    reconstruction={previewReconstruction}
+                    onSwitchTo2D={() => setPreviewMode("2D")}
+                    onRunPhysics={runPreviewPhysics}
+                    onPreparePlayback={runPreviewPhysics}
+                    compact
                   />
                 </div>
-              )}
-            </div>
-
-            {/* Right side — Map */}
-            <div className="relative min-h-[680px] w-full bg-gray-100">
-              <AccidentMap
-                visualizationMode={
-                  visualizationMode
-                }
-                onVisualizationModeChange={
-                  setVisualizationMode
-                }
-                heatmapFilters={
-                  heatmapFilters
-                }
-              />
-            </div>
+              </Suspense>
+            )}
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
+
+      <section className="grid gap-3 xl:grid-cols-[1.15fr_1fr_1fr_.85fr]">
+        <article className="ui-panel overflow-hidden">
+          <div className="ui-panel-header"><h2 className="ui-panel-title">Active case</h2></div>
+          {latestCase ? (
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold text-[#79adfa]">{latestCase.caseNumber}</p>
+                  <h3 className="mt-1 text-sm font-semibold text-slate-200">{latestCase.title}</h3>
+                  <p className="mt-2 text-[10px] leading-5 text-slate-500">{latestCase.location}</p>
+                </div>
+                <span className="ui-badge">{latestCase.status}</span>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-[10px]">
+                <div><dt className="text-slate-600">Accident date</dt><dd className="mt-1 text-slate-300">{formatDate(latestCase.accidentDate)}</dd></div>
+                <div><dt className="text-slate-600">Officer</dt><dd className="mt-1 text-slate-300">{latestCase.investigatingOfficer || "Not recorded"}</dd></div>
+              </dl>
+              <Link to={`/cases/${latestCase.id}`} className="ui-button mt-4 w-full">Open case</Link>
+            </div>
+          ) : (
+            <div className="p-6 text-center text-[10px] text-slate-500">No active case has been created.</div>
+          )}
+        </article>
+
+        <article className="ui-panel p-4">
+          <div className="flex items-center justify-between"><h2 className="ui-panel-title">Participants ({participantCount})</h2>{previewReconstruction && <Link to="/reconstruction" className="text-[9px] text-[#79adfa]">Edit</Link>}</div>
+          <div className="mt-3 space-y-2">
+            {previewReconstruction?.vehicles.slice(0, 4).map((participant, index) => (
+              <div key={participant.id} className="flex items-center gap-3 rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <span className="rounded border border-[#2b456f] px-2 py-1 text-[9px] text-[#8db8fb]">P{index + 1}</span>
+                <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-semibold text-slate-200">{participant.name}</p><p className="mt-0.5 text-[9px] text-slate-500">{participant.type} · {participant.estimatedSpeedKmh} km/h</p></div>
+              </div>
+            ))}
+            {!previewReconstruction && <p className="py-6 text-center text-[10px] text-slate-600">No participant data.</p>}
+          </div>
+        </article>
+
+        <article className="ui-panel p-4">
+          <div className="flex items-center justify-between"><h2 className="ui-panel-title">Evidence markers ({evidenceCount})</h2><Link to="/evidence" className="text-[9px] text-[#79adfa]">View all</Link></div>
+          <div className="mt-3 divide-y divide-[#17243d]">
+            {previewReconstruction?.evidenceRecords.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-center gap-3 py-2.5"><span className="rounded border border-[#2a3e64] px-2 py-1 text-[9px] text-slate-400">E{item.evidenceNumber}</span><div className="min-w-0"><p className="truncate text-[10px] text-slate-300">{item.title}</p><p className="mt-0.5 text-[8px] text-slate-600">{item.category} · {item.status}</p></div></div>
+            ))}
+            {previewReconstruction && previewReconstruction.evidenceRecords.length === 0 && <p className="py-6 text-center text-[10px] text-slate-600">No evidence markers recorded.</p>}
+            {!previewReconstruction && <p className="py-6 text-center text-[10px] text-slate-600">No reconstruction selected.</p>}
+          </div>
+        </article>
+
+        <article className="ui-panel p-4">
+          <h2 className="ui-panel-title">Scene conditions</h2>
+          <div className="mt-4 space-y-3 text-[10px]">
+            {sceneConditions.map(([label, value]) => <div key={label} className="flex justify-between gap-4"><span className="text-slate-500">{label}</span><span className="text-right text-slate-300">{value}</span></div>)}
+            {sceneConditions.length === 0 && <p className="py-6 text-center text-slate-600">No scene configuration.</p>}
+          </div>
+        </article>
+      </section>
+
+      <section className="flex flex-wrap gap-2">
+        <Link to="/cases/new" className="ui-button"><Plus size={14} />New case</Link>
+        <Link to="/scene-map" className="ui-button"><MapPinned size={14} />Open map</Link>
+        <Link to="/reports" className="ui-button"><FileText size={14} />Reports</Link>
+        {previewReconstruction ? (
+          <Link to={latestCase ? `/cases/${latestCase.id}/reconstruction` : "/reconstruction"} className="ui-button-primary ml-auto px-6"><Play size={14} />Continue reconstruction</Link>
+        ) : (
+          <Link to="/cases/new" className="ui-button-primary ml-auto px-6"><Plus size={14} />Start first reconstruction</Link>
+        )}
+      </section>
     </div>
   );
 }

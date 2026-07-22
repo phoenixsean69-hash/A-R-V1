@@ -27,6 +27,7 @@ interface SimulationBody {
   profile: ParticipantPhysicsProfile;
   impactPoint: MovementPathPoint;
   position: Vector2;
+  previousPosition: Vector2;
   velocity: Vector2;
   incomingVelocity: Vector2;
   rotation: number;
@@ -54,12 +55,22 @@ interface DetectedParticipantContact {
   contactPosition: Vector2;
 }
 
-function closestApproachOnStep(
+interface DetectedSceneObjectContact {
+  timeSeconds: number;
+  participantId: string;
+  objectId: string;
+  participantPosition: Vector2;
+  objectPosition: Vector2;
+  contactPosition: Vector2;
+}
+
+function firstContactOnStep(
   leftStart: Vector2,
   leftEnd: Vector2,
   rightStart: Vector2,
   rightEnd: Vector2,
-): { alpha: number; distance: number } {
+  collisionDistance: number,
+): { alpha: number; distance: number } | null {
   const relativeStart = {
     x: rightStart.x - leftStart.x,
     y: rightStart.y - leftStart.y,
@@ -68,10 +79,31 @@ function closestApproachOnStep(
     x: (rightEnd.x - rightStart.x) - (leftEnd.x - leftStart.x),
     y: (rightEnd.y - rightStart.y) - (leftEnd.y - leftStart.y),
   };
-  const denominator = dot(relativeDelta, relativeDelta);
-  const alpha = denominator < 0.000001
-    ? 0
-    : clamp(-dot(relativeStart, relativeDelta) / denominator, 0, 1);
+  const radius = Math.max(0, collisionDistance);
+  const c = dot(relativeStart, relativeStart) - radius * radius;
+
+  if (c <= 0) {
+    return { alpha: 0, distance: magnitude(relativeStart) };
+  }
+
+  const a = dot(relativeDelta, relativeDelta);
+  if (a < 0.0000001) return null;
+
+  const b = 2 * dot(relativeStart, relativeDelta);
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) return null;
+
+  const squareRoot = Math.sqrt(Math.max(0, discriminant));
+  const enterAlpha = (-b - squareRoot) / (2 * a);
+  const exitAlpha = (-b + squareRoot) / (2 * a);
+  const alpha = enterAlpha >= 0 && enterAlpha <= 1
+    ? enterAlpha
+    : exitAlpha >= 0 && exitAlpha <= 1
+      ? exitAlpha
+      : null;
+
+  if (alpha === null) return null;
+
   const separation = {
     x: relativeStart.x + relativeDelta.x * alpha,
     y: relativeStart.y + relativeDelta.y * alpha,
@@ -137,10 +169,11 @@ function detectEarliestParticipantContact(
     ]),
   );
   const step = clamp(Math.min(settings.timeStepSeconds, 0.08), 0.02, 0.08);
-  let earliest: DetectedParticipantContact | null = null;
 
   for (let time = 0; time < durationSeconds - 0.0001; time += step) {
     const nextTime = Math.min(durationSeconds, time + step);
+    let earliestInStep: DetectedParticipantContact | null = null;
+
     for (let leftIndex = 0; leftIndex < participants.length; leftIndex += 1) {
       for (let rightIndex = leftIndex + 1; rightIndex < participants.length; rightIndex += 1) {
         const left = participants[leftIndex];
@@ -155,17 +188,23 @@ function detectEarliestParticipantContact(
         const leftEnd = participantWorldPositionAtTime(left, nextTime, width, height);
         const rightStart = participantWorldPositionAtTime(right, time, width, height);
         const rightEnd = participantWorldPositionAtTime(right, nextTime, width, height);
-        const approach = closestApproachOnStep(leftStart, leftEnd, rightStart, rightEnd);
-        if (approach.distance > collisionDistance) continue;
+        const contact = firstContactOnStep(
+          leftStart,
+          leftEnd,
+          rightStart,
+          rightEnd,
+          collisionDistance,
+        );
+        if (!contact) continue;
 
-        const contactTime = time + (nextTime - time) * approach.alpha;
+        const contactTime = time + (nextTime - time) * contact.alpha;
         const leftPosition = {
-          x: leftStart.x + (leftEnd.x - leftStart.x) * approach.alpha,
-          y: leftStart.y + (leftEnd.y - leftStart.y) * approach.alpha,
+          x: leftStart.x + (leftEnd.x - leftStart.x) * contact.alpha,
+          y: leftStart.y + (leftEnd.y - leftStart.y) * contact.alpha,
         };
         const rightPosition = {
-          x: rightStart.x + (rightEnd.x - rightStart.x) * approach.alpha,
-          y: rightStart.y + (rightEnd.y - rightStart.y) * approach.alpha,
+          x: rightStart.x + (rightEnd.x - rightStart.x) * contact.alpha,
+          y: rightStart.y + (rightEnd.y - rightStart.y) * contact.alpha,
         };
         const candidate: DetectedParticipantContact = {
           timeSeconds: contactTime,
@@ -178,13 +217,122 @@ function detectEarliestParticipantContact(
             y: (leftPosition.y + rightPosition.y) / 2,
           },
         };
-        if (!earliest || candidate.timeSeconds < earliest.timeSeconds) earliest = candidate;
+
+        if (
+          earliestInStep === null ||
+          candidate.timeSeconds < earliestInStep.timeSeconds
+        ) {
+          earliestInStep = candidate;
+        }
       }
     }
-    if (earliest && earliest.timeSeconds <= nextTime + 0.0001) return earliest;
+
+    if (earliestInStep !== null) return earliestInStep;
   }
 
-  return earliest;
+  return null;
+}
+
+function detectEarliestSceneObjectContact(
+  participants: ReconstructionVehicle[],
+  sceneObjects: ReconstructionSceneObject[],
+  settings: ReconstructionPhysicsSettings,
+  width: number,
+  height: number,
+  durationSeconds: number,
+): DetectedSceneObjectContact | null {
+  if (participants.length === 0 || sceneObjects.length === 0) return null;
+
+  const participantProfiles = new Map(
+    participants.map((participant) => [
+      participant.id,
+      { ...getDefaultParticipantPhysics(participant), ...(participant.physics ?? {}) },
+    ]),
+  );
+  const collidableObjects = sceneObjects
+    .map((object) => ({
+      object,
+      profile: {
+        ...getDefaultSceneObjectPhysics(object),
+        ...(object.physics ?? {}),
+      },
+      position: worldPosition(object.position, width, height),
+    }))
+    .filter(({ profile }) => profile.enabled && profile.collidable);
+
+  if (collidableObjects.length === 0) return null;
+
+  const step = clamp(Math.min(settings.timeStepSeconds, 0.08), 0.02, 0.08);
+
+  for (let time = 0; time < durationSeconds - 0.0001; time += step) {
+    const nextTime = Math.min(durationSeconds, time + step);
+    let earliestInStep: DetectedSceneObjectContact | null = null;
+
+    for (const participant of participants) {
+      const participantProfile = participantProfiles.get(participant.id)!;
+      const participantStart = participantWorldPositionAtTime(
+        participant,
+        time,
+        width,
+        height,
+      );
+      const participantEnd = participantWorldPositionAtTime(
+        participant,
+        nextTime,
+        width,
+        height,
+      );
+
+      for (const { object, profile, position } of collidableObjects) {
+        const interactionDistance =
+          participantProfile.collisionRadiusMetres +
+          profile.collisionRadiusMetres;
+        const contact = firstContactOnStep(
+          participantStart,
+          participantEnd,
+          position,
+          position,
+          interactionDistance,
+        );
+        if (!contact) continue;
+
+        const participantPosition = {
+          x:
+            participantStart.x +
+            (participantEnd.x - participantStart.x) * contact.alpha,
+          y:
+            participantStart.y +
+            (participantEnd.y - participantStart.y) * contact.alpha,
+        };
+        const normal = normalise({
+          x: participantPosition.x - position.x,
+          y: participantPosition.y - position.y,
+        });
+        const candidate: DetectedSceneObjectContact = {
+          timeSeconds: time + (nextTime - time) * contact.alpha,
+          participantId: participant.id,
+          objectId: object.id,
+          participantPosition,
+          objectPosition: position,
+          contactPosition: {
+            x: position.x + normal.x * profile.collisionRadiusMetres,
+            y: position.y + normal.y * profile.collisionRadiusMetres,
+          },
+        };
+
+        if (
+          earliestInStep === null ||
+          candidate.timeSeconds < earliestInStep.timeSeconds
+        ) {
+          earliestInStep = candidate;
+        }
+      }
+    }
+
+    if (earliestInStep !== null) return earliestInStep;
+  }
+
+  return null;
 }
 
 export const DEFAULT_PHYSICS_SETTINGS: ReconstructionPhysicsSettings = {
@@ -594,6 +742,23 @@ function makePhysicsPoint(
   };
 }
 
+export function preparePhysicsForPlayback(
+  source: AccidentReconstruction,
+): AccidentReconstruction {
+  const settings = { ...DEFAULT_PHYSICS_SETTINGS, ...(source.physicsSettings ?? {}) };
+  const shouldRun =
+    settings.enabled &&
+    settings.mode === "Physics After Primary Impact" &&
+    settings.autoRunOnPlay &&
+    source.vehicles.length > 0;
+
+  if (!shouldRun) {
+    return source.physicsSettings ? source : { ...source, physicsSettings: settings };
+  }
+
+  return applyPhysicsSimulation(source);
+}
+
 export function applyPhysicsSimulation(
   source: AccidentReconstruction,
 ): AccidentReconstruction {
@@ -626,8 +791,17 @@ export function applyPhysicsSimulation(
     warnings.push("No physics-enabled participants were available.");
   }
 
-  const detectedContact = detectEarliestParticipantContact(
+  const step = clamp(settings.timeStepSeconds, 0.04, 0.5);
+  const detectedParticipantContact = detectEarliestParticipantContact(
     participants,
+    settings,
+    width,
+    height,
+    source.durationSeconds,
+  );
+  const detectedObjectContact = detectEarliestSceneObjectContact(
+    participants,
+    source.sceneObjects,
     settings,
     width,
     height,
@@ -636,13 +810,39 @@ export function applyPhysicsSimulation(
   const authoredImpactTimes = participants
     .map((participant) => getImpactPoint(participant).timeSeconds)
     .sort((left, right) => left - right);
-  const impactTime = detectedContact?.timeSeconds ??
-    (authoredImpactTimes.length
-      ? authoredImpactTimes[Math.floor(authoredImpactTimes.length / 2)]
-      : source.durationSeconds / 2);
-  const detectedCollisionPoint = detectedContact
-    ? scenePosition(detectedContact.contactPosition, width, height)
-    : { ...source.collisionPoint };
+  const authoredImpactTime = authoredImpactTimes.length
+    ? authoredImpactTimes[Math.floor(authoredImpactTimes.length / 2)]
+    : source.durationSeconds / 2;
+  const primaryEvent = [
+    { kind: "authored" as const, timeSeconds: authoredImpactTime },
+    ...(detectedParticipantContact
+      ? [{
+          kind: "participant" as const,
+          timeSeconds: detectedParticipantContact.timeSeconds,
+        }]
+      : []),
+    ...(detectedObjectContact
+      ? [{
+          kind: "object" as const,
+          timeSeconds: detectedObjectContact.timeSeconds,
+        }]
+      : []),
+  ].reduce((earliest, candidate) =>
+    candidate.timeSeconds < earliest.timeSeconds ? candidate : earliest,
+  );
+  const primaryImpactTime = primaryEvent.timeSeconds;
+  const impactTime = primaryEvent.kind === "object"
+    ? Math.max(0, primaryImpactTime - step)
+    : primaryImpactTime;
+  const activeParticipantContact =
+    primaryEvent.kind === "participant" ? detectedParticipantContact : null;
+  const activeObjectContact =
+    primaryEvent.kind === "object" ? detectedObjectContact : null;
+  const detectedCollisionPoint = activeParticipantContact
+    ? scenePosition(activeParticipantContact.contactPosition, width, height)
+    : activeObjectContact
+      ? scenePosition(activeObjectContact.contactPosition, width, height)
+      : { ...source.collisionPoint };
 
   const bodies: SimulationBody[] = participants.map((participant) => {
     const profile = {
@@ -675,6 +875,7 @@ export function applyPhysicsSimulation(
         rotation: state.rotation,
       },
       position,
+      previousPosition: { ...position },
       velocity: { ...incomingVelocity },
       incomingVelocity: { ...incomingVelocity },
       rotation: rotationFromVelocity(incomingVelocity, state.rotation),
@@ -693,11 +894,11 @@ export function applyPhysicsSimulation(
     for (let rightIndex = leftIndex + 1; rightIndex < bodies.length; rightIndex += 1) {
       const left = bodies[leftIndex];
       const right = bodies[rightIndex];
-      const isDetectedPair = detectedContact &&
-        ((left.participant.id === detectedContact.leftId &&
-          right.participant.id === detectedContact.rightId) ||
-          (left.participant.id === detectedContact.rightId &&
-            right.participant.id === detectedContact.leftId));
+      const isDetectedPair = activeParticipantContact &&
+        ((left.participant.id === activeParticipantContact.leftId &&
+          right.participant.id === activeParticipantContact.rightId) ||
+          (left.participant.id === activeParticipantContact.rightId &&
+            right.participant.id === activeParticipantContact.leftId));
       const distance = magnitude({
         x: right.position.x - left.position.x,
         y: right.position.y - left.position.y,
@@ -718,17 +919,26 @@ export function applyPhysicsSimulation(
     }
   }
 
-  if (detectedContact) {
+  if (activeParticipantContact) {
     warnings.push(
-      `Continuous contact detection found the first participant collision at ${impactTime.toFixed(2)}s, before or at the authored primary marker.`,
+      `Continuous contact detection found the first participant collision at ${primaryImpactTime.toFixed(2)}s, before or at the authored primary marker.`,
+    );
+  } else if (activeObjectContact) {
+    const objectLabel = source.sceneObjects.find(
+      (object) => object.id === activeObjectContact.objectId,
+    )?.label ?? "a solid scene object";
+    const participantName = participants.find(
+      (participant) => participant.id === activeObjectContact.participantId,
+    )?.name ?? "A participant";
+    warnings.push(
+      `Continuous contact detection found ${participantName}'s first solid-object impact with ${objectLabel} at ${primaryImpactTime.toFixed(2)}s, before the authored primary marker.`,
     );
   } else if (participants.length > 1) {
     warnings.push(
-      "No earlier body contact was found along the guided routes; the authored impact timing was used.",
+      "No earlier participant or solid-object contact was found along the guided routes; the authored impact timing was used.",
     );
   }
 
-  const step = clamp(settings.timeStepSeconds, 0.04, 0.5);
   const baseFriction = surfaceFriction(source) * settings.globalFrictionMultiplier;
   const maximumSimulationTime = Math.max(source.durationSeconds, impactTime + 30);
   let simulatedDurationSeconds = impactTime;
@@ -750,6 +960,10 @@ export function applyPhysicsSimulation(
     time += step
   ) {
     bodies.forEach((body) => {
+      body.previousPosition = { ...body.position };
+    });
+
+    bodies.forEach((body) => {
       if (time < body.timeSeconds || body.stopped) return;
 
       let localFriction = baseFriction * body.profile.rollingFriction;
@@ -763,12 +977,92 @@ export function applyPhysicsSimulation(
           : "Post-impact slide";
       let linkedSceneObjectId: string | undefined;
 
-      objects.forEach(({ object, profile, position }) => {
-        if (!profile.enabled) return;
-        const delta = { x: body.position.x - position.x, y: body.position.y - position.y };
-        const distance = magnitude(delta);
-        const interactionDistance = body.profile.collisionRadiusMetres + profile.collisionRadiusMetres;
-        if (distance > interactionDistance) return;
+      const speed = magnitude(body.velocity);
+      let nextSpeed = speed;
+      if (speed > 0) {
+        const direction = normalise(body.velocity);
+        const estimateTravel = (friction: number) => {
+          const frictionLimitedDeceleration = Math.max(
+            0.35,
+            9.81 * friction * 0.72,
+          );
+          const deceleration = Math.min(
+            body.profile.brakingDecelerationMps2,
+            frictionLimitedDeceleration,
+          );
+          const drag = speed * settings.airDrag;
+          const estimatedNextSpeed = Math.max(
+            0,
+            speed - (deceleration + drag) * step,
+          );
+          const averageTravelSpeed = (speed + estimatedNextSpeed) / 2;
+          return {
+            nextSpeed: estimatedNextSpeed,
+            end: {
+              x: body.previousPosition.x + direction.x * averageTravelSpeed * step,
+              y: body.previousPosition.y + direction.y * averageTravelSpeed * step,
+            },
+          };
+        };
+
+        const preliminaryTravel = estimateTravel(localFriction);
+        objects.forEach(({ object, profile, position }) => {
+          if (!profile.enabled || !LOW_GRIP_OBJECT_TYPES.has(object.type)) return;
+          const interactionDistance =
+            body.profile.collisionRadiusMetres + profile.collisionRadiusMetres;
+          if (
+            firstContactOnStep(
+              body.previousPosition,
+              preliminaryTravel.end,
+              position,
+              position,
+              interactionDistance,
+            )
+          ) {
+            localFriction *= profile.surfaceFrictionMultiplier;
+          }
+        });
+
+        const travel = estimateTravel(localFriction);
+        nextSpeed = travel.nextSpeed;
+        body.position = travel.end;
+        body.velocity = {
+          x: direction.x * nextSpeed,
+          y: direction.y * nextSpeed,
+        };
+      }
+
+      const objectContacts = objects
+        .flatMap(({ object, profile, position }) => {
+          if (!profile.enabled) return [];
+          const interactionDistance =
+            body.profile.collisionRadiusMetres + profile.collisionRadiusMetres;
+          const contact = firstContactOnStep(
+            body.previousPosition,
+            body.position,
+            position,
+            position,
+            interactionDistance,
+          );
+          return contact
+            ? [{ object, profile, position, interactionDistance, contact }]
+            : [];
+        })
+        .sort((left, right) => left.contact.alpha - right.contact.alpha);
+
+      for (const {
+        object,
+        profile,
+        position,
+        interactionDistance,
+        contact,
+      } of objectContacts) {
+        const contactPosition = {
+          x: body.previousPosition.x +
+            (body.position.x - body.previousPosition.x) * contact.alpha,
+          y: body.previousPosition.y +
+            (body.position.y - body.previousPosition.y) * contact.alpha,
+        };
 
         if (object.type === "Pothole" && !body.collidedWithObjects.has(object.id)) {
           body.velocity = rotate(
@@ -788,11 +1082,10 @@ export function applyPhysicsSimulation(
           action = "Deflect";
           label = `Deflected by ${object.label}`;
           linkedSceneObjectId = object.id;
-          return;
+          continue;
         }
 
         if (LOW_GRIP_OBJECT_TYPES.has(object.type)) {
-          localFriction *= profile.surfaceFrictionMultiplier;
           if (!body.collidedWithObjects.has(object.id)) {
             body.velocity = rotate(
               body.velocity,
@@ -809,11 +1102,19 @@ export function applyPhysicsSimulation(
           action = "Deflect";
           label = `Reduced grip on ${object.label}`;
           linkedSceneObjectId = object.id;
-          return;
+          continue;
         }
 
         if (profile.collidable && !body.collidedWithObjects.has(object.id)) {
-          const normal = normalise(delta);
+          const delta = {
+            x: contactPosition.x - position.x,
+            y: contactPosition.y - position.y,
+          };
+          const normal = normalise(
+            magnitude(delta) > 0.001
+              ? delta
+              : { x: -body.velocity.x, y: -body.velocity.y },
+          );
           body.velocity = reflect(body.velocity, normal);
           body.velocity = {
             x: body.velocity.x * profile.restitution * profile.speedLossFactor,
@@ -831,32 +1132,8 @@ export function applyPhysicsSimulation(
           action = "Ricochet";
           label = `Impact with ${object.label}`;
           linkedSceneObjectId = object.id;
+          break;
         }
-      });
-
-      const speed = magnitude(body.velocity);
-      let nextSpeed = speed;
-      if (speed > 0) {
-        const direction = normalise(body.velocity);
-        const frictionLimitedDeceleration = Math.max(
-          0.35,
-          9.81 * localFriction * 0.72,
-        );
-        const deceleration = Math.min(
-          body.profile.brakingDecelerationMps2,
-          frictionLimitedDeceleration,
-        );
-        const drag = speed * settings.airDrag;
-        nextSpeed = Math.max(0, speed - (deceleration + drag) * step);
-        const averageTravelSpeed = (speed + nextSpeed) / 2;
-        body.position = {
-          x: body.position.x + direction.x * averageTravelSpeed * step,
-          y: body.position.y + direction.y * averageTravelSpeed * step,
-        };
-        body.velocity = {
-          x: direction.x * nextSpeed,
-          y: direction.y * nextSpeed,
-        };
       }
 
       body.rotation += body.angularVelocityDegreesPerSecond * step;
@@ -927,16 +1204,36 @@ export function applyPhysicsSimulation(
         const right = bodies[rightIndex];
         if (left.collidedWithParticipants.has(right.participant.id)) continue;
 
-        const delta = {
-          x: right.position.x - left.position.x,
-          y: right.position.y - left.position.y,
-        };
         const collisionDistance =
           left.profile.collisionRadiusMetres +
           right.profile.collisionRadiusMetres +
           Math.max(0, settings.collisionToleranceMetres);
+        const contact = firstContactOnStep(
+          left.previousPosition,
+          left.position,
+          right.previousPosition,
+          right.position,
+          collisionDistance,
+        );
+        if (!contact) continue;
+
+        left.position = {
+          x: left.previousPosition.x +
+            (left.position.x - left.previousPosition.x) * contact.alpha,
+          y: left.previousPosition.y +
+            (left.position.y - left.previousPosition.y) * contact.alpha,
+        };
+        right.position = {
+          x: right.previousPosition.x +
+            (right.position.x - right.previousPosition.x) * contact.alpha,
+          y: right.previousPosition.y +
+            (right.position.y - right.previousPosition.y) * contact.alpha,
+        };
+        const delta = {
+          x: right.position.x - left.position.x,
+          y: right.position.y - left.position.y,
+        };
         const distance = magnitude(delta);
-        if (distance > collisionDistance) continue;
 
         left.stopped = false;
         right.stopped = false;
@@ -1050,7 +1347,7 @@ export function applyPhysicsSimulation(
   const summary: PhysicsSimulationSummary = {
     ranAt: new Date().toISOString(),
     participantCollisions,
-    primaryImpactTimeSeconds: impactTime,
+    primaryImpactTimeSeconds: primaryImpactTime,
     estimatedImpactEnergyKj: Number(estimatedImpactEnergyKj.toFixed(1)),
     solidObjectImpacts,
     potholeInteractions,

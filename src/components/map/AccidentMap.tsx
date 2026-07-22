@@ -712,7 +712,7 @@ const handleCloseJunctionAnalysis =
 
       mapRef.current = null;
     };
-  }, []);
+  }, [handleOpenJunctionAnalysis]);
 
   useEffect(() => {
     visualizationModeRef.current =
@@ -765,7 +765,7 @@ const handleCloseJunctionAnalysis =
 
     junctionMarkersCleanupRef.current =
       null;
-  }, [visualizationMode]);
+  }, [handleOpenJunctionAnalysis, visualizationMode]);
 
   useEffect(() => {
     heatmapFiltersRef.current =
@@ -890,7 +890,7 @@ const handleCloseJunctionAnalysis =
         handleStyleLoad,
       );
     };
-  }, [mapType]);
+  }, [handleOpenJunctionAnalysis, mapType]);
 
   useEffect(() => {
     const map = mapRef.current;

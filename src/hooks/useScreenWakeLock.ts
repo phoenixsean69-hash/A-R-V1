@@ -39,8 +39,10 @@ export function useScreenWakeLock(active: boolean): {
 
   useEffect(() => {
     if (!active || !supported || !wakeLockApi) {
-      void release();
-      return;
+      const timer = window.setTimeout(() => {
+        void release();
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
     let cancelled = false;
@@ -59,6 +61,7 @@ export function useScreenWakeLock(active: boolean): {
         sentinel.addEventListener("release", () => setLocked(false));
       })
       .catch((wakeLockError: unknown) => {
+        if (cancelled) return;
         setError(
           wakeLockError instanceof Error
             ? wakeLockError.message
@@ -68,7 +71,11 @@ export function useScreenWakeLock(active: boolean): {
 
     return () => {
       cancelled = true;
-      void release();
+      const sentinel = sentinelRef.current;
+      sentinelRef.current = null;
+      if (sentinel && !sentinel.released) {
+        void sentinel.release();
+      }
     };
   }, [active, release, supported, wakeLockApi]);
 

@@ -77,6 +77,9 @@ export default function ReconstructionRecorder({
   const [stage, setStage] = useState<RecorderStage>("idle");
   const [countdown, setCountdown] = useState(3);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [recordingDurationSeconds, setRecordingDurationSeconds] = useState(
+    reconstruction.durationSeconds,
+  );
   const [preferences, setPreferences] =
     useState<ReconstructionRecordingPreferences>(
       DEFAULT_RECONSTRUCTION_RECORDING_PREFERENCES,
@@ -277,6 +280,7 @@ export default function ReconstructionRecorder({
 
       const source = onBeforeRecord ? await onBeforeRecord() : reconstruction;
       recordingSourceRef.current = source;
+      setRecordingDurationSeconds(source.durationSeconds);
 
       for (let value = 3; value >= 1; value -= 1) {
         setCountdown(value);
@@ -414,7 +418,7 @@ export default function ReconstructionRecorder({
                   {stage === "recording" && (
                     <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-sm font-black text-white shadow-lg">
                       <span className="h-3 w-3 animate-pulse rounded-full bg-white" />
-                      REC {recordingTime.toFixed(1)}s / {recordingSourceRef.current.durationSeconds.toFixed(1)}s
+                      REC {recordingTime.toFixed(1)}s / {recordingDurationSeconds.toFixed(1)}s
                     </div>
                   )}
                 </div>

@@ -19,6 +19,7 @@ import { FieldPlacementService } from "../../services/fieldPlacementService";
 import {
   DEFAULT_PHYSICS_SETTINGS,
   applyPhysicsSimulation,
+  preparePhysicsForPlayback,
 } from "../../services/reconstructionPhysicsService";
 import { getSceneObjectCatalogItem } from "../../data/sceneObjectCatalog";
 
@@ -472,87 +473,107 @@ function createDefaultReconstruction(): AccidentReconstruction {
 
 function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
   const colour = getParticipantColour(participant.colour);
+  const glow = selected ? "drop-shadow-[0_0_8px_rgba(96,165,250,0.95)]" : "drop-shadow-[0_3px_5px_rgba(0,0,0,0.45)]";
+  const label = (
+    <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded border border-[#23395d] bg-[#050914]/90 px-1.5 py-0.5 text-[7px] font-semibold text-slate-200 shadow-lg">
+      {participant.name}
+    </span>
+  );
 
   if (isHumanParticipant(participant.type)) {
     return (
-      <div
-        className={`relative flex h-12 w-8 flex-col items-center ${
-          selected ? "drop-shadow-[0_0_8px_rgba(34,211,238,1)]" : ""
-        }`}
-      >
-        <span
-          className="block h-3.5 w-3.5 rounded-full border-2 border-white"
-          style={{ backgroundColor: colour }}
-        />
-        <span
-          className="mt-0.5 block h-5 w-3 rounded-sm border border-white"
-          style={{ backgroundColor: colour }}
-        />
-        <span
-          className="absolute left-1 top-5 h-1 w-6 rounded-full"
-          style={{ backgroundColor: colour }}
-        />
-        <span className="mt-0.5 flex gap-1">
-          <span
-            className="block h-4 w-1.5 rounded-full"
-            style={{ backgroundColor: colour }}
-          />
-          <span
-            className="block h-4 w-1.5 rounded-full"
-            style={{ backgroundColor: colour }}
-          />
-        </span>
-
-        {participant.injured && (
-          <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white shadow">
-            !
-          </span>
-        )}
+      <div className={`relative h-12 w-8 ${glow}`}>
+        <svg viewBox="0 0 32 48" className="h-full w-full overflow-visible" aria-hidden="true">
+          <ellipse cx="16" cy="8" rx="6.5" ry="7" fill="#b97850" stroke="#e2e8f0" strokeWidth="1.4" />
+          <path d="M10 16 C10 13 22 13 22 16 L24 30 C22 34 10 34 8 30 Z" fill={colour} stroke="#e2e8f0" strokeWidth="1.2" />
+          <path d="M9 19 L3.8 31 M23 19 L28.2 31" stroke="#b97850" strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M12.5 32 L10 45 M19.5 32 L22 45" stroke="#273244" strokeWidth="4.2" strokeLinecap="round" />
+          <path d="M7.6 45 H12.2 M19.8 45 H24.4" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+          {participant.type === "Officer" && <path d="M9 18 L23 18" stroke="#cbd5e1" strokeWidth="2.2" />}
+          {participant.type === "Officer" && <path d="M10 5 Q16 0 22 5 L22 8 H10 Z" fill="#1e293b" stroke="#94a3b8" strokeWidth="1" />}
+          {participant.type === "Witness" && <rect x="22" y="20" width="4" height="7" rx="1" fill="#dbeafe" stroke="#64748b" />}
+        </svg>
+        {participant.injured && <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border border-[#fda4af] bg-[#7f1d2d] text-[8px] font-black text-white">!</span>}
+        {label}
       </div>
     );
   }
 
-  if (participant.type === "Bicycle") {
+  if (participant.type === "Bicycle" || participant.type === "Motorcycle") {
+    const motorcycle = participant.type === "Motorcycle";
     return (
-      <div
-        className={`relative h-8 w-12 ${
-          selected ? "drop-shadow-[0_0_8px_rgba(34,211,238,1)]" : ""
-        }`}
-      >
-        <span className="absolute bottom-0 left-0 h-5 w-5 rounded-full border-[3px] border-white" />
-        <span className="absolute bottom-0 right-0 h-5 w-5 rounded-full border-[3px] border-white" />
-        <span
-          className="absolute left-3 top-3 h-1 w-7 rotate-12 rounded-full"
-          style={{ backgroundColor: colour }}
-        />
-        <span
-          className="absolute left-5 top-1 h-5 w-1 -rotate-12 rounded-full"
-          style={{ backgroundColor: colour }}
-        />
+      <div className={`relative ${motorcycle ? "h-8 w-14" : "h-8 w-12"} ${glow}`}>
+        <svg viewBox="0 0 56 32" className="h-full w-full overflow-visible" aria-hidden="true">
+          <ellipse cx="10" cy="23" rx="8" ry="6.5" fill="#070b12" stroke="#d9e2ec" strokeWidth="2.2" />
+          <ellipse cx="46" cy="23" rx="8" ry="6.5" fill="#070b12" stroke="#d9e2ec" strokeWidth="2.2" />
+          <circle cx="10" cy="23" r="2" fill="#94a3b8" />
+          <circle cx="46" cy="23" r="2" fill="#94a3b8" />
+          {motorcycle ? (
+            <>
+              <path d="M12 21 L22 11 L38 12 L45 21 L29 22 Z" fill={colour} stroke="#f1f5f9" strokeWidth="1.2" />
+              <ellipse cx="29" cy="12" rx="8" ry="5" fill={colour} stroke="#dbeafe" strokeWidth="1" />
+              <path d="M34 9 L42 5 L47 7" stroke="#aab7c8" strokeWidth="2" strokeLinecap="round" />
+              <rect x="19" y="7" width="10" height="4" rx="2" fill="#202a37" />
+              <path d="M22 22 L18 28" stroke="#aab7c8" strokeWidth="2" />
+              <circle cx="47" cy="8" r="2.5" fill="#fff7cf" stroke="#cbd5e1" />
+            </>
+          ) : (
+            <>
+              <path d="M10 23 L22 10 L30 23 Z M22 10 L39 10 L30 23 M39 10 L46 23" fill="none" stroke={colour} strokeWidth="2.4" strokeLinejoin="round" />
+              <path d="M18 8 H27 M38 7 L44 5" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="30" cy="23" r="2.3" fill="#94a3b8" />
+            </>
+          )}
+          <circle cx="27" cy="5.8" r="4.2" fill="#b97850" stroke="#e2e8f0" strokeWidth="1" />
+          <path d="M24 10 L21 17 L31 19 L36 11" fill="#273244" stroke="#dbe4ee" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+        {label}
       </div>
     );
   }
 
   const dimensions = getVehicleDimensions(participant.type);
+  const width = Math.max(dimensions.width, participant.type === "Car" ? 50 : dimensions.width);
+  const height = Math.max(dimensions.height, 25);
+  const bodyStroke = participant.colour === "White" ? "#64748b" : "#dbe4ee";
 
   return (
-    <div
-      className={`flex items-center justify-center rounded-md border-2 border-white shadow-lg ${
-        selected ? "ring-4 ring-cyan-300/40" : ""
-      }`}
-      style={{
-        width: dimensions.width,
-        height: dimensions.height,
-        backgroundColor: colour,
-      }}
-    >
-      <span
-        className={`px-1 text-[9px] font-bold drop-shadow ${
-          participant.colour === "White" ? "text-gray-900" : "text-white"
-        }`}
-      >
-        {participant.name}
-      </span>
+    <div className={`relative ${glow}`} style={{ width, height }}>
+      <svg viewBox="0 0 100 52" className="h-full w-full overflow-visible" aria-hidden="true">
+        <rect x="7" y="4" width="86" height="44" rx={participant.type === "Bus" ? 8 : 14} fill={colour} stroke={bodyStroke} strokeWidth="2" />
+        <rect x="2" y="9" width="8" height="11" rx="2" fill="#111827" />
+        <rect x="2" y="32" width="8" height="11" rx="2" fill="#111827" />
+        <rect x="90" y="9" width="8" height="11" rx="2" fill="#111827" />
+        <rect x="90" y="32" width="8" height="11" rx="2" fill="#111827" />
+        {participant.type === "Truck" ? (
+          <>
+            <rect x="12" y="8" width="51" height="36" rx="5" fill="#66717f" stroke="#cbd5e1" />
+            <rect x="65" y="8" width="23" height="36" rx="7" fill={colour} stroke={bodyStroke} />
+            <path d="M70 11 H85 V41 H70 Z" fill="#7ea1b8" opacity=".85" />
+            <path d="M18 13 H57 M18 20 H57 M18 27 H57 M18 34 H57" stroke="#8793a0" strokeWidth="1" />
+          </>
+        ) : participant.type === "Bus" ? (
+          <>
+            <path d="M17 9 H83 Q88 9 88 14 V38 Q88 43 83 43 H17 Q12 43 12 38 V14 Q12 9 17 9 Z" fill={colour} stroke={bodyStroke} />
+            {[19,31,43,55,67].map((x) => <rect key={x} x={x} y="11" width="9" height="30" rx="2" fill="#7295ad" opacity=".84" />)}
+            <rect x="78" y="11" width="8" height="30" rx="2" fill="#8bb2ca" />
+          </>
+        ) : (
+          <>
+            <path d="M22 8 Q30 4 50 4 Q70 4 78 8 L88 18 V34 L78 44 Q69 48 50 48 Q31 48 22 44 L12 34 V18 Z" fill={colour} stroke={bodyStroke} strokeWidth="1.4" />
+            <path d="M31 9 Q50 4 69 9 L75 17 H25 Z" fill="#7da0b8" stroke="#cbd5e1" strokeWidth="1" />
+            <path d="M25 35 H75 L69 44 Q50 49 31 44 Z" fill="#66899f" stroke="#cbd5e1" strokeWidth="1" />
+            <path d="M23 26 H77" stroke="#dbe4ee" strokeWidth="1" opacity=".7" />
+            <rect x="9" y="21" width="5" height="10" rx="2" fill="#263442" stroke="#94a3b8" />
+            <rect x="86" y="21" width="5" height="10" rx="2" fill="#263442" stroke="#94a3b8" />
+          </>
+        )}
+        <rect x="86" y="12" width="4" height="8" rx="1" fill="#fff2b3" />
+        <rect x="86" y="32" width="4" height="8" rx="1" fill="#fff2b3" />
+        <rect x="9" y="12" width="4" height="8" rx="1" fill="#9f2431" />
+        <rect x="9" y="32" width="4" height="8" rx="1" fill="#9f2431" />
+      </svg>
+      {label}
     </div>
   );
 }
@@ -758,9 +779,12 @@ export default function AccidentReconstructionEditor({
   const [sceneExpanded, setSceneExpanded] = useState(false);
   const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("2D");
   const [sceneView, setSceneView] = useState({ zoom: 1, panX: 0, panY: 0 });
-  const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>("Diagram");
+  const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>(reconstruction.fieldCalibration ? "Satellite" : "Diagram");
   const [routeDrawingParticipantId, setRouteDrawingParticipantId] = useState<string | null>(null);
-  const [, setHistoryVersion] = useState(0);
+  const [historyAvailability, setHistoryAvailability] = useState({
+    canUndo: false,
+    canRedo: false,
+  });
   const [dragState, setDragState] = useState<DragState | null>(null);
 
   const [activeSceneObjectType, setActiveSceneObjectType] =
@@ -821,45 +845,50 @@ export default function AccidentReconstructionEditor({
     [],
   );
 
+  const caseNumber = caseContext?.caseNumber;
+
   useEffect(() => {
-    const loaded = reconstructionId
-      ? ReconstructionService.getById(reconstructionId)
-      : null;
-
-    const next = loaded ?? createDefaultReconstruction();
-
-    setReconstruction(
-      caseContext
+    const timer = window.setTimeout(() => {
+      const loaded = reconstructionId
+        ? ReconstructionService.getById(reconstructionId)
+        : null;
+      const created = loaded ?? createDefaultReconstruction();
+      const next = caseNumber
         ? {
-            ...next,
-            accidentId: caseContext.caseNumber,
+            ...created,
+            accidentId: caseNumber,
           }
-        : next,
-    );
-  }, [reconstructionId, caseContext?.caseId, caseContext?.caseNumber]);
+        : created;
 
-  useEffect(() => {
-    setSelectedParticipantId(reconstruction.vehicles[0]?.id ?? null);
-    setSelectedPathPointId(
-      reconstruction.vehicles[0]?.pathPoints[0]?.id ?? null,
-    );
-    setSelectedSceneObjectId(reconstruction.sceneObjects[0]?.id ?? null);
-    setSelectedMeasurementId(reconstruction.measurements[0]?.id ?? null);
-    setSelectedEvidenceId(reconstruction.evidenceRecords[0]?.id ?? null);
-    setCurrentTime(0);
-    currentTimeRef.current = 0;
-    setIsPlaying(false);
-    setDragState(null);
-    setActiveSceneObjectType(null);
-    setTraceToolObjectId(null);
-    setMeasurementToolActive(false);
-    setMeasurementDraftStart(null);
-    setActiveEvidencePlacementId(null);
-    setCollisionPlacementActive(false);
-    setFieldPlacementOpen(false);
-    setFieldPlacementInitialTarget(null);
-    setPendingGpsSceneObjectId(null);
-  }, [reconstruction.id]);
+      setReconstruction(next);
+      setSelectedParticipantId(next.vehicles[0]?.id ?? null);
+      setSelectedPathPointId(next.vehicles[0]?.pathPoints[0]?.id ?? null);
+      setSelectedSceneObjectId(next.sceneObjects[0]?.id ?? null);
+      setSelectedMeasurementId(next.measurements[0]?.id ?? null);
+      setSelectedEvidenceId(next.evidenceRecords[0]?.id ?? null);
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setIsPlaying(false);
+      setDragState(null);
+      setActiveSceneObjectType(null);
+      setTraceToolObjectId(null);
+      setMeasurementToolActive(false);
+      setMeasurementDraftStart(null);
+      setActiveEvidencePlacementId(null);
+      setCollisionPlacementActive(false);
+      setFieldPlacementOpen(false);
+      setFieldPlacementInitialTarget(null);
+      setPendingGpsSceneObjectId(null);
+
+      undoStackRef.current = [];
+      redoStackRef.current = [];
+      historySnapshotRef.current = next;
+      applyingHistoryRef.current = false;
+      setHistoryAvailability({ canUndo: false, canRedo: false });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [caseNumber, reconstructionId]);
 
   useEffect(() => {
     currentTimeRef.current = currentTime;
@@ -879,7 +908,10 @@ export default function AccidentReconstructionEditor({
       redoStackRef.current = [];
       historySnapshotRef.current = reconstruction;
       historyTimerRef.current = null;
-      setHistoryVersion((value) => value + 1);
+      setHistoryAvailability({
+        canUndo: undoStackRef.current.length > 0,
+        canRedo: false,
+      });
     }, 280);
   }, [reconstruction]);
 
@@ -896,18 +928,29 @@ export default function AccidentReconstructionEditor({
     settings: reconstruction.physicsSettings,
   }), [reconstruction]);
 
+  const livePhysicsEnabled = Boolean(
+    reconstruction.physicsSettings?.enabled ?? DEFAULT_PHYSICS_SETTINGS.enabled,
+  ) && Boolean(
+    reconstruction.physicsSettings?.liveSimulation ??
+      DEFAULT_PHYSICS_SETTINGS.liveSimulation,
+  );
+  const physicsParticipantCount = reconstruction.vehicles.length;
+
   useEffect(() => {
-    const settings = { ...DEFAULT_PHYSICS_SETTINGS, ...(reconstruction.physicsSettings ?? {}) };
-    if (!settings.enabled || !settings.liveSimulation || reconstruction.vehicles.length < 1) return;
-    if (livePhysicsTimerRef.current !== null) window.clearTimeout(livePhysicsTimerRef.current);
+    if (!livePhysicsEnabled || physicsParticipantCount < 1) return;
+    if (livePhysicsTimerRef.current !== null) {
+      window.clearTimeout(livePhysicsTimerRef.current);
+    }
     livePhysicsTimerRef.current = window.setTimeout(() => {
       setReconstruction((current) => applyPhysicsSimulation(current));
       livePhysicsTimerRef.current = null;
     }, 500);
     return () => {
-      if (livePhysicsTimerRef.current !== null) window.clearTimeout(livePhysicsTimerRef.current);
+      if (livePhysicsTimerRef.current !== null) {
+        window.clearTimeout(livePhysicsTimerRef.current);
+      }
     };
-  }, [physicsInputSignature]);
+  }, [livePhysicsEnabled, physicsInputSignature, physicsParticipantCount]);
 
   useEffect(() => {
     if (!sceneExpanded) return;
@@ -1155,12 +1198,6 @@ export default function AccidentReconstructionEditor({
           ? FieldPlacementService.markManuallyAdjusted({
               reconstruction: {
                 ...updated,
-                physicsSettings: {
-                  ...DEFAULT_PHYSICS_SETTINGS,
-                  ...(updated.physicsSettings ?? {}),
-                  autoRunOnPlay: false,
-                  liveSimulation: false,
-                },
                 lastPhysicsSimulation: undefined,
               },
               targetType: "ParticipantPathPoint",
@@ -1855,17 +1892,34 @@ export default function AccidentReconstructionEditor({
     [],
   );
 
-  const handleRunPhysics = useCallback(() => {
+  const handleRunPhysics = useCallback((): AccidentReconstruction => {
     setIsPlaying(false);
     setCurrentTime(0);
     currentTimeRef.current = 0;
-    setReconstruction((current) => applyPhysicsSimulation(current));
+    const simulated = applyPhysicsSimulation(reconstruction);
+    setReconstruction(simulated);
     showSaveMessage(
-      "Physics paths generated. Review the movement and save the reconstruction when satisfied.",
+      "Physics paths generated. Both 2D and 3D now use this shared collision timeline.",
       "info",
       4000,
     );
-  }, [showSaveMessage]);
+    return simulated;
+  }, [reconstruction, showSaveMessage]);
+
+  const handlePreparePlayback = useCallback((): AccidentReconstruction => {
+    const prepared = preparePhysicsForPlayback(reconstruction);
+    if (prepared !== reconstruction) {
+      setReconstruction(prepared);
+      if ((prepared.lastPhysicsSimulation?.participantCollisions ?? 0) > 0) {
+        showSaveMessage(
+          "Fresh collision physics prepared for synchronized 2D and 3D playback.",
+          "info",
+          3200,
+        );
+      }
+    }
+    return prepared;
+  }, [reconstruction, showSaveMessage]);
 
   const handlePlayPause = useCallback(() => {
     if (isPlaying) {
@@ -1882,30 +1936,15 @@ export default function AccidentReconstructionEditor({
       setCurrentTime(0);
     }
 
-    const settings = {
-      ...DEFAULT_PHYSICS_SETTINGS,
-      ...(reconstruction.physicsSettings ?? {}),
-    };
-
-    if (
-      startsFromBeginning &&
-      settings.enabled &&
-      settings.mode === "Physics After Primary Impact" &&
-      settings.autoRunOnPlay &&
-      reconstruction.vehicles.length > 0
-    ) {
-      const simulated = applyPhysicsSimulation(reconstruction);
-      setReconstruction(simulated);
-
-      if ((simulated.lastPhysicsSimulation?.participantCollisions ?? 0) > 0) {
+    if (startsFromBeginning) {
+      const prepared = handlePreparePlayback();
+      if (
+        prepared !== reconstruction &&
+        (prepared.lastPhysicsSimulation?.participantCollisions ?? 0) === 0 &&
+        reconstruction.vehicles.length > 1
+      ) {
         showSaveMessage(
-          "Collision response prepared: impact impulse, deflection, slide and natural stopping are active.",
-          "info",
-          3500,
-        );
-      } else if (reconstruction.vehicles.length > 1) {
-        showSaveMessage(
-          "The participants have no meaningful relative impact speed. Review their approach directions and impact speeds.",
+          "No closing participant contact was found. Review approach directions, paths and speeds.",
           "info",
           4500,
         );
@@ -1913,7 +1952,7 @@ export default function AccidentReconstructionEditor({
     }
 
     setIsPlaying(true);
-  }, [isPlaying, reconstruction, showSaveMessage]);
+  }, [handlePreparePlayback, isPlaying, reconstruction, showSaveMessage]);
 
   const handleReset = useCallback(() => {
     setIsPlaying(false);
@@ -2169,12 +2208,6 @@ export default function AccidentReconstructionEditor({
       if (routeParticipantId && routePoints.length >= 2) {
         setReconstruction((current) => ({
           ...current,
-          physicsSettings: {
-            ...DEFAULT_PHYSICS_SETTINGS,
-            ...(current.physicsSettings ?? {}),
-            autoRunOnPlay: false,
-            liveSimulation: false,
-          },
           lastPhysicsSimulation: undefined,
           vehicles: current.vehicles.map((participant) => {
             if (participant.id !== routeParticipantId) return participant;
@@ -2281,7 +2314,10 @@ export default function AccidentReconstructionEditor({
     applyingHistoryRef.current = true;
     historySnapshotRef.current = previous;
     setReconstruction(previous);
-    setHistoryVersion((value) => value + 1);
+    setHistoryAvailability({
+      canUndo: undoStackRef.current.length > 0,
+      canRedo: redoStackRef.current.length > 0,
+    });
   }, [reconstruction]);
 
   const handleRedo = useCallback(() => {
@@ -2291,7 +2327,10 @@ export default function AccidentReconstructionEditor({
     applyingHistoryRef.current = true;
     historySnapshotRef.current = next;
     setReconstruction(next);
-    setHistoryVersion((value) => value + 1);
+    setHistoryAvailability({
+      canUndo: undoStackRef.current.length > 0,
+      canRedo: redoStackRef.current.length > 0,
+    });
   }, [reconstruction]);
 
   useEffect(() => {
@@ -2347,28 +2386,28 @@ export default function AccidentReconstructionEditor({
       : "";
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 lg:p-6">
-      <div className="mx-auto max-w-[2200px]">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+    <div className="reconstruction-editor space-y-3">
+      <div className="mx-auto max-w-[2200px] space-y-3">
+        <div className="ui-panel flex flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#79adfa]">
               {caseContext ? caseContext.caseNumber : "RoadSafe AR"}
             </p>
-            <h1 className="mt-1 text-3xl font-bold text-gray-900">
+            <h1 className="mt-1 text-base font-bold text-slate-100">
               Accident Reconstruction Editor
             </h1>
             {caseContext && (
-              <p className="mt-1 text-sm font-semibold text-indigo-700">
+              <p className="mt-1 text-[10px] font-semibold text-slate-400">
                 Linked case: {caseContext.caseTitle}
               </p>
             )}
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-600">
+            <p className="mt-1 max-w-3xl text-[9px] leading-4 text-slate-600">
               Build detailed multi-point movement paths, connect actions to the
               timeline and trace curved physical evidence directly on the road.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {saveMessage && (
               <span
                 role={saveMessageType === "error" ? "alert" : "status"}
@@ -2388,21 +2427,21 @@ export default function AccidentReconstructionEditor({
               <>
                 <Link
                   to={caseContext.casePath}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95"
+                  className="ui-button"
                 >
                   ← Back to Case
                 </Link>
 
                 <Link
                   to={caseContext.reportPath}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 active:scale-95"
+                  className="ui-button"
                 >
                   View Report
                 </Link>
 
                 <Link
                   to={caseContext.footagePath}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 active:scale-95"
+                  className="ui-button"
                 >
                   Saved Footage
                 </Link>
@@ -2411,21 +2450,21 @@ export default function AccidentReconstructionEditor({
               <>
                 <Link
                   to="/"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95"
+                  className="ui-button"
                 >
                   ← Back to Dashboard
                 </Link>
 
                 <Link
                   to="/cases"
-                  className="inline-flex items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 active:scale-95"
+                  className="ui-button"
                 >
                   Accident Cases
                 </Link>
 
                 <Link
                   to="/cases/new"
-                  className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 active:scale-95"
+                  className="ui-button"
                 >
                   + New Case
                 </Link>
@@ -2435,7 +2474,7 @@ export default function AccidentReconstructionEditor({
             <button
               type="button"
               onClick={() => openFieldPlacementForTarget(null)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-5 py-3 font-semibold text-cyan-800 shadow-sm transition hover:bg-cyan-100 active:scale-95"
+              className="ui-button"
             >
               Field GPS Placement
             </button>
@@ -2484,17 +2523,17 @@ export default function AccidentReconstructionEditor({
             <button
               type="button"
               onClick={handleSave}
-              className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+              className="ui-button-primary px-5"
             >
               Save Reconstruction
             </button>
           </div>
         </div>
 
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="ui-panel flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-700">View</span>
-            <div className="flex rounded-lg border border-gray-300 bg-gray-50 p-1">
+            <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">View mode</span>
+            <div className="flex rounded-md border border-[#1d2c4b] bg-[#070c18] p-1">
             {(["2D", "3D"] as const).map((view) => (
               <button
                 key={view}
@@ -2503,14 +2542,14 @@ export default function AccidentReconstructionEditor({
                   setIsPlaying(false);
                   setActiveReconstructionView(view);
                 }}
-                className={`rounded-md px-5 py-2 text-sm font-bold transition ${activeReconstructionView === view ? "bg-slate-900 text-white shadow-sm" : "text-gray-600 hover:bg-white"}`}
+                className={`rounded px-5 py-1.5 text-[10px] font-bold transition-colors ${activeReconstructionView === view ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
               >
                 {view === "2D" ? "2D" : "3D"}
               </button>
             ))}
             </div>
           </div>
-          <span className="text-xs text-gray-500">Only the selected view runs.</span>
+          <span className="text-[9px] text-slate-600">One synchronized physics timeline powers both views.</span>
         </div>
 
         {activeReconstructionView === "3D" && (
@@ -2519,12 +2558,13 @@ export default function AccidentReconstructionEditor({
               reconstruction={reconstruction}
               onSwitchTo2D={() => setActiveReconstructionView("2D")}
               onRunPhysics={handleRunPhysics}
+              onPreparePlayback={handlePreparePlayback}
             />
           </Suspense>
         )}
 
-        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)_310px] 2xl:grid-cols-[280px_minmax(0,1fr)_330px]`}>
-          <aside className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} items-start gap-3 xl:grid-cols-[245px_minmax(0,1fr)_300px] 2xl:grid-cols-[260px_minmax(0,1fr)_315px]`}>
+          <aside className="ui-panel p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
             <h2 className="text-lg font-bold text-gray-900">Accident Case</h2>
 
             <div className="mt-5 space-y-4">
@@ -2706,42 +2746,42 @@ export default function AccidentReconstructionEditor({
           </aside>
 
           <main
-            className={`min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm ${
+            className={`ui-panel min-w-0 overflow-hidden ${
               sceneExpanded
                 ? "fixed inset-2 z-[100] flex flex-col shadow-2xl sm:inset-4"
                 : ""
             }`}
           >
-            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-4">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#182743] bg-[#080e1c] px-4 py-3">
               <div>
-                <h2 className="font-bold text-gray-900">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">
                   Reconstruction Scene
                 </h2>
-                <p className="text-xs text-gray-500">
+                <p className="mt-1 text-[9px] text-slate-600">
                   Full calibrated area: {reconstruction.scene.sceneWidthMetres}m × {reconstruction.scene.sceneHeightMetres}m. Drag movement points or expand for detailed placement.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600">
-                <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                <div className="flex rounded-md border border-[#1d2c4b] bg-[#070c18] p-1">
                   {(["Diagram", "Street", "Satellite"] as ReconstructionBasemapMode[]).map((mode) => (
                     <button
                       key={mode}
                       type="button"
                       onClick={() => setBasemapMode(mode)}
-                      className={`rounded-md px-2.5 py-1.5 text-[10px] font-black ${basemapMode === mode ? "bg-white text-blue-700 shadow" : "text-gray-500 hover:text-gray-900"}`}
+                      className={`rounded px-2.5 py-1.5 text-[9px] font-bold ${basemapMode === mode ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
                     >
                       {mode}
                     </button>
                   ))}
                 </div>
-                <button type="button" onClick={handleUndo} disabled={undoStackRef.current.length === 0 && historyTimerRef.current === null} className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-black disabled:opacity-40">Undo</button>
-                <button type="button" onClick={handleRedo} disabled={redoStackRef.current.length === 0} className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-black disabled:opacity-40">Redo</button>
+                <button type="button" onClick={handleUndo} disabled={!historyAvailability.canUndo} className="ui-button py-1.5 disabled:opacity-40">Undo</button>
+                <button type="button" onClick={handleRedo} disabled={!historyAvailability.canRedo} className="ui-button py-1.5 disabled:opacity-40">Redo</button>
                 <button
                   type="button"
                   disabled={!selectedParticipantId}
                   onClick={() => setRouteDrawingParticipantId((current) => current ? null : selectedParticipantId)}
-                  className={`rounded-lg px-3 py-2 text-xs font-black text-white disabled:bg-gray-400 ${routeDrawingParticipantId ? "bg-rose-600" : "bg-cyan-700 hover:bg-cyan-800"}`}
+                  className={`ui-button py-1.5 text-white disabled:opacity-40 ${routeDrawingParticipantId ? "border-[#87414f] bg-[#562635]" : ""}`}
                 >
                   {routeDrawingParticipantId ? "Cancel Route" : "Draw Route"}
                 </button>
@@ -2760,7 +2800,7 @@ export default function AccidentReconstructionEditor({
                 <button
                   type="button"
                   onClick={() => setSceneExpanded((current) => !current)}
-                  className="ml-1 rounded-lg bg-slate-900 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-slate-700"
+                  className="ui-button-primary ml-1 py-1.5"
                   aria-pressed={sceneExpanded}
                   title={sceneExpanded ? "Return to the editor layout" : "Use the largest available scene viewport"}
                 >
@@ -3167,7 +3207,7 @@ export default function AccidentReconstructionEditor({
             </div>
           </main>
 
-          <aside className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+          <aside className="ui-panel p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
             {selectedSceneObject ? (
               <SceneObjectSettingsPanel
                 object={selectedSceneObject}
