@@ -1,75 +1,202 @@
-# React + TypeScript + Vite
+# RoadSafe AR
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+RoadSafe AR is a React and TypeScript prototype for accident case management, road-risk analysis, 2D/3D crash reconstruction, physics-assisted replay, evidence recording and future augmented-reality scene placement.
 
-Currently, two official plugins are available:
+## Current Status
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Development stage:** Advanced functional prototype
 
-## React Compiler
+The strongest implemented areas are:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Accident case creation and management.
+- Road-layout and junction visualisation.
+- Interactive 2D reconstruction.
+- Interactive Three.js 3D reconstruction.
+- Lightweight procedural models for vehicles, cyclists and people.
+- Earliest-contact collision detection.
+- Post-impact movement, yaw, friction and stopping.
+- Evidence markers and measurements.
+- GPS-assisted field placement.
+- Reconstruction validation and scenario comparison.
+- Report and footage workflows.
 
-## Expanding the ESLint configuration
+The main unfinished areas are:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Central backend persistence and authentication.
+- Real camera-based augmented reality.
+- Full continuous detection for every secondary collision.
+- Complete 3D Play and automatic-physics integration.
+- Automated tests and remaining lint corrections.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+See the full [project progress report](docs/PROGRESS_REPORT.md).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Technology Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React 19
+- TypeScript 6
+- Vite 8
+- React Router
+- Tailwind CSS
+- Three.js
+- MapLibre GL
+- Chart.js
+- AR.js
+- Supabase client
 
+## Main Features
+
+### Accident case management
+
+- Structured case numbering.
+- Accident date, time and location.
+- Investigating officer and police-station records.
+- Case status tracking.
+- Linked reconstructions, reports and footage.
+
+### 2D reconstruction
+
+- Road-scene configuration.
+- Participant path authoring.
+- Collision-point setup.
+- Scene objects and hazards.
+- Evidence markers.
+- Measurements.
+- Timeline playback.
+- Physics controls.
+
+### 3D reconstruction
+
+- Cars, buses and trucks.
+- Motorcycles and bicycles.
+- Pedestrians, witnesses and officers.
+- Multiple camera views.
+- Post-impact launch, fall, yaw and deformation effects.
+- Shared participant paths and physics results.
+
+### Physics preview
+
+- Earliest physical-contact detection.
+- Participant mass and restitution.
+- Collision impulses and estimated energy.
+- Friction and braking deceleration.
+- Deflection and ricochet.
+- Natural stopping positions.
+- Interaction with barriers, trees, parked vehicles, potholes and low-grip surfaces.
+
+> The physics module is an investigative visualisation aid. It is not yet a certified forensic crash-analysis engine.
+
+## Getting Started
+
+### Requirements
+
+- Node.js
+- npm
+
+### Installation
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run dev
 ```
+
+### Production build
+
+```bash
+npm run build
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Application Routes
+
+- `/` — Dashboard
+- `/cases` — Accident cases
+- `/cases/new` — Create a case
+- `/cases/:caseId` — Case details
+- `/cases/:caseId/edit` — Edit a case
+- `/cases/:caseId/reconstruction` — Case reconstruction
+- `/cases/:caseId/report` — Case report
+- `/cases/:caseId/footage` — Saved footage
+- `/reconstruction` — Standalone reconstruction workspace
+
+## Project Structure
+
+```text
+src/
+├── components/
+│   ├── cases/
+│   ├── fieldPlacement/
+│   ├── footage/
+│   ├── map/
+│   └── reconstruction/
+├── data/
+├── hooks/
+├── pages/
+├── routes/
+├── services/
+├── types/
+└── utils/
+```
+
+Important files include:
+
+- `src/components/reconstruction/AccidentReconstructionEditor.tsx`
+- `src/components/reconstruction/Reconstruction3DViewer.tsx`
+- `src/services/reconstructionPhysicsService.ts`
+- `src/services/accidentCaseService.ts`
+- `src/services/roadLayoutDetectionService.ts`
+- `src/types/reconstruction.ts`
+
+## Data Storage
+
+The current prototype primarily uses browser storage:
+
+- `localStorage` for cases, reconstructions and related metadata.
+- IndexedDB for recorded footage blobs.
+
+Supabase is installed but has not yet been connected to the application.
+
+## Development Roadmap
+
+### Milestone 1 — Reconstruction engine stabilisation
+
+- Connect 3D Play to automatic physics preparation.
+- Add swept detection for all secondary collisions.
+- Add swept participant-to-object detection.
+- Keep 2D and 3D on one simulation timeline.
+- Fix remaining TypeScript and ESLint problems.
+- Add collision scenario tests.
+
+### Milestone 2 — Backend and users
+
+- Supabase configuration.
+- Authentication.
+- Investigator and administrator roles.
+- Cloud case storage.
+- Evidence upload.
+- Multi-device synchronisation.
+
+### Milestone 3 — Augmented reality
+
+- Camera-based AR viewer.
+- Real-world scene anchoring.
+- Field calibration.
+- On-site overlays.
+- Device testing and performance optimisation.
+
+## Documentation
+
+- [Progress Report](docs/PROGRESS_REPORT.md)
+
+## Repository
+
+`phoenixsean69-hash/A-R-V1`
