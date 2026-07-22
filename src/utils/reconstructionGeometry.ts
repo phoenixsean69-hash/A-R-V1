@@ -1,0 +1,377 @@
+import type {
+  AccidentReconstruction,
+  MovementPathPoint,
+  ReconstructionPosition,
+  ReconstructionSceneObject,
+  ReconstructionVehicle,
+  SceneObjectType,
+} from "../types/reconstruction";
+
+export interface ReconstructionImpactEffectState {
+  active: boolean;
+  impactTimeSeconds: number;
+  intensity: number;
+  position: ReconstructionPosition;
+  progress: number;
+}
+
+export function clamp(
+  value: number,
+  minimum: number,
+  maximum: number,
+): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+export function interpolate(
+  start: number,
+  end: number,
+  progress: number,
+): number {
+  return start + (end - start) * progress;
+}
+
+function interpolateAngle(
+  start: number,
+  end: number,
+  progress: number,
+): number {
+  const difference = ((end - start + 540) % 360) - 180;
+  return start + difference * progress;
+}
+
+function getKinematicPositionProgress(
+  start: MovementPathPoint,
+  end: MovementPathPoint,
+  timeProgress: number,
+): number {
+  const startSpeed = start.action === "Stop" ? 0 : Math.max(0, start.speedKmh);
+  const endSpeed = end.action === "Stop" ? 0 : Math.max(0, end.speedKmh);
+  const averageSpeed = (startSpeed + endSpeed) / 2;
+
+  if (averageSpeed < 0.01) {
+    return timeProgress * timeProgress * (3 - 2 * timeProgress);
+  }
+
+  const distanceFraction =
+    (startSpeed * timeProgress +
+      0.5 * (endSpeed - startSpeed) * timeProgress * timeProgress) /
+    averageSpeed;
+
+  return clamp(distanceFraction, 0, 1);
+}
+
+export function sortMovementPathPoints(
+  points: MovementPathPoint[],
+): MovementPathPoint[] {
+  return [...points].sort(
+    (first, second) => first.timeSeconds - second.timeSeconds,
+  );
+}
+
+export function getPointsCentroid(
+  points: ReconstructionPosition[],
+): ReconstructionPosition {
+  if (points.length === 0) {
+    return { x: 50, y: 50 };
+  }
+
+  const total = points.reduce(
+    (result, point) => ({
+      x: result.x + point.x,
+      y: result.y + point.y,
+    }),
+    { x: 0, y: 0 },
+  );
+
+  return {
+    x: total.x / points.length,
+    y: total.y / points.length,
+  };
+}
+
+function catmullRom(
+  p0: number,
+  p1: number,
+  p2: number,
+  p3: number,
+  progress: number,
+): number {
+  const progressSquared = progress * progress;
+  const progressCubed = progressSquared * progress;
+
+  return (
+    0.5 *
+    (2 * p1 +
+      (-p0 + p2) * progress +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * progressSquared +
+      (-p0 + 3 * p1 - 3 * p2 + p3) * progressCubed)
+  );
+}
+
+function interpolateCurvedPosition(
+  points: MovementPathPoint[],
+  segmentIndex: number,
+  progress: number,
+): ReconstructionPosition {
+  const first = points[Math.max(0, segmentIndex - 1)].position;
+  const second = points[segmentIndex].position;
+  const third = points[Math.min(points.length - 1, segmentIndex + 1)].position;
+  const fourth =
+    points[Math.min(points.length - 1, segmentIndex + 2)].position;
+
+  return {
+    x: clamp(
+      catmullRom(first.x, second.x, third.x, fourth.x, progress),
+      0,
+      100,
+    ),
+    y: clamp(
+      catmullRom(first.y, second.y, third.y, fourth.y, progress),
+      0,
+      100,
+    ),
+  };
+}
+
+export function getParticipantStateAtTime(
+  participant: ReconstructionVehicle,
+  currentTime: number,
+): {
+  position: ReconstructionPosition;
+  rotation: number;
+  speedKmh: number;
+  activePointId: string;
+} {
+  const points = sortMovementPathPoints(participant.pathPoints);
+
+  if (points.length === 0) {
+    return {
+      position: participant.startPosition,
+      rotation: participant.startRotation,
+      speedKmh: participant.estimatedSpeedKmh,
+      activePointId: "",
+    };
+  }
+
+  if (currentTime <= points[0].timeSeconds) {
+    return {
+      position: points[0].position,
+      rotation: points[0].rotation,
+      speedKmh: points[0].speedKmh,
+      activePointId: points[0].id,
+    };
+  }
+
+  const finalPoint = points[points.length - 1];
+
+  if (currentTime >= finalPoint.timeSeconds) {
+    return {
+      position: finalPoint.position,
+      rotation: finalPoint.rotation,
+      speedKmh: finalPoint.action === "Stop" ? 0 : finalPoint.speedKmh,
+      activePointId: finalPoint.id,
+    };
+  }
+
+  const segmentIndex = points.findIndex(
+    (point, index) =>
+      index < points.length - 1 &&
+      currentTime >= point.timeSeconds &&
+      currentTime <= points[index + 1].timeSeconds,
+  );
+
+  const safeIndex = Math.max(0, segmentIndex);
+  const start = points[safeIndex];
+  const end = points[safeIndex + 1];
+  const duration = Math.max(end.timeSeconds - start.timeSeconds, 0.001);
+  const timeProgress = clamp((currentTime - start.timeSeconds) / duration, 0, 1);
+  const positionProgress = getKinematicPositionProgress(
+    start,
+    end,
+    timeProgress,
+  );
+  const endSpeed = end.action === "Stop" ? 0 : end.speedKmh;
+
+  return {
+    position: interpolateCurvedPosition(points, safeIndex, positionProgress),
+    rotation: interpolateAngle(start.rotation, end.rotation, positionProgress),
+    speedKmh: Math.max(0, interpolate(start.speedKmh, endSpeed, timeProgress)),
+    activePointId: timeProgress < 0.5 ? start.id : end.id,
+  };
+}
+
+export function getReconstructionImpactEffectState(
+  reconstruction: AccidentReconstruction,
+  currentTime: number,
+): ReconstructionImpactEffectState {
+  const impactPoints = reconstruction.vehicles
+    .map((participant) =>
+      sortMovementPathPoints(participant.pathPoints).find(
+        (point) => point.action === "Impact",
+      ),
+    )
+    .filter((point): point is MovementPathPoint => Boolean(point));
+
+  const fallbackTime = impactPoints.length
+    ? [...impactPoints]
+        .sort((left, right) => left.timeSeconds - right.timeSeconds)[
+          Math.floor(impactPoints.length / 2)
+        ].timeSeconds
+    : reconstruction.durationSeconds / 2;
+  const impactTimeSeconds =
+    reconstruction.lastPhysicsSimulation?.primaryImpactTimeSeconds ?? fallbackTime;
+
+  const width = Math.max(1, reconstruction.scene.sceneWidthMetres);
+  const height = Math.max(1, reconstruction.scene.sceneHeightMetres);
+  const tolerance =
+    reconstruction.physicsSettings?.collisionToleranceMetres ??
+    reconstruction.collisionSetup?.toleranceMetres ??
+    2.2;
+  const convergingParticipants = impactPoints.filter((point) => {
+    const horizontalDistance =
+      ((point.position.x - reconstruction.collisionPoint.x) / 100) * width;
+    const verticalDistance =
+      ((point.position.y - reconstruction.collisionPoint.y) / 100) * height;
+    return Math.hypot(horizontalDistance, verticalDistance) <= tolerance + 0.5;
+  });
+  const collisionDetected = reconstruction.lastPhysicsSimulation
+    ? reconstruction.lastPhysicsSimulation.participantCollisions > 0
+    : convergingParticipants.length >= 2;
+  const showImpactEffects = reconstruction.physicsSettings?.showImpactEffects ?? true;
+  const elapsed = currentTime - impactTimeSeconds;
+  const effectDuration = 1.05;
+  const energy = reconstruction.lastPhysicsSimulation?.estimatedImpactEnergyKj ?? 0;
+  const fallbackSpeed = Math.max(
+    0,
+    ...impactPoints.map((point) => point.speedKmh),
+  );
+
+  return {
+    active:
+      showImpactEffects &&
+      collisionDetected &&
+      elapsed >= 0 &&
+      elapsed <= effectDuration,
+    impactTimeSeconds,
+    intensity: clamp(
+      energy > 0 ? 0.6 + Math.log10(1 + energy) / 3 : 0.55 + fallbackSpeed / 140,
+      0.55,
+      1.35,
+    ),
+    position: reconstruction.collisionPoint,
+    progress: clamp(elapsed / effectDuration, 0, 1),
+  };
+}
+
+export function buildSmoothSvgPath(
+  positions: ReconstructionPosition[],
+  smoothing = 0.85,
+): string {
+  if (positions.length === 0) {
+    return "";
+  }
+
+  if (positions.length === 1) {
+    return `M ${positions[0].x} ${positions[0].y}`;
+  }
+
+  if (positions.length === 2) {
+    return `M ${positions[0].x} ${positions[0].y} L ${positions[1].x} ${positions[1].y}`;
+  }
+
+  const tension = clamp(smoothing, 0, 1) / 6;
+  let path = `M ${positions[0].x} ${positions[0].y}`;
+
+  for (let index = 0; index < positions.length - 1; index += 1) {
+    const previous = positions[Math.max(0, index - 1)];
+    const current = positions[index];
+    const next = positions[index + 1];
+    const following = positions[Math.min(positions.length - 1, index + 2)];
+
+    const controlOne = {
+      x: current.x + (next.x - previous.x) * tension,
+      y: current.y + (next.y - previous.y) * tension,
+    };
+
+    const controlTwo = {
+      x: next.x - (following.x - current.x) * tension,
+      y: next.y - (following.y - current.y) * tension,
+    };
+
+    path += ` C ${controlOne.x} ${controlOne.y}, ${controlTwo.x} ${controlTwo.y}, ${next.x} ${next.y}`;
+  }
+
+  return path;
+}
+
+export function createOffsetTracePoints(
+  points: ReconstructionPosition[],
+  offset: number,
+): ReconstructionPosition[] {
+  if (points.length < 2) {
+    return points;
+  }
+
+  return points.map((point, index) => {
+    const previous = points[Math.max(0, index - 1)];
+    const next = points[Math.min(points.length - 1, index + 1)];
+    const directionX = next.x - previous.x;
+    const directionY = next.y - previous.y;
+    const length = Math.hypot(directionX, directionY) || 1;
+
+    return {
+      x: clamp(point.x + (-directionY / length) * offset, 0, 100),
+      y: clamp(point.y + (directionX / length) * offset, 0, 100),
+    };
+  });
+}
+
+export function isTraceableSceneObjectType(type: SceneObjectType): boolean {
+  return type === "Skid Mark" || type === "Tyre Mark" || type === "Road Crack";
+}
+
+export function shiftSceneObjectTrace(
+  object: ReconstructionSceneObject,
+  nextPosition: ReconstructionPosition,
+): ReconstructionPosition[] | undefined {
+  if (!object.tracePoints || object.tracePoints.length === 0) {
+    return object.tracePoints;
+  }
+
+  const differenceX = nextPosition.x - object.position.x;
+  const differenceY = nextPosition.y - object.position.y;
+
+  return object.tracePoints.map((point) => ({
+    x: clamp(point.x + differenceX, 0, 100),
+    y: clamp(point.y + differenceY, 0, 100),
+  }));
+}
+
+export function syncLegacyParticipantFields(
+  participant: ReconstructionVehicle,
+): ReconstructionVehicle {
+  const points = sortMovementPathPoints(participant.pathPoints);
+
+  if (points.length === 0) {
+    return participant;
+  }
+
+  const start = points[0];
+  const impact =
+    points.find((point) => point.action === "Impact") ??
+    points[Math.floor(points.length / 2)];
+  const final = points[points.length - 1];
+
+  return {
+    ...participant,
+    pathPoints: points,
+    startPosition: start.position,
+    collisionPosition: impact.position,
+    finalPosition: final.position,
+    startRotation: start.rotation,
+    collisionRotation: impact.rotation,
+    finalRotation: final.rotation,
+    collisionTimeSeconds: impact.timeSeconds,
+    estimatedSpeedKmh: start.speedKmh,
+  };}

@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Rubik", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+}
+
+/* MapLibre ships its own Helvetica font shorthand, so keep map UI on-brand too. */
+.maplibregl-map,
+.maplibregl-map button,
+.maplibregl-map input,
+.maplibregl-map select,
+.maplibregl-map textarea {
+  font-family: var(--font-sans) !important;
+}
