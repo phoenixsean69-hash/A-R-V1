@@ -2580,7 +2580,7 @@ export default function AccidentReconstructionEditor({
                       title: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>
 
@@ -2637,7 +2637,7 @@ export default function AccidentReconstructionEditor({
                     }))
                   }
                   rows={4}
-                  className="mt-1.5 w-full resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+                  className="mt-1.5 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
                 />
               </label>
 
@@ -2715,7 +2715,7 @@ export default function AccidentReconstructionEditor({
                     key={participant.id}
                     type="button"
                     onClick={() => handleSelectParticipant(participant.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
+                    className={`flex w-full items-center gap-3 rounded-sm border p-3 text-left transition ${
                       selectedParticipantId === participant.id
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:bg-gray-50"
@@ -2823,7 +2823,7 @@ export default function AccidentReconstructionEditor({
                   : { height: "clamp(700px, 76vh, 1000px)" }
               }
             >
-              <div data-scene-interactive="true" className="absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-xl bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur">
+              <div data-scene-interactive="true" className="absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-sm bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur">
                 <span />
                 <button type="button" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY + 40 }))} className="rounded bg-white/15 p-2 font-black">↑</button>
                 <button type="button" onClick={() => setSceneView((view) => ({ ...view, zoom: Math.min(2.5, view.zoom + 0.2) }))} className="rounded bg-white/15 p-2 font-black">+</button>
@@ -3236,7 +3236,7 @@ export default function AccidentReconstructionEditor({
                 </h2>
 
                 {!selectedParticipant ? (
-                  <p className="mt-5 rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+                  <p className="mt-5 rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                     Select or add a participant to edit movement and route details.
                   </p>
                 ) : (
@@ -3250,7 +3250,7 @@ export default function AccidentReconstructionEditor({
                             name: event.target.value,
                           })
                         }
-                        className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+                        className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
                       />
                     </label>
 
@@ -3387,7 +3387,7 @@ export default function AccidentReconstructionEditor({
                     <button
                       type="button"
                       onClick={handleDeleteParticipant}
-                      className="w-full rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
+                      className="w-full rounded-sm border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
                     >
                       Delete Participant
                     </button>

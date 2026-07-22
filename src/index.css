@@ -81,7 +81,7 @@
   box-shadow: 0 0 0 2px rgba(61,109,169,.18) !important;
 }
 .reconstruction-editor .rounded-2xl,
-.reconstruction-editor .rounded-xl { border-radius: .45rem !important; }
+.reconstruction-editor .rounded-sm { border-radius: .45rem !important; }
 .reconstruction-editor .bg-white,
 .reconstruction-editor .bg-gray-50,
 .reconstruction-editor .bg-gray-100,
@@ -156,4 +156,161 @@
   .roadsafe-shell main > div:last-child { padding: 0 !important; }
   .roadsafe-shell,
   .roadsafe-shell .bg-white { background: white !important; color: black !important; }
+}
+
+/* Dense operational dashboard matching the approved command-centre layout. */
+
+.dashboard-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+
+.dashboard-stat-card {
+  display: flex;
+  min-width: 0;
+  min-height: 92px;
+  align-items: center;
+  gap: .8rem;
+  padding: .8rem .9rem;
+  border: 1px solid #1a2942;
+  border-radius: .45rem;
+  background: linear-gradient(145deg, #050914 0%, #0b111c 58%, #10141b 100%);
+  box-shadow: inset 0 1px 0 rgba(125, 164, 220, .035), 0 8px 22px rgba(0, 0, 0, .18);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.dashboard-stat-card:hover {
+  border-color: #294261;
+  background: linear-gradient(145deg, #060b17 0%, #0d1420 58%, #111722 100%);
+}
+
+.dashboard-stat-card:active {
+  border-color: #345374;
+}
+
+.dashboard-stat-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border: 1px solid #294567;
+  border-radius: .4rem;
+  background: #07142a;
+  color: #8bb9fa;
+}
+
+@media (max-width: 760px) {
+  .dashboard-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.dashboard-command-grid .ui-panel {
+  background: linear-gradient(180deg, rgba(8, 17, 34, .98), rgba(5, 12, 25, .98));
+  border-color: #182849;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+}
+.dashboard-command-grid .ui-panel-header {
+  min-height: 46px;
+  border-color: #182849;
+  padding: .65rem .75rem;
+}
+.dashboard-command-grid .ui-panel-title {
+  font-size: .58rem;
+  letter-spacing: .12em;
+  color: #aab8cc;
+}
+.dashboard-command-grid .maplibregl-map {
+  background: #050b17;
+}
+.dashboard-command-grid .maplibregl-ctrl-top-right {
+  top: 4px;
+  right: 4px;
+}
+.dashboard-command-grid .maplibregl-ctrl-group {
+  margin: 4px !important;
+}
+.dashboard-3d-preview .reconstruction-3d {
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.dashboard-3d-preview .reconstruction-3d > :first-child {
+  display: none !important;
+}
+.dashboard-3d-preview .reconstruction-3d > :nth-child(2) {
+  min-height: 244px !important;
+}
+.dashboard-3d-preview .reconstruction-3d > :last-child {
+  min-height: 60px;
+  padding: .4rem .65rem !important;
+}
+.dashboard-3d-preview .reconstruction-3d > :last-child button {
+  padding-top: .3rem;
+  padding-bottom: .3rem;
+}
+
+
+/* Dashboard panel rows: fixed horizontal grouping on desktop, stacked only on small screens. */
+.dashboard-primary-row,
+.dashboard-secondary-row,
+.dashboard-tertiary-row {
+  display: grid;
+  gap: .7rem;
+  align-items: stretch;
+}
+
+.dashboard-primary-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-secondary-row {
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+}
+
+.dashboard-tertiary-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-primary-row > .ui-panel,
+.dashboard-secondary-row > .ui-panel,
+.dashboard-tertiary-row > .ui-panel {
+  min-width: 0;
+  height: 100%;
+}
+
+.roadsafe-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: #22385d #040918;
+}
+
+.roadsafe-sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.roadsafe-sidebar::-webkit-scrollbar-track {
+  background: #040918;
+}
+
+.roadsafe-sidebar::-webkit-scrollbar-thumb {
+  border: 2px solid #040918;
+  border-radius: 999px;
+  background: #22385d;
+}
+
+@media (max-width: 980px) {
+  .dashboard-primary-row,
+  .dashboard-secondary-row,
+  .dashboard-tertiary-row {
+    grid-template-columns: 1fr;
+  }
 }

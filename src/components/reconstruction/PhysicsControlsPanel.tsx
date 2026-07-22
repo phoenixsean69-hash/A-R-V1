@@ -64,7 +64,7 @@ export default function PhysicsControlsPanel({
             type="button"
             onClick={onRunPhysics}
             disabled={!settings.enabled || reconstruction.vehicles.length === 0}
-            className="rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+            className="rounded-sm bg-white px-5 py-3 text-sm font-black text-blue-900 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
           >
             Run Physics & Bake Movement Paths
           </button>
@@ -73,7 +73,7 @@ export default function PhysicsControlsPanel({
 
       <div className="grid gap-5 p-5 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
         <div className="space-y-4">
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-4">
             <div>
               <p className="text-sm font-black text-gray-900">Physics assistance</p>
               <p className="mt-1 text-xs text-gray-500">Disable to keep movement entirely officer-authored.</p>
@@ -86,7 +86,7 @@ export default function PhysicsControlsPanel({
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 p-4">
+          <label className="flex items-center justify-between rounded-sm border border-violet-200 bg-violet-50 p-4">
             <div>
               <p className="text-sm font-black text-blue-900">Simulate before playback</p>
               <p className="mt-1 text-xs text-blue-900">
@@ -111,7 +111,7 @@ export default function PhysicsControlsPanel({
                   mode: event.target.value as ReconstructionPhysicsSettings["mode"],
                 })
               }
-              className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
             >
               <option value="Guided Paths">Guided Paths</option>
               <option value="Physics After Primary Impact">Physics After Primary Impact</option>
@@ -176,7 +176,7 @@ export default function PhysicsControlsPanel({
             </label>
           </div>
 
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
             <div>
               <p className="text-sm font-black text-gray-900">Velocity vectors</p>
               <p className="mt-1 text-xs text-gray-500">Show direction and current speed over the scene.</p>
@@ -189,7 +189,7 @@ export default function PhysicsControlsPanel({
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
             <div>
               <p className="text-sm font-black text-gray-900">Impact flash and debris</p>
               <p className="mt-1 text-xs text-gray-500">Show the collision shockwave and impact particles in playback and recorded footage.</p>
@@ -202,7 +202,7 @@ export default function PhysicsControlsPanel({
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
             <div>
               <p className="text-sm font-black text-gray-900">Replace post-impact path</p>
               <p className="mt-1 text-xs text-gray-500">Keeps pre-impact officer points and replaces later points with the physics result.</p>
@@ -226,7 +226,7 @@ export default function PhysicsControlsPanel({
 
           <div className="space-y-3">
             {reconstruction.vehicles.length === 0 && (
-              <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+              <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                 Add participants before configuring physics.
               </p>
             )}
@@ -247,7 +247,7 @@ export default function PhysicsControlsPanel({
                 });
 
               return (
-                <article key={participant.id} className="rounded-xl border border-gray-200 p-4">
+                <article key={participant.id} className="rounded-sm border border-gray-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h4 className="font-black text-gray-950">{participant.name}</h4>
@@ -320,7 +320,7 @@ export default function PhysicsControlsPanel({
           </div>
 
           {summary && (
-            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+            <div className="rounded-sm border border-violet-200 bg-violet-50 p-4">
               <h3 className="font-black text-violet-950">Last simulation</h3>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-violet-900 sm:grid-cols-4">
                 <p><strong>Participant collisions:</strong><br />{summary.participantCollisions}</p>

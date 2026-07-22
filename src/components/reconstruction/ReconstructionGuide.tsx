@@ -80,7 +80,7 @@ export default function ReconstructionGuide() {
           </ol>
         </section>
 
-        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+        <section className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-amber-950">
           <h3 className="font-black">Quality checklist before final footage</h3>
           <p className="mt-1">
             Collision point confirmed and locked · Participant origin and destination completed · Impact times aligned · Speeds reviewed · Potholes and solid objects positioned · Evidence documented · Physics output reviewed · Final resting positions checked · Reconstruction saved.

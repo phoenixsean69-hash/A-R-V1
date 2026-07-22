@@ -65,7 +65,7 @@ class ReconstructionErrorBoundary extends Component<
             leaving a blank white screen.
           </p>
 
-          <pre className="mt-5 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-xs leading-5 text-red-200">
+          <pre className="mt-5 max-h-48 overflow-auto whitespace-pre-wrap rounded-sm bg-slate-950 p-4 text-xs leading-5 text-red-200">
             {this.state.error.message || "Unknown reconstruction editor error"}
           </pre>
 
@@ -73,14 +73,14 @@ class ReconstructionErrorBoundary extends Component<
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white"
+              className="rounded-sm bg-blue-600 px-5 py-3 text-sm font-bold text-white"
             >
               Reload Reconstruction
             </button>
 
             <Link
               to={this.props.casePath}
-              className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700"
+              className="rounded-sm border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700"
             >
               Return to Case
             </Link>

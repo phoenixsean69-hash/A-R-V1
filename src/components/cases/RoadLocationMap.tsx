@@ -564,7 +564,7 @@ export default function RoadLocationMap({
         <div ref={containerRef} className="h-[360px] w-full" />
 
         <div
-          className="absolute left-3 top-3 z-10 flex overflow-hidden rounded-xl border border-slate-200 bg-white/95 shadow-lg backdrop-blur"
+          className="absolute left-3 top-3 z-10 flex overflow-hidden rounded-sm border border-slate-200 bg-white/95 shadow-lg backdrop-blur"
           onClick={(event) => event.stopPropagation()}
         >
           <button
@@ -594,7 +594,7 @@ export default function RoadLocationMap({
 
         {styleLoading && (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-slate-950/25">
-            <div className="rounded-xl bg-white px-4 py-3 text-sm font-black text-slate-800 shadow-xl">
+            <div className="rounded-sm bg-white px-4 py-3 text-sm font-black text-slate-800 shadow-xl">
               Loading {mapType} map…
             </div>
           </div>

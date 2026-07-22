@@ -63,6 +63,8 @@ interface AccidentMapProps {
 
   heatmapFilters:
     AccidentHeatmapFilters;
+
+  compactSelectionPanel?: boolean;
 }
 
 interface SelectionFeatureCollection {
@@ -403,6 +405,7 @@ export default function AccidentMap({
   visualizationMode,
   onVisualizationModeChange,
   heatmapFilters,
+  compactSelectionPanel = false,
 }: AccidentMapProps) {
   const mapContainerRef =
     useRef<HTMLDivElement | null>(
@@ -1115,132 +1118,109 @@ const handleCloseJunctionAnalysis =
         className="h-full w-full"
       />
 
-      {/* Map type controls */}
-      <div className="absolute right-4 top-4 z-10 flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-        <button
-          type="button"
-          onClick={() =>
-            setMapType("street")
-          }
-          className={`px-4 py-2 text-sm font-medium transition ${
-            mapType === "street"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          Street
-        </button>
+      {/* Compact map controls */}
+      <div className="absolute right-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-col items-end gap-2">
+        <div className="flex overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/95 p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => setMapType("street")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              mapType === "street"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            Street
+          </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            setMapType("hybrid")
-          }
-          className={`border-l border-gray-200 px-4 py-2 text-sm font-medium transition ${
-            mapType === "hybrid"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          Hybrid
-        </button>
+          <button
+            type="button"
+            onClick={() => setMapType("hybrid")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              mapType === "hybrid"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            Hybrid
+          </button>
 
-        <button
-          type="button"
-          onClick={
-            handleSelectArea
-          }
-          className={`border-l border-gray-200 px-4 py-2 text-sm font-medium transition ${
-            selectionEnabled
-              ? "bg-green-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          {selectionEnabled
-            ? "Draw Rectangle"
-            : "Select Area"}
-        </button>
+          <button
+            type="button"
+            onClick={handleSelectArea}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              selectionEnabled
+                ? "bg-[#254d82] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            {selectionEnabled ? "Draw area" : "Select area"}
+          </button>
+        </div>
+
+        <div className="flex overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/95 p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => onVisualizationModeChange("markers")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              visualizationMode === "markers"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            Markers
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onVisualizationModeChange("heatmap")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              visualizationMode === "heatmap"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            Heatmap
+          </button>
+        </div>
       </div>
 
-      {/* Markers / Heatmap controls */}
-      <div className="absolute right-4 top-16 z-10 flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-        <button
-          type="button"
-          onClick={() =>
-            onVisualizationModeChange(
-              "markers",
-            )
-          }
-          className={`px-4 py-2 text-sm font-medium transition ${
-            visualizationMode ===
-            "markers"
-              ? "bg-purple-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          Markers
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            onVisualizationModeChange(
-              "heatmap",
-            )
-          }
-          className={`border-l border-gray-200 px-4 py-2 text-sm font-medium transition ${
-            visualizationMode ===
-            "heatmap"
-              ? "bg-purple-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          Heatmap
-        </button>
-      </div>
-
-      {visualizationMode ===
-        "markers" && (
-        <div className="absolute left-4 top-4 z-10 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-          <p className="mb-2 text-xs font-semibold text-gray-700">
-            Junction Risk
+      {visualizationMode === "markers" && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 min-w-[118px] rounded-md border border-[#24426b] bg-[#061125]/95 px-3 py-2 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+          <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-300">
+            Junction risk
           </p>
 
-          <div className="space-y-1.5 text-xs text-gray-600">
+          <div className="space-y-1.5 text-[9px] text-slate-400">
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-red-600" />
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
               <span>High</span>
             </div>
-
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-amber-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
               <span>Medium</span>
             </div>
-
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-green-600" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               <span>Low</span>
             </div>
           </div>
         </div>
       )}
 
-      {visualizationMode ===
-        "heatmap" && (
-        <div className="absolute left-4 top-4 z-10 w-48 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-          <p className="mb-2 text-xs font-semibold text-gray-700">
-            Accident Concentration
+      {visualizationMode === "heatmap" && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-40 rounded-md border border-[#24426b] bg-[#061125]/95 px-3 py-2 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+          <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-300">
+            Accident concentration
           </p>
-
           <div
-            className="h-3 w-full rounded-full"
+            className="h-1.5 w-full rounded-full"
             style={{
               background:
-                "linear-gradient(to right, rgb(103,169,207), rgb(50,205,170), rgb(255,255,0), rgb(255,165,0), rgb(239,68,68), rgb(127,29,29))",
+                "linear-gradient(to right, #244e91, #4e8bd3, #f0b43c, #df654f, #9f263d)",
             }}
           />
-
-          <div className="mt-1 flex justify-between text-[10px] text-gray-500">
+          <div className="mt-1.5 flex justify-between text-[8px] text-slate-500">
             <span>Lower</span>
             <span>Higher</span>
           </div>
@@ -1253,7 +1233,78 @@ const handleCloseJunctionAnalysis =
         </div>
       )}
 
-      {selectedBounds && (
+      {selectedBounds && compactSelectionPanel && (
+        <div className="absolute bottom-3 right-3 z-20 w-[min(270px,calc(100%-24px))] overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/98 shadow-[0_14px_34px_rgba(0,0,0,.45)] backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3 border-b border-[#19345a] px-3 py-2.5">
+            <div className="min-w-0">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-100">
+                Selected area
+              </h3>
+              <p className="mt-0.5 truncate text-[8px] text-slate-500">
+                Focused road-safety analysis zone
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseSelectedArea}
+              className="rounded border border-[#24426b] px-2 py-1 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="space-y-2.5 px-3 py-3">
+            {showAnalysis && analysis ? (
+              <>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    ["Junctions", analysis.totalJunctions],
+                    ["Crashes", analysis.totalAccidents],
+                    ["Fatal", analysis.totalFatalities],
+                    ["Injured", analysis.totalInjuries],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded border border-[#1b3559] bg-[#08162b] px-1.5 py-2 text-center">
+                      <p className="text-[12px] font-bold text-slate-100">{value}</p>
+                      <p className="mt-0.5 text-[7px] uppercase tracking-[0.06em] text-slate-500">{label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between rounded border border-[#1b3559] bg-[#08162b] px-2.5 py-2">
+                  <span className="text-[8px] uppercase tracking-[0.08em] text-slate-500">Overall risk</span>
+                  <span className="text-[9px] font-bold text-[#78adfa]">{analysis.overallRiskLevel}</span>
+                </div>
+              </>
+            ) : analysisError ? (
+              <p className="rounded border border-[#623044] bg-[#2a101b] px-2.5 py-2 text-[8px] text-[#ff9db0]">
+                {analysisError}
+              </p>
+            ) : (
+              <p className="text-[8px] leading-4 text-slate-400">
+                Analyse this selection for junctions, recorded crashes, casualties and overall risk.
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSelectArea}
+                className="flex-1 rounded border border-[#24426b] bg-[#08162b] px-2 py-1.5 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]"
+              >
+                Select again
+              </button>
+              <button
+                type="button"
+                onClick={showAnalysis && analysis ? () => setShowAnalysis(false) : handleAnalyseArea}
+                className="flex-1 rounded border border-[#315f9c] bg-[#12396f] px-2 py-1.5 text-[8px] font-semibold text-[#d8e9ff] hover:bg-[#174783]"
+              >
+                {showAnalysis && analysis ? "Hide analysis" : "Analyse area"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedBounds && !compactSelectionPanel && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
           <div className="flex max-h-[95%] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="flex items-center justify-between gap-4 border-b border-gray-200 p-5">
@@ -1269,9 +1320,7 @@ const handleCloseJunctionAnalysis =
 
               <button
                 type="button"
-                onClick={
-                  handleCloseSelectedArea
-                }
+                onClick={handleCloseSelectedArea}
                 className="rounded-xl bg-red-600 px-8 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-red-700 active:scale-95"
               >
                 Close
@@ -1279,64 +1328,40 @@ const handleCloseJunctionAnalysis =
             </div>
 
             <div className="overflow-y-auto p-5">
-<SelectedAreaPreview
-  bounds={selectedBounds}
-  mapType={mapType}
-  visualizationMode={
-    visualizationMode
-  }
-  heatmapFilters={
-    heatmapFilters
-  }
-  onViewFullAnalysis={
-    handleOpenJunctionAnalysis
-  }
-/>
+              <SelectedAreaPreview
+                bounds={selectedBounds}
+                mapType={mapType}
+                visualizationMode={visualizationMode}
+                heatmapFilters={heatmapFilters}
+                onViewFullAnalysis={handleOpenJunctionAnalysis}
+              />
 
-              {showAnalysis &&
-                analysis && (
-                  <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
-                    <AreaAnalysisResults
-                      analysis={
-                        analysis
-                      }
-                    />
-                  </div>
-                )}
+              {showAnalysis && analysis && (
+                <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
+                  <AreaAnalysisResults analysis={analysis} />
+                </div>
+              )}
 
-              {showAnalysis &&
-                analysisError && (
-                  <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-5">
-                    <h4 className="font-semibold text-red-800">
-                      Analysis failed
-                    </h4>
-
-                    <p className="mt-1 text-sm text-red-700">
-                      {analysisError}
-                    </p>
-                  </div>
-                )}
+              {showAnalysis && analysisError && (
+                <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-5">
+                  <h4 className="font-semibold text-red-800">Analysis failed</h4>
+                  <p className="mt-1 text-sm text-red-700">{analysisError}</p>
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
-                  onClick={
-                    handleSelectArea
-                  }
+                  onClick={handleSelectArea}
                   className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                 >
                   Select Again
                 </button>
 
-                {showAnalysis &&
-                analysis ? (
+                {showAnalysis && analysis ? (
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowAnalysis(
-                        false,
-                      )
-                    }
+                    onClick={() => setShowAnalysis(false)}
                     className="rounded-lg border border-blue-600 px-5 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                   >
                     Hide Analysis
@@ -1344,9 +1369,7 @@ const handleCloseJunctionAnalysis =
                 ) : (
                   <button
                     type="button"
-                    onClick={
-                      handleAnalyseArea
-                    }
+                    onClick={handleAnalyseArea}
                     className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
                   >
                     Analyse Selected Area

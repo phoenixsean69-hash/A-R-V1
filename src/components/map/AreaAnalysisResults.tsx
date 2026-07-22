@@ -64,7 +64,7 @@ export default function AreaAnalysisResults({
         />
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
         <h4 className="mb-3 font-semibold text-gray-900">
           Junction risk distribution
         </h4>
@@ -126,7 +126,7 @@ export default function AreaAnalysisResults({
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center">
+        <div className="rounded-sm border border-dashed border-gray-300 p-6 text-center">
           <p className="font-medium text-gray-700">
             No monitored junctions found
           </p>
@@ -147,7 +147,7 @@ interface ResultCardProps {
 
 function ResultCard({ label, value }: ResultCardProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="rounded-sm border border-gray-200 bg-white p-4">
       <p className="text-sm text-gray-500">{label}</p>
 
       <p className="mt-1 text-2xl font-semibold text-gray-900">

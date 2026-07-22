@@ -365,7 +365,7 @@ export default function ReconstructionRecorder({
           setOpen(true);
           setStage("idle");
         }}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-700 active:scale-95"
+        className="inline-flex items-center justify-center gap-2 rounded-sm bg-rose-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-700 active:scale-95"
       >
         <span aria-hidden="true">●</span>
         Record Footage
@@ -390,7 +390,7 @@ export default function ReconstructionRecorder({
                 type="button"
                 onClick={closeModal}
                 disabled={stage === "recording" || stage === "countdown" || stage === "saving"}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-sm border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Close
               </button>
@@ -398,7 +398,7 @@ export default function ReconstructionRecorder({
 
             <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
               <section>
-                <div className="relative overflow-hidden rounded-xl bg-black shadow-lg">
+                <div className="relative overflow-hidden rounded-sm bg-black shadow-lg">
                   <canvas
                     ref={canvasRef}
                     width={dimensions.width}
@@ -424,7 +424,7 @@ export default function ReconstructionRecorder({
                 </div>
 
                 {stage === "preview" && previewUrl && (
-                  <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <div className="mt-4 rounded-sm border border-emerald-200 bg-emerald-50 p-4">
                     <p className="font-black text-emerald-900">Recording preview</p>
                     <video
                       src={previewUrl}
@@ -437,7 +437,7 @@ export default function ReconstructionRecorder({
                 )}
 
                 {stage === "error" && (
-                  <div className="mt-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                  <div className="mt-4 rounded-sm border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-800">
                     {errorMessage}
                   </div>
                 )}
@@ -450,7 +450,7 @@ export default function ReconstructionRecorder({
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     disabled={stage === "recording" || stage === "countdown" || stage === "saving"}
-                    className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    className="mt-1.5 w-full rounded-sm border border-slate-300 px-3 py-2.5 text-sm"
                   />
                 </label>
 
@@ -461,7 +461,7 @@ export default function ReconstructionRecorder({
                     onChange={(event) => setDescription(event.target.value)}
                     rows={3}
                     disabled={stage === "recording" || stage === "countdown" || stage === "saving"}
-                    className="mt-1.5 w-full resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    className="mt-1.5 w-full resize-none rounded-sm border border-slate-300 px-3 py-2.5 text-sm"
                   />
                 </label>
 
@@ -505,7 +505,7 @@ export default function ReconstructionRecorder({
                   </label>
                 </div>
 
-                <div className="space-y-2 rounded-xl bg-slate-50 p-3">
+                <div className="space-y-2 rounded-sm bg-slate-50 p-3">
                   {[
                     ["showMovementPaths", "Show movement paths"],
                     ["showMeasurements", "Show measurements"],
@@ -530,7 +530,7 @@ export default function ReconstructionRecorder({
                   ))}
                 </div>
 
-                <label className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm font-bold text-indigo-800">
+                <label className="flex items-center justify-between rounded-sm border border-indigo-200 bg-indigo-50 p-3 text-sm font-bold text-indigo-800">
                   Mark as primary footage
                   <input
                     type="checkbox"
@@ -544,7 +544,7 @@ export default function ReconstructionRecorder({
                   <button
                     type="button"
                     onClick={handleStartRecording}
-                    className="w-full rounded-xl bg-rose-600 px-5 py-3 font-black text-white hover:bg-rose-700"
+                    className="w-full rounded-sm bg-rose-600 px-5 py-3 font-black text-white hover:bg-rose-700"
                   >
                     ● Start Recording
                   </button>
@@ -552,7 +552,7 @@ export default function ReconstructionRecorder({
                   <button
                     type="button"
                     onClick={handleStopRecording}
-                    className="w-full rounded-xl bg-slate-950 px-5 py-3 font-black text-white"
+                    className="w-full rounded-sm bg-slate-950 px-5 py-3 font-black text-white"
                   >
                     Stop Recording
                   </button>
@@ -561,20 +561,20 @@ export default function ReconstructionRecorder({
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700"
+                      className="w-full rounded-sm bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700"
                     >
                       Save Footage to Case
                     </button>
                     <button
                       type="button"
                       onClick={resetRecording}
-                      className="w-full rounded-xl border border-slate-300 px-5 py-3 font-black text-slate-700"
+                      className="w-full rounded-sm border border-slate-300 px-5 py-3 font-black text-slate-700"
                     >
                       Record Again
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-slate-100 p-4 text-center text-sm font-bold text-slate-600">
+                  <div className="rounded-sm bg-slate-100 p-4 text-center text-sm font-bold text-slate-600">
                     {stage === "saving" ? "Saving footage…" : "Preparing recorder…"}
                   </div>
                 )}

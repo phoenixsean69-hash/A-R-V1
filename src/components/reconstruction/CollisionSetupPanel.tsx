@@ -174,7 +174,7 @@ export default function CollisionSetupPanel({
               type="button"
               onClick={placementActive ? onCancelPlacement : onBeginPlacement}
               disabled={setup.locked}
-              className={`rounded-xl px-4 py-2.5 text-sm font-black text-white transition disabled:bg-gray-400 ${
+              className={`rounded-sm px-4 py-2.5 text-sm font-black text-white transition disabled:bg-gray-400 ${
                 placementActive ? "bg-red-700" : "bg-red-600 hover:bg-red-700"
               }`}
             >
@@ -185,7 +185,7 @@ export default function CollisionSetupPanel({
               type="button"
               onClick={derive}
               disabled={impactCount === 0 || setup.locked}
-              className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-800 hover:bg-indigo-100 disabled:bg-gray-100 disabled:text-gray-400"
+              className="rounded-sm border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-800 hover:bg-indigo-100 disabled:bg-gray-100 disabled:text-gray-400"
             >
               Derive from Impact Points
             </button>
@@ -194,7 +194,7 @@ export default function CollisionSetupPanel({
               type="button"
               onClick={snapImpactPoints}
               disabled={reconstruction.vehicles.length === 0 || setup.locked}
-              className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-black text-orange-800 hover:bg-orange-100 disabled:bg-gray-100 disabled:text-gray-400"
+              className="rounded-sm border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-black text-orange-800 hover:bg-orange-100 disabled:bg-gray-100 disabled:text-gray-400"
             >
               Snap All Impact Points Here
             </button>
@@ -209,12 +209,12 @@ export default function CollisionSetupPanel({
                 onChange({ collisionSetup: { ...setup, notes: event.target.value } })
               }
               placeholder="How the collision point was established: debris centre, vehicle damage, witness statement, CCTV, GPS, measurements…"
-              className="mt-1 w-full resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+              className="mt-1 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
             />
           </label>
         </div>
 
-        <div className="space-y-3 rounded-xl bg-gray-50 p-4">
+        <div className="space-y-3 rounded-sm bg-gray-50 p-4">
           <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
             <div>
               <p className="text-sm font-black text-gray-900">Officer confirmed</p>

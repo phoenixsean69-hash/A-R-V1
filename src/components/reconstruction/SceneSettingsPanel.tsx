@@ -122,7 +122,7 @@ function ToggleSetting({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-3">
+    <label className="flex items-center justify-between gap-4 rounded-sm border border-gray-200 p-3">
       <span>
         <span className="block text-sm font-medium text-gray-700">
           {label}

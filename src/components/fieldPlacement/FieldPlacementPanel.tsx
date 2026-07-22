@@ -537,14 +537,14 @@ export default function FieldPlacementPanel({
             <button
               type="button"
               onClick={geolocation.isWatching ? geolocation.stop : geolocation.start}
-              className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-800 hover:bg-sky-100"
+              className="rounded-sm border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-800 hover:bg-sky-100"
             >
               {geolocation.isWatching ? "Pause GPS" : "Start GPS"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black"
+              className="rounded-sm bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black"
             >
               Close Field Mode
             </button>
@@ -636,17 +636,17 @@ export default function FieldPlacementPanel({
             {(geolocation.error || error || message || wakeLock.error) && (
               <div className="space-y-2">
                 {(geolocation.error || error) && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+                  <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
                     {error || geolocation.error}
                   </div>
                 )}
                 {message && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
                     {message}
                   </div>
                 )}
                 {wakeLock.error && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+                  <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
                     Wake lock unavailable: {wakeLock.error}
                   </div>
                 )}
@@ -681,7 +681,7 @@ export default function FieldPlacementPanel({
             <div className="max-h-[760px] overflow-y-auto p-4 sm:p-5">
               {tab === "Calibration" && (
                 <div className="space-y-5">
-                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+                  <div className="rounded-sm border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
                     Stand at the virtual scene’s <strong>lower-left origin</strong>, then walk along the scene’s horizontal road direction and capture the second point. The optional width point tells the system which side of the road should face upward in the 2D editor.
                   </div>
 
@@ -705,7 +705,7 @@ export default function FieldPlacementPanel({
                       help: "Stand on the side that should appear toward the top of the 2D scene.",
                     },
                   ].map((item) => (
-                    <div key={item.kind} className="rounded-xl border border-gray-200 p-4">
+                    <div key={item.kind} className="rounded-sm border border-gray-200 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="font-black text-gray-950">{item.title}</h3>
@@ -727,7 +727,7 @@ export default function FieldPlacementPanel({
                   ))}
 
                   {isAveraging && (
-                    <div className="rounded-xl bg-purple-50 p-4">
+                    <div className="rounded-sm bg-purple-50 p-4">
                       <div className="flex items-center justify-between text-xs font-bold text-purple-800">
                         <span>Averaging GPS while the device remains still…</span>
                         <span>{Math.round(averageProgress * 100)}%</span>
@@ -741,7 +741,7 @@ export default function FieldPlacementPanel({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-4 text-xs">
+                  <div className="grid grid-cols-2 gap-3 rounded-sm bg-gray-50 p-4 text-xs">
                     <div>
                       <span className="font-bold text-gray-500">Scene width</span>
                       <p className="mt-1 text-lg font-black text-gray-950">
@@ -760,13 +760,13 @@ export default function FieldPlacementPanel({
                     type="button"
                     onClick={saveCalibration}
                     disabled={!calibrationOrigin || !calibrationDirection || isAveraging}
-                    className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    className="w-full rounded-sm bg-emerald-600 px-4 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
                     Save Field Calibration
                   </button>
 
                   {reconstruction.fieldCalibration && (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
+                    <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
                       <p className="font-black">Active calibration</p>
                       <p>Road bearing: {reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}°</p>
                       <p>Direction reference: {reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(1)}m</p>
@@ -783,7 +783,7 @@ export default function FieldPlacementPanel({
                     <button
                       type="button"
                       onClick={() => setTab("Calibration")}
-                      className="w-full rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm font-bold text-amber-900"
+                      className="w-full rounded-sm border border-amber-300 bg-amber-50 p-4 text-left text-sm font-bold text-amber-900"
                     >
                       Calibration is required. Open the Calibration tab →
                     </button>
@@ -797,7 +797,7 @@ export default function FieldPlacementPanel({
                         setTargetKey(event.target.value);
                         setPendingCapture(null);
                       }}
-                      className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-3 text-sm"
+                      className="mt-2 w-full rounded-sm border border-gray-300 px-3 py-3 text-sm"
                     >
                       <option value="">Select an item…</option>
                       {targets.map((target) => {
@@ -816,7 +816,7 @@ export default function FieldPlacementPanel({
                       type="button"
                       onClick={prepareCurrentCapture}
                       disabled={!geolocation.current || !reconstruction.fieldCalibration}
-                      className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-800 hover:bg-sky-100 disabled:bg-gray-100 disabled:text-gray-400"
+                      className="rounded-sm border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-800 hover:bg-sky-100 disabled:bg-gray-100 disabled:text-gray-400"
                     >
                       Use Current Reading
                     </button>
@@ -824,14 +824,14 @@ export default function FieldPlacementPanel({
                       type="button"
                       onClick={() => void prepareAverageCapture()}
                       disabled={isAveraging || !reconstruction.fieldCalibration}
-                      className="rounded-xl bg-purple-600 px-4 py-3 text-sm font-black text-white hover:bg-purple-700 disabled:bg-gray-400"
+                      className="rounded-sm bg-purple-600 px-4 py-3 text-sm font-black text-white hover:bg-purple-700 disabled:bg-gray-400"
                     >
                       Average for 5 Seconds
                     </button>
                   </div>
 
                   {isAveraging && (
-                    <div className="rounded-xl bg-purple-50 p-4">
+                    <div className="rounded-sm bg-purple-50 p-4">
                       <p className="text-xs font-bold text-purple-800">
                         Keep the device still while readings are averaged.
                       </p>
@@ -845,7 +845,7 @@ export default function FieldPlacementPanel({
                   )}
 
                   {pendingCapture && (
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h3 className="font-black text-gray-950">Prepared location</h3>
                         <LocationAccuracyBadge
@@ -889,7 +889,7 @@ export default function FieldPlacementPanel({
                     type="button"
                     onClick={confirmPlacement}
                     disabled={!selectedTarget || !pendingCapture || !reconstruction.fieldCalibration}
-                    className="w-full rounded-xl bg-blue-600 px-4 py-3 font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    className="w-full rounded-sm bg-blue-600 px-4 py-3 font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
                     Confirm Current Position
                   </button>
@@ -898,7 +898,7 @@ export default function FieldPlacementPanel({
 
               {tab === "Walk Trace" && (
                 <div className="space-y-5">
-                  <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm leading-6 text-purple-900">
+                  <div className="rounded-sm border border-purple-200 bg-purple-50 p-4 text-sm leading-6 text-purple-900">
                     Walk slowly along a skid mark, tyre mark, road crack or estimated participant route. GPS samples with worse than ±25m accuracy are excluded automatically.
                   </div>
 
@@ -908,7 +908,7 @@ export default function FieldPlacementPanel({
                       value={traceTargetKey}
                       onChange={(event) => setTraceTargetKey(event.target.value)}
                       disabled={isTracing}
-                      className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-3 text-sm disabled:bg-gray-100"
+                      className="mt-2 w-full rounded-sm border border-gray-300 px-3 py-3 text-sm disabled:bg-gray-100"
                     >
                       <option value="">Select a route or trace…</option>
                       {traceTargets.map((target) => (
@@ -919,7 +919,7 @@ export default function FieldPlacementPanel({
                     </select>
                   </label>
 
-                  <div className="grid grid-cols-3 gap-3 rounded-xl bg-gray-50 p-4 text-center">
+                  <div className="grid grid-cols-3 gap-3 rounded-sm bg-gray-50 p-4 text-center">
                     <div>
                       <p className="text-[10px] font-black uppercase text-gray-500">Points</p>
                       <p className="mt-1 text-xl font-black text-gray-950">{traceCoordinates.length}</p>
@@ -943,7 +943,7 @@ export default function FieldPlacementPanel({
                       type="button"
                       onClick={startWalkingTrace}
                       disabled={!selectedTraceTarget || !reconstruction.fieldCalibration}
-                      className="w-full rounded-xl bg-red-600 px-4 py-3 font-black text-white hover:bg-red-700 disabled:bg-gray-400"
+                      className="w-full rounded-sm bg-red-600 px-4 py-3 font-black text-white hover:bg-red-700 disabled:bg-gray-400"
                     >
                       ● Start Walking Trace
                     </button>
@@ -951,7 +951,7 @@ export default function FieldPlacementPanel({
                     <button
                       type="button"
                       onClick={stopWalkingTrace}
-                      className="w-full animate-pulse rounded-xl bg-red-700 px-4 py-3 font-black text-white"
+                      className="w-full animate-pulse rounded-sm bg-red-700 px-4 py-3 font-black text-white"
                     >
                       ■ Stop Trace Recording
                     </button>
@@ -962,7 +962,7 @@ export default function FieldPlacementPanel({
                       <button
                         type="button"
                         onClick={saveWalkingTrace}
-                        className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
+                        className="rounded-sm bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
                       >
                         Save Trace to Reconstruction
                       </button>
@@ -972,7 +972,7 @@ export default function FieldPlacementPanel({
                           setTraceCoordinates([]);
                           setTraceStartedAt("");
                         }}
-                        className="rounded-xl border border-gray-300 px-4 py-3 text-sm font-black text-gray-700 hover:bg-gray-50"
+                        className="rounded-sm border border-gray-300 px-4 py-3 text-sm font-black text-gray-700 hover:bg-gray-50"
                       >
                         Discard Trace
                       </button>
@@ -984,13 +984,13 @@ export default function FieldPlacementPanel({
               {tab === "History" && (
                 <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-blue-50 p-4">
+                    <div className="rounded-sm bg-blue-50 p-4">
                       <p className="text-xs font-black uppercase text-blue-600">Captured points</p>
                       <p className="mt-1 text-3xl font-black text-blue-950">
                         {reconstruction.fieldPlacements.length}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-purple-50 p-4">
+                    <div className="rounded-sm bg-purple-50 p-4">
                       <p className="text-xs font-black uppercase text-purple-600">Walking traces</p>
                       <p className="mt-1 text-3xl font-black text-purple-950">
                         {reconstruction.fieldWalkingTracks.length}
@@ -1010,14 +1010,14 @@ export default function FieldPlacementPanel({
                         },
                       )
                     }
-                    className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-800 hover:bg-indigo-100"
+                    className="w-full rounded-sm border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-800 hover:bg-indigo-100"
                   >
                     Export Field Audit JSON
                   </button>
 
                   <div className="space-y-3">
                     {reconstruction.fieldPlacements.length === 0 && (
-                      <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+                      <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                         No field points have been confirmed yet.
                       </p>
                     )}
@@ -1029,7 +1029,7 @@ export default function FieldPlacementPanel({
                           new Date(left.confirmedAt).getTime(),
                       )
                       .map((placement) => (
-                        <article key={placement.id} className="rounded-xl border border-gray-200 p-4">
+                        <article key={placement.id} className="rounded-sm border border-gray-200 p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h3 className="font-black text-gray-950">{placement.targetLabel}</h3>
@@ -1069,7 +1069,7 @@ export default function FieldPlacementPanel({
                     <div className="space-y-3 border-t border-gray-200 pt-5">
                       <h3 className="font-black text-gray-950">Saved walking traces</h3>
                       {reconstruction.fieldWalkingTracks.map((track) => (
-                        <article key={track.id} className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950">
+                        <article key={track.id} className="rounded-sm border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950">
                           <p className="font-black">{track.targetLabel}</p>
                           <p className="mt-1 text-xs">
                             {track.coordinates.length} GPS points · {track.distanceMetres.toFixed(1)}m · average accuracy ±{track.averageAccuracyMetres.toFixed(1)}m

@@ -180,7 +180,7 @@ export default function AccidentTimeline({
         <button
           type="button"
           onClick={handleAddEvent}
-          className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-800"
+          className="rounded-sm bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-800"
         >
           Add event at {currentTime.toFixed(1)}s
         </button>
@@ -188,7 +188,7 @@ export default function AccidentTimeline({
 
       <div className="mt-5 overflow-x-auto pb-2">
         <div className="min-w-[760px]">
-          <div className="relative h-24 rounded-xl border border-gray-200 bg-gray-50 px-4">
+          <div className="relative h-24 rounded-sm border border-gray-200 bg-gray-50 px-4">
             <div className="absolute left-4 right-4 top-12 h-1 rounded-full bg-gray-300" />
 
             <div
@@ -245,7 +245,7 @@ export default function AccidentTimeline({
               key={event.id}
               type="button"
               onClick={() => handleEventClick(event)}
-              className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
+              className={`flex w-full items-start gap-3 rounded-sm border p-3 text-left transition ${
                 selectedEventId === event.id
                   ? "border-blue-500 bg-blue-50"
                   : "border-gray-200 hover:bg-gray-50"
@@ -279,14 +279,14 @@ export default function AccidentTimeline({
           ))}
 
           {displayEvents.length === 0 && (
-            <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+            <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
               Add participants, movement points or manual events to build the
               accident timeline.
             </p>
           )}
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
           {!selectedEvent ? (
             <p className="text-sm text-gray-500">
               Select a timeline event to inspect or edit it.

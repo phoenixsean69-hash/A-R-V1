@@ -47,13 +47,13 @@ export default function FootagePlaybackPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               to={`/cases/${accidentCase.id}/footage`}
-              className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-black text-slate-200"
+              className="rounded-sm border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-black text-slate-200"
             >
               ← All Footage
             </Link>
             <Link
               to={`/cases/${accidentCase.id}`}
-              className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-black text-slate-200"
+              className="rounded-sm border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-black text-slate-200"
             >
               Back to Case
             </Link>
@@ -61,7 +61,7 @@ export default function FootagePlaybackPage() {
         </header>
 
         {message && (
-          <div className="mt-5 rounded-xl border border-emerald-700 bg-emerald-950/60 p-4 text-sm font-semibold text-emerald-200">
+          <div className="mt-5 rounded-sm border border-emerald-700 bg-emerald-950/60 p-4 text-sm font-semibold text-emerald-200">
             {message}
           </div>
         )}
@@ -114,7 +114,7 @@ export default function FootagePlaybackPage() {
                   setMessage(error instanceof Error ? error.message : "Download failed.");
                 }
               }}
-              className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white"
+              className="w-full rounded-sm bg-blue-600 px-4 py-3 text-sm font-black text-white"
             >
               Download Footage
             </button>
@@ -128,7 +128,7 @@ export default function FootagePlaybackPage() {
                   setVersion((current) => current + 1);
                   setMessage("This recording is now the primary case footage.");
                 }}
-                className="w-full rounded-xl border border-indigo-500 bg-indigo-950 px-4 py-3 text-sm font-black text-indigo-200"
+                className="w-full rounded-sm border border-indigo-500 bg-indigo-950 px-4 py-3 text-sm font-black text-indigo-200"
               >
                 Mark as Primary
               </button>
@@ -142,7 +142,7 @@ export default function FootagePlaybackPage() {
                 AccidentCaseService.removeFootage(accidentCase.id, footage.id);
                 navigate(`/cases/${accidentCase.id}/footage`);
               }}
-              className="w-full rounded-xl border border-red-800 bg-red-950/40 px-4 py-3 text-sm font-black text-red-300"
+              className="w-full rounded-sm border border-red-800 bg-red-950/40 px-4 py-3 text-sm font-black text-red-300"
             >
               Delete Footage
             </button>

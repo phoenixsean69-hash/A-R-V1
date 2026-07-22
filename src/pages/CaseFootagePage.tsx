@@ -34,13 +34,13 @@ export default function CaseFootagePage() {
           <div className="flex flex-wrap gap-2">
             <Link
               to={`/cases/${accidentCase.id}`}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700"
+              className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700"
             >
               ← Back to Case
             </Link>
             <Link
               to={`/cases/${accidentCase.id}/reconstruction`}
-              className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-black text-white"
+              className="rounded-sm bg-rose-600 px-4 py-2.5 text-sm font-black text-white"
             >
               ● Record Another Version
             </Link>

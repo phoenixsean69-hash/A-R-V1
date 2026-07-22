@@ -460,7 +460,7 @@ export default function NewCaseRoadWizard({
               }}
               className={primaryButtonClass}
             >
-              Continue to Location Detection →
+              Continue to Location Detection
             </button>
           </WizardActions>
         </section>
@@ -515,7 +515,7 @@ export default function NewCaseRoadWizard({
                   <button
                     type="button"
                     onClick={startLocationTracking}
-                    className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
+                    className="rounded-sm bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
                   >
                     {geolocation.isWatching
                       ? "Location Tracking Active"
@@ -526,7 +526,7 @@ export default function NewCaseRoadWizard({
                     type="button"
                     disabled={averaging}
                     onClick={() => void averageLocation()}
-                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                    className="rounded-sm border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
                   >
                     {averaging ? "Averaging for 5 seconds..." : "Average Location for 5 Seconds"}
                   </button>
@@ -542,7 +542,7 @@ export default function NewCaseRoadWizard({
                           capturedAt: geolocation.current!.capturedAt,
                         })
                       }
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                      className="rounded-sm border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
                     >
                       Use Current Reading
                     </button>
@@ -551,7 +551,7 @@ export default function NewCaseRoadWizard({
 
                 {(geolocation.error || locationMessage) && (
                   <p
-                    className={`mt-4 rounded-xl p-3 text-xs font-semibold ${
+                    className={`mt-4 rounded-sm p-3 text-xs font-semibold ${
                       geolocation.error
                         ? "bg-red-50 text-red-700"
                         : "bg-blue-50 text-blue-700"
@@ -586,7 +586,7 @@ export default function NewCaseRoadWizard({
                 <button
                   type="button"
                   onClick={useManualCoordinate}
-                  className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
+                  className="mt-3 w-full rounded-sm border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
                 >
                   Apply Manual Coordinate
                 </button>
@@ -667,7 +667,7 @@ export default function NewCaseRoadWizard({
               <button
                 type="button"
                 onClick={() => void detectRoadLayout(true)}
-                className="mt-4 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-black text-white"
+                className="mt-4 rounded-sm bg-red-700 px-4 py-2.5 text-sm font-black text-white"
               >
                 Retry Road Detection
               </button>
@@ -719,7 +719,7 @@ export default function NewCaseRoadWizard({
                   <button
                     type="button"
                     onClick={() => void detectRoadLayout(true)}
-                    className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50"
+                    className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50"
                   >
                     Retry Detection
                   </button>
@@ -837,7 +837,7 @@ export default function NewCaseRoadWizard({
                   />
                 </div>
 
-                <label className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4">
+                <label className="mt-4 flex items-center justify-between gap-4 rounded-sm border border-slate-200 p-4">
                   <span>
                     <span className="block text-sm font-black text-slate-800">
                       Pedestrian crossing present
@@ -957,7 +957,7 @@ export default function NewCaseRoadWizard({
               type="button"
               disabled={creating}
               onClick={createCaseAndScene}
-              className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="rounded-sm bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               {creating
                 ? "Creating Case and Scene..."
@@ -989,7 +989,7 @@ function WizardProgress({ step }: { step: WizardStep }) {
           return (
             <div
               key={label}
-              className={`rounded-xl border px-3 py-3 ${
+              className={`rounded-sm border px-3 py-3 ${
                 active
                   ? "border-blue-500 bg-blue-50"
                   : completed
@@ -1179,7 +1179,7 @@ function WizardActions({ children }: { children: React.ReactNode }) {
 }
 
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
+  return `w-full rounded-sm border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-100"
       : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
@@ -1187,7 +1187,7 @@ function inputClass(hasError: boolean): string {
 }
 
 const primaryButtonClass =
-  "rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400";
+  "rounded-sm bg-blue-950 px-6 py-3 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-400";
 
 const secondaryButtonClass =
-  "rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";
+  "rounded-sm border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";

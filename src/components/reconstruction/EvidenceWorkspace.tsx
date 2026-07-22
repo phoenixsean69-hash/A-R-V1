@@ -181,7 +181,7 @@ export function EvidenceWorkspacePanel({
             </p>
           </div>
 
-          <div className="flex rounded-xl border border-gray-200 bg-white p-1">
+          <div className="flex rounded-sm border border-gray-200 bg-white p-1">
             {(["evidence", "measurements", "photos"] as const).map((item) => (
               <button
                 key={item}
@@ -220,7 +220,7 @@ export function EvidenceWorkspacePanel({
                   key={record.id}
                   type="button"
                   onClick={() => onSelectEvidence(record.id)}
-                  className={`w-full rounded-xl border p-3 text-left ${
+                  className={`w-full rounded-sm border p-3 text-left ${
                     selectedEvidenceId === record.id
                       ? "border-amber-500 bg-amber-50"
                       : "border-gray-200 hover:bg-gray-50"
@@ -243,7 +243,7 @@ export function EvidenceWorkspacePanel({
               ))}
 
               {evidenceRecords.length === 0 && (
-                <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+                <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                   No evidence records have been added.
                 </p>
               )}
@@ -251,7 +251,7 @@ export function EvidenceWorkspacePanel({
           </div>
 
           {!selectedEvidence ? (
-            <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+            <div className="rounded-sm border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
               Select an evidence record to edit its details and position.
             </div>
           ) : (
@@ -423,7 +423,7 @@ export function EvidenceWorkspacePanel({
                 </label>
               </div>
 
-              <div className="sm:col-span-2 rounded-xl border border-gray-200 p-3">
+              <div className="sm:col-span-2 rounded-sm border border-gray-200 p-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-600">
                   Linked measurements
                 </p>
@@ -548,7 +548,7 @@ export function EvidenceWorkspacePanel({
                   key={measurement.id}
                   type="button"
                   onClick={() => onSelectMeasurement(measurement.id)}
-                  className={`w-full rounded-xl border p-3 text-left ${
+                  className={`w-full rounded-sm border p-3 text-left ${
                     selectedMeasurementId === measurement.id
                       ? "border-sky-500 bg-sky-50"
                       : "border-gray-200 hover:bg-gray-50"
@@ -564,7 +564,7 @@ export function EvidenceWorkspacePanel({
               ))}
 
               {measurements.length === 0 && (
-                <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+                <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                   Use New Measurement, then click two points on the scene.
                 </p>
               )}
@@ -572,7 +572,7 @@ export function EvidenceWorkspacePanel({
           </div>
 
           {!selectedMeasurement ? (
-            <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+            <div className="rounded-sm border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
               Select a measurement to edit its type, links and notes.
             </div>
           ) : (
@@ -605,7 +605,7 @@ export function EvidenceWorkspacePanel({
                 </select>
               </label>
 
-              <div className="rounded-xl bg-sky-50 p-3">
+              <div className="rounded-sm bg-sky-50 p-3">
                 <p className="text-xs font-semibold text-sky-700">Calculated length</p>
                 <p className="mt-1 text-2xl font-black text-sky-950">
                   {selectedMeasurement.distanceMetres.toFixed(2)} m
@@ -742,7 +742,7 @@ export function EvidenceWorkspacePanel({
                 />
               </label>
 
-              <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+              <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
                 <span className="text-sm font-semibold text-gray-700">Visible</span>
                 <input
                   type="checkbox"
@@ -754,7 +754,7 @@ export function EvidenceWorkspacePanel({
                 />
               </label>
 
-              <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+              <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
                 <span className="text-sm font-semibold text-gray-700">Lock endpoints</span>
                 <input
                   type="checkbox"
@@ -838,7 +838,7 @@ export function EvidenceWorkspacePanel({
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {photos.map((photo) => (
-              <article key={photo.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <article key={photo.id} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
                 <img
                   src={photo.thumbnailDataUrl}
                   alt={photo.caption || photo.filename}
@@ -950,7 +950,7 @@ export function EvidenceWorkspacePanel({
             ))}
 
             {photos.length === 0 && (
-              <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 md:col-span-2 xl:col-span-3">
+              <p className="rounded-sm border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 md:col-span-2 xl:col-span-3">
                 No scene photographs have been uploaded.
               </p>
             )}

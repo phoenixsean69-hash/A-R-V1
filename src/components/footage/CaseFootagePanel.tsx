@@ -50,14 +50,14 @@ export default function CaseFootagePanel({
         <div className="flex flex-wrap gap-2">
           <Link
             to={`/cases/${accidentCase.id}/reconstruction`}
-            className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-black text-white"
+            className="rounded-sm bg-rose-600 px-4 py-2.5 text-sm font-black text-white"
           >
             ● Record Footage
           </Link>
           {showAllLink && (
             <Link
               to={`/cases/${accidentCase.id}/footage`}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700"
+              className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700"
             >
               View All
             </Link>
@@ -66,13 +66,13 @@ export default function CaseFootagePanel({
       </div>
 
       {message && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+        <div className="mt-4 rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
           {message}
         </div>
       )}
 
       {footage.length === 0 ? (
-        <div className="mt-5 rounded-xl border-2 border-dashed border-slate-300 p-8 text-center">
+        <div className="mt-5 rounded-sm border-2 border-dashed border-slate-300 p-8 text-center">
           <p className="font-black text-slate-800">No reconstruction footage yet</p>
           <p className="mt-2 text-sm text-slate-500">
             Open the linked reconstruction and use Record Footage to create a playable case video.
@@ -83,7 +83,7 @@ export default function CaseFootagePanel({
           {footage.map((record) => (
             <article
               key={record.id}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+              className="overflow-hidden rounded-sm border border-slate-200 bg-slate-50"
             >
               <div className="relative aspect-video bg-slate-950">
                 {record.thumbnailDataUrl ? (

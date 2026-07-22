@@ -3,6 +3,16 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
+import { THIRD_PARTY_3D_ASSET_NOTICE } from "../../data/realisticAssetCatalog";
+import {
+  createRealisticProceduralSceneObject,
+  disposeObjectTree,
+  enhanceRoadTextures,
+  loadRealisticEnvironmentModel,
+  loadRealisticParticipantModel,
+  loadRealisticSceneObjectModel,
+} from "../../services/realisticSceneAssetService";
+
 import type {
   AccidentReconstruction,
   ReconstructionPosition,
@@ -20,6 +30,11 @@ interface Reconstruction3DViewerProps {
 }
 
 type CameraMode = "Orbit" | "Overhead" | "Roadside" | "Driver";
+
+interface AssetLifecycle {
+  isDisposed: () => boolean;
+  settle: (failed?: boolean) => void;
+}
 
 const PARTICIPANT_COLOURS: Record<string, number> = {
   Blue: 0x2563eb, Red: 0xdc2626, Green: 0x16a34a, Yellow: 0xeab308,
@@ -278,7 +293,7 @@ function createTwoWheelerModel(participant: ReconstructionVehicle, colour: numbe
   return group;
 }
 
-function createParticipantMesh(participant: ReconstructionVehicle): THREE.Group {
+function createProceduralParticipantMesh(participant: ReconstructionVehicle): THREE.Group {
   const group = new THREE.Group();
   const [length, height, width] = participantDimensions(participant);
   const colour = PARTICIPANT_COLOURS[participant.colour] ?? 0x2563eb;
@@ -436,31 +451,7 @@ function objectColour(object: ReconstructionSceneObject): number {
 }
 
 function createSceneObjectMesh(object: ReconstructionSceneObject): THREE.Object3D {
-  const flat = ["Pothole", "Road Crack", "Puddle", "Oil Spill", "Loose Gravel", "Skid Mark", "Tyre Mark"].includes(object.type);
-  const tree = object.type === "Tree" || object.type === "Bush";
-  const material = new THREE.MeshStandardMaterial({ color: objectColour(object), roughness: 0.8, transparent: flat, opacity: flat ? 0.72 : 1 });
-  if (object.tracePoints && object.tracePoints.length > 1) {
-    return new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: objectColour(object) }));
-  }
-  if (flat) {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.25 * object.scale, 1.25 * object.scale, 0.08, 24), material);
-    mesh.position.y = 0.05;
-    return mesh;
-  }
-  if (tree) {
-    const group = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.36, 2.5, 10), new THREE.MeshStandardMaterial({ color: 0x78350f }));
-    trunk.position.y = 1.25;
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(1.5 * object.scale, 18, 12), material);
-    crown.position.y = 3;
-    group.add(trunk, crown);
-    return group;
-  }
-  const height = ["Street Light", "Traffic Light", "CCTV Camera"].includes(object.type) ? 4.5 : 1.4;
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.4 * object.scale, height * object.scale, 1.4 * object.scale), material);
-  mesh.position.y = height * object.scale / 2;
-  mesh.castShadow = true;
-  return mesh;
+  return createRealisticProceduralSceneObject(object);
 }
 
 function createSurfaceTexture(kind: "asphalt" | "ground", wet = false): THREE.CanvasTexture {
@@ -514,29 +505,63 @@ function addCrosswalk(scene: THREE.Scene, horizontal: boolean, roadWidth: number
   }
 }
 
-function addStreetLight(scene: THREE.Scene, x: number, z: number, rotation = 0) {
+function addStreetLight(
+  scene: THREE.Scene,
+  x: number,
+  z: number,
+  rotation: number,
+  lifecycle: AssetLifecycle,
+) {
   const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x39414a, metalness: 0.7, roughness: 0.35 });
-  const group = new THREE.Group();
+  const fallback = new THREE.Group();
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 5.8, 12), poleMaterial);
   pole.position.y = 2.9;
   pole.castShadow = true;
-  group.add(pole);
+  fallback.add(pole);
   const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.10, 0.10), poleMaterial);
   arm.position.set(0.58, 5.62, 0);
-  group.add(arm);
+  fallback.add(arm);
   const lamp = new THREE.Mesh(
     new RoundedBoxGeometry(0.46, 0.17, 0.28, 2, 0.04),
     new THREE.MeshStandardMaterial({ color: 0xc5c9c5, emissive: 0xfff0c4, emissiveIntensity: 0.36, roughness: 0.28 }),
   );
   lamp.position.set(1.22, 5.55, 0);
-  group.add(lamp);
-  group.position.set(x, 0, z);
-  group.rotation.y = rotation;
-  scene.add(group);
+  fallback.add(lamp);
+  fallback.position.set(x, 0, z);
+  fallback.rotation.y = rotation;
+  scene.add(fallback);
+
+  void loadRealisticEnvironmentModel("streetLight", { length: 1.9, height: 6.1, width: 1.3 })
+    .then((model) => {
+      if (lifecycle.isDisposed()) {
+        disposeObjectTree(model);
+        return;
+      }
+      scene.remove(fallback);
+      disposeObjectTree(fallback);
+      model.position.set(x, 0, z);
+      model.rotation.y = rotation;
+      scene.add(model);
+      lifecycle.settle(false);
+    })
+    .catch((error: unknown) => {
+      console.warn("Realistic street-light model unavailable:", error);
+      lifecycle.settle(true);
+    });
 }
 
-function addBuilding(scene: THREE.Scene, x: number, z: number, width: number, depth: number, height: number, tone: number) {
-  const group = new THREE.Group();
+function addBuilding(
+  scene: THREE.Scene,
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  height: number,
+  tone: number,
+  assetKey: "suburbanHouses" | "schoolBuilding" | "commercialBuilding",
+  lifecycle: AssetLifecycle,
+) {
+  const fallback = new THREE.Group();
   const body = new THREE.Mesh(
     new RoundedBoxGeometry(width, height, depth, 2, 0.08),
     new THREE.MeshStandardMaterial({ color: tone, roughness: 0.82 }),
@@ -544,7 +569,7 @@ function addBuilding(scene: THREE.Scene, x: number, z: number, width: number, de
   body.position.y = height / 2;
   body.castShadow = true;
   body.receiveShadow = true;
-  group.add(body);
+  fallback.add(body);
   const windowMaterial = new THREE.MeshStandardMaterial({ color: 0x536779, emissive: 0x182633, emissiveIntensity: 0.12, roughness: 0.35 });
   const columns = Math.max(2, Math.floor(width / 2.2));
   const rows = Math.max(1, Math.floor(height / 2.2));
@@ -552,18 +577,37 @@ function addBuilding(scene: THREE.Scene, x: number, z: number, width: number, de
     for (let column = 0; column < columns; column += 1) {
       const windowMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.7), windowMaterial);
       windowMesh.position.set(-width / 2 + 1 + column * ((width - 2) / Math.max(1, columns - 1)), 1.25 + row * 1.7, depth / 2 + 0.011);
-      group.add(windowMesh);
+      fallback.add(windowMesh);
     }
   }
-  group.position.set(x, 0, z);
-  scene.add(group);
+  fallback.position.set(x, 0, z);
+  scene.add(fallback);
+
+  void loadRealisticEnvironmentModel(assetKey, { length: width, height, width: depth })
+    .then((model) => {
+      if (lifecycle.isDisposed()) {
+        disposeObjectTree(model);
+        return;
+      }
+      scene.remove(fallback);
+      disposeObjectTree(fallback);
+      model.position.set(x, 0, z);
+      scene.add(model);
+      lifecycle.settle(false);
+    })
+    .catch((error: unknown) => {
+      console.warn(`Realistic building model unavailable (${assetKey}):`, error);
+      lifecycle.settle(true);
+    });
 }
 
-function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction) {
+function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction, lifecycle: AssetLifecycle) {
   const { sceneWidthMetres: width, sceneHeightMetres: height, roadLayout } = reconstruction.scene;
   const wet = reconstruction.scene.roadSurface === "Wet";
   const groundTexture = createSurfaceTexture("ground");
   const asphaltTexture = createSurfaceTexture("asphalt", wet);
+  const sidewalkTexture = createSurfaceTexture("ground");
+  enhanceRoadTextures(asphaltTexture, groundTexture, sidewalkTexture);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(width * 1.7, height * 1.7),
     new THREE.MeshStandardMaterial({ map: groundTexture, color: 0x687164, roughness: 1 }),
@@ -580,7 +624,11 @@ function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction) {
     clearcoat: wet ? 0.32 : 0,
     clearcoatRoughness: 0.28,
   });
-  const sidewalkMaterial = new THREE.MeshStandardMaterial({ color: 0x777c80, roughness: 0.92 });
+  const sidewalkMaterial = new THREE.MeshStandardMaterial({
+    map: sidewalkTexture,
+    color: 0x9b9b98,
+    roughness: 0.94,
+  });
   const curbMaterial = new THREE.MeshStandardMaterial({ color: 0xa0a3a2, roughness: 0.85 });
   const markingMaterial = new THREE.MeshStandardMaterial({ color: 0xe3e4df, roughness: 0.72 });
   const centreMaterial = new THREE.MeshStandardMaterial({ color: 0xb9943f, roughness: 0.74 });
@@ -691,18 +739,34 @@ function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction) {
     [-edgeX * 0.95, edgeZ, 8, 9, 7],
     [edgeX, edgeZ, 10, 7, 5.5],
   ] as const;
+  const buildingAssets = [
+    "suburbanHouses",
+    "commercialBuilding",
+    "schoolBuilding",
+    "suburbanHouses",
+  ] as const;
   placements.forEach(([x, z, buildingWidth, depth, buildingHeight], index) =>
-    addBuilding(scene, x, z, buildingWidth, depth, buildingHeight, buildingMaterialTones[index]),
+    addBuilding(
+      scene,
+      x,
+      z,
+      buildingWidth,
+      depth,
+      buildingHeight,
+      buildingMaterialTones[index],
+      buildingAssets[index],
+      lifecycle,
+    ),
   );
 
   for (const x of [-width * 0.38, width * 0.38]) {
-    addStreetLight(scene, x, roadWidth / 2 + 2.25, Math.PI);
-    addStreetLight(scene, x, -roadWidth / 2 - 2.25, 0);
+    addStreetLight(scene, x, roadWidth / 2 + 2.25, Math.PI, lifecycle);
+    addStreetLight(scene, x, -roadWidth / 2 - 2.25, 0, lifecycle);
   }
   if (roadLayout !== "Straight Road" && roadLayout !== "Pedestrian Crossing") {
     for (const z of [-height * 0.38, height * 0.38]) {
-      addStreetLight(scene, roadWidth / 2 + 2.25, z, -Math.PI / 2);
-      addStreetLight(scene, -roadWidth / 2 - 2.25, z, Math.PI / 2);
+      addStreetLight(scene, roadWidth / 2 + 2.25, z, -Math.PI / 2, lifecycle);
+      addStreetLight(scene, -roadWidth / 2 - 2.25, z, Math.PI / 2, lifecycle);
     }
   }
 
@@ -740,6 +804,7 @@ function Reconstruction3DViewer({
   const [showEvidence, setShowEvidence] = useState(true);
   const [showPhysicsEffects, setShowPhysicsEffects] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [assetStatus, setAssetStatus] = useState({ loaded: 0, total: 0, failed: 0 });
 
   useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { speedRef.current = playbackSpeed; }, [playbackSpeed]);
@@ -751,6 +816,27 @@ function Reconstruction3DViewer({
     const width = reconstruction.scene.sceneWidthMetres;
     const height = reconstruction.scene.sceneHeightMetres;
     const scene = new THREE.Scene();
+    let disposed = false;
+    let loadedAssets = 0;
+    let failedAssets = 0;
+    const visibleObjectCount = showObjects
+      ? reconstruction.sceneObjects.filter(
+          (object) => object.visible && !(object.tracePoints && object.tracePoints.length > 1),
+        ).length
+      : 0;
+    const hasCrossRoad = !["Straight Road", "Pedestrian Crossing"].includes(
+      reconstruction.scene.roadLayout,
+    );
+    const environmentAssetCount = 4 + (hasCrossRoad ? 8 : 4);
+    const totalAssets =
+      reconstruction.vehicles.length + visibleObjectCount + environmentAssetCount;
+    setAssetStatus({ loaded: 0, total: totalAssets, failed: 0 });
+    const settleAsset = (failed = false) => {
+      if (disposed) return;
+      loadedAssets += 1;
+      if (failed) failedAssets += 1;
+      setAssetStatus({ loaded: loadedAssets, total: totalAssets, failed: failedAssets });
+    };
     const nightScene = reconstruction.scene.timeOfDay === "Night";
     const environmentColour = nightScene ? 0x030916 : 0x75818a;
     scene.background = new THREE.Color(environmentColour);
@@ -793,7 +879,10 @@ function Reconstruction3DViewer({
     const fillLight = new THREE.DirectionalLight(0x7e9cc8, nightScene ? 0.38 : 0.3);
     fillLight.position.set(28, 18, -24);
     scene.add(fillLight);
-    addRoad(scene, reconstruction);
+    addRoad(scene, reconstruction, {
+      isDisposed: () => disposed,
+      settle: settleAsset,
+    });
 
     const participantMeshes = new Map<string, THREE.Group>();
     const velocityArrows = new Map<string, THREE.ArrowHelper>();
@@ -806,9 +895,34 @@ function Reconstruction3DViewer({
         time: impactPoint?.timeSeconds,
         speedKmh: impactPoint?.speedKmh ?? participant.estimatedSpeedKmh,
       });
-      const mesh = createParticipantMesh(participant);
+      const mesh = createProceduralParticipantMesh(participant);
       scene.add(mesh);
       participantMeshes.set(participant.id, mesh);
+      void loadRealisticParticipantModel(participant, participantDimensions(participant))
+        .then((realisticModel) => {
+          if (disposed) {
+            disposeObjectTree(realisticModel);
+            return;
+          }
+          const modelRoot = mesh.userData.modelRoot as THREE.Group | undefined;
+          if (!modelRoot) {
+            disposeObjectTree(realisticModel);
+            settleAsset(true);
+            return;
+          }
+          const previousChildren = [...modelRoot.children];
+          previousChildren.forEach((child) => {
+            modelRoot.remove(child);
+            disposeObjectTree(child);
+          });
+          modelRoot.add(realisticModel);
+          modelRoot.userData.realisticAsset = true;
+          settleAsset(false);
+        })
+        .catch((error: unknown) => {
+          console.warn(`Realistic model unavailable for ${participant.name}:`, error);
+          settleAsset(true);
+        });
       if (showPhysicsEffects) {
         const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 2, PARTICIPANT_COLOURS[participant.colour] ?? 0xffffff, 0.65, 0.35);
         scene.add(arrow);
@@ -854,12 +968,36 @@ function Reconstruction3DViewer({
         const geometry = new THREE.BufferGeometry().setFromPoints(object.tracePoints.map((point) => worldPosition(point, width, height, 0.22)));
         const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: objectColour(object), linewidth: 2 }));
         scene.add(line);
-      } else {
-        const mesh = createSceneObjectMesh(object);
-        mesh.position.add(worldPosition(object.position, width, height));
-        mesh.rotation.y = THREE.MathUtils.degToRad(-object.rotation);
-        scene.add(mesh);
+        return;
       }
+
+      const holder = new THREE.Group();
+      const fallback = createSceneObjectMesh(object);
+      holder.add(fallback);
+      holder.position.copy(worldPosition(object.position, width, height));
+      holder.rotation.y = THREE.MathUtils.degToRad(-object.rotation);
+      scene.add(holder);
+
+      void loadRealisticSceneObjectModel(object)
+        .then((realisticModel) => {
+          if (!realisticModel) {
+            settleAsset(false);
+            return;
+          }
+          if (disposed) {
+            disposeObjectTree(realisticModel);
+            return;
+          }
+          holder.remove(fallback);
+          disposeObjectTree(fallback);
+          holder.add(realisticModel);
+          holder.userData.realisticAsset = true;
+          settleAsset(false);
+        })
+        .catch((error: unknown) => {
+          console.warn(`Realistic scene object unavailable for ${object.label}:`, error);
+          settleAsset(true);
+        });
     });
 
     if (showEvidence) {
@@ -1019,6 +1157,7 @@ function Reconstruction3DViewer({
     resize();
     animationId = requestAnimationFrame(animate);
     return () => {
+      disposed = true;
       cancelAnimationFrame(animationId);
       observer.disconnect();
       controls.dispose();
@@ -1099,6 +1238,16 @@ function Reconstruction3DViewer({
         </button>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#29446f] bg-[#050a16]/85 px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
           {cameraMode} · {displayTime.toFixed(1)}s
+        </div>
+        <div
+          className="pointer-events-none absolute bottom-3 left-3 max-w-[65%] rounded border border-[#1b3153] bg-[#050a16]/85 px-2.5 py-1.5 text-[8px] text-slate-400 backdrop-blur"
+          title={THIRD_PARTY_3D_ASSET_NOTICE}
+        >
+          {assetStatus.total > 0 && assetStatus.loaded < assetStatus.total
+            ? `Loading realistic assets ${assetStatus.loaded}/${assetStatus.total}`
+            : assetStatus.failed > 0
+              ? `Realistic assets ready · ${assetStatus.failed} fallback(s)`
+              : "Realistic GLB/PBR assets ready"}
         </div>
       </div>
       <div className={`border-t border-[#182743] bg-[#080e1c] ${compact ? "px-3 py-2" : "p-4"}`}>

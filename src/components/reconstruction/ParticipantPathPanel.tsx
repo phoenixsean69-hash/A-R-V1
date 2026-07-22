@@ -142,7 +142,7 @@ export default function ParticipantPathPanel({
               onParticipantChange({ originLocation: event.target.value })
             }
             placeholder="e.g. Chipadze residential area"
-            className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
           />
         </label>
 
@@ -154,11 +154,11 @@ export default function ParticipantPathPanel({
               onParticipantChange({ destinationLocation: event.target.value })
             }
             placeholder="e.g. Bindura CBD"
-            className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
           />
         </label>
 
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+        <div className="rounded-sm border border-cyan-200 bg-cyan-50 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-black text-cyan-950">Pick heading direction</p>
@@ -185,7 +185,7 @@ export default function ParticipantPathPanel({
 
       <div className="mt-4 space-y-3">
         {hiddenPhysicsSamples > 0 && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-violet-200 bg-violet-50 p-3">
+          <div className="flex items-center justify-between gap-3 rounded-sm border border-violet-200 bg-violet-50 p-3">
             <p className="text-xs leading-5 text-violet-900"><strong>{hiddenPhysicsSamples} physics samples hidden.</strong> They keep playback smooth and accurate but are not primary editing dots.</p>
             <button type="button" onClick={() => setShowPhysicsSamples(true)} className="shrink-0 rounded-lg bg-violet-700 px-3 py-2 text-[10px] font-black text-white">Show all</button>
           </div>
@@ -199,7 +199,7 @@ export default function ParticipantPathPanel({
           return (
             <div
               key={point.id}
-              className={`rounded-xl border p-3 transition ${
+              className={`rounded-sm border p-3 transition ${
                 selected
                   ? "border-blue-500 bg-blue-50"
                   : "border-gray-200 bg-white"

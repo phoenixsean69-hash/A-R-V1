@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
+  AppWindow,
   BarChart3,
   Bell,
   Boxes,
@@ -8,10 +9,9 @@ import {
   ClipboardList,
   FileText,
   FolderKanban,
-  LayoutDashboard,
+  Home,
   Map,
   Menu,
-  Search,
   Settings,
   ShieldCheck,
   Video,
@@ -20,7 +20,7 @@ import {
 import { WorkspaceDataService } from "../../services/workspaceDataService";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/", label: "Dashboard", icon: Home, end: true },
   { to: "/cases", label: "Cases", icon: FolderKanban },
   { to: "/reconstruction", label: "Reconstructions", icon: Boxes },
   { to: "/scene-map", label: "Scene Map", icon: Map },
@@ -31,12 +31,22 @@ const navItems = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-function pageMeta(pathname: string) {
-  if (pathname.startsWith("/cases/new")) return ["New accident case", "Create and prepare a new investigation record"];
-  if (pathname.includes("/reconstruction")) return ["Accident reconstruction", "Build, simulate and review the collision sequence"];
-  if (pathname.includes("/report")) return ["Investigation report", "Review and export documented findings"];
-  if (pathname.includes("/footage")) return ["Reconstruction footage", "Review captured reconstruction playback"];
-  if (pathname.startsWith("/cases/")) return ["Case workspace", "Investigation details, evidence and progress"];
+function pageMeta(pathname: string): [string, string] {
+  if (pathname.startsWith("/cases/new")) {
+    return ["New accident case", "Create and prepare a new investigation record"];
+  }
+  if (pathname.includes("/reconstruction")) {
+    return ["Accident reconstruction", "Build, simulate and review the collision sequence"];
+  }
+  if (pathname.includes("/report")) {
+    return ["Investigation report", "Review and export documented findings"];
+  }
+  if (pathname.includes("/footage")) {
+    return ["Reconstruction footage", "Review captured reconstruction playback"];
+  }
+  if (pathname.startsWith("/cases/")) {
+    return ["Case workspace", "Investigation details, evidence and progress"];
+  }
   if (pathname === "/cases") return ["Cases", "Manage active and completed investigations"];
   if (pathname === "/scene-map") return ["Scene map", "Review accident locations and blackspot intelligence"];
   if (pathname === "/evidence") return ["Evidence", "Review scene records and documented items"];
@@ -47,145 +57,241 @@ function pageMeta(pathname: string) {
   return ["Dashboard", "Operational overview and active investigations"];
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "Not recorded";
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function AppShell() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [title, description] = useMemo(() => pageMeta(location.pathname), [location.pathname]);
+  const [now, setNow] = useState(() => new Date());
+  const [title, description] = useMemo(
+    () => pageMeta(location.pathname),
+    [location.pathname],
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const summary = WorkspaceDataService.getSummary();
-  const investigatorName = summary.latestCase?.investigatingOfficer || "Local Investigator";
+  const activeCase = summary.latestCase;
+  const activeReconstruction = activeCase
+    ? WorkspaceDataService.getReconstructions().find(
+        (item) => item.id === activeCase.reconstructionId,
+      ) ?? summary.latestReconstruction
+    : summary.latestReconstruction;
+  const investigatorName = activeCase?.investigatingOfficer || "Local Investigator";
   const initials = investigatorName
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("") || "LI";
-  const searchResults = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (query.length < 2) return [];
-    const caseResults = WorkspaceDataService.getCases()
-      .filter((record) =>
-        [record.caseNumber, record.title, record.location, record.investigatingOfficer]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      )
-      .slice(0, 5)
-      .map((record) => ({
-        id: `case-${record.id}`,
-        title: record.caseNumber,
-        detail: `${record.title} · ${record.location}`,
-        to: `/cases/${record.id}`,
-      }));
-    const evidenceResults = WorkspaceDataService.getEvidence()
-      .filter((item) =>
-        [item.evidence.title, item.evidence.description, item.accidentCase?.caseNumber ?? ""]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      )
-      .slice(0, 3)
-      .map((item) => ({
-        id: `evidence-${item.id}`,
-        title: item.evidence.title,
-        detail: item.accidentCase?.caseNumber ?? item.reconstruction.accidentId,
-        to: item.accidentCase ? `/cases/${item.accidentCase.id}/reconstruction` : "/evidence",
-      }));
-    return [...caseResults, ...evidenceResults].slice(0, 7);
-  }, [searchQuery]);
+  const isDashboard = location.pathname === "/";
+
+  const quickInfo = [
+    ["Case ID", activeCase?.caseNumber ?? "No active case"],
+    ["Date", activeCase ? formatDate(activeCase.accidentDate) : "—"],
+    ["Time", activeCase?.accidentTime || "—"],
+    ["Location", activeCase?.location || "No location recorded"],
+    ["Investigator", activeCase?.investigatingOfficer || "Not assigned"],
+    ["Station", activeCase?.policeStation || "Not recorded"],
+    ["Weather", activeReconstruction?.scene.weather || "Not configured"],
+    ["Road", activeReconstruction?.scene.roadSurface || "Not configured"],
+  ];
 
   return (
-    <div className="roadsafe-shell min-h-screen bg-[#050817] text-slate-200">
-      <aside className={`roadsafe-sidebar fixed inset-y-0 left-0 z-50 w-[228px] border-r border-[#18243f] bg-[#070b19] transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-16 items-center justify-between border-b border-[#18243f] px-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-md border border-[#35558a] bg-[#0b1530] text-[#7fb1ff]">
-              <ShieldCheck size={21} strokeWidth={1.7} />
+    <div className="roadsafe-shell min-h-screen bg-[#030714] text-slate-200">
+      <aside
+        className={`roadsafe-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[214px] flex-col overflow-y-auto overscroll-contain border-r border-[#182849] bg-[#040918] transition-transform duration-150 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-[#182849] px-4">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#3765a3] bg-[#08142c] text-[#7fb0ff]">
+              <ShieldCheck size={23} strokeWidth={1.65} />
             </div>
-            <div>
-              <p className="text-sm font-black tracking-[0.16em] text-slate-100">ROADSAFE AR</p>
-              <p className="text-[9px] uppercase tracking-[0.14em] text-slate-500">Accident reconstruction</p>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-black tracking-[0.12em] text-slate-100">
+                ROADSAFE AR
+              </p>
+              <p className="truncate text-[8px] uppercase tracking-[0.13em] text-slate-500">
+                Accident reconstruction system
+              </p>
             </div>
-          </div>
-          <button className="ui-icon-button lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button>
+          </Link>
+          <button
+            className="ui-icon-button lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X size={17} />
+          </button>
         </div>
 
-        <nav className="space-y-1 p-3">
+        <nav className="shrink-0 space-y-1 p-2.5">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               onClick={() => setMobileOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-md px-3 py-2.5 text-[12px] font-semibold transition-colors duration-150 ${isActive ? "bg-[#111b35] text-[#8cbaff] ring-1 ring-inset ring-[#244778]" : "text-slate-400 hover:bg-[#0c1225] hover:text-slate-100"}`}
+              className={({ isActive }) =>
+  `flex items-center gap-3 rounded-md px-3 py-2.5 text-[11px] font-semibold transition-colors duration-100 ${
+    isActive
+      ? "bg-[#091a35] text-[#8ebcff]"
+      : "text-slate-400 hover:bg-[#040912] hover:text-slate-100"
+  }`
+}
             >
-              <Icon size={16} strokeWidth={1.7} />
+              <Icon size={15} strokeWidth={1.65} />
               <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="absolute inset-x-3 bottom-3 rounded-md border border-[#18243f] bg-[#090f20] p-3">
-          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">System status</p>
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[#6fa8ff]">
-            <span className="h-2 w-2 rounded-full bg-[#4d8cf5] shadow-[0_0_10px_rgba(77,140,245,0.65)]" />
-            Local workspace ready
+        <div className="shrink-0 px-2.5 pb-2">
+          <section className="rounded-md border border-[#182849] bg-[#070d1d]">
+            <div className="border-b border-[#182849] px-3 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                Case quick info
+              </p>
+            </div>
+            <dl className="divide-y divide-[#111e36] px-3">
+              {quickInfo.map(([label, value]) => (
+                <div key={label} className="py-2">
+                  <dt className="text-[7px] font-semibold uppercase tracking-[0.11em] text-slate-600">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 break-words text-[9px] leading-4 text-slate-300">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </div>
+
+        <div className="mt-auto shrink-0 border-t border-[#182849] p-3">
+          <p className="text-[8px] font-bold uppercase tracking-[0.13em] text-slate-600">
+            System status
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-[9px] font-semibold text-[#6fa8ff]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#4d8cf5] shadow-[0_0_9px_rgba(77,140,245,0.7)]" />
+            All local services operational
           </div>
-          <p className="mt-1 text-[8px] text-slate-600">{summary.totalCases} cases · {summary.reconstructionCount} reconstructions</p>
         </div>
       </aside>
 
-      {mobileOpen && <button aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && (
+        <button
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-black/65 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-      <div className="lg:pl-[228px]">
-        <header className="sticky top-0 z-30 border-b border-[#18243f] bg-[#070b19]/95 backdrop-blur">
-          <div className="flex h-16 items-center gap-3 px-4 lg:px-6">
-            <button className="ui-icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={19} /></button>
-            <div className="relative hidden max-w-md flex-1 md:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
-              <input
-                className="ui-input h-9 w-full pl-9"
-                placeholder="Search cases, evidence, locations..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-              />
-              {searchQuery.trim().length >= 2 && (
-                <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-md border border-[#1d2c4b] bg-[#080e1c] shadow-2xl">
-                  {searchResults.length ? searchResults.map((result) => (
-                    <Link
-                      key={result.id}
-                      to={result.to}
-                      onClick={() => setSearchQuery("")}
-                      className="block border-b border-[#17243d] px-3 py-2.5 last:border-b-0 hover:bg-[#10182d]"
-                    >
-                      <span className="block text-[10px] font-semibold text-slate-200">{result.title}</span>
-                      <span className="mt-1 block truncate text-[8px] text-slate-600">{result.detail}</span>
-                    </Link>
-                  )) : (
-                    <p className="px-3 py-4 text-center text-[9px] text-slate-600">No matching stored records.</p>
-                  )}
-                </div>
-              )}
+      <div className="lg:pl-[214px]">
+        <header className="sticky top-0 z-30 border-b border-[#182849] bg-[#040918]/96 backdrop-blur">
+          <div className="flex min-h-[68px] items-center gap-3 px-3 sm:px-4 lg:px-5">
+            <button
+              className="ui-icon-button lg:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu size={18} />
+            </button>
+
+            <div className="min-w-0 border-l border-[#244b7f] pl-4">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-300">
+                Case: {activeCase?.caseNumber ?? "No active case"}
+              </p>
+              <p className="mt-1 truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-[#6fa8ff]">
+                Status: {activeCase?.status ?? "Workspace ready"}
+              </p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Link to="/cases" className="ui-icon-button relative" aria-label={`${summary.activeCases} active cases`} title={`${summary.activeCases} active cases`}>
-                <Bell size={17} />
-                {summary.activeCases > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full border border-[#29446f] bg-[#173c78] px-1 text-center text-[8px] font-bold text-white">{summary.activeCases}</span>}
+
+            <div className="ml-auto flex items-center gap-1.5">
+              <Link to="/" className="ui-icon-button hidden sm:grid" aria-label="Dashboard">
+                <AppWindow size={16} />
               </Link>
-              <div className="relative">
-                <button className="flex items-center gap-2 rounded-md border border-[#1d2c4b] bg-[#0b1122] px-2.5 py-1.5 text-left transition-colors hover:bg-[#10182d]" onClick={() => setProfileOpen((value) => !value)}>
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#182642] text-xs font-bold text-[#9bc1ff]">{initials}</span>
-                  <span className="hidden sm:block">
-                    <span className="block text-[11px] font-bold text-slate-200">{investigatorName}</span>
-                    <span className="block text-[9px] text-slate-500">Investigator</span>
+              <Link
+                to="/cases"
+                className="ui-icon-button relative hidden sm:grid"
+                aria-label={`${summary.activeCases} active cases`}
+              >
+                <Bell size={16} />
+                {summary.activeCases > 0 && (
+                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full border border-[#315786] bg-[#153f79] px-1 text-center text-[7px] font-bold text-white">
+                    {summary.activeCases}
                   </span>
-                  <ChevronDown size={14} className="text-slate-500" />
+                )}
+              </Link>
+              <Link to="/settings" className="ui-icon-button hidden sm:grid" aria-label="Settings">
+                <Settings size={16} />
+              </Link>
+
+              <div className="hidden border-l border-[#182849] px-3 text-right sm:block">
+                <p className="font-mono text-[10px] font-semibold text-slate-300">
+                  {now.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </p>
+                <p className="mt-1 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                  {now.toLocaleDateString([], {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+
+              <div className="relative">
+                <button
+                  className="flex min-h-10 items-center gap-2 rounded-md border border-[#1d3155] bg-[#071124] px-2.5 py-1.5 text-left transition-colors duration-100 hover:bg-[#0a1730]"
+                  onClick={() => setProfileOpen((value) => !value)}
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md border border-[#284b7e] bg-[#102344] text-[10px] font-bold text-[#9bc1ff]">
+                    {initials}
+                  </span>
+                  <span className="hidden md:block">
+                    <span className="block text-[8px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      Investigator
+                    </span>
+                    <span className="mt-0.5 block max-w-32 truncate text-[9px] font-semibold text-slate-200">
+                      {investigatorName}
+                    </span>
+                  </span>
+                  <ChevronDown size={13} className="text-slate-500" />
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-44 rounded-md border border-[#1d2c4b] bg-[#0a1020] p-1.5 shadow-2xl">
-                    <Link to="/cases" onClick={() => setProfileOpen(false)} className="block w-full rounded px-3 py-2 text-left text-xs text-slate-300 hover:bg-[#111b35]">Investigator cases</Link>
-                    <Link to="/settings" onClick={() => setProfileOpen(false)} className="block w-full rounded px-3 py-2 text-left text-xs text-slate-300 hover:bg-[#111b35]">Workspace settings</Link>
+                  <div className="absolute right-0 mt-2 w-44 rounded-md border border-[#1d3155] bg-[#071124] p-1.5 shadow-2xl">
+                    <Link
+                      to="/cases"
+                      onClick={() => setProfileOpen(false)}
+                      className="block rounded px-3 py-2 text-[10px] text-slate-300 hover:bg-[#0d1c37]"
+                    >
+                      Investigator cases
+                    </Link>
+                    <Link
+                      to="/settings"
+                      onClick={() => setProfileOpen(false)}
+                      className="block rounded px-3 py-2 text-[10px] text-slate-300 hover:bg-[#0d1c37]"
+                    >
+                      Workspace settings
+                    </Link>
                   </div>
                 )}
               </div>
@@ -194,11 +300,15 @@ export default function AppShell() {
         </header>
 
         <main>
-          <div className="border-b border-[#14213a] bg-[#070c1a] px-4 py-4 lg:px-6">
-            <h1 className="text-lg font-bold tracking-tight text-slate-100">{title}</h1>
-            <p className="mt-1 text-xs text-slate-500">{description}</p>
+          {!isDashboard && (
+            <div className="border-b border-[#14213a] bg-[#050b18] px-4 py-3.5 lg:px-5">
+              <h1 className="text-base font-bold tracking-tight text-slate-100">{title}</h1>
+              <p className="mt-1 text-[10px] text-slate-500">{description}</p>
+            </div>
+          )}
+          <div className={isDashboard ? "p-2.5 sm:p-3" : "p-3 sm:p-4 lg:p-5"}>
+            <Outlet />
           </div>
-          <div className="p-3 sm:p-4 lg:p-5"><Outlet /></div>
         </main>
       </div>
     </div>

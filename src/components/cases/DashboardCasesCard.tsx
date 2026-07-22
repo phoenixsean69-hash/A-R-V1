@@ -24,20 +24,20 @@ export default function DashboardCasesCard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="rounded-xl bg-white/10 px-4 py-3 text-center">
+          <div className="rounded-sm bg-white/10 px-4 py-3 text-center">
             <p className="text-2xl font-black">{activeCases}</p>
             <p className="text-xs text-blue-100">Active cases</p>
           </div>
           <Link
             to="/cases"
-            className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-900 transition hover:bg-blue-50"
+            className="rounded-sm bg-white px-5 py-3 text-sm font-bold text-blue-900 transition hover:bg-blue-50"
           >
             Open Cases
           </Link>
 
           <Link
             to="cases/new"
-            className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20"
+            className="rounded-sm border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20"
           >
             + New Case
           </Link>

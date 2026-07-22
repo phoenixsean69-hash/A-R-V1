@@ -33,7 +33,7 @@ function MetricCard({
   description,
 }: MetricCardProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
         {label}
       </p>
@@ -137,7 +137,7 @@ function BreakdownChart({
     );
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-sm border border-gray-200 bg-white p-5">
       <h3 className="font-bold text-gray-900">
         {title}
       </h3>
@@ -236,7 +236,7 @@ export default function JunctionAnalysisModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-6 rounded-xl bg-red-600 px-7 py-3 font-semibold text-white"
+            className="mt-6 rounded-sm bg-red-600 px-7 py-3 font-semibold text-white"
           >
             Close
           </button>
@@ -303,7 +303,7 @@ export default function JunctionAnalysisModal({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-xl bg-red-600 px-6 py-3 text-base font-bold text-white shadow-md transition hover:bg-red-700 active:scale-95"
+            className="shrink-0 rounded-sm bg-red-600 px-6 py-3 text-base font-bold text-white shadow-md transition hover:bg-red-700 active:scale-95"
           >
             Close
           </button>
@@ -349,7 +349,7 @@ export default function JunctionAnalysisModal({
               (item) => (
                 <div
                   key={item.label}
-                  className="rounded-xl border border-gray-200 bg-white p-5"
+                  className="rounded-sm border border-gray-200 bg-white p-5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span
@@ -378,7 +378,7 @@ export default function JunctionAnalysisModal({
           </div>
 
           {/* Monthly trend */}
-          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
+          <div className="mt-6 rounded-sm border border-gray-200 bg-white p-5">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
                 Accident Trend by Month
@@ -468,7 +468,7 @@ export default function JunctionAnalysisModal({
           </div>
 
           {/* Time analysis */}
-          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
+          <div className="mt-6 rounded-sm border border-gray-200 bg-white p-5">
             <h3 className="text-lg font-bold text-gray-900">
               High-Risk Times of Day
             </h3>
@@ -480,7 +480,7 @@ export default function JunctionAnalysisModal({
                     key={
                       period.label
                     }
-                    className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                    className="rounded-sm border border-gray-200 bg-gray-50 p-4"
                   >
                     <p className="font-bold text-gray-900">
                       {period.label}
@@ -529,7 +529,7 @@ export default function JunctionAnalysisModal({
                     key={
                       recommendation.id
                     }
-                    className="rounded-xl border border-gray-200 bg-white p-5"
+                    className="rounded-sm border border-gray-200 bg-white p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <h4 className="font-bold text-gray-900">
@@ -581,7 +581,7 @@ export default function JunctionAnalysisModal({
           </div>
 
           {/* Recent accident records */}
-          <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-white">
             <div className="border-b border-gray-200 p-5">
               <h3 className="text-lg font-bold text-gray-900">
                 Recent Accident Records

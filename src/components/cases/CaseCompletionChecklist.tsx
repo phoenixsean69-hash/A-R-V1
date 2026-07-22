@@ -43,7 +43,7 @@ export default function CaseCompletionChecklist({
         {completion.checks.map((check) => (
           <div
             key={check.key}
-            className={`rounded-xl border p-3 ${
+            className={`rounded-sm border p-3 ${
               check.complete
                 ? "border-emerald-200 bg-emerald-50"
                 : "border-amber-200 bg-amber-50"

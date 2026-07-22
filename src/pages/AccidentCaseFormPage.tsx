@@ -61,7 +61,7 @@ export default function AccidentCaseFormPage() {
 
           <Link
             to={existing ? `/cases/${existing.id}` : "/cases"}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700"
+            className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700"
           >
             ← Back
           </Link>

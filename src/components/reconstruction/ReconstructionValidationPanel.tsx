@@ -53,16 +53,16 @@ function ReconstructionValidationPanel({
             </p>
           </div>
           <div className="flex gap-2">
-            <span className="rounded-xl bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{criticalCount}</strong><span className="text-[10px] uppercase">Critical</span></span>
-            <span className="rounded-xl bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{warningCount}</strong><span className="text-[10px] uppercase">Warnings</span></span>
-            <span className="rounded-xl bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{result.passedChecks}/{result.totalChecks}</strong><span className="text-[10px] uppercase">Checks passed</span></span>
+            <span className="rounded-sm bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{criticalCount}</strong><span className="text-[10px] uppercase">Critical</span></span>
+            <span className="rounded-sm bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{warningCount}</strong><span className="text-[10px] uppercase">Warnings</span></span>
+            <span className="rounded-sm bg-white/10 px-4 py-3 text-center"><strong className="block text-xl">{result.passedChecks}/{result.totalChecks}</strong><span className="text-[10px] uppercase">Checks passed</span></span>
           </div>
         </div>
       </div>
 
       <div className="grid gap-5 p-5 xl:grid-cols-[0.75fr_1.25fr]">
         <div className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-black text-gray-950">Calculation assumptions</h3>
               <select value={unitSystem} onChange={(event) => setUnitSystem(event.target.value as UnitSystem)} className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs font-bold">
@@ -87,9 +87,9 @@ function ReconstructionValidationPanel({
             <h3 className="font-black text-gray-950">Validation findings</h3>
             <div className="mt-3 space-y-2">
               {result.issues.length === 0 ? (
-                <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">No conflicts detected under the selected assumptions.</p>
+                <p className="rounded-sm border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">No conflicts detected under the selected assumptions.</p>
               ) : result.issues.map((issue) => (
-                <div key={issue.id} className={`rounded-xl border p-3 ${severityStyles[issue.severity]}`}>
+                <div key={issue.id} className={`rounded-sm border p-3 ${severityStyles[issue.severity]}`}>
                   <div className="flex items-center justify-between gap-2"><strong className="text-sm">{issue.title}</strong><span className="rounded-full bg-white/70 px-2 py-0.5 text-[9px] font-black uppercase">{issue.severity}</span></div>
                   <p className="mt-1 text-xs leading-5 opacity-80">{issue.detail}</p>
                 </div>
@@ -101,11 +101,11 @@ function ReconstructionValidationPanel({
         <div>
           <h3 className="font-black text-gray-950">Participant calculations</h3>
           {result.participants.length === 0 ? (
-            <p className="mt-3 rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">Add a participant to begin validation.</p>
+            <p className="mt-3 rounded-sm border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">Add a participant to begin validation.</p>
           ) : (
             <div className="mt-3 grid gap-4 lg:grid-cols-2">
               {result.participants.map((metrics) => (
-                <article key={metrics.participantId} className="rounded-xl border border-gray-200 p-4">
+                <article key={metrics.participantId} className="rounded-sm border border-gray-200 p-4">
                   <div className="flex items-center justify-between gap-2"><h4 className="font-black text-gray-950">{metrics.participantName}</h4><span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600">Impact {formatSpeed(metrics.impactSpeedKmh)}</span></div>
                   <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
                     <div><dt className="text-gray-500">Total path</dt><dd className="mt-1 font-black text-gray-900">{formatDistance(metrics.pathDistanceMetres)}</dd></div>
@@ -124,7 +124,7 @@ function ReconstructionValidationPanel({
               ))}
             </div>
           )}
-          <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-xs leading-5 text-gray-600">
+          <div className="mt-4 rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs leading-5 text-gray-600">
             <strong className="text-gray-900">Interpretation notice:</strong> these are screening calculations, not certified conclusions. Distances come from the calibrated scene; confidence ranges vary reaction time by ±0.5 s and friction by ±0.12. Record measured road drag, gradient, ABS behaviour and expert assumptions before relying on results in a formal report.
           </div>
         </div>

@@ -79,26 +79,26 @@ function ReconstructionScenarioWorkspace({ reconstruction, onLoadScenario }: Rec
             <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100">Preserve the working reconstruction, test alternatives, link assumptions to evidence and document why a scenario was accepted or rejected.</p>
           </div>
           <div className="flex min-w-[280px] gap-2">
-            <input value={newScenarioName} onChange={(event) => setNewScenarioName(event.target.value)} placeholder={`Scenario ${String.fromCharCode(65 + scenarios.length)}`} className="min-w-0 flex-1 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-indigo-300" />
+            <input value={newScenarioName} onChange={(event) => setNewScenarioName(event.target.value)} placeholder={`Scenario ${String.fromCharCode(65 + scenarios.length)}`} className="min-w-0 flex-1 rounded-sm border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-indigo-300" />
             <button type="button" onClick={() => {
               const created = ReconstructionScenarioService.create(reconstruction, newScenarioName || `Scenario ${String.fromCharCode(65 + scenarios.length)}`);
               setSelectedScenarioId(created.id);
               setNewScenarioName("");
               refresh();
-            }} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-indigo-950">Save Current as Scenario</button>
+            }} className="rounded-sm bg-white px-4 py-2 text-xs font-black text-indigo-950">Save Current as Scenario</button>
           </div>
         </div>
       </div>
 
       <div className="p-5">
         {scenarios.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-indigo-300 bg-indigo-50 p-7 text-center text-sm text-indigo-900">Create Scenario A from the current reconstruction, then change the working speeds, timing, braking point or heading and save another scenario for comparison.</p>
+          <p className="rounded-sm border border-dashed border-indigo-300 bg-indigo-50 p-7 text-center text-sm text-indigo-900">Create Scenario A from the current reconstruction, then change the working speeds, timing, braking point or heading and save another scenario for comparison.</p>
         ) : (
           <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
             <div className="space-y-3">
               <h3 className="font-black text-gray-950">Saved scenarios</h3>
               {comparisons.map(({ scenario, metrics }) => (
-                <button key={scenario.id} type="button" onClick={() => setSelectedScenarioId(scenario.id)} className={`w-full rounded-xl border p-4 text-left transition ${selectedScenarioId === scenario.id ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-gray-200 hover:bg-gray-50"}`}>
+                <button key={scenario.id} type="button" onClick={() => setSelectedScenarioId(scenario.id)} className={`w-full rounded-sm border p-4 text-left transition ${selectedScenarioId === scenario.id ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-gray-200 hover:bg-gray-50"}`}>
                   <div className="flex items-center justify-between gap-3"><strong className="text-sm text-gray-950">{scenario.name}</strong><span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${scenario.preferred ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-600"}`}>{scenario.preferred ? "Preferred" : scenario.status}</span></div>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"><span className="rounded-lg bg-red-50 p-2 text-red-800"><strong className="block text-base">{metrics.critical}</strong>Critical</span><span className="rounded-lg bg-amber-50 p-2 text-amber-900"><strong className="block text-base">{metrics.warnings}</strong>Warnings</span><span className="rounded-lg bg-sky-50 p-2 text-sky-900"><strong className="block text-base">{metrics.impactSpread?.toFixed(2) ?? "—"}s</strong>Impact spread</span></div>
                   <p className="mt-3 text-[11px] text-gray-500">{metrics.participants.map((participant) => `${participant.participantName}: ${participant.impactSpeedKmh.toFixed(0)} km/h impact`).join(" · ") || "No participants"}</p>
@@ -107,7 +107,7 @@ function ReconstructionScenarioWorkspace({ reconstruction, onLoadScenario }: Rec
             </div>
 
             {selected && (
-              <div className="space-y-4 rounded-xl border border-gray-200 p-4">
+              <div className="space-y-4 rounded-sm border border-gray-200 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <input value={selected.name} onChange={(event) => updateSelected({ name: event.target.value })} className="min-w-[180px] flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold" />
                   <select value={selected.status} onChange={(event) => updateSelected({ status: event.target.value as ScenarioStatus })} className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold">{STATUSES.map((status) => <option key={status}>{status}</option>)}</select>
@@ -127,7 +127,7 @@ function ReconstructionScenarioWorkspace({ reconstruction, onLoadScenario }: Rec
                   <div className="mt-3 space-y-2">{selected.assumptions.map((assumption) => <div key={assumption.id} className="flex items-start justify-between gap-3 rounded-lg bg-gray-50 p-3"><div><p className="text-xs font-black text-gray-900">{assumption.label}: {assumption.value}</p><p className="mt-1 text-[10px] text-gray-500">{assumption.classification} · {assumption.evidenceRecordIds.length} linked evidence item(s)</p></div><button type="button" onClick={() => updateSelected({ assumptions: selected.assumptions.filter((item) => item.id !== assumption.id) })} className="text-[10px] font-black text-red-600">Remove</button></div>)}</div>
                 </div>
 
-                <label className="block"><span className="text-xs font-black text-gray-700">Acceptance/rejection conclusion</span><textarea value={selected.conclusion} onChange={(event) => updateSelected({ conclusion: event.target.value })} rows={4} placeholder="State why this scenario is supported, disputed, accepted or rejected…" className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm" /></label>
+                <label className="block"><span className="text-xs font-black text-gray-700">Acceptance/rejection conclusion</span><textarea value={selected.conclusion} onChange={(event) => updateSelected({ conclusion: event.target.value })} rows={4} placeholder="State why this scenario is supported, disputed, accepted or rejected…" className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm" /></label>
               </div>
             )}
           </div>

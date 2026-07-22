@@ -52,7 +52,7 @@ export default function SceneObjectPalette({
       </div>
 
       {activeType && (
-        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+        <div className="mt-3 rounded-sm border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
           <p>
             Placement tool active: <strong>{activeType}</strong>. Click the scene
             for manual placement, or walk to its real position and use GPS.
@@ -87,7 +87,7 @@ export default function SceneObjectPalette({
                     type="button"
                     onClick={() => onToolSelect(item.type)}
                     title={item.description}
-                    className={`rounded-xl border p-2 text-left transition ${
+                    className={`rounded-sm border p-2 text-left transition ${
                       activeType === item.type
                         ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
                         : "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/50"
@@ -135,7 +135,7 @@ export default function SceneObjectPalette({
                 key={object.id}
                 type="button"
                 onClick={() => onSelectObject(object.id)}
-                className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left ${
+                className={`flex w-full items-center gap-3 rounded-sm border p-2.5 text-left ${
                   selectedObjectId === object.id
                     ? "border-purple-500 bg-purple-50"
                     : "border-gray-200 hover:bg-gray-50"
@@ -164,7 +164,7 @@ export default function SceneObjectPalette({
           })}
 
           {objects.length === 0 && (
-            <p className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-xs text-gray-500">
+            <p className="rounded-sm border border-dashed border-gray-300 p-4 text-center text-xs text-gray-500">
               No hazards, evidence or infrastructure have been placed yet.
             </p>
           )}

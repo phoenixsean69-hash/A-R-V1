@@ -204,7 +204,7 @@ export default function FieldSceneLivePreview({
           </div>
         )}
 
-        <div className="absolute bottom-3 left-3 z-50 max-w-[80%] rounded-xl bg-slate-950/80 px-3 py-2 text-[11px] font-semibold text-white backdrop-blur-sm">
+        <div className="absolute bottom-3 left-3 z-50 max-w-[80%] rounded-sm bg-slate-950/80 px-3 py-2 text-[11px] font-semibold text-white backdrop-blur-sm">
           {selectedTarget
             ? `Selected target: ${selectedTarget.label}. The cyan GPS marker moves across the same calibrated scene in real time.`
             : "Select a placement target to compare its stored position with the live GPS position."}

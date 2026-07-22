@@ -34,7 +34,7 @@ export default function AccidentReportPage() {
       <div className="no-print mx-auto mb-5 flex max-w-5xl flex-wrap items-center justify-between gap-3">
         <Link
           to={`/cases/${accidentCase.id}`}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700"
+          className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700"
         >
           ← Back to Case
         </Link>
@@ -43,21 +43,21 @@ export default function AccidentReportPage() {
           <button
             type="button"
             onClick={() => window.print()}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
+            className="rounded-sm bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
           >
             Print / Save PDF
           </button>
           <button
             type="button"
             onClick={() => AccidentReportService.downloadWord(report)}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white"
+            className="rounded-sm bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white"
           >
             Download Word
           </button>
           <button
             type="button"
             onClick={() => AccidentReportService.downloadJson(report)}
-            className="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-bold text-white"
+            className="rounded-sm bg-slate-800 px-4 py-2.5 text-sm font-bold text-white"
           >
             Export JSON
           </button>
@@ -65,7 +65,7 @@ export default function AccidentReportPage() {
       </div>
 
       {!completion.complete && (
-        <div className="no-print mx-auto mb-5 max-w-5xl rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="no-print mx-auto mb-5 max-w-5xl rounded-sm border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           <p className="font-black">This report is based on an incomplete reconstruction.</p>
           <p className="mt-1 leading-6">
             {completion.completedCount} of {completion.totalCount} completion checks currently pass.
@@ -101,7 +101,7 @@ export default function AccidentReportPage() {
           </p>
         </header>
 
-        <section className="mt-6 grid gap-3 rounded-xl bg-slate-50 p-5 text-sm sm:grid-cols-2">
+        <section className="mt-6 grid gap-3 rounded-sm bg-slate-50 p-5 text-sm sm:grid-cols-2">
           <p><strong>Case Number:</strong> {accidentCase.caseNumber}</p>
           <p><strong>Status:</strong> {accidentCase.status}</p>
           <p><strong>Date:</strong> {accidentCase.accidentDate}</p>
@@ -225,7 +225,7 @@ export default function AccidentReportPage() {
 
         <ReportSection title="Field GPS Placement Audit">
           {reconstruction?.fieldCalibration ? (
-            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+            <div className="mb-4 rounded-sm border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
               <p className="font-black">Physical scene calibration</p>
               <p className="mt-1">Road bearing: {reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}° · Direction reference: {reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(1)}m · Y-axis side: {reconstruction.fieldCalibration.yAxisSide}</p>
               <p className="mt-1 text-xs">Captured by {reconstruction.fieldCalibration.createdBy || "Not recorded"} on {new Date(reconstruction.fieldCalibration.createdAt).toLocaleString()}.</p>
@@ -255,7 +255,7 @@ export default function AccidentReportPage() {
           {reconstruction && reconstruction.photos.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {reconstruction.photos.map((photo, index) => (
-                <figure key={photo.id} className="rounded-xl border border-slate-200 p-3">
+                <figure key={photo.id} className="rounded-sm border border-slate-200 p-3">
                   <img
                     src={photo.dataUrl || photo.thumbnailDataUrl}
                     alt={photo.caption || photo.filename}
@@ -278,7 +278,7 @@ export default function AccidentReportPage() {
               {report.footage.map((footage) => (
                 <div
                   key={footage.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200 bg-slate-50 p-4"
                 >
                   <div>
                     <p className="font-black text-slate-900">

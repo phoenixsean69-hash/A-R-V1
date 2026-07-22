@@ -57,7 +57,7 @@ export default function HeatmapFilterPanel({
   };
 
   return (
-    <div className="w-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="w-full rounded-sm border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold text-gray-900">

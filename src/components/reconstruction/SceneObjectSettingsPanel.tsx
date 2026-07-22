@@ -65,7 +65,7 @@ export default function SceneObjectSettingsPanel({
           <input
             value={object.label}
             onChange={(event) => onChange({ label: event.target.value })}
-            className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
           />
         </label>
 
@@ -78,7 +78,7 @@ export default function SceneObjectSettingsPanel({
                 severity: event.target.value as SceneObjectSeverity,
               })
             }
-            className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
           >
             {SEVERITY_OPTIONS.map((severity) => (
               <option key={severity} value={severity}>
@@ -170,7 +170,7 @@ export default function SceneObjectSettingsPanel({
               onChange={(event) =>
                 onChange({ speedLimitKmh: Number(event.target.value) })
               }
-              className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+              className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
             />
           </label>
         )}
@@ -187,13 +187,13 @@ export default function SceneObjectSettingsPanel({
               onChange={(event) =>
                 onChange({ evidenceNumber: Number(event.target.value) })
               }
-              className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
+              className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
             />
           </label>
         )}
 
         {traceable && (
-          <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+          <div className="rounded-sm border border-purple-200 bg-purple-50 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-bold text-purple-900">Curved trace</p>
@@ -288,7 +288,7 @@ export default function SceneObjectSettingsPanel({
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
             <span className="text-sm font-medium text-gray-700">Visible</span>
             <input
               type="checkbox"
@@ -298,7 +298,7 @@ export default function SceneObjectSettingsPanel({
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+          <label className="flex items-center justify-between rounded-sm border border-gray-200 p-3">
             <span className="text-sm font-medium text-gray-700">Locked</span>
             <input
               type="checkbox"
@@ -316,11 +316,11 @@ export default function SceneObjectSettingsPanel({
             onChange={(event) => onChange({ notes: event.target.value })}
             rows={4}
             placeholder="Measurements, condition, source of evidence, or officer observations..."
-            className="mt-1.5 w-full resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
           />
         </label>
 
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Position
           </p>
@@ -377,7 +377,7 @@ export default function SceneObjectSettingsPanel({
           </p>
         </div>
 
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-sm font-black text-emerald-950">
             Place from real location
           </p>
@@ -398,7 +398,7 @@ export default function SceneObjectSettingsPanel({
           <button
             type="button"
             onClick={onDuplicate}
-            className="rounded-xl border border-purple-300 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-100"
+            className="rounded-sm border border-purple-300 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-100"
           >
             Duplicate
           </button>
@@ -406,7 +406,7 @@ export default function SceneObjectSettingsPanel({
           <button
             type="button"
             onClick={onDelete}
-            className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
+            className="rounded-sm border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
           >
             Delete
           </button>

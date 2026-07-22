@@ -215,7 +215,7 @@ export default function CaseForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="rounded-sm bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {submitting ? "Saving..." : submitLabel}
         </button>
@@ -245,7 +245,7 @@ function Field({
 }
 
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
+  return `w-full rounded-sm border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-100"
       : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
