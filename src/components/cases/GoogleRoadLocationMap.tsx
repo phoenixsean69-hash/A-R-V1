@@ -20,7 +20,7 @@ import type {
   GoogleStreetViewPanorama,
 } from "../../services/googleMapsLoader";
 import {
-  getGoogleMapsMapId,
+  getGoogleMapsRuntimeMapId,
   getPreferredGoogleMapType,
   setPreferredGoogleMapType,
 } from "../../services/mapPreferencesService";
@@ -250,7 +250,7 @@ export default function GoogleRoadLocationMap({
           minZoom: 3,
           maxZoom: 22,
           mapTypeId: MAP_TYPE_IDS[initialMapTypeRef.current],
-          mapId: getGoogleMapsMapId(),
+          mapId: getGoogleMapsRuntimeMapId(),
           gestureHandling: "greedy",
           fullscreenControl: true,
           mapTypeControl: false,
@@ -520,7 +520,7 @@ export default function GoogleRoadLocationMap({
 
       <div className={streetViewOpen ? "grid md:grid-cols-2" : "grid"}>
         <div className="relative min-h-[360px]">
-          <div ref={mapContainerRef} className="absolute inset-0" />
+          <div ref={mapContainerRef} className="roadsafe-google-map absolute inset-0" />
           {!ready && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50 text-sm font-black text-white">
               Loading Google Maps…
@@ -540,7 +540,7 @@ export default function GoogleRoadLocationMap({
 
         {streetViewOpen && (
           <div className="relative min-h-[360px] border-l border-slate-200">
-            <div ref={panoramaContainerRef} className="absolute inset-0" />
+            <div ref={panoramaContainerRef} className="roadsafe-google-map absolute inset-0" />
             <button
               type="button"
               onClick={() => setStreetViewOpen(false)}

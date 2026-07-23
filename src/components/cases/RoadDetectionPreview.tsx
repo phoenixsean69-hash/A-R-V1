@@ -57,7 +57,7 @@ export default function RoadDetectionPreview({
         <div className="border-b border-slate-200 px-4 py-3">
           <h3 className="font-black text-slate-900">Detected map geometry</h3>
           <p className="mt-1 text-xs text-slate-500">
-            Nearby OpenStreetMap roads normalised around the officer’s confirmed position.
+            Google road context normalised around the officer’s confirmed position.
           </p>
         </div>
 

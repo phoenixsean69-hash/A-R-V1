@@ -5,14 +5,32 @@ export interface GoogleLatLngLiteral {
   lng: number;
 }
 
+export interface GooglePoint {
+  x: number;
+  y: number;
+}
+
 export interface GoogleLatLng {
   lat(): number;
   lng(): number;
 }
 
+export interface GoogleMapsListener {
+  remove(): void;
+}
+
+export interface GoogleLatLngBounds {
+  extend(position: GoogleLatLngLiteral | GoogleLatLng): GoogleLatLngBounds;
+  getNorthEast(): GoogleLatLng;
+  getSouthWest(): GoogleLatLng;
+  isEmpty(): boolean;
+}
+
 export interface GoogleMapsMap {
-  fitBounds(bounds: GoogleLatLngBounds, padding?: number | Record<string, number>): void;
+  fitBounds(bounds: GoogleLatLngBounds | unknown, padding?: number | Record<string, number>): void;
+  getBounds(): GoogleLatLngBounds | null | undefined;
   getCenter(): GoogleLatLng | null;
+  getDiv(): HTMLElement;
   getHeading(): number | undefined;
   getMapTypeId(): string | undefined;
   getStreetView(): GoogleStreetViewPanorama;
@@ -24,15 +42,6 @@ export interface GoogleMapsMap {
   setOptions(options: Record<string, unknown>): void;
   setZoom(zoom: number): void;
   addListener(eventName: string, handler: (...args: unknown[]) => void): GoogleMapsListener;
-}
-
-export interface GoogleMapsListener {
-  remove(): void;
-}
-
-export interface GoogleLatLngBounds {
-  extend(position: GoogleLatLngLiteral): GoogleLatLngBounds;
-  isEmpty(): boolean;
 }
 
 export interface GoogleDataFeature {
@@ -79,11 +88,70 @@ export interface GoogleMaxZoomService {
   ): void;
 }
 
+export interface GoogleRectangle {
+  getBounds(): GoogleLatLngBounds | null;
+  setBounds(bounds: Record<string, number> | GoogleLatLngBounds): void;
+  setMap(map: GoogleMapsMap | null): void;
+  setOptions(options: Record<string, unknown>): void;
+  addListener(eventName: string, handler: (...args: unknown[]) => void): GoogleMapsListener;
+}
+
+export interface GoogleInfoWindow {
+  close(): void;
+  open(options: Record<string, unknown>): void;
+  setContent(content: string | Element): void;
+  setPosition(position: GoogleLatLngLiteral): void;
+}
+
+export interface GoogleMapPanes {
+  overlayLayer: HTMLElement;
+  overlayMouseTarget: HTMLElement;
+}
+
+export interface GoogleMapCanvasProjection {
+  fromLatLngToDivPixel(position: GoogleLatLng): GooglePoint | null;
+}
+
+export interface GoogleOverlayView {
+  draw: () => void;
+  onAdd: () => void;
+  onRemove: () => void;
+  getMap(): GoogleMapsMap | null;
+  getPanes(): GoogleMapPanes | null;
+  getProjection(): GoogleMapCanvasProjection;
+  setMap(map: GoogleMapsMap | null): void;
+}
+
+export interface GoogleGeocoderResult {
+  formatted_address?: string;
+  types?: string[];
+  address_components?: Array<{
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
+  geometry?: {
+    location?: GoogleLatLng;
+    viewport?: GoogleLatLngBounds;
+  };
+}
+
+export interface GoogleGeocoder {
+  geocode(
+    request: Record<string, unknown>,
+  ): Promise<{ results: GoogleGeocoderResult[] }>;
+}
+
 export interface GoogleMapsNamespace {
   Data: new (options?: Record<string, unknown>) => GoogleDataLayer;
+  Geocoder: new () => GoogleGeocoder;
+  InfoWindow: new (options?: Record<string, unknown>) => GoogleInfoWindow;
+  LatLng: new (lat: number, lng: number) => GoogleLatLng;
   LatLngBounds: new () => GoogleLatLngBounds;
   Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMapsMap;
   MaxZoomService: new () => GoogleMaxZoomService;
+  OverlayView: new () => GoogleOverlayView;
+  Rectangle: new (options?: Record<string, unknown>) => GoogleRectangle;
   StreetViewPanorama: new (
     element: HTMLElement,
     options: Record<string, unknown>,
@@ -148,7 +216,7 @@ export async function loadGoogleMaps(): Promise<GoogleMapsNamespace> {
   const apiKey = getGoogleMapsBrowserKey();
   if (!apiKey) {
     throw new Error(
-      "Google Maps is not configured. Add VITE_GOOGLE_MAPS_BROWSER_KEY.",
+      "Google Maps is not configured. Add VITE_GOOGLE_MAPS_BROWSER_KEY to .env.local.",
     );
   }
 
@@ -159,8 +227,10 @@ export async function loadGoogleMaps(): Promise<GoogleMapsNamespace> {
   const maps = await window.__roadsafeGoogleMapsLoader;
   await Promise.all([
     maps.importLibrary("maps"),
+    maps.importLibrary("marker"),
     maps.importLibrary("places"),
     maps.importLibrary("streetView"),
+    maps.importLibrary("geocoding"),
   ]);
   return maps;
 }
@@ -174,4 +244,20 @@ export function latLngLiteral(
 export function mapCenterLiteral(map: GoogleMapsMap): GoogleLatLngLiteral | null {
   const center = map.getCenter();
   return center ? { lat: center.lat(), lng: center.lng() } : null;
+}
+
+export function googleBoundsToLiteral(bounds: GoogleLatLngBounds): {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+} {
+  const northEast = bounds.getNorthEast();
+  const southWest = bounds.getSouthWest();
+  return {
+    north: northEast.lat(),
+    east: northEast.lng(),
+    south: southWest.lat(),
+    west: southWest.lng(),
+  };
 }

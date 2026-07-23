@@ -24,9 +24,7 @@ import {
   Expand,
   FileSearch,
   Image as ImageIcon,
-  Globe2,
   Layers3,
-  Map as MapIcon,
   Move,
   Pause,
   Play,
@@ -41,8 +39,6 @@ import {
 } from "lucide-react";
 
 import { ReconstructionService } from "../../services/reconstructionService";
-import { useMapProviderPreference } from "../../hooks/useMapProviderPreference";
-import { isGoogleMapsConfigured } from "../../services/mapPreferencesService";
 import { FieldPlacementService } from "../../services/fieldPlacementService";
 import {
   DEFAULT_PHYSICS_SETTINGS,
@@ -908,8 +904,6 @@ export default function AccidentReconstructionEditor({
     useState<InvestigationDetailView>(null);
   const [sceneView, setSceneView] = useState({ zoom: 0.92, panX: 0, panY: 0 });
   const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>(reconstruction.fieldCalibration ? "Satellite" : "Diagram");
-  const [mapProvider, setMapProvider] = useMapProviderPreference();
-  const googleMapsConfigured = isGoogleMapsConfigured();
   const [routeDrawingParticipantId, setRouteDrawingParticipantId] = useState<string | null>(null);
   const [historyAvailability, setHistoryAvailability] = useState({
     canUndo: false,
@@ -3565,24 +3559,9 @@ export default function AccidentReconstructionEditor({
                   ))}
                 </div>
                 {basemapMode !== "Diagram" && (
-                  <div className="flex rounded-md border border-[#1d2c4b] bg-[#070c18] p-1">
-                    <button
-                      type="button"
-                      onClick={() => setMapProvider("Open Map")}
-                      className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-bold ${mapProvider === "Open Map" ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
-                    >
-                      <MapIcon size={11} /> Open
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!googleMapsConfigured}
-                      onClick={() => setMapProvider("Google")}
-                      title={googleMapsConfigured ? "Use Google imagery for the reconstruction basemap." : "Add VITE_GOOGLE_MAPS_BROWSER_KEY to enable Google Maps."}
-                      className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-bold disabled:cursor-not-allowed disabled:opacity-35 ${mapProvider === "Google" && googleMapsConfigured ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
-                    >
-                      <Globe2 size={11} /> Google
-                    </button>
-                  </div>
+                  <span className="rounded-md border border-[#28508a] bg-[#0d2d5b] px-2.5 py-1.5 text-[9px] font-bold text-[#d9e9ff]">
+                    Google basemap
+                  </span>
                 )}
                 <button type="button" onClick={handleUndo} disabled={!historyAvailability.canUndo} className="ui-button py-1.5 disabled:opacity-40">Undo</button>
                 <button type="button" onClick={handleRedo} disabled={!historyAvailability.canRedo} className="ui-button py-1.5 disabled:opacity-40">Redo</button>

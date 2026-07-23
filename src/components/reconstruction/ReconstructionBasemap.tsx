@@ -1,10 +1,8 @@
 import { useState } from "react";
 
-import { useMapProviderPreference } from "../../hooks/useMapProviderPreference";
 import { isGoogleMapsConfigured } from "../../services/mapPreferencesService";
 import type { FieldSceneCalibration } from "../../types/fieldPlacement";
 import GoogleReconstructionBasemap from "./GoogleReconstructionBasemap";
-import OpenReconstructionBasemap from "./OpenReconstructionBasemap";
 
 export type ReconstructionBasemapMode = "Diagram" | "Street" | "Satellite";
 
@@ -17,23 +15,26 @@ export default function ReconstructionBasemap({
   calibration,
   mode,
 }: ReconstructionBasemapProps) {
-  const [provider, setProvider] = useMapProviderPreference();
-  const [googleFailed, setGoogleFailed] = useState(false);
-  const useGoogle =
-    provider === "Google" && isGoogleMapsConfigured() && !googleFailed;
+  const [googleError, setGoogleError] = useState("");
 
-  if (useGoogle) {
+  if (!isGoogleMapsConfigured() || googleError) {
     return (
-      <GoogleReconstructionBasemap
-        calibration={calibration}
-        mode={mode}
-        onLoadError={() => {
-          setGoogleFailed(true);
-          setProvider("Open Map");
-        }}
-      />
+      <div className="pointer-events-none absolute inset-0 z-0 grid place-items-center bg-slate-800 p-6 text-center">
+        <div className="max-w-md rounded-xl border border-amber-400/30 bg-slate-950/90 p-4 text-xs leading-5 text-amber-100 shadow-xl">
+          <strong className="block text-white">Google basemap unavailable</strong>
+          <span className="mt-2 block">
+            {googleError || "Add VITE_GOOGLE_MAPS_BROWSER_KEY to .env.local and restart the app."}
+          </span>
+        </div>
+      </div>
     );
   }
 
-  return <OpenReconstructionBasemap calibration={calibration} mode={mode} />;
+  return (
+    <GoogleReconstructionBasemap
+      calibration={calibration}
+      mode={mode}
+      onLoadError={setGoogleError}
+    />
+  );
 }

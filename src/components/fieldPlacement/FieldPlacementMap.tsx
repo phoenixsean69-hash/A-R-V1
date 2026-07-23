@@ -1,7 +1,6 @@
-import { AlertTriangle, Globe2, Map } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
-import { useMapProviderPreference } from "../../hooks/useMapProviderPreference";
 import { isGoogleMapsConfigured } from "../../services/mapPreferencesService";
 import type {
   FieldCaptureMode,
@@ -11,7 +10,6 @@ import type {
   RejectedGeoCoordinate,
 } from "../../types/fieldPlacement";
 import GoogleFieldPlacementMap from "./GoogleFieldPlacementMap";
-import OpenFieldPlacementMap from "./OpenFieldPlacementMap";
 
 interface FieldPlacementMapProps {
   current: GeoCoordinate | null;
@@ -26,84 +24,46 @@ interface FieldPlacementMapProps {
 }
 
 export default function FieldPlacementMap(props: FieldPlacementMapProps) {
-  const [provider, setProvider] = useMapProviderPreference();
   const [googleError, setGoogleError] = useState("");
-  const googleConfigured = isGoogleMapsConfigured();
-  const activeProvider = provider === "Google" && googleConfigured && !googleError
-    ? "Google"
-    : "Open Map";
+  const configured = isGoogleMapsConfigured();
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 bg-slate-900 px-4 py-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">
-            Real-world field map
+            Google field intelligence
           </p>
           <h3 className="text-sm font-black text-white">
             Officer position and captured geometry
           </h3>
         </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-slate-600 bg-slate-950">
-            <button
-              type="button"
-              onClick={() => {
-                setGoogleError("");
-                setProvider("Open Map");
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-black ${
-                activeProvider === "Open Map"
-                  ? "bg-sky-500 text-slate-950"
-                  : "text-slate-300 hover:bg-slate-800"
-              }`}
-            >
-              <Map size={14} /> Open Map
-            </button>
-            <button
-              type="button"
-              disabled={!googleConfigured}
-              onClick={() => {
-                setGoogleError("");
-                setProvider("Google");
-              }}
-              className={`inline-flex items-center gap-1.5 border-l border-slate-600 px-3 py-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-40 ${
-                activeProvider === "Google"
-                  ? "bg-sky-500 text-slate-950"
-                  : "text-slate-300 hover:bg-slate-800"
-              }`}
-              title={
-                googleConfigured
-                  ? "Use Google Maps imagery and context tools."
-                  : "Add VITE_GOOGLE_MAPS_BROWSER_KEY to enable Google Maps."
-              }
-            >
-              <Globe2 size={14} /> Google
-            </button>
-          </div>
-        </div>
+        <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-200">
+          Google Maps
+        </span>
       </div>
 
-      {googleError && (
-        <div className="flex items-start gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          <div>
-            <strong>Google Maps was unavailable.</strong> {googleError} The open-map provider is active instead.
+      {(!configured || googleError) && (
+        <div className="flex min-h-[320px] items-center justify-center p-6">
+          <div className="max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={20} className="mt-0.5 shrink-0" />
+              <div>
+                <strong className="block text-white">Google Maps configuration required</strong>
+                <p className="mt-2 leading-6">
+                  {googleError || "Add VITE_GOOGLE_MAPS_BROWSER_KEY to .env.local, then restart the development server."}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {activeProvider === "Google" ? (
+      {configured && !googleError && (
         <GoogleFieldPlacementMap
           {...props}
-          onLoadError={(message) => {
-            setGoogleError(message);
-            setProvider("Open Map");
-          }}
+          onLoadError={setGoogleError}
         />
-      ) : (
-        <OpenFieldPlacementMap {...props} />
       )}
     </section>
   );

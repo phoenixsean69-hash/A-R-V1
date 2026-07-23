@@ -8,7 +8,7 @@ import type {
   GoogleMapsMap,
   GoogleMapsNamespace,
 } from "../../services/googleMapsLoader";
-import { getGoogleMapsMapId } from "../../services/mapPreferencesService";
+import { getGoogleMapsRuntimeMapId } from "../../services/mapPreferencesService";
 import type { FieldSceneCalibration } from "../../types/fieldPlacement";
 import type { ReconstructionBasemapMode } from "./ReconstructionBasemap";
 
@@ -44,7 +44,7 @@ export default function GoogleReconstructionBasemap({
           minZoom: 3,
           maxZoom: 22,
           mapTypeId: mode === "Street" ? "roadmap" : "satellite",
-          mapId: getGoogleMapsMapId(),
+          mapId: getGoogleMapsRuntimeMapId(),
           heading: calibration?.rotationDegrees ?? 0,
           tilt: 0,
           clickableIcons: false,
@@ -98,7 +98,7 @@ export default function GoogleReconstructionBasemap({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 bg-slate-700">
-      <div ref={containerRef} className="h-full w-full" />
+      <div ref={containerRef} className="roadsafe-google-map h-full w-full" />
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-800/70 text-xs font-black text-white">
           Loading Google basemap…

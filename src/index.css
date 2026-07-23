@@ -52,11 +52,42 @@
 .ui-button-primary:active,
 .ui-icon-button:active { opacity: .94; }
 
-.maplibregl-map,
-.maplibregl-map button,
-.maplibregl-map input,
-.maplibregl-map select,
-.maplibregl-map textarea { font-family: var(--font-sans) !important; }
+
+/* Google Maps surfaces */
+.roadsafe-google-map,
+.roadsafe-google-map button,
+.roadsafe-google-map input,
+.roadsafe-google-map select,
+.roadsafe-google-map textarea { font-family: var(--font-sans) !important; }
+.roadsafe-google-map img { max-width: none !important; }
+.roadsafe-google-heatmap-canvas { mix-blend-mode: normal; }
+.roadsafe-google-junction-marker {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.roadsafe-google-junction-marker__dot {
+  width: 27px;
+  height: 27px;
+  border: 3px solid #fff;
+  border-radius: 9999px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.45);
+  transition: transform 150ms ease;
+}
+.roadsafe-google-junction-marker:hover .roadsafe-google-junction-marker__dot,
+.roadsafe-google-junction-marker:focus-visible .roadsafe-google-junction-marker__dot {
+  transform: scale(1.3);
+}
+.roadsafe-google-junction-marker:focus-visible {
+  outline: 2px solid #7fb3ff;
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
 
 /* Reconstruction workspace */
 .reconstruction-editor {
@@ -137,17 +168,6 @@
 .dashboard-3d-preview .reconstruction-3d { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
 .dashboard-3d-preview .reconstruction-3d > :first-child { min-height: 42px; }
 
-.maplibregl-ctrl-group,
-.maplibregl-popup-content {
-  border: 1px solid #1d2c4b !important;
-  background: #080e1c !important;
-  color: #dbe4f0 !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,.35) !important;
-}
-.maplibregl-ctrl-group button { background-color: #080e1c !important; }
-.maplibregl-ctrl-group button + button { border-top-color: #1d2c4b !important; }
-.maplibregl-ctrl-icon { filter: invert(.8) sepia(.1) saturate(.5); }
-
 @media print {
   .roadsafe-sidebar,
   .roadsafe-shell > div > header,
@@ -226,16 +246,6 @@
   font-size: .58rem;
   letter-spacing: .12em;
   color: #aab8cc;
-}
-.dashboard-command-grid .maplibregl-map {
-  background: #050b17;
-}
-.dashboard-command-grid .maplibregl-ctrl-top-right {
-  top: 4px;
-  right: 4px;
-}
-.dashboard-command-grid .maplibregl-ctrl-group {
-  margin: 4px !important;
 }
 .dashboard-3d-preview .reconstruction-3d {
   height: 100% !important;
