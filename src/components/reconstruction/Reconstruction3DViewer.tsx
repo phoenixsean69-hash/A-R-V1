@@ -5,6 +5,16 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 
 import { THIRD_PARTY_3D_ASSET_NOTICE } from "../../data/realisticAssetCatalog";
 import {
+  createTerrainGeometry,
+  createTerrainSurface,
+  getTerrainOrigin,
+  loadTerrainElevationGrid,
+} from "../../services/terrainElevationService";
+import type {
+  TerrainElevationGrid,
+  TerrainSurface,
+} from "../../services/terrainElevationService";
+import {
   createRealisticProceduralSceneObject,
   disposeObjectTree,
   enhanceRoadTextures,
@@ -27,9 +37,24 @@ interface Reconstruction3DViewerProps {
   onRunPhysics: () => AccidentReconstruction;
   onPreparePlayback: () => AccidentReconstruction;
   compact?: boolean;
+  workspaceMode?: boolean;
+  selectedParticipantId?: string | null;
+  onSelectParticipant?: (participantId: string) => void;
+  cameraCycleToken?: number;
+  workspaceTimeSeconds?: number;
+  workspacePlaying?: boolean;
+  workspacePlaybackSpeed?: number;
+  workspaceCameraMode?: CameraMode;
+  workspaceLayers?: {
+    paths: boolean;
+    objects: boolean;
+    evidence: boolean;
+    physics: boolean;
+  };
 }
 
 type CameraMode = "Orbit" | "Overhead" | "Roadside" | "Driver";
+type TerrainLoadStatus = "Disabled" | "Loading" | "Ready" | "Unavailable" | "Error";
 
 interface AssetLifecycle {
   isDisposed: () => boolean;
@@ -41,8 +66,16 @@ const PARTICIPANT_COLOURS: Record<string, number> = {
   Black: 0x111827, White: 0xf8fafc, Orange: 0xea580c, Purple: 0x9333ea,
 };
 
-function worldPosition(position: ReconstructionPosition, width: number, height: number, y = 0): THREE.Vector3 {
-  return new THREE.Vector3((position.x / 100 - 0.5) * width, y, (position.y / 100 - 0.5) * height);
+function worldPosition(
+  position: ReconstructionPosition,
+  width: number,
+  height: number,
+  y = 0,
+  heightAt?: (x: number, z: number) => number,
+): THREE.Vector3 {
+  const x = (position.x / 100 - 0.5) * width;
+  const z = (position.y / 100 - 0.5) * height;
+  return new THREE.Vector3(x, (heightAt?.(x, z) ?? 0) + y, z);
 }
 
 function createTextSprite(text: string): THREE.Sprite {
@@ -492,14 +525,21 @@ function createSurfaceTexture(kind: "asphalt" | "ground", wet = false): THREE.Ca
   return texture;
 }
 
-function addCrosswalk(scene: THREE.Scene, horizontal: boolean, roadWidth: number) {
+function addCrosswalk(
+  scene: THREE.Scene,
+  horizontal: boolean,
+  roadWidth: number,
+  heightAt: (x: number, z: number) => number,
+) {
   const material = new THREE.MeshStandardMaterial({ color: 0xd8dad7, roughness: 0.78 });
   for (let index = -4; index <= 4; index += 1) {
     const stripe = new THREE.Mesh(
       new THREE.BoxGeometry(horizontal ? 0.65 : roadWidth * 0.72, 0.025, horizontal ? roadWidth * 0.72 : 0.65),
       material,
     );
-    stripe.position.set(horizontal ? index * 1.05 : 0, 0.18, horizontal ? 0 : index * 1.05);
+    const x = horizontal ? index * 1.05 : 0;
+    const z = horizontal ? 0 : index * 1.05;
+    stripe.position.set(x, heightAt(x, z) + 0.18, z);
     stripe.receiveShadow = true;
     scene.add(stripe);
   }
@@ -511,6 +551,7 @@ function addStreetLight(
   z: number,
   rotation: number,
   lifecycle: AssetLifecycle,
+  baseY = 0,
 ) {
   const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x39414a, metalness: 0.7, roughness: 0.35 });
   const fallback = new THREE.Group();
@@ -527,7 +568,7 @@ function addStreetLight(
   );
   lamp.position.set(1.22, 5.55, 0);
   fallback.add(lamp);
-  fallback.position.set(x, 0, z);
+  fallback.position.set(x, baseY, z);
   fallback.rotation.y = rotation;
   scene.add(fallback);
 
@@ -539,7 +580,7 @@ function addStreetLight(
       }
       scene.remove(fallback);
       disposeObjectTree(fallback);
-      model.position.set(x, 0, z);
+      model.position.set(x, baseY, z);
       model.rotation.y = rotation;
       scene.add(model);
       lifecycle.settle(false);
@@ -560,6 +601,7 @@ function addBuilding(
   tone: number,
   assetKey: "suburbanHouses" | "schoolBuilding" | "commercialBuilding",
   lifecycle: AssetLifecycle,
+  baseY = 0,
 ) {
   const fallback = new THREE.Group();
   const body = new THREE.Mesh(
@@ -580,7 +622,7 @@ function addBuilding(
       fallback.add(windowMesh);
     }
   }
-  fallback.position.set(x, 0, z);
+  fallback.position.set(x, baseY, z);
   scene.add(fallback);
 
   void loadRealisticEnvironmentModel(assetKey, { length: width, height, width: depth })
@@ -591,7 +633,7 @@ function addBuilding(
       }
       scene.remove(fallback);
       disposeObjectTree(fallback);
-      model.position.set(x, 0, z);
+      model.position.set(x, baseY, z);
       scene.add(model);
       lifecycle.settle(false);
     })
@@ -601,88 +643,240 @@ function addBuilding(
     });
 }
 
-function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction, lifecycle: AssetLifecycle) {
+function cloneWorldTiledTexture(
+  source: THREE.Texture,
+  worldWidth: number,
+  worldDepth: number,
+  metresPerTile: number,
+): THREE.Texture {
+  const texture = source.clone();
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(
+    Math.max(1, worldWidth / metresPerTile),
+    Math.max(1, worldDepth / metresPerTile),
+  );
+  texture.center.set(0.5, 0.5);
+  texture.anisotropy = 8;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function segmentPiecesOutsideGap(
+  start: number,
+  end: number,
+  gapStart: number,
+  gapEnd: number,
+): Array<{ centre: number; length: number }> {
+  const pieces: Array<{ centre: number; length: number }> = [];
+  const leftEnd = Math.min(end, gapStart);
+  if (leftEnd > start) {
+    pieces.push({ centre: (start + leftEnd) / 2, length: leftEnd - start });
+  }
+  const rightStart = Math.max(start, gapEnd);
+  if (end > rightStart) {
+    pieces.push({ centre: (rightStart + end) / 2, length: end - rightStart });
+  }
+  return pieces;
+}
+
+function createConformingSurfaceMesh(
+  worldWidth: number,
+  worldDepth: number,
+  centreX: number,
+  centreZ: number,
+  heightAt: (x: number, z: number) => number,
+  yOffset: number,
+  material: THREE.Material,
+  segmentSize = 3,
+): THREE.Mesh {
+  const segmentsX = Math.max(1, Math.ceil(worldWidth / segmentSize));
+  const segmentsZ = Math.max(1, Math.ceil(worldDepth / segmentSize));
+  const geometry = new THREE.PlaneGeometry(
+    worldWidth,
+    worldDepth,
+    segmentsX,
+    segmentsZ,
+  );
+  geometry.rotateX(-Math.PI / 2);
+  const positions = geometry.getAttribute("position") as THREE.BufferAttribute;
+  for (let index = 0; index < positions.count; index += 1) {
+    const localX = positions.getX(index);
+    const localZ = positions.getZ(index);
+    positions.setY(
+      index,
+      heightAt(centreX + localX, centreZ + localZ) + yOffset,
+    );
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(centreX, 0, centreZ);
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function addRoad(
+  scene: THREE.Scene,
+  reconstruction: AccidentReconstruction,
+  lifecycle: AssetLifecycle,
+  terrainSurface?: TerrainSurface,
+) {
   const { sceneWidthMetres: width, sceneHeightMetres: height, roadLayout } = reconstruction.scene;
   const wet = reconstruction.scene.roadSurface === "Wet";
   const groundTexture = createSurfaceTexture("ground");
   const asphaltTexture = createSurfaceTexture("asphalt", wet);
   const sidewalkTexture = createSurfaceTexture("ground");
-  enhanceRoadTextures(asphaltTexture, groundTexture, sidewalkTexture);
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(width * 1.7, height * 1.7),
-    new THREE.MeshStandardMaterial({ map: groundTexture, color: 0x687164, roughness: 1 }),
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
+  const terrainHeightAt = terrainSurface?.heightAt ?? (() => 0);
+  const roadHeightAt = reconstruction.scene.conformRoadToTerrain
+    ? terrainHeightAt
+    : () => 0;
 
-  const roadMaterial = new THREE.MeshPhysicalMaterial({
-    map: asphaltTexture,
-    color: wet ? 0x6c7880 : 0x8a8d8f,
-    roughness: wet ? 0.38 : 0.88,
-    metalness: wet ? 0.12 : 0,
-    clearcoat: wet ? 0.32 : 0,
-    clearcoatRoughness: 0.28,
-  });
-  const sidewalkMaterial = new THREE.MeshStandardMaterial({
-    map: sidewalkTexture,
-    color: 0x9b9b98,
-    roughness: 0.94,
-  });
+  asphaltTexture.repeat.set(1, 1);
+  sidewalkTexture.repeat.set(1, 1);
+  enhanceRoadTextures(asphaltTexture, groundTexture, sidewalkTexture);
+
+  if (terrainSurface) {
+    const terrainTexture = cloneWorldTiledTexture(
+      groundTexture,
+      terrainSurface.grid.areaMetres,
+      terrainSurface.grid.areaMetres,
+      7,
+    );
+    const terrain = new THREE.Mesh(
+      createTerrainGeometry(terrainSurface),
+      new THREE.MeshStandardMaterial({
+        map: terrainTexture,
+        color: 0x596653,
+        roughness: 1,
+      }),
+    );
+    terrain.receiveShadow = true;
+    scene.add(terrain);
+  } else {
+    const groundWidth = width * 1.7;
+    const groundDepth = height * 1.7;
+    groundTexture.repeat.set(
+      Math.max(1, groundWidth / 6),
+      Math.max(1, groundDepth / 6),
+    );
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(groundWidth, groundDepth),
+      new THREE.MeshStandardMaterial({
+        map: groundTexture,
+        color: 0x687164,
+        roughness: 1,
+      }),
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+  }
+
+  const createRoadMaterial = (worldWidth: number, worldDepth: number) =>
+    new THREE.MeshPhysicalMaterial({
+      map: cloneWorldTiledTexture(asphaltTexture, worldWidth, worldDepth, 3.4),
+      color: wet ? 0x6c7880 : 0x8a8d8f,
+      roughness: wet ? 0.38 : 0.88,
+      metalness: wet ? 0.12 : 0,
+      clearcoat: wet ? 0.32 : 0,
+      clearcoatRoughness: 0.28,
+    });
+
+  const createSidewalkMaterial = (worldWidth: number, worldDepth: number) =>
+    new THREE.MeshStandardMaterial({
+      map: cloneWorldTiledTexture(sidewalkTexture, worldWidth, worldDepth, 1.5),
+      color: 0x9b9b98,
+      roughness: 0.94,
+    });
+
   const curbMaterial = new THREE.MeshStandardMaterial({ color: 0xa0a3a2, roughness: 0.85 });
   const markingMaterial = new THREE.MeshStandardMaterial({ color: 0xe3e4df, roughness: 0.72 });
   const centreMaterial = new THREE.MeshStandardMaterial({ color: 0xb9943f, roughness: 0.74 });
   const roadWidth = Math.min(18, 6.2 + reconstruction.scene.laneCount * 3.15);
+  const isJunction = !["Straight Road", "Pedestrian Crossing"].includes(roadLayout);
+  const infrastructureGap = roadLayout === "Roundabout" ? 25 : roadWidth + 4.4;
+  const markingGap = roadLayout === "Roundabout" ? 24 : roadWidth + 1.2;
 
-  const addRoadSegment = (horizontal: boolean, segmentLength: number, offset = 0) => {
-    const road = new THREE.Mesh(
-      new THREE.BoxGeometry(horizontal ? segmentLength : roadWidth, 0.14, horizontal ? roadWidth : segmentLength),
-      roadMaterial,
+  const addRoadSegment = (
+    horizontal: boolean,
+    segmentLength: number,
+    offset = 0,
+    gapAtJunction = false,
+  ) => {
+    const worldWidth = horizontal ? segmentLength : roadWidth;
+    const worldDepth = horizontal ? roadWidth : segmentLength;
+    const centreX = horizontal ? offset : 0;
+    const centreZ = horizontal ? 0 : offset;
+    const road = createConformingSurfaceMesh(
+      worldWidth,
+      worldDepth,
+      centreX,
+      centreZ,
+      roadHeightAt,
+      0.08,
+      createRoadMaterial(worldWidth, worldDepth),
+      2.5,
     );
-    road.position.set(horizontal ? offset : 0, 0.07, horizontal ? 0 : offset);
-    road.receiveShadow = true;
     scene.add(road);
+
+    const axisStart = offset - segmentLength / 2;
+    const axisEnd = offset + segmentLength / 2;
+    const gapStart = -infrastructureGap / 2;
+    const gapEnd = infrastructureGap / 2;
+    const infrastructurePieces = gapAtJunction
+      ? segmentPiecesOutsideGap(axisStart, axisEnd, gapStart, gapEnd)
+      : [{ centre: offset, length: segmentLength }];
 
     if (reconstruction.scene.showPavements) {
       for (const side of [-1, 1]) {
-        const sidewalk = new THREE.Mesh(
-          new THREE.BoxGeometry(
-            horizontal ? segmentLength : 2.2,
-            0.18,
-            horizontal ? 2.2 : segmentLength,
-          ),
-          sidewalkMaterial,
-        );
-        sidewalk.position.set(
-          horizontal ? offset : side * (roadWidth / 2 + 1.1),
-          0.09,
-          horizontal ? side * (roadWidth / 2 + 1.1) : offset,
-        );
-        sidewalk.receiveShadow = true;
-        scene.add(sidewalk);
-        const curb = new THREE.Mesh(
-          new THREE.BoxGeometry(
-            horizontal ? segmentLength : 0.22,
-            0.28,
-            horizontal ? 0.22 : segmentLength,
-          ),
-          curbMaterial,
-        );
-        curb.position.set(
-          horizontal ? offset : side * (roadWidth / 2 + 0.12),
-          0.14,
-          horizontal ? side * (roadWidth / 2 + 0.12) : offset,
-        );
-        scene.add(curb);
+        for (const piece of infrastructurePieces) {
+          if (piece.length < 0.2) continue;
+          const sidewalkWorldWidth = horizontal ? piece.length : 2.2;
+          const sidewalkWorldDepth = horizontal ? 2.2 : piece.length;
+          const sidewalkX = horizontal ? piece.centre : side * (roadWidth / 2 + 1.1);
+          const sidewalkZ = horizontal ? side * (roadWidth / 2 + 1.1) : piece.centre;
+          const sidewalk = createConformingSurfaceMesh(
+            sidewalkWorldWidth,
+            sidewalkWorldDepth,
+            sidewalkX,
+            sidewalkZ,
+            roadHeightAt,
+            0.13,
+            createSidewalkMaterial(sidewalkWorldWidth, sidewalkWorldDepth),
+            2,
+          );
+          scene.add(sidewalk);
+
+          const curbX = horizontal ? piece.centre : side * (roadWidth / 2 + 0.12);
+          const curbZ = horizontal ? side * (roadWidth / 2 + 0.12) : piece.centre;
+          const curb = new THREE.Mesh(
+            new THREE.BoxGeometry(
+              horizontal ? piece.length : 0.22,
+              0.28,
+              horizontal ? 0.22 : piece.length,
+            ),
+            curbMaterial,
+          );
+          curb.position.set(
+            curbX,
+            roadHeightAt(curbX, curbZ) + 0.14,
+            curbZ,
+          );
+          scene.add(curb);
+        }
       }
     }
 
     if (reconstruction.scene.showLaneMarkings) {
       const lanes = Math.max(1, reconstruction.scene.laneCount);
+      const laneGapStart = -markingGap / 2;
+      const laneGapEnd = markingGap / 2;
       for (let lane = 1; lane < lanes; lane += 1) {
         const laneOffset = -roadWidth / 2 + (roadWidth / lanes) * lane;
         const centre = lanes % 2 === 0 && lane === lanes / 2;
-        for (let value = -segmentLength / 2; value < segmentLength / 2; value += centre ? 4 : 7) {
+        for (let value = axisStart; value < axisEnd; value += centre ? 4 : 7) {
+          if (gapAtJunction && value >= laneGapStart && value <= laneGapEnd) continue;
           const dash = new THREE.Mesh(
             new THREE.BoxGeometry(
               horizontal ? (centre ? 3.2 : 3.0) : (centre ? 0.10 : 0.08),
@@ -691,10 +885,12 @@ function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction, lif
             ),
             centre ? centreMaterial : markingMaterial,
           );
+          const dashX = horizontal ? value : laneOffset;
+          const dashZ = horizontal ? laneOffset : value;
           dash.position.set(
-            horizontal ? value + offset : laneOffset,
-            0.165,
-            horizontal ? laneOffset : value + offset,
+            dashX,
+            roadHeightAt(dashX, dashZ) + 0.165,
+            dashZ,
           );
           scene.add(dash);
         }
@@ -702,32 +898,61 @@ function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction, lif
     }
   };
 
-  addRoadSegment(true, width * 1.18);
+  addRoadSegment(true, width * 1.18, 0, isJunction);
   if (roadLayout !== "Straight Road" && roadLayout !== "Pedestrian Crossing") {
     const verticalLength = roadLayout === "T-Junction" ? height * 0.62 : height * 1.18;
-    addRoadSegment(false, verticalLength, roadLayout === "T-Junction" ? height * 0.29 : 0);
+    addRoadSegment(
+      false,
+      verticalLength,
+      roadLayout === "T-Junction" ? height * 0.29 : 0,
+      true,
+    );
+  }
+
+  if (isJunction && roadLayout !== "Roundabout") {
+    const intersection = createConformingSurfaceMesh(
+      roadWidth,
+      roadWidth,
+      0,
+      0,
+      roadHeightAt,
+      0.10,
+      createRoadMaterial(roadWidth, roadWidth),
+      1.6,
+    );
+    scene.add(intersection);
   }
 
   if (roadLayout === "Roundabout") {
+    const ringGeometry = new THREE.RingGeometry(6.2, 11.2, 64, 8);
+    ringGeometry.rotateX(-Math.PI / 2);
+    const ringPositions = ringGeometry.getAttribute("position") as THREE.BufferAttribute;
+    for (let index = 0; index < ringPositions.count; index += 1) {
+      const x = ringPositions.getX(index);
+      const z = ringPositions.getZ(index);
+      ringPositions.setY(index, roadHeightAt(x, z) + 0.12);
+    }
+    ringPositions.needsUpdate = true;
+    ringGeometry.computeVertexNormals();
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(6.2, 11.2, 64),
-      roadMaterial,
+      ringGeometry,
+      createRoadMaterial(22.4, 22.4),
     );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.18;
     ring.receiveShadow = true;
     scene.add(ring);
+
+    const islandTexture = cloneWorldTiledTexture(groundTexture, 12, 12, 4);
     const island = new THREE.Mesh(
       new THREE.CylinderGeometry(5.9, 5.9, 0.34, 48),
-      new THREE.MeshStandardMaterial({ map: groundTexture, color: 0x566453, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ map: islandTexture, color: 0x566453, roughness: 1 }),
     );
-    island.position.y = 0.16;
+    island.position.y = roadHeightAt(0, 0) + 0.16;
     island.receiveShadow = true;
     scene.add(island);
   }
 
   if (roadLayout === "Pedestrian Crossing" || reconstruction.scene.showPedestrianCrossing) {
-    addCrosswalk(scene, true, roadWidth);
+    addCrosswalk(scene, true, roadWidth, roadHeightAt);
   }
 
   const edgeX = width * 0.63;
@@ -756,27 +981,38 @@ function addRoad(scene: THREE.Scene, reconstruction: AccidentReconstruction, lif
       buildingMaterialTones[index],
       buildingAssets[index],
       lifecycle,
+      terrainHeightAt(x, z),
     ),
   );
 
   for (const x of [-width * 0.38, width * 0.38]) {
-    addStreetLight(scene, x, roadWidth / 2 + 2.25, Math.PI, lifecycle);
-    addStreetLight(scene, x, -roadWidth / 2 - 2.25, 0, lifecycle);
+    const positiveZ = roadWidth / 2 + 2.25;
+    const negativeZ = -roadWidth / 2 - 2.25;
+    addStreetLight(scene, x, positiveZ, Math.PI, lifecycle, terrainHeightAt(x, positiveZ));
+    addStreetLight(scene, x, negativeZ, 0, lifecycle, terrainHeightAt(x, negativeZ));
   }
   if (roadLayout !== "Straight Road" && roadLayout !== "Pedestrian Crossing") {
     for (const z of [-height * 0.38, height * 0.38]) {
-      addStreetLight(scene, roadWidth / 2 + 2.25, z, -Math.PI / 2, lifecycle);
-      addStreetLight(scene, -roadWidth / 2 - 2.25, z, Math.PI / 2, lifecycle);
+      const positiveX = roadWidth / 2 + 2.25;
+      const negativeX = -roadWidth / 2 - 2.25;
+      addStreetLight(scene, positiveX, z, -Math.PI / 2, lifecycle, terrainHeightAt(positiveX, z));
+      addStreetLight(scene, negativeX, z, Math.PI / 2, lifecycle, terrainHeightAt(negativeX, z));
     }
   }
 
   if (reconstruction.scene.roadSurface === "Damaged") {
     const crackMaterial = new THREE.MeshBasicMaterial({ color: 0x14171a });
     for (let index = 0; index < 8; index += 1) {
+      const x1 = -width * 0.35 + index * 2.1;
+      const x2 = -width * 0.30 + index * 2.1;
+      const x3 = -width * 0.26 + index * 2.1;
+      const z1 = -1.5 + (index % 3);
+      const z2 = -0.4 + (index % 2);
+      const z3 = 0.7 + (index % 3);
       const points = [
-        new THREE.Vector3(-width * 0.35 + index * 2.1, 0.19, -1.5 + (index % 3)),
-        new THREE.Vector3(-width * 0.30 + index * 2.1, 0.19, -0.4 + (index % 2)),
-        new THREE.Vector3(-width * 0.26 + index * 2.1, 0.19, 0.7 + (index % 3)),
+        new THREE.Vector3(x1, roadHeightAt(x1, z1) + 0.19, z1),
+        new THREE.Vector3(x2, roadHeightAt(x2, z2) + 0.19, z2),
+        new THREE.Vector3(x3, roadHeightAt(x3, z3) + 0.19, z3),
       ];
       scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), crackMaterial));
     }
@@ -789,12 +1025,24 @@ function Reconstruction3DViewer({
   onRunPhysics,
   onPreparePlayback,
   compact = false,
+  workspaceMode = false,
+  selectedParticipantId = null,
+  onSelectParticipant,
+  cameraCycleToken = 0,
+  workspaceTimeSeconds,
+  workspacePlaying,
+  workspacePlaybackSpeed,
+  workspaceCameraMode,
+  workspaceLayers,
 }: Reconstruction3DViewerProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const playingRef = useRef(false);
   const timeRef = useRef(0);
   const speedRef = useRef(1);
   const cameraModeRef = useRef<CameraMode>("Orbit");
+  const selectedParticipantRef = useRef<string | null>(selectedParticipantId);
+  const onSelectParticipantRef = useRef(onSelectParticipant);
+  const workspaceTimeRef = useRef(workspaceTimeSeconds ?? 0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [displayTime, setDisplayTime] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -805,21 +1053,145 @@ function Reconstruction3DViewer({
   const [showPhysicsEffects, setShowPhysicsEffects] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [assetStatus, setAssetStatus] = useState({ loaded: 0, total: 0, failed: 0 });
+  const [terrainGrid, setTerrainGrid] = useState<TerrainElevationGrid | null>(null);
+  const [terrainStatus, setTerrainStatus] = useState<TerrainLoadStatus>("Disabled");
+  const [terrainMessage, setTerrainMessage] = useState("Flat local scene");
+  const terrainOrigin = getTerrainOrigin(reconstruction);
+  const terrainLatitude = terrainOrigin?.latitude ?? null;
+  const terrainLongitude = terrainOrigin?.longitude ?? null;
+  const terrainAccuracyMetres = terrainOrigin?.accuracyMetres ?? 0;
+  const terrainCapturedAt = terrainOrigin?.capturedAt ?? "";
+  const controlledWorkspace = workspaceMode && workspaceTimeSeconds !== undefined;
+  const effectivePlaying = controlledWorkspace ? Boolean(workspacePlaying) : isPlaying;
+  const effectivePlaybackSpeed = controlledWorkspace
+    ? (workspacePlaybackSpeed ?? 1)
+    : playbackSpeed;
+  const effectiveShowPaths = workspaceLayers?.paths ?? showPaths;
+  const effectiveShowObjects = workspaceLayers?.objects ?? showObjects;
+  const effectiveShowEvidence = workspaceLayers?.evidence ?? showEvidence;
+  const effectiveShowPhysicsEffects = workspaceLayers?.physics ?? showPhysicsEffects;
+  const effectiveCameraMode =
+    workspaceMode && workspaceCameraMode ? workspaceCameraMode : cameraMode;
+  const visibleDisplayTime = controlledWorkspace
+    ? (workspaceTimeSeconds ?? 0)
+    : displayTime;
 
-  useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
-  useEffect(() => { speedRef.current = playbackSpeed; }, [playbackSpeed]);
-  useEffect(() => { cameraModeRef.current = cameraMode; }, [cameraMode]);
+  useEffect(() => { playingRef.current = effectivePlaying; }, [effectivePlaying]);
+  useEffect(() => { speedRef.current = effectivePlaybackSpeed; }, [effectivePlaybackSpeed]);
+  useEffect(() => { cameraModeRef.current = effectiveCameraMode; }, [effectiveCameraMode]);
+  useEffect(() => { selectedParticipantRef.current = selectedParticipantId; }, [selectedParticipantId]);
+  useEffect(() => { onSelectParticipantRef.current = onSelectParticipant; }, [onSelectParticipant]);
+  useEffect(() => {
+    if (!controlledWorkspace || workspaceTimeSeconds === undefined) return;
+    workspaceTimeRef.current = workspaceTimeSeconds;
+    timeRef.current = workspaceTimeSeconds;
+  }, [controlledWorkspace, workspaceTimeSeconds]);
+
+  useEffect(() => {
+    if (!workspaceMode || cameraCycleToken <= 0) return;
+    const modes: CameraMode[] = ["Orbit", "Overhead", "Roadside", "Driver"];
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setCameraMode((current) => modes[(modes.indexOf(current) + 1) % modes.length]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cameraCycleToken, workspaceMode]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const updateLater = (callback: () => void) => {
+      void Promise.resolve().then(() => {
+        if (!controller.signal.aborted) callback();
+      });
+    };
+
+    if (!reconstruction.scene.useRealTerrain) {
+      updateLater(() => {
+        setTerrainGrid(null);
+        setTerrainStatus("Disabled");
+        setTerrainMessage("Flat terrain selected");
+      });
+      return () => controller.abort();
+    }
+
+    if (terrainLatitude === null || terrainLongitude === null) {
+      updateLater(() => {
+        setTerrainGrid(null);
+        setTerrainStatus("Unavailable");
+        setTerrainMessage("Add GPS calibration to load real terrain");
+      });
+      return () => controller.abort();
+    }
+
+    updateLater(() => {
+      setTerrainStatus("Loading");
+      setTerrainMessage("Loading elevation tiles…");
+    });
+
+    void loadTerrainElevationGrid(
+      {
+        latitude: terrainLatitude,
+        longitude: terrainLongitude,
+        accuracyMetres: terrainAccuracyMetres,
+        capturedAt: terrainCapturedAt || new Date(0).toISOString(),
+      },
+      reconstruction.scene.terrainAreaMetres,
+      reconstruction.scene.terrainAreaMetres >= 1_000 ? 97 : 65,
+      controller.signal,
+    )
+      .then((grid) => {
+        if (controller.signal.aborted) return;
+        setTerrainGrid(grid);
+        setTerrainStatus("Ready");
+        setTerrainMessage(
+          `${grid.areaMetres} m terrain · ${Math.max(0, grid.maximumElevationMetres - grid.minimumElevationMetres).toFixed(1)} m relief`,
+        );
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.warn("Real terrain could not be loaded:", error);
+        setTerrainGrid(null);
+        setTerrainStatus("Error");
+        setTerrainMessage("Terrain unavailable · using flat fallback");
+      });
+
+    return () => controller.abort();
+  }, [
+    reconstruction.scene.terrainAreaMetres,
+    reconstruction.scene.useRealTerrain,
+    terrainAccuracyMetres,
+    terrainCapturedAt,
+    terrainLatitude,
+    terrainLongitude,
+  ]);
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
     const width = reconstruction.scene.sceneWidthMetres;
     const height = reconstruction.scene.sceneHeightMetres;
+    const terrainRotation =
+      reconstruction.fieldCalibration?.rotationDegrees ??
+      reconstruction.scene.roadRotation;
+    const terrainSurface = terrainGrid
+      ? createTerrainSurface(
+          terrainGrid,
+          reconstruction.scene.terrainExaggeration,
+          terrainRotation,
+        )
+      : undefined;
+    const terrainHeightAt = terrainSurface?.heightAt ?? (() => 0);
+    const sceneHeightAt = reconstruction.scene.conformRoadToTerrain
+      ? terrainHeightAt
+      : () => 0;
     const scene = new THREE.Scene();
     let disposed = false;
     let loadedAssets = 0;
     let failedAssets = 0;
-    const visibleObjectCount = showObjects
+    const visibleObjectCount = effectiveShowObjects
       ? reconstruction.sceneObjects.filter(
           (object) => object.visible && !(object.tracePoints && object.tracePoints.length > 1),
         ).length
@@ -856,7 +1228,7 @@ function Reconstruction3DViewer({
     controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2.02;
     controls.minDistance = 5;
-    controls.maxDistance = Math.max(width, height) * 2;
+    controls.maxDistance = Math.max(width, height, terrainGrid?.areaMetres ?? 0) * 1.35;
     scene.add(new THREE.HemisphereLight(
       nightScene ? 0x60728e : 0xdde8ee,
       nightScene ? 0x07101d : 0x3d443d,
@@ -866,23 +1238,28 @@ function Reconstruction3DViewer({
     sun.position.set(-30, 48, 25);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    const shadowExtent = Math.max(width, height) * 0.8;
+    const shadowExtent = Math.max(width, height, Math.min(terrainGrid?.areaMetres ?? 0, 350)) * 0.8;
     sun.shadow.camera.left = -shadowExtent;
     sun.shadow.camera.right = shadowExtent;
     sun.shadow.camera.top = shadowExtent;
     sun.shadow.camera.bottom = -shadowExtent;
     sun.shadow.camera.near = 1;
-    sun.shadow.camera.far = Math.max(width, height) * 3;
+    sun.shadow.camera.far = Math.max(width, height, terrainGrid?.areaMetres ?? 0) * 2;
     sun.shadow.bias = -0.00018;
     scene.add(sun);
 
     const fillLight = new THREE.DirectionalLight(0x7e9cc8, nightScene ? 0.38 : 0.3);
     fillLight.position.set(28, 18, -24);
     scene.add(fillLight);
-    addRoad(scene, reconstruction, {
-      isDisposed: () => disposed,
-      settle: settleAsset,
-    });
+    addRoad(
+      scene,
+      reconstruction,
+      {
+        isDisposed: () => disposed,
+        settle: settleAsset,
+      },
+      terrainSurface,
+    );
 
     const participantMeshes = new Map<string, THREE.Group>();
     const velocityArrows = new Map<string, THREE.ArrowHelper>();
@@ -896,6 +1273,10 @@ function Reconstruction3DViewer({
         speedKmh: impactPoint?.speedKmh ?? participant.estimatedSpeedKmh,
       });
       const mesh = createProceduralParticipantMesh(participant);
+      mesh.userData.participantId = participant.id;
+      mesh.traverse((child) => {
+        child.userData.participantId = participant.id;
+      });
       scene.add(mesh);
       participantMeshes.set(participant.id, mesh);
       void loadRealisticParticipantModel(participant, participantDimensions(participant))
@@ -923,7 +1304,7 @@ function Reconstruction3DViewer({
           console.warn(`Realistic model unavailable for ${participant.name}:`, error);
           settleAsset(true);
         });
-      if (showPhysicsEffects) {
+      if (effectiveShowPhysicsEffects) {
         const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 2, PARTICIPANT_COLOURS[participant.colour] ?? 0xffffff, 0.65, 0.35);
         scene.add(arrow);
         velocityArrows.set(participant.id, arrow);
@@ -941,21 +1322,21 @@ function Reconstruction3DViewer({
         scene.add(smoke);
         smokeEffects.set(participant.id, smoke);
       }
-      if (showPaths) {
-        const positions = sortedPoints.map((point) => worldPosition(point.position, width, height, 0.28));
+      if (effectiveShowPaths) {
+        const positions = sortedPoints.map((point) => worldPosition(point.position, width, height, 0.28, sceneHeightAt));
         if (positions.length > 1) {
           const curve = new THREE.CatmullRomCurve3(positions, false, "catmullrom", 0.45);
           const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(Math.max(24, positions.length * 10)));
           const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: PARTICIPANT_COLOURS[participant.colour] ?? 0xffffff, transparent: true, opacity: 0.9 }));
           scene.add(line);
         }
-        if (showPhysicsEffects) {
+        if (effectiveShowPhysicsEffects) {
           for (let index = 1; index < sortedPoints.length; index += 1) {
             const point = sortedPoints[index];
             if (!["Brake", "Slide", "Ricochet", "Deflect", "Swerve"].includes(point.action)) continue;
             const geometry = new THREE.BufferGeometry().setFromPoints([
-              worldPosition(sortedPoints[index - 1].position, width, height, 0.31),
-              worldPosition(point.position, width, height, 0.31),
+              worldPosition(sortedPoints[index - 1].position, width, height, 0.31, sceneHeightAt),
+              worldPosition(point.position, width, height, 0.31, sceneHeightAt),
             ]);
             scene.add(new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x111827, transparent: true, opacity: point.action === "Brake" ? 0.7 : 0.52 })));
           }
@@ -963,9 +1344,13 @@ function Reconstruction3DViewer({
       }
     });
 
-    if (showObjects) reconstruction.sceneObjects.filter((object) => object.visible).forEach((object) => {
+    const selectionBox = new THREE.BoxHelper(new THREE.Group(), 0x4d8cf5);
+    selectionBox.visible = false;
+    scene.add(selectionBox);
+
+    if (effectiveShowObjects) reconstruction.sceneObjects.filter((object) => object.visible).forEach((object) => {
       if (object.tracePoints && object.tracePoints.length > 1) {
-        const geometry = new THREE.BufferGeometry().setFromPoints(object.tracePoints.map((point) => worldPosition(point, width, height, 0.22)));
+        const geometry = new THREE.BufferGeometry().setFromPoints(object.tracePoints.map((point) => worldPosition(point, width, height, 0.22, sceneHeightAt)));
         const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: objectColour(object), linewidth: 2 }));
         scene.add(line);
         return;
@@ -974,7 +1359,7 @@ function Reconstruction3DViewer({
       const holder = new THREE.Group();
       const fallback = createSceneObjectMesh(object);
       holder.add(fallback);
-      holder.position.copy(worldPosition(object.position, width, height));
+      holder.position.copy(worldPosition(object.position, width, height, 0, sceneHeightAt));
       holder.rotation.y = THREE.MathUtils.degToRad(-object.rotation);
       scene.add(holder);
 
@@ -1000,19 +1385,19 @@ function Reconstruction3DViewer({
         });
     });
 
-    if (showEvidence) {
+    if (effectiveShowEvidence) {
       reconstruction.evidenceRecords.forEach((record) => {
         const marker = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.4, 12), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-        marker.position.copy(worldPosition(record.position, width, height, 0.7));
+        marker.position.copy(worldPosition(record.position, width, height, 0.7, sceneHeightAt));
         scene.add(marker);
       });
       reconstruction.measurements.forEach((measurement) => {
-        const geometry = new THREE.BufferGeometry().setFromPoints([worldPosition(measurement.start, width, height, 0.35), worldPosition(measurement.end, width, height, 0.35)]);
+        const geometry = new THREE.BufferGeometry().setFromPoints([worldPosition(measurement.start, width, height, 0.35, sceneHeightAt), worldPosition(measurement.end, width, height, 0.35, sceneHeightAt)]);
         scene.add(new THREE.Line(geometry, new THREE.LineDashedMaterial({ color: 0x38bdf8, dashSize: 0.6, gapSize: 0.35 })));
       });
     }
 
-    const collisionPosition = worldPosition(reconstruction.collisionPoint, width, height, 0.42);
+    const collisionPosition = worldPosition(reconstruction.collisionPoint, width, height, 0.42, sceneHeightAt);
     const collisionMarker = new THREE.Mesh(new THREE.TorusGeometry(1.35, 0.18, 12, 36), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
     collisionMarker.rotation.x = Math.PI / 2;
     collisionMarker.position.copy(collisionPosition);
@@ -1024,7 +1409,7 @@ function Reconstruction3DViewer({
     const shockwave = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.05, 40), shockwaveMaterial);
     shockwave.rotation.x = -Math.PI / 2;
     shockwave.position.copy(collisionPosition).add(new THREE.Vector3(0, 0.08, 0));
-    shockwave.visible = showPhysicsEffects;
+    shockwave.visible = effectiveShowPhysicsEffects;
     scene.add(shockwave);
 
     const debris = new THREE.Group();
@@ -1047,7 +1432,9 @@ function Reconstruction3DViewer({
     const animate = (now: number) => {
       const delta = Math.min(0.08, (now - previous) / 1000);
       previous = now;
-      if (playingRef.current) {
+      if (controlledWorkspace) {
+        timeRef.current = workspaceTimeRef.current;
+      } else if (playingRef.current) {
         timeRef.current += delta * speedRef.current;
         if (timeRef.current >= reconstruction.durationSeconds) {
           timeRef.current = reconstruction.durationSeconds;
@@ -1059,7 +1446,7 @@ function Reconstruction3DViewer({
         const state = getParticipantStateAtTime(participant, timeRef.current);
         const mesh = participantMeshes.get(participant.id);
         if (!mesh) return;
-        const basePosition = worldPosition(state.position, width, height);
+        const basePosition = worldPosition(state.position, width, height, 0, sceneHeightAt);
         mesh.position.copy(basePosition);
         mesh.rotation.set(0, THREE.MathUtils.degToRad(-state.rotation), 0);
         const angle = THREE.MathUtils.degToRad(-state.rotation);
@@ -1091,7 +1478,7 @@ function Reconstruction3DViewer({
       impactLight.intensity = impactDelta < 0.35 ? (1 - impactDelta / 0.35) * 20 : 0;
       collisionMarker.scale.setScalar(impactDelta < 0.55 ? 1 + (0.55 - impactDelta) * 1.8 : 1);
       const sinceImpact = timeRef.current - impactTime;
-      if (showPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.1) {
+      if (effectiveShowPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.1) {
         const progress = sinceImpact / 1.1;
         shockwave.visible = true;
         shockwave.scale.setScalar(1 + progress * 7);
@@ -1099,13 +1486,13 @@ function Reconstruction3DViewer({
       } else {
         shockwaveMaterial.opacity = 0;
       }
-      debris.visible = showPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.4;
+      debris.visible = effectiveShowPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.4;
       if (debris.visible) debris.children.forEach((fragment, index) => {
         const velocity = fragment.userData.velocity as THREE.Vector3;
         fragment.position.set(velocity.x * sinceImpact, Math.max(0, velocity.y * sinceImpact - 4.9 * sinceImpact * sinceImpact), velocity.z * sinceImpact);
         fragment.rotation.set(sinceImpact * (5 + index % 3), sinceImpact * (7 + index % 4), sinceImpact * 4);
       });
-      if (showPhysicsEffects && Math.abs(sinceImpact) < 0.28) {
+      if (effectiveShowPhysicsEffects && Math.abs(sinceImpact) < 0.28) {
         const strength = (1 - Math.abs(sinceImpact) / 0.28) * 0.18;
         participantMeshes.forEach((mesh) => {
           if (mesh.position.distanceTo(collisionPosition) < 12) {
@@ -1120,7 +1507,7 @@ function Reconstruction3DViewer({
       if (mode === "Overhead") {
         camera.position.lerp(new THREE.Vector3(0, Math.max(width, height) * 1.05, 0.01), 0.08);
         camera.up.set(0, 0, -1);
-        camera.lookAt(0, 0, 0);
+        camera.lookAt(0, terrainHeightAt(0, 0), 0);
       } else {
         camera.up.set(0, 1, 0);
         if (mode === "Roadside") {
@@ -1130,7 +1517,7 @@ function Reconstruction3DViewer({
           const participant = reconstruction.vehicles[0];
           if (participant) {
             const state = getParticipantStateAtTime(participant, timeRef.current);
-            const target = worldPosition(state.position, width, height, 1.4);
+            const target = worldPosition(state.position, width, height, 1.4, sceneHeightAt);
             const angle = THREE.MathUtils.degToRad(-state.rotation);
             const behind = new THREE.Vector3(-Math.cos(angle) * 7, 3.2, Math.sin(angle) * 7);
             camera.position.lerp(target.clone().add(behind), 0.16);
@@ -1139,8 +1526,19 @@ function Reconstruction3DViewer({
         }
       }
       if (controls.enabled) controls.update();
+
+      const selectedMesh = selectedParticipantRef.current
+        ? participantMeshes.get(selectedParticipantRef.current)
+        : undefined;
+      if (selectedMesh) {
+        selectionBox.setFromObject(selectedMesh);
+        selectionBox.visible = true;
+      } else {
+        selectionBox.visible = false;
+      }
+
       renderer.render(scene, camera);
-      if (now - lastUiUpdate > 100) {
+      if (!controlledWorkspace && now - lastUiUpdate > 100) {
         lastUiUpdate = now;
         setDisplayTime(timeRef.current);
       }
@@ -1154,12 +1552,32 @@ function Reconstruction3DViewer({
     };
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!onSelectParticipantRef.current) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const intersections = raycaster.intersectObjects(
+        Array.from(participantMeshes.values()),
+        true,
+      );
+      const participantId = intersections
+        .map((intersection) => intersection.object.userData.participantId as string | undefined)
+        .find(Boolean);
+      if (participantId) onSelectParticipantRef.current(participantId);
+    };
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
     resize();
     animationId = requestAnimationFrame(animate);
     return () => {
       disposed = true;
       cancelAnimationFrame(animationId);
       observer.disconnect();
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
       controls.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {
@@ -1185,7 +1603,7 @@ function Reconstruction3DViewer({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [reconstruction, showEvidence, showObjects, showPaths, showPhysicsEffects]);
+  }, [controlledWorkspace, reconstruction, effectiveShowEvidence, effectiveShowObjects, effectiveShowPaths, effectiveShowPhysicsEffects, terrainGrid]);
 
   const setTime = (value: number) => {
     timeRef.current = value;
@@ -1215,8 +1633,8 @@ function Reconstruction3DViewer({
   };
 
   return (
-    <section className={`reconstruction-3d ui-panel flex min-h-0 flex-col overflow-hidden ${expanded ? "fixed inset-3 z-[120]" : ""} ${compact ? "reconstruction-3d--compact h-full" : ""}`}>
-      <div className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#182743] bg-[#080e1c] ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
+    <section className={`reconstruction-3d ui-panel flex min-h-0 flex-col overflow-hidden ${expanded ? "fixed inset-3 z-[120]" : ""} ${compact ? "reconstruction-3d--compact h-full" : ""} ${workspaceMode ? "reconstruction-3d--workspace" : ""}`}>
+      {!workspaceMode && <div className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#182743] bg-[#080e1c] ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
         <div>
           <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">3D Reconstruction</h2>
           {!compact && <p className="mt-1 text-[9px] text-slate-600">Physical scene, participant routes and evidence layers.</p>}
@@ -1227,17 +1645,20 @@ function Reconstruction3DViewer({
           <select value={cameraMode} onChange={(event) => setCameraMode(event.target.value as CameraMode)} className="ui-input py-1.5"><option>Orbit</option><option>Overhead</option><option>Roadside</option><option>Driver</option></select>
           {!compact && <button type="button" onClick={() => setExpanded((value) => !value)} className="ui-button-primary py-1.5">{expanded ? "Exit full view" : "Expand"}</button>}
         </div>
-      </div>
+      </div>}
       <div
         className={`relative min-h-0 w-full flex-1 bg-[#030711] ${expanded ? "flex-1" : ""}`}
-        style={expanded ? undefined : compact ? { minHeight: "270px" } : { height: "min(72vh, 760px)", minHeight: "520px" }}
+        style={expanded || workspaceMode ? undefined : compact ? { minHeight: "270px" } : { height: "min(72vh, 760px)", minHeight: "520px" }}
       >
         <div ref={mountRef} className="absolute inset-0" />
-        <button type="button" onClick={handlePlayPause} className="ui-button-primary absolute left-3 top-3 z-10 min-w-20 shadow-xl">
+        {!workspaceMode && <button type="button" onClick={handlePlayPause} className="ui-button-primary absolute left-3 top-3 z-10 min-w-20 shadow-xl">
           {isPlaying ? "Pause" : "Play"}
-        </button>
+        </button>}
+        <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#29446f] bg-[#050a16]/88 px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
+          Terrain: {terrainStatus} · {terrainMessage}
+        </div>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#29446f] bg-[#050a16]/85 px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
-          {cameraMode} · {displayTime.toFixed(1)}s
+          {effectiveCameraMode} · {visibleDisplayTime.toFixed(1)}s
         </div>
         <div
           className="pointer-events-none absolute bottom-3 left-3 max-w-[65%] rounded border border-[#1b3153] bg-[#050a16]/85 px-2.5 py-1.5 text-[8px] text-slate-400 backdrop-blur"
@@ -1250,23 +1671,26 @@ function Reconstruction3DViewer({
               : "Realistic GLB/PBR assets ready"}
         </div>
       </div>
-      <div className={`border-t border-[#182743] bg-[#080e1c] ${compact ? "px-3 py-2" : "p-4"}`}>
+      {!workspaceMode && <div className={`border-t border-[#182743] bg-[#080e1c] ${compact ? "px-3 py-2" : "p-4"}`}>
         <input type="range" min={0} max={reconstruction.durationSeconds} step={0.01} value={displayTime} onChange={(event) => { setIsPlaying(false); setTime(Number(event.target.value)); }} className="roadsafe-range w-full" />
         <div className={`flex flex-wrap items-center justify-between gap-3 ${compact ? "mt-1.5" : "mt-3"}`}>
           <div className="flex items-center gap-2">
+            {workspaceMode && <button type="button" onClick={handlePlayPause} className="ui-button-primary py-1.5">{isPlaying ? "Pause" : "Play"}</button>}
+            {workspaceMode && <button type="button" onClick={() => { setIsPlaying(false); setTime(Math.max(0, timeRef.current - 0.1)); }} className="ui-button py-1.5" aria-label="Step backward">−0.1s</button>}
+            {workspaceMode && <button type="button" onClick={() => { setIsPlaying(false); setTime(Math.min(reconstruction.durationSeconds, timeRef.current + 0.1)); }} className="ui-button py-1.5" aria-label="Step forward">+0.1s</button>}
             <button type="button" onClick={() => { setIsPlaying(false); setTime(0); }} className="ui-button py-1.5">Reset</button>
             <span className="text-[9px] font-semibold text-slate-400">{displayTime.toFixed(1)}s / {reconstruction.durationSeconds.toFixed(1)}s</span>
             {!compact && reconstruction.lastPhysicsSimulation && <span className="text-[9px] text-slate-600">{reconstruction.lastPhysicsSimulation.participantCollisions} collision(s) · {reconstruction.lastPhysicsSimulation.estimatedImpactEnergyKj.toFixed(1)} kJ</span>}
           </div>
           {!compact && <div className="flex flex-wrap items-center gap-3 text-[9px] text-slate-400">
-            <label className="flex items-center gap-1.5"><input type="checkbox" checked={showPaths} onChange={(event) => setShowPaths(event.target.checked)} /> Paths</label>
-            <label className="flex items-center gap-1.5"><input type="checkbox" checked={showObjects} onChange={(event) => setShowObjects(event.target.checked)} /> Objects</label>
-            <label className="flex items-center gap-1.5"><input type="checkbox" checked={showEvidence} onChange={(event) => setShowEvidence(event.target.checked)} /> Evidence</label>
-            <label className="flex items-center gap-1.5"><input type="checkbox" checked={showPhysicsEffects} onChange={(event) => setShowPhysicsEffects(event.target.checked)} /> Physics</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={effectiveShowPaths} onChange={(event) => setShowPaths(event.target.checked)} /> Paths</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={effectiveShowObjects} onChange={(event) => setShowObjects(event.target.checked)} /> Objects</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={effectiveShowEvidence} onChange={(event) => setShowEvidence(event.target.checked)} /> Evidence</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={effectiveShowPhysicsEffects} onChange={(event) => setShowPhysicsEffects(event.target.checked)} /> Physics</label>
             <select value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))} className="ui-input py-1.5"><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={1.5}>1.5×</option><option value={2}>2×</option></select>
           </div>}
         </div>
-      </div>
+      </div>}
     </section>
   );
 }

@@ -2,6 +2,8 @@ import type {
   AccidentReconstruction,
   MovementPathPoint,
   ParticipantPhysicsProfile,
+  PhysicsCollisionEvent,
+  PhysicsCollisionShape,
   PhysicsSimulationSummary,
   ReconstructionPhysicsSettings,
   ReconstructionPosition,
@@ -17,20 +19,47 @@ import {
   syncLegacyParticipantFields,
 } from "../utils/reconstructionGeometry";
 
+import {
+  calculatePlanarMomentOfInertia,
+  createPhysicsCollisionShape,
+  findSweptPhysicsCollision,
+  getPhysicsCollisionManifold,
+  velocityAtContactPoint,
+  type PhysicsCollisionManifold,
+  type PhysicsPose2D,
+  type PhysicsShapeDimensions,
+} from "./physicsCollisionGeometry";
+
 interface Vector2 {
   x: number;
   y: number;
 }
 
+interface ResolvedParticipantPhysicsProfile extends ParticipantPhysicsProfile {
+  collisionShape: PhysicsCollisionShape;
+  lengthMetres: number;
+  widthMetres: number;
+  collisionFriction: number;
+  momentOfInertiaScale: number;
+}
+
+interface ResolvedSceneObjectPhysicsProfile extends SceneObjectPhysicsProfile {
+  collisionShape: PhysicsCollisionShape;
+  lengthMetres: number;
+  widthMetres: number;
+  collisionFriction: number;
+}
+
 interface SimulationBody {
   participant: ReconstructionVehicle;
-  profile: ParticipantPhysicsProfile;
+  profile: ResolvedParticipantPhysicsProfile;
   impactPoint: MovementPathPoint;
   position: Vector2;
   previousPosition: Vector2;
   velocity: Vector2;
   incomingVelocity: Vector2;
   rotation: number;
+  previousRotation: number;
   angularVelocityDegreesPerSecond: number;
   timeSeconds: number;
   points: MovementPathPoint[];
@@ -41,9 +70,13 @@ interface SimulationBody {
   collidedWithObjects: Set<string>;
 }
 
-interface ParticipantCollisionResult {
+interface CollisionImpulseResult {
   collided: boolean;
   impactEnergyKj: number;
+  relativeSpeedKmh: number;
+  normalImpulseNs: number;
+  frictionImpulseNs: number;
+  angularVelocityChangesDegPerSecond: Record<string, number>;
 }
 
 interface DetectedParticipantContact {
@@ -53,6 +86,7 @@ interface DetectedParticipantContact {
   leftPosition: Vector2;
   rightPosition: Vector2;
   contactPosition: Vector2;
+  normal: Vector2;
 }
 
 interface DetectedSceneObjectContact {
@@ -62,6 +96,7 @@ interface DetectedSceneObjectContact {
   participantPosition: Vector2;
   objectPosition: Vector2;
   contactPosition: Vector2;
+  normal: Vector2;
 }
 
 function firstContactOnStep(
@@ -153,6 +188,83 @@ function participantVelocityAtTime(
   };
 }
 
+function resolveParticipantPhysicsProfile(
+  participant: ReconstructionVehicle,
+): ResolvedParticipantPhysicsProfile {
+  return {
+    ...getDefaultParticipantPhysics(participant),
+    ...(participant.physics ?? {}),
+  } as ResolvedParticipantPhysicsProfile;
+}
+
+function resolveSceneObjectPhysicsProfile(
+  object: ReconstructionSceneObject,
+): ResolvedSceneObjectPhysicsProfile {
+  return {
+    ...getDefaultSceneObjectPhysics(object),
+    ...(object.physics ?? {}),
+  } as ResolvedSceneObjectPhysicsProfile;
+}
+
+function participantDimensions(
+  profile: ResolvedParticipantPhysicsProfile,
+): PhysicsShapeDimensions {
+  return {
+    collisionShape: profile.collisionShape,
+    collisionRadiusMetres: profile.collisionRadiusMetres,
+    lengthMetres: profile.lengthMetres,
+    widthMetres: profile.widthMetres,
+  };
+}
+
+function objectDimensions(
+  profile: ResolvedSceneObjectPhysicsProfile,
+): PhysicsShapeDimensions {
+  return {
+    collisionShape: profile.collisionShape,
+    collisionRadiusMetres: profile.collisionRadiusMetres,
+    lengthMetres: profile.lengthMetres,
+    widthMetres: profile.widthMetres,
+  };
+}
+
+function participantPoseAtTime(
+  participant: ReconstructionVehicle,
+  timeSeconds: number,
+  width: number,
+  height: number,
+): PhysicsPose2D {
+  const state = getParticipantStateAtTime(participant, timeSeconds);
+  return {
+    position: worldPosition(state.position, width, height),
+    rotationDegrees: state.rotation,
+  };
+}
+
+function bodyPose(body: SimulationBody, previous = false): PhysicsPose2D {
+  return {
+    position: previous ? body.previousPosition : body.position,
+    rotationDegrees: previous ? body.previousRotation : body.rotation,
+  };
+}
+
+function sceneObjectPose(
+  object: ReconstructionSceneObject,
+  width: number,
+  height: number,
+): PhysicsPose2D {
+  return {
+    position: worldPosition(object.position, width, height),
+    rotationDegrees: object.rotation,
+  };
+}
+
+function physicalCollisionTolerance(
+  settings: ReconstructionPhysicsSettings,
+): number {
+  return clamp(settings.collisionToleranceMetres, 0, 0.35);
+}
+
 function detectEarliestParticipantContact(
   participants: ReconstructionVehicle[],
   settings: ReconstructionPhysicsSettings,
@@ -165,10 +277,11 @@ function detectEarliestParticipantContact(
   const profiles = new Map(
     participants.map((participant) => [
       participant.id,
-      { ...getDefaultParticipantPhysics(participant), ...(participant.physics ?? {}) },
+      resolveParticipantPhysicsProfile(participant),
     ]),
   );
   const step = clamp(Math.min(settings.timeStepSeconds, 0.08), 0.02, 0.08);
+  const tolerance = physicalCollisionTolerance(settings);
 
   for (let time = 0; time < durationSeconds - 0.0001; time += step) {
     const nextTime = Math.min(durationSeconds, time + step);
@@ -180,42 +293,25 @@ function detectEarliestParticipantContact(
         const right = participants[rightIndex];
         const leftProfile = profiles.get(left.id)!;
         const rightProfile = profiles.get(right.id)!;
-        const collisionDistance =
-          leftProfile.collisionRadiusMetres +
-          rightProfile.collisionRadiusMetres +
-          Math.max(0, settings.collisionToleranceMetres);
-        const leftStart = participantWorldPositionAtTime(left, time, width, height);
-        const leftEnd = participantWorldPositionAtTime(left, nextTime, width, height);
-        const rightStart = participantWorldPositionAtTime(right, time, width, height);
-        const rightEnd = participantWorldPositionAtTime(right, nextTime, width, height);
-        const contact = firstContactOnStep(
-          leftStart,
-          leftEnd,
-          rightStart,
-          rightEnd,
-          collisionDistance,
+        const contact = findSweptPhysicsCollision(
+          participantPoseAtTime(left, time, width, height),
+          participantPoseAtTime(left, nextTime, width, height),
+          participantDimensions(leftProfile),
+          participantPoseAtTime(right, time, width, height),
+          participantPoseAtTime(right, nextTime, width, height),
+          participantDimensions(rightProfile),
+          tolerance,
         );
         if (!contact) continue;
 
-        const contactTime = time + (nextTime - time) * contact.alpha;
-        const leftPosition = {
-          x: leftStart.x + (leftEnd.x - leftStart.x) * contact.alpha,
-          y: leftStart.y + (leftEnd.y - leftStart.y) * contact.alpha,
-        };
-        const rightPosition = {
-          x: rightStart.x + (rightEnd.x - rightStart.x) * contact.alpha,
-          y: rightStart.y + (rightEnd.y - rightStart.y) * contact.alpha,
-        };
         const candidate: DetectedParticipantContact = {
-          timeSeconds: contactTime,
+          timeSeconds: time + (nextTime - time) * contact.alpha,
           leftId: left.id,
           rightId: right.id,
-          leftPosition,
-          rightPosition,
-          contactPosition: {
-            x: (leftPosition.x + rightPosition.x) / 2,
-            y: (leftPosition.y + rightPosition.y) / 2,
-          },
+          leftPosition: contact.leftPose.position,
+          rightPosition: contact.rightPose.position,
+          contactPosition: contact.manifold.contactPoint,
+          normal: contact.manifold.normal,
         };
 
         if (
@@ -246,23 +342,21 @@ function detectEarliestSceneObjectContact(
   const participantProfiles = new Map(
     participants.map((participant) => [
       participant.id,
-      { ...getDefaultParticipantPhysics(participant), ...(participant.physics ?? {}) },
+      resolveParticipantPhysicsProfile(participant),
     ]),
   );
   const collidableObjects = sceneObjects
     .map((object) => ({
       object,
-      profile: {
-        ...getDefaultSceneObjectPhysics(object),
-        ...(object.physics ?? {}),
-      },
-      position: worldPosition(object.position, width, height),
+      profile: resolveSceneObjectPhysicsProfile(object),
+      pose: sceneObjectPose(object, width, height),
     }))
     .filter(({ profile }) => profile.enabled && profile.collidable);
 
   if (collidableObjects.length === 0) return null;
 
   const step = clamp(Math.min(settings.timeStepSeconds, 0.08), 0.02, 0.08);
+  const tolerance = physicalCollisionTolerance(settings);
 
   for (let time = 0; time < durationSeconds - 0.0001; time += step) {
     const nextTime = Math.min(durationSeconds, time + step);
@@ -270,54 +364,29 @@ function detectEarliestSceneObjectContact(
 
     for (const participant of participants) {
       const participantProfile = participantProfiles.get(participant.id)!;
-      const participantStart = participantWorldPositionAtTime(
-        participant,
-        time,
-        width,
-        height,
-      );
-      const participantEnd = participantWorldPositionAtTime(
-        participant,
-        nextTime,
-        width,
-        height,
-      );
+      const participantStart = participantPoseAtTime(participant, time, width, height);
+      const participantEnd = participantPoseAtTime(participant, nextTime, width, height);
 
-      for (const { object, profile, position } of collidableObjects) {
-        const interactionDistance =
-          participantProfile.collisionRadiusMetres +
-          profile.collisionRadiusMetres;
-        const contact = firstContactOnStep(
+      for (const { object, profile, pose } of collidableObjects) {
+        const contact = findSweptPhysicsCollision(
           participantStart,
           participantEnd,
-          position,
-          position,
-          interactionDistance,
+          participantDimensions(participantProfile),
+          pose,
+          pose,
+          objectDimensions(profile),
+          tolerance,
         );
         if (!contact) continue;
 
-        const participantPosition = {
-          x:
-            participantStart.x +
-            (participantEnd.x - participantStart.x) * contact.alpha,
-          y:
-            participantStart.y +
-            (participantEnd.y - participantStart.y) * contact.alpha,
-        };
-        const normal = normalise({
-          x: participantPosition.x - position.x,
-          y: participantPosition.y - position.y,
-        });
         const candidate: DetectedSceneObjectContact = {
           timeSeconds: time + (nextTime - time) * contact.alpha,
           participantId: participant.id,
           objectId: object.id,
-          participantPosition,
-          objectPosition: position,
-          contactPosition: {
-            x: position.x + normal.x * profile.collisionRadiusMetres,
-            y: position.y + normal.y * profile.collisionRadiusMetres,
-          },
+          participantPosition: contact.leftPose.position,
+          objectPosition: contact.rightPose.position,
+          contactPosition: contact.manifold.contactPoint,
+          normal: contact.manifold.normal,
         };
 
         if (
@@ -341,7 +410,7 @@ export const DEFAULT_PHYSICS_SETTINGS: ReconstructionPhysicsSettings = {
   autoRunOnPlay: true,
   liveSimulation: false,
   timeStepSeconds: 0.1,
-  collisionToleranceMetres: 2.2,
+  collisionToleranceMetres: 0.18,
   globalFrictionMultiplier: 1,
   airDrag: 0.015,
   stopSpeedKmh: 2,
@@ -419,13 +488,6 @@ function rotate(vector: Vector2, degrees: number): Vector2 {
   };
 }
 
-function reflect(vector: Vector2, normal: Vector2): Vector2 {
-  const factor = 2 * dot(vector, normal);
-  return {
-    x: vector.x - factor * normal.x,
-    y: vector.y - factor * normal.y,
-  };
-}
 
 function deterministicSign(value: string): number {
   let hash = 0;
@@ -512,41 +574,61 @@ export function getDefaultParticipantPhysics(
       return {
         enabled: true,
         massKg: 12000,
-        collisionRadiusMetres: 2.4,
-        restitution: 0.12,
+        collisionRadiusMetres: 1.25,
+        restitution: 0.1,
         rollingFriction: 1,
         lateralGrip: 0.72,
         brakingDecelerationMps2: 5.2,
+        collisionShape: "Oriented Box",
+        lengthMetres: 11.8,
+        widthMetres: 2.55,
+        collisionFriction: 0.72,
+        momentOfInertiaScale: 1,
       };
     case "Truck":
       return {
         enabled: true,
         massKg: 9000,
-        collisionRadiusMetres: 2.2,
-        restitution: 0.1,
+        collisionRadiusMetres: 1.25,
+        restitution: 0.08,
         rollingFriction: 1.05,
         lateralGrip: 0.68,
         brakingDecelerationMps2: 5,
+        collisionShape: "Oriented Box",
+        lengthMetres: 8.4,
+        widthMetres: 2.5,
+        collisionFriction: 0.76,
+        momentOfInertiaScale: 1.05,
       };
     case "Motorcycle":
       return {
         enabled: true,
         massKg: 240,
-        collisionRadiusMetres: 0.85,
-        restitution: 0.28,
+        collisionRadiusMetres: 0.42,
+        restitution: 0.22,
         rollingFriction: 0.75,
         lateralGrip: 0.9,
         brakingDecelerationMps2: 7,
+        collisionShape: "Oriented Box",
+        lengthMetres: 2.2,
+        widthMetres: 0.82,
+        collisionFriction: 0.52,
+        momentOfInertiaScale: 0.72,
       };
     case "Bicycle":
       return {
         enabled: true,
         massKg: 95,
-        collisionRadiusMetres: 0.65,
-        restitution: 0.22,
+        collisionRadiusMetres: 0.34,
+        restitution: 0.18,
         rollingFriction: 0.6,
         lateralGrip: 0.82,
         brakingDecelerationMps2: 4.5,
+        collisionShape: "Oriented Box",
+        lengthMetres: 1.85,
+        widthMetres: 0.64,
+        collisionFriction: 0.46,
+        momentOfInertiaScale: 0.62,
       };
     case "Pedestrian":
     case "Officer":
@@ -554,73 +636,127 @@ export function getDefaultParticipantPhysics(
       return {
         enabled: true,
         massKg: 75,
-        collisionRadiusMetres: 0.45,
-        restitution: 0.08,
+        collisionRadiusMetres: 0.38,
+        restitution: 0.06,
         rollingFriction: 1.45,
         lateralGrip: 0.45,
         brakingDecelerationMps2: 3.8,
+        collisionShape: "Circle",
+        lengthMetres: 0.76,
+        widthMetres: 0.76,
+        collisionFriction: 0.5,
+        momentOfInertiaScale: 0.65,
       };
     case "Car":
     default:
       return {
         enabled: true,
         massKg: 1450,
-        collisionRadiusMetres: 1.45,
-        restitution: 0.18,
+        collisionRadiusMetres: 0.92,
+        restitution: 0.14,
         rollingFriction: 0.92,
         lateralGrip: 0.82,
         brakingDecelerationMps2: 7.2,
+        collisionShape: "Oriented Box",
+        lengthMetres: 4.5,
+        widthMetres: 1.82,
+        collisionFriction: 0.66,
+        momentOfInertiaScale: 1,
       };
   }
 }
 
 export function getDefaultSceneObjectPhysics(
-  object: Pick<ReconstructionSceneObject, "type" | "severity" | "scale" | "lengthMetres">,
+  object: Pick<
+    ReconstructionSceneObject,
+    "type" | "severity" | "scale" | "lengthMetres" | "widthMetres"
+  >,
 ): SceneObjectPhysicsProfile {
   if (object.type === "Pothole") {
     const severityFactor =
       object.severity === "Critical" ? 0.55 :
       object.severity === "High" ? 0.66 :
       object.severity === "Medium" ? 0.76 : 0.86;
+    const diameter = Math.max(1.2, object.scale * 1.8);
     return {
       enabled: true,
       collidable: false,
-      collisionRadiusMetres: Math.max(0.6, object.scale * 0.9),
+      collisionRadiusMetres: diameter / 2,
       restitution: 0,
       surfaceFrictionMultiplier: 1.25,
       speedLossFactor: severityFactor,
       deflectionDegrees: object.severity === "Critical" ? 18 : object.severity === "High" ? 12 : 7,
+      collisionShape: "Circle",
+      lengthMetres: diameter,
+      widthMetres: diameter,
+      collisionFriction: 0.9,
     };
   }
 
   if (LOW_GRIP_OBJECT_TYPES.has(object.type)) {
+    const diameter = Math.max(1.6, object.scale * 2.6);
     return {
       enabled: true,
       collidable: false,
-      collisionRadiusMetres: Math.max(0.8, object.scale * 1.3),
+      collisionRadiusMetres: diameter / 2,
       restitution: 0,
       surfaceFrictionMultiplier: object.type === "Oil Spill" ? 0.28 : 0.58,
       speedLossFactor: 0.96,
       deflectionDegrees: object.type === "Loose Gravel" ? 5 : 2,
+      collisionShape: "Circle",
+      lengthMetres: diameter,
+      widthMetres: diameter,
+      collisionFriction: 0.2,
     };
   }
 
   const solid = SOLID_OBJECT_TYPES.has(object.type);
+  const longBarrier =
+    object.type === "Wall" ||
+    object.type === "Guardrail" ||
+    object.type === "Road Barrier" ||
+    object.type === "Fence";
+  const parkedVehicle = object.type === "Parked Vehicle";
+  const busStop = object.type === "Bus Stop";
+  const circular =
+    object.type === "Tree" ||
+    object.type === "Street Light" ||
+    object.type === "Traffic Light" ||
+    object.type === "Stop Sign" ||
+    object.type === "Give Way Sign" ||
+    object.type === "Speed Limit Sign";
+  const length = longBarrier
+    ? Math.max(1, Number(object.lengthMetres ?? 4))
+    : parkedVehicle
+      ? Math.max(3.8, Number(object.lengthMetres ?? 4.5))
+      : busStop
+        ? Math.max(2.5, Number(object.lengthMetres ?? 4))
+        : Math.max(0.5, object.scale * 1.2);
+  const width = longBarrier
+    ? Math.max(0.18, Number(object.widthMetres ?? 0.32))
+    : parkedVehicle
+      ? Math.max(1.6, Number(object.widthMetres ?? 1.9))
+      : busStop
+        ? Math.max(1, Number(object.widthMetres ?? 1.4))
+        : Math.max(0.3, object.scale * 0.7);
+  const radius = circular
+    ? Math.max(0.18, object.scale * (object.type === "Tree" ? 0.55 : 0.22))
+    : Math.max(0.25, Math.min(length, width) / 2);
+
   return {
     enabled: solid,
     collidable: solid,
-    collisionRadiusMetres: Math.max(
-      0.45,
-      object.type === "Wall" || object.type === "Guardrail" || object.type === "Road Barrier"
-        ? Math.max(1.2, Number(object.lengthMetres ?? 2) / 2)
-        : object.type === "Parked Vehicle"
-          ? 1.6
-          : object.scale * 0.7,
-    ),
-    restitution: object.type === "Road Barrier" || object.type === "Guardrail" ? 0.25 : 0.12,
+    collisionRadiusMetres: radius,
+    restitution:
+      object.type === "Road Barrier" || object.type === "Guardrail" ? 0.2 : 0.08,
     surfaceFrictionMultiplier: 1,
-    speedLossFactor: object.type === "Tree" || object.type === "Street Light" ? 0.28 : 0.5,
+    speedLossFactor:
+      object.type === "Tree" || object.type === "Street Light" ? 0.28 : 0.55,
     deflectionDegrees: 0,
+    collisionShape: circular ? "Circle" : "Oriented Box",
+    lengthMetres: circular ? radius * 2 : length,
+    widthMetres: circular ? radius * 2 : width,
+    collisionFriction: longBarrier ? 0.82 : parkedVehicle ? 0.68 : 0.72,
   };
 }
 
@@ -640,85 +776,279 @@ export function derivePrimaryCollisionPoint(
   };
 }
 
+function bodyMomentOfInertia(body: SimulationBody): number {
+  return calculatePlanarMomentOfInertia(
+    body.profile.massKg,
+    participantDimensions(body.profile),
+    body.profile.momentOfInertiaScale,
+  );
+}
+
+function applyImpulseToBody(
+  body: SimulationBody,
+  impulse: Vector2,
+  contactPoint: Vector2,
+): void {
+  body.velocity = {
+    x: body.velocity.x + impulse.x / body.profile.massKg,
+    y: body.velocity.y + impulse.y / body.profile.massKg,
+  };
+  const offset = {
+    x: contactPoint.x - body.position.x,
+    y: contactPoint.y - body.position.y,
+  };
+  const angularDeltaRadiansPerSecond =
+    cross(offset, impulse) / Math.max(0.001, bodyMomentOfInertia(body));
+  body.angularVelocityDegreesPerSecond +=
+    (angularDeltaRadiansPerSecond * 180) / Math.PI;
+}
+
+function contactVelocity(body: SimulationBody, contactPoint: Vector2): Vector2 {
+  return velocityAtContactPoint(
+    body.velocity,
+    (body.angularVelocityDegreesPerSecond * Math.PI) / 180,
+    {
+      x: contactPoint.x - body.position.x,
+      y: contactPoint.y - body.position.y,
+    },
+  );
+}
+
 function resolveParticipantCollision(
   left: SimulationBody,
   right: SimulationBody,
-): ParticipantCollisionResult {
-  const delta = {
-    x: right.position.x - left.position.x,
-    y: right.position.y - left.position.y,
-  };
-  let normal = normalise(
-    magnitude(delta) > 0.05
-      ? delta
-      : { x: left.velocity.x - right.velocity.x, y: left.velocity.y - right.velocity.y },
-  );
+  manifold: PhysicsCollisionManifold,
+): CollisionImpulseResult {
+  const normal = normalise(manifold.normal);
+  const contactPoint = manifold.contactPoint;
+  const leftBeforeAngular = left.angularVelocityDegreesPerSecond;
+  const rightBeforeAngular = right.angularVelocityDegreesPerSecond;
+  const leftContactVelocity = contactVelocity(left, contactPoint);
+  const rightContactVelocity = contactVelocity(right, contactPoint);
   const relativeVelocity = {
-    x: right.velocity.x - left.velocity.x,
-    y: right.velocity.y - left.velocity.y,
+    x: rightContactVelocity.x - leftContactVelocity.x,
+    y: rightContactVelocity.y - leftContactVelocity.y,
   };
-  let velocityAlongNormal = dot(relativeVelocity, normal);
+  const velocityAlongNormal = dot(relativeVelocity, normal);
 
-  if (velocityAlongNormal > 0 && magnitude(delta) <= 0.05) {
-    normal = { x: -normal.x, y: -normal.y };
-    velocityAlongNormal = dot(relativeVelocity, normal);
+  if (velocityAlongNormal >= -0.03) {
+    return {
+      collided: false,
+      impactEnergyKj: 0,
+      relativeSpeedKmh: mpsToKmh(magnitude(relativeVelocity)),
+      normalImpulseNs: 0,
+      frictionImpulseNs: 0,
+      angularVelocityChangesDegPerSecond: {},
+    };
   }
 
-  if (velocityAlongNormal >= -0.05) {
-    return { collided: false, impactEnergyKj: 0 };
-  }
-
+  const leftOffset = {
+    x: contactPoint.x - left.position.x,
+    y: contactPoint.y - left.position.y,
+  };
+  const rightOffset = {
+    x: contactPoint.x - right.position.x,
+    y: contactPoint.y - right.position.y,
+  };
+  const inverseLeftMass = 1 / left.profile.massKg;
+  const inverseRightMass = 1 / right.profile.massKg;
+  const inverseLeftInertia = 1 / Math.max(0.001, bodyMomentOfInertia(left));
+  const inverseRightInertia = 1 / Math.max(0.001, bodyMomentOfInertia(right));
+  const leftNormalLever = cross(leftOffset, normal);
+  const rightNormalLever = cross(rightOffset, normal);
+  const normalDenominator =
+    inverseLeftMass +
+    inverseRightMass +
+    leftNormalLever * leftNormalLever * inverseLeftInertia +
+    rightNormalLever * rightNormalLever * inverseRightInertia;
   const restitution = Math.min(left.profile.restitution, right.profile.restitution);
-  const reducedMass =
-    (left.profile.massKg * right.profile.massKg) /
-    (left.profile.massKg + right.profile.massKg);
+  const normalImpulseMagnitude =
+    (-(1 + restitution) * velocityAlongNormal) /
+    Math.max(0.000001, normalDenominator);
+  const normalImpulse = {
+    x: normal.x * normalImpulseMagnitude,
+    y: normal.y * normalImpulseMagnitude,
+  };
+
+  applyImpulseToBody(left, { x: -normalImpulse.x, y: -normalImpulse.y }, contactPoint);
+  applyImpulseToBody(right, normalImpulse, contactPoint);
+
+  const relativeAfterNormal = {
+    x: contactVelocity(right, contactPoint).x - contactVelocity(left, contactPoint).x,
+    y: contactVelocity(right, contactPoint).y - contactVelocity(left, contactPoint).y,
+  };
+  const tangentRaw = {
+    x: relativeAfterNormal.x - normal.x * dot(relativeAfterNormal, normal),
+    y: relativeAfterNormal.y - normal.y * dot(relativeAfterNormal, normal),
+  };
+  let frictionImpulseMagnitude = 0;
+  if (magnitude(tangentRaw) > 0.0001) {
+    const tangent = normalise(tangentRaw);
+    const leftTangentLever = cross(leftOffset, tangent);
+    const rightTangentLever = cross(rightOffset, tangent);
+    const tangentDenominator =
+      inverseLeftMass +
+      inverseRightMass +
+      leftTangentLever * leftTangentLever * inverseLeftInertia +
+      rightTangentLever * rightTangentLever * inverseRightInertia;
+    const unconstrainedFrictionImpulse =
+      -dot(relativeAfterNormal, tangent) /
+      Math.max(0.000001, tangentDenominator);
+    const frictionCoefficient = Math.sqrt(
+      left.profile.collisionFriction * right.profile.collisionFriction,
+    );
+    const maximumFrictionImpulse = frictionCoefficient * normalImpulseMagnitude;
+    frictionImpulseMagnitude = clamp(
+      unconstrainedFrictionImpulse,
+      -maximumFrictionImpulse,
+      maximumFrictionImpulse,
+    );
+    const frictionImpulse = {
+      x: tangent.x * frictionImpulseMagnitude,
+      y: tangent.y * frictionImpulseMagnitude,
+    };
+    applyImpulseToBody(left, { x: -frictionImpulse.x, y: -frictionImpulse.y }, contactPoint);
+    applyImpulseToBody(right, frictionImpulse, contactPoint);
+  }
+
+  const effectiveMass = 1 / Math.max(0.000001, normalDenominator);
   const impactEnergyKj =
-    (0.5 * reducedMass * velocityAlongNormal * velocityAlongNormal *
+    (0.5 * effectiveMass * velocityAlongNormal * velocityAlongNormal *
       (1 - restitution * restitution)) /
     1000;
-  const impulseMagnitude =
-    (-(1 + restitution) * velocityAlongNormal) /
-    (1 / left.profile.massKg + 1 / right.profile.massKg);
-  const impulse = { x: normal.x * impulseMagnitude, y: normal.y * impulseMagnitude };
-
-  left.velocity = {
-    x: left.velocity.x - impulse.x / left.profile.massKg,
-    y: left.velocity.y - impulse.y / left.profile.massKg,
-  };
-  right.velocity = {
-    x: right.velocity.x + impulse.x / right.profile.massKg,
-    y: right.velocity.y + impulse.y / right.profile.massKg,
-  };
-
-  const relativeSpeed = magnitude(relativeVelocity);
-  const approachCross = cross(
-    normalise(left.incomingVelocity),
-    normalise(right.incomingVelocity),
-  );
-  const yawDirection =
-    Math.abs(approachCross) > 0.08
-      ? Math.sign(approachCross)
-      : deterministicSign(`${left.participant.id}:${right.participant.id}`);
-  const yawMagnitude = clamp(28 + relativeSpeed * 6.5, 28, 150);
-  left.angularVelocityDegreesPerSecond =
-    yawDirection * yawMagnitude *
-    (right.profile.massKg / (left.profile.massKg + right.profile.massKg));
-  right.angularVelocityDegreesPerSecond =
-    -yawDirection * yawMagnitude *
-    (left.profile.massKg / (left.profile.massKg + right.profile.massKg));
-
   const leftDeflection = Math.abs(
     angleDifferenceDegrees(left.incomingVelocity, left.velocity),
   );
   const rightDeflection = Math.abs(
     angleDifferenceDegrees(right.incomingVelocity, right.velocity),
   );
-  left.primaryResponseAction = leftDeflection >= 24 ? "Ricochet" : "Deflect";
-  right.primaryResponseAction = rightDeflection >= 24 ? "Ricochet" : "Deflect";
-  left.primaryResponseLabel = `${left.primaryResponseAction} after impact with ${right.participant.name}`;
-  right.primaryResponseLabel = `${right.primaryResponseAction} after impact with ${left.participant.name}`;
+  const leftSpinChange =
+    left.angularVelocityDegreesPerSecond - leftBeforeAngular;
+  const rightSpinChange =
+    right.angularVelocityDegreesPerSecond - rightBeforeAngular;
+  left.primaryResponseAction =
+    leftDeflection >= 24 || Math.abs(leftSpinChange) >= 35 ? "Ricochet" : "Deflect";
+  right.primaryResponseAction =
+    rightDeflection >= 24 || Math.abs(rightSpinChange) >= 35 ? "Ricochet" : "Deflect";
+  left.primaryResponseLabel =
+    `${left.primaryResponseAction} after impact with ${right.participant.name}`;
+  right.primaryResponseLabel =
+    `${right.primaryResponseAction} after impact with ${left.participant.name}`;
 
-  return { collided: true, impactEnergyKj };
+  return {
+    collided: true,
+    impactEnergyKj,
+    relativeSpeedKmh: mpsToKmh(magnitude(relativeVelocity)),
+    normalImpulseNs: Math.abs(normalImpulseMagnitude),
+    frictionImpulseNs: Math.abs(frictionImpulseMagnitude),
+    angularVelocityChangesDegPerSecond: {
+      [left.participant.id]: Number(leftSpinChange.toFixed(3)),
+      [right.participant.id]: Number(rightSpinChange.toFixed(3)),
+    },
+  };
+}
+
+function resolveStaticObjectCollision(
+  body: SimulationBody,
+  objectProfile: ResolvedSceneObjectPhysicsProfile,
+  manifold: PhysicsCollisionManifold,
+): CollisionImpulseResult {
+  const normal = normalise(manifold.normal);
+  const contactPoint = manifold.contactPoint;
+  const beforeAngular = body.angularVelocityDegreesPerSecond;
+  const bodyContactVelocity = contactVelocity(body, contactPoint);
+  const relativeVelocity = {
+    x: -bodyContactVelocity.x,
+    y: -bodyContactVelocity.y,
+  };
+  const velocityAlongNormal = dot(relativeVelocity, normal);
+
+  if (velocityAlongNormal >= -0.03) {
+    return {
+      collided: false,
+      impactEnergyKj: 0,
+      relativeSpeedKmh: mpsToKmh(magnitude(relativeVelocity)),
+      normalImpulseNs: 0,
+      frictionImpulseNs: 0,
+      angularVelocityChangesDegPerSecond: {},
+    };
+  }
+
+  const offset = {
+    x: contactPoint.x - body.position.x,
+    y: contactPoint.y - body.position.y,
+  };
+  const inverseMass = 1 / body.profile.massKg;
+  const inverseInertia = 1 / Math.max(0.001, bodyMomentOfInertia(body));
+  const normalLever = cross(offset, normal);
+  const normalDenominator =
+    inverseMass + normalLever * normalLever * inverseInertia;
+  const restitution = Math.min(body.profile.restitution, objectProfile.restitution);
+  const normalImpulseMagnitude =
+    (-(1 + restitution) * velocityAlongNormal) /
+    Math.max(0.000001, normalDenominator);
+  const normalImpulse = {
+    x: normal.x * normalImpulseMagnitude,
+    y: normal.y * normalImpulseMagnitude,
+  };
+  applyImpulseToBody(body, { x: -normalImpulse.x, y: -normalImpulse.y }, contactPoint);
+
+  const relativeAfterNormal = {
+    x: -contactVelocity(body, contactPoint).x,
+    y: -contactVelocity(body, contactPoint).y,
+  };
+  const tangentRaw = {
+    x: relativeAfterNormal.x - normal.x * dot(relativeAfterNormal, normal),
+    y: relativeAfterNormal.y - normal.y * dot(relativeAfterNormal, normal),
+  };
+  let frictionImpulseMagnitude = 0;
+  if (magnitude(tangentRaw) > 0.0001) {
+    const tangent = normalise(tangentRaw);
+    const tangentLever = cross(offset, tangent);
+    const tangentDenominator =
+      inverseMass + tangentLever * tangentLever * inverseInertia;
+    const unconstrainedFrictionImpulse =
+      -dot(relativeAfterNormal, tangent) /
+      Math.max(0.000001, tangentDenominator);
+    const frictionCoefficient = Math.sqrt(
+      body.profile.collisionFriction * objectProfile.collisionFriction,
+    );
+    const maximumFrictionImpulse = frictionCoefficient * normalImpulseMagnitude;
+    frictionImpulseMagnitude = clamp(
+      unconstrainedFrictionImpulse,
+      -maximumFrictionImpulse,
+      maximumFrictionImpulse,
+    );
+    const frictionImpulse = {
+      x: tangent.x * frictionImpulseMagnitude,
+      y: tangent.y * frictionImpulseMagnitude,
+    };
+    applyImpulseToBody(body, { x: -frictionImpulse.x, y: -frictionImpulse.y }, contactPoint);
+  }
+
+  body.velocity = {
+    x: body.velocity.x * objectProfile.speedLossFactor,
+    y: body.velocity.y * objectProfile.speedLossFactor,
+  };
+  body.angularVelocityDegreesPerSecond *=
+    0.65 + objectProfile.speedLossFactor * 0.35;
+  const effectiveMass = 1 / Math.max(0.000001, normalDenominator);
+  const impactEnergyKj =
+    (0.5 * effectiveMass * velocityAlongNormal * velocityAlongNormal *
+      (1 - restitution * restitution)) /
+    1000;
+  const angularChange = body.angularVelocityDegreesPerSecond - beforeAngular;
+
+  return {
+    collided: true,
+    impactEnergyKj,
+    relativeSpeedKmh: mpsToKmh(magnitude(relativeVelocity)),
+    normalImpulseNs: Math.abs(normalImpulseMagnitude),
+    frictionImpulseNs: Math.abs(frictionImpulseMagnitude),
+    angularVelocityChangesDegPerSecond: {
+      [body.participant.id]: Number(angularChange.toFixed(3)),
+    },
+  };
 }
 
 function makePhysicsPoint(
@@ -768,6 +1098,7 @@ export function applyPhysicsSimulation(
       ...source,
       physicsSettings: settings,
       lastPhysicsSimulation: {
+        solverVersion: "RoadSafe Physics V2",
         ranAt: new Date().toISOString(),
         participantCollisions: 0,
         primaryImpactTimeSeconds: source.durationSeconds / 2,
@@ -777,6 +1108,7 @@ export function applyPhysicsSimulation(
         surfaceInteractions: 0,
         generatedPathPoints: 0,
         simulatedDurationSeconds: source.durationSeconds,
+        collisionEvents: [],
         warnings: ["Physics was not applied because Guided Paths mode is selected."],
       },
     };
@@ -786,6 +1118,13 @@ export function applyPhysicsSimulation(
   const height = Math.max(1, source.scene.sceneHeightMetres);
   const participants = source.vehicles.filter((participant) => participant.physics?.enabled ?? true);
   const warnings: string[] = [];
+  const collisionEvents: PhysicsCollisionEvent[] = [];
+
+  if (settings.collisionToleranceMetres > 0.35) {
+    warnings.push(
+      `Collision tolerance was limited to 0.35 m for physical contact; the stored value is ${settings.collisionToleranceMetres.toFixed(2)} m.`,
+    );
+  }
 
   if (participants.length === 0) {
     warnings.push("No physics-enabled participants were available.");
@@ -845,10 +1184,7 @@ export function applyPhysicsSimulation(
       : { ...source.collisionPoint };
 
   const bodies: SimulationBody[] = participants.map((participant) => {
-    const profile = {
-      ...getDefaultParticipantPhysics(participant),
-      ...(participant.physics ?? {}),
-    };
+    const profile = resolveParticipantPhysicsProfile(participant);
     const authoredImpact = getImpactPoint(participant);
     const state = getParticipantStateAtTime(participant, impactTime);
     const position = participantWorldPositionAtTime(
@@ -879,6 +1215,7 @@ export function applyPhysicsSimulation(
       velocity: { ...incomingVelocity },
       incomingVelocity: { ...incomingVelocity },
       rotation: rotationFromVelocity(incomingVelocity, state.rotation),
+      previousRotation: rotationFromVelocity(incomingVelocity, state.rotation),
       angularVelocityDegreesPerSecond: 0,
       timeSeconds: impactTime,
       points: [],
@@ -890,6 +1227,7 @@ export function applyPhysicsSimulation(
 
   let participantCollisions = 0;
   let estimatedImpactEnergyKj = 0;
+  const collisionTolerance = physicalCollisionTolerance(settings);
   for (let leftIndex = 0; leftIndex < bodies.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < bodies.length; rightIndex += 1) {
       const left = bodies[leftIndex];
@@ -899,23 +1237,56 @@ export function applyPhysicsSimulation(
           right.participant.id === activeParticipantContact.rightId) ||
           (left.participant.id === activeParticipantContact.rightId &&
             right.participant.id === activeParticipantContact.leftId));
-      const distance = magnitude({
-        x: right.position.x - left.position.x,
-        y: right.position.y - left.position.y,
-      });
-      const collisionDistance =
-        left.profile.collisionRadiusMetres +
-        right.profile.collisionRadiusMetres +
-        Math.max(0, settings.collisionToleranceMetres);
-      if (!isDetectedPair && distance > collisionDistance) continue;
+      const manifold: PhysicsCollisionManifold | null =
+        isDetectedPair && activeParticipantContact
+          ? (() => {
+              const sameOrder = left.participant.id === activeParticipantContact.leftId;
+              return {
+                normal: sameOrder
+                  ? activeParticipantContact.normal
+                  : {
+                      x: -activeParticipantContact.normal.x,
+                      y: -activeParticipantContact.normal.y,
+                    },
+                penetrationMetres: 0,
+                contactPoint: activeParticipantContact.contactPosition,
+              };
+            })()
+          : getPhysicsCollisionManifold(
+              createPhysicsCollisionShape(
+                bodyPose(left),
+                participantDimensions(left.profile),
+                collisionTolerance / 2,
+              ),
+              createPhysicsCollisionShape(
+                bodyPose(right),
+                participantDimensions(right.profile),
+                collisionTolerance / 2,
+              ),
+            );
+      if (!manifold) continue;
 
-      const result = resolveParticipantCollision(left, right);
-      if (result.collided) {
-        participantCollisions += 1;
-        estimatedImpactEnergyKj += result.impactEnergyKj;
-        left.collidedWithParticipants.add(right.participant.id);
-        right.collidedWithParticipants.add(left.participant.id);
-      }
+      const result = resolveParticipantCollision(left, right, manifold);
+      if (!result.collided) continue;
+
+      participantCollisions += 1;
+      estimatedImpactEnergyKj += result.impactEnergyKj;
+      left.collidedWithParticipants.add(right.participant.id);
+      right.collidedWithParticipants.add(left.participant.id);
+      collisionEvents.push({
+        id: `collision-${collisionEvents.length + 1}`,
+        timeSeconds: primaryImpactTime,
+        type: "Participant-Participant",
+        participantIds: [left.participant.id, right.participant.id],
+        contactPoint: scenePosition(manifold.contactPoint, width, height),
+        normal: { ...manifold.normal },
+        relativeSpeedKmh: Number(result.relativeSpeedKmh.toFixed(2)),
+        normalImpulseNs: Number(result.normalImpulseNs.toFixed(2)),
+        frictionImpulseNs: Number(result.frictionImpulseNs.toFixed(2)),
+        estimatedEnergyKj: Number(result.impactEnergyKj.toFixed(2)),
+        angularVelocityChangesDegPerSecond:
+          result.angularVelocityChangesDegPerSecond,
+      });
     }
   }
 
@@ -950,8 +1321,9 @@ export function applyPhysicsSimulation(
 
   const objects = source.sceneObjects.map((object) => ({
     object,
-    profile: { ...getDefaultSceneObjectPhysics(object), ...(object.physics ?? {}) },
+    profile: resolveSceneObjectPhysicsProfile(object),
     position: worldPosition(object.position, width, height),
+    pose: sceneObjectPose(object, width, height),
   }));
 
   for (
@@ -961,6 +1333,7 @@ export function applyPhysicsSimulation(
   ) {
     bodies.forEach((body) => {
       body.previousPosition = { ...body.position };
+      body.previousRotation = body.rotation;
     });
 
     bodies.forEach((body) => {
@@ -1033,36 +1406,24 @@ export function applyPhysicsSimulation(
       }
 
       const objectContacts = objects
-        .flatMap(({ object, profile, position }) => {
+        .flatMap(({ object, profile, pose }) => {
           if (!profile.enabled) return [];
-          const interactionDistance =
-            body.profile.collisionRadiusMetres + profile.collisionRadiusMetres;
-          const contact = firstContactOnStep(
-            body.previousPosition,
-            body.position,
-            position,
-            position,
-            interactionDistance,
+          const contact = findSweptPhysicsCollision(
+            bodyPose(body, true),
+            bodyPose(body, false),
+            participantDimensions(body.profile),
+            pose,
+            pose,
+            objectDimensions(profile),
+            profile.collidable ? collisionTolerance : 0,
           );
-          return contact
-            ? [{ object, profile, position, interactionDistance, contact }]
-            : [];
+          return contact ? [{ object, profile, contact }] : [];
         })
         .sort((left, right) => left.contact.alpha - right.contact.alpha);
 
-      for (const {
-        object,
-        profile,
-        position,
-        interactionDistance,
-        contact,
-      } of objectContacts) {
-        const contactPosition = {
-          x: body.previousPosition.x +
-            (body.position.x - body.previousPosition.x) * contact.alpha,
-          y: body.previousPosition.y +
-            (body.position.y - body.previousPosition.y) * contact.alpha,
-        };
+      for (const { object, profile, contact } of objectContacts) {
+        body.position = { ...contact.leftPose.position };
+        body.rotation = contact.leftPose.rotationDegrees;
 
         if (object.type === "Pothole" && !body.collidedWithObjects.has(object.id)) {
           body.velocity = rotate(
@@ -1106,29 +1467,31 @@ export function applyPhysicsSimulation(
         }
 
         if (profile.collidable && !body.collidedWithObjects.has(object.id)) {
-          const delta = {
-            x: contactPosition.x - position.x,
-            y: contactPosition.y - position.y,
-          };
-          const normal = normalise(
-            magnitude(delta) > 0.001
-              ? delta
-              : { x: -body.velocity.x, y: -body.velocity.y },
-          );
-          body.velocity = reflect(body.velocity, normal);
-          body.velocity = {
-            x: body.velocity.x * profile.restitution * profile.speedLossFactor,
-            y: body.velocity.y * profile.restitution * profile.speedLossFactor,
-          };
+          const result = resolveStaticObjectCollision(body, profile, contact.manifold);
+          if (!result.collided) continue;
           body.position = {
-            x: position.x + normal.x * interactionDistance,
-            y: position.y + normal.y * interactionDistance,
+            x: body.position.x - contact.manifold.normal.x * contact.manifold.penetrationMetres,
+            y: body.position.y - contact.manifold.normal.y * contact.manifold.penetrationMetres,
           };
           body.collidedWithObjects.add(object.id);
-          body.angularVelocityDegreesPerSecond +=
-            deterministicSign(`${body.participant.id}:${object.id}:solid`) * 75;
           interactedObjects.add(object.id);
           solidObjectImpacts += 1;
+          estimatedImpactEnergyKj += result.impactEnergyKj;
+          collisionEvents.push({
+            id: `collision-${collisionEvents.length + 1}`,
+            timeSeconds: time - step + step * contact.alpha,
+            type: "Participant-Object",
+            participantIds: [body.participant.id],
+            sceneObjectId: object.id,
+            contactPoint: scenePosition(contact.manifold.contactPoint, width, height),
+            normal: { ...contact.manifold.normal },
+            relativeSpeedKmh: Number(result.relativeSpeedKmh.toFixed(2)),
+            normalImpulseNs: Number(result.normalImpulseNs.toFixed(2)),
+            frictionImpulseNs: Number(result.frictionImpulseNs.toFixed(2)),
+            estimatedEnergyKj: Number(result.impactEnergyKj.toFixed(2)),
+            angularVelocityChangesDegPerSecond:
+              result.angularVelocityChangesDegPerSecond,
+          });
           action = "Ricochet";
           label = `Impact with ${object.label}`;
           linkedSceneObjectId = object.id;
@@ -1204,62 +1567,75 @@ export function applyPhysicsSimulation(
         const right = bodies[rightIndex];
         if (left.collidedWithParticipants.has(right.participant.id)) continue;
 
-        const collisionDistance =
-          left.profile.collisionRadiusMetres +
-          right.profile.collisionRadiusMetres +
-          Math.max(0, settings.collisionToleranceMetres);
-        const contact = firstContactOnStep(
-          left.previousPosition,
-          left.position,
-          right.previousPosition,
-          right.position,
-          collisionDistance,
+        const contact = findSweptPhysicsCollision(
+          bodyPose(left, true),
+          bodyPose(left, false),
+          participantDimensions(left.profile),
+          bodyPose(right, true),
+          bodyPose(right, false),
+          participantDimensions(right.profile),
+          collisionTolerance,
         );
         if (!contact) continue;
 
-        left.position = {
-          x: left.previousPosition.x +
-            (left.position.x - left.previousPosition.x) * contact.alpha,
-          y: left.previousPosition.y +
-            (left.position.y - left.previousPosition.y) * contact.alpha,
-        };
-        right.position = {
-          x: right.previousPosition.x +
-            (right.position.x - right.previousPosition.x) * contact.alpha,
-          y: right.previousPosition.y +
-            (right.position.y - right.previousPosition.y) * contact.alpha,
-        };
-        const delta = {
-          x: right.position.x - left.position.x,
-          y: right.position.y - left.position.y,
-        };
-        const distance = magnitude(delta);
-
+        left.position = { ...contact.leftPose.position };
+        left.rotation = contact.leftPose.rotationDegrees;
+        right.position = { ...contact.rightPose.position };
+        right.rotation = contact.rightPose.rotationDegrees;
         left.stopped = false;
         right.stopped = false;
-        const result = resolveParticipantCollision(left, right);
+        const result = resolveParticipantCollision(left, right, contact.manifold);
         if (!result.collided) continue;
 
-        const normal = normalise(delta);
-        const overlap = Math.max(0, collisionDistance - distance);
         const totalMass = left.profile.massKg + right.profile.massKg;
         left.position = {
-          x: left.position.x - normal.x * overlap * (right.profile.massKg / totalMass),
-          y: left.position.y - normal.y * overlap * (right.profile.massKg / totalMass),
+          x:
+            left.position.x -
+            contact.manifold.normal.x *
+              contact.manifold.penetrationMetres *
+              (right.profile.massKg / totalMass),
+          y:
+            left.position.y -
+            contact.manifold.normal.y *
+              contact.manifold.penetrationMetres *
+              (right.profile.massKg / totalMass),
         };
         right.position = {
-          x: right.position.x + normal.x * overlap * (left.profile.massKg / totalMass),
-          y: right.position.y + normal.y * overlap * (left.profile.massKg / totalMass),
+          x:
+            right.position.x +
+            contact.manifold.normal.x *
+              contact.manifold.penetrationMetres *
+              (left.profile.massKg / totalMass),
+          y:
+            right.position.y +
+            contact.manifold.normal.y *
+              contact.manifold.penetrationMetres *
+              (left.profile.massKg / totalMass),
         };
         left.collidedWithParticipants.add(right.participant.id);
         right.collidedWithParticipants.add(left.participant.id);
         participantCollisions += 1;
         estimatedImpactEnergyKj += result.impactEnergyKj;
+        const contactTime = time - step + step * contact.alpha;
+        collisionEvents.push({
+          id: `collision-${collisionEvents.length + 1}`,
+          timeSeconds: contactTime,
+          type: "Participant-Participant",
+          participantIds: [left.participant.id, right.participant.id],
+          contactPoint: scenePosition(contact.manifold.contactPoint, width, height),
+          normal: { ...contact.manifold.normal },
+          relativeSpeedKmh: Number(result.relativeSpeedKmh.toFixed(2)),
+          normalImpulseNs: Number(result.normalImpulseNs.toFixed(2)),
+          frictionImpulseNs: Number(result.frictionImpulseNs.toFixed(2)),
+          estimatedEnergyKj: Number(result.impactEnergyKj.toFixed(2)),
+          angularVelocityChangesDegPerSecond:
+            result.angularVelocityChangesDegPerSecond,
+        });
 
         left.points.push(
           makePhysicsPoint(
             left,
-            time,
+            contactTime,
             scenePosition(left.position, width, height),
             "Impact",
             `Contact with ${right.participant.name}`,
@@ -1268,14 +1644,14 @@ export function applyPhysicsSimulation(
         right.points.push(
           makePhysicsPoint(
             right,
-            time,
+            contactTime,
             scenePosition(right.position, width, height),
             "Impact",
             `Contact with ${left.participant.name}`,
           ),
         );
         generatedPathPoints += 2;
-        simulatedDurationSeconds = Math.max(simulatedDurationSeconds, time);
+        simulatedDurationSeconds = Math.max(simulatedDurationSeconds, contactTime);
       }
     }
 
@@ -1287,7 +1663,7 @@ export function applyPhysicsSimulation(
     if (!body || body.points.length === 0) {
       return {
         ...participant,
-        physics: { ...getDefaultParticipantPhysics(participant), ...(participant.physics ?? {}) },
+        physics: resolveParticipantPhysicsProfile(participant),
       };
     }
 
@@ -1345,6 +1721,7 @@ export function applyPhysicsSimulation(
   );
 
   const summary: PhysicsSimulationSummary = {
+    solverVersion: "RoadSafe Physics V2",
     ranAt: new Date().toISOString(),
     participantCollisions,
     primaryImpactTimeSeconds: primaryImpactTime,
@@ -1354,6 +1731,7 @@ export function applyPhysicsSimulation(
     surfaceInteractions,
     generatedPathPoints,
     simulatedDurationSeconds: Number(simulatedDurationSeconds.toFixed(2)),
+    collisionEvents,
     warnings,
   };
 
@@ -1384,7 +1762,7 @@ export function applyPhysicsSimulation(
     vehicles: updatedVehicles,
     sceneObjects: source.sceneObjects.map((object) => ({
       ...object,
-      physics: { ...getDefaultSceneObjectPhysics(object), ...(object.physics ?? {}) },
+      physics: resolveSceneObjectPhysicsProfile(object),
     })),
     physicsSettings: settings,
     lastPhysicsSimulation: summary,

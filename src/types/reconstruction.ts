@@ -101,6 +101,8 @@ export interface ReconstructionEntity {
   physics?: ParticipantPhysicsProfile;
 }
 
+export type PhysicsCollisionShape = "Circle" | "Oriented Box";
+
 export interface ParticipantPhysicsProfile {
   enabled: boolean;
   massKg: number;
@@ -109,6 +111,13 @@ export interface ParticipantPhysicsProfile {
   rollingFriction: number;
   lateralGrip: number;
   brakingDecelerationMps2: number;
+
+  /** V2 contact geometry. Older cases fall back to type-specific defaults. */
+  collisionShape?: PhysicsCollisionShape;
+  lengthMetres?: number;
+  widthMetres?: number;
+  collisionFriction?: number;
+  momentOfInertiaScale?: number;
 }
 
 /* Compatibility aliases used by the current editor. */
@@ -178,6 +187,12 @@ export interface RoadSceneSettings {
   roadSurface: RoadSurfaceCondition;
   visibility: SceneVisibility;
   trafficVolume: SceneTrafficVolume;
+
+  /** Optional real-world DEM terrain around the calibrated accident location. */
+  useRealTerrain: boolean;
+  terrainAreaMetres: number;
+  terrainExaggeration: number;
+  conformRoadToTerrain: boolean;
 }
 
 export function createDefaultRoadSceneSettings(): RoadSceneSettings {
@@ -198,6 +213,10 @@ export function createDefaultRoadSceneSettings(): RoadSceneSettings {
     roadSurface: "Dry",
     visibility: "Good",
     trafficVolume: "Moderate",
+    useRealTerrain: true,
+    terrainAreaMetres: 500,
+    terrainExaggeration: 1,
+    conformRoadToTerrain: true,
   };
 }
 
@@ -288,6 +307,12 @@ export interface SceneObjectPhysicsProfile {
   surfaceFrictionMultiplier: number;
   speedLossFactor: number;
   deflectionDegrees: number;
+
+  /** V2 static contact geometry. */
+  collisionShape?: PhysicsCollisionShape;
+  lengthMetres?: number;
+  widthMetres?: number;
+  collisionFriction?: number;
 }
 
 export type PhysicsSimulationMode =
@@ -320,7 +345,23 @@ export interface CollisionSetup {
   lastCalculatedAt?: string;
 }
 
+export interface PhysicsCollisionEvent {
+  id: string;
+  timeSeconds: number;
+  type: "Participant-Participant" | "Participant-Object";
+  participantIds: string[];
+  sceneObjectId?: string;
+  contactPoint: ReconstructionPosition;
+  normal: ReconstructionPosition;
+  relativeSpeedKmh: number;
+  normalImpulseNs: number;
+  frictionImpulseNs: number;
+  estimatedEnergyKj: number;
+  angularVelocityChangesDegPerSecond: Record<string, number>;
+}
+
 export interface PhysicsSimulationSummary {
+  solverVersion: "RoadSafe Physics V2";
   ranAt: string;
   participantCollisions: number;
   primaryImpactTimeSeconds: number;
@@ -330,6 +371,7 @@ export interface PhysicsSimulationSummary {
   surfaceInteractions: number;
   generatedPathPoints: number;
   simulatedDurationSeconds: number;
+  collisionEvents: PhysicsCollisionEvent[];
   warnings: string[];
 }
 

@@ -675,8 +675,8 @@ export function createRealisticProceduralSceneObject(
 export function enhanceTextureFromUrl(
   target: THREE.Texture,
   url: string,
-  repeatX: number,
-  repeatY: number,
+  repeatX?: number,
+  repeatY?: number,
 ): void {
   textureLoader.load(
     url,
@@ -685,7 +685,9 @@ export function enhanceTextureFromUrl(
       target.colorSpace = THREE.SRGBColorSpace;
       target.wrapS = THREE.RepeatWrapping;
       target.wrapT = THREE.RepeatWrapping;
-      target.repeat.set(repeatX, repeatY);
+      if (repeatX !== undefined && repeatY !== undefined) {
+        target.repeat.set(repeatX, repeatY);
+      }
       target.anisotropy = 8;
       target.needsUpdate = true;
       loaded.dispose();
@@ -702,9 +704,11 @@ export function enhanceRoadTextures(
   ground: THREE.Texture,
   sidewalk?: THREE.Texture,
 ): void {
-  enhanceTextureFromUrl(asphalt, ROAD_TEXTURE_ASSETS.asphalt, 10, 10);
-  enhanceTextureFromUrl(ground, ROAD_TEXTURE_ASSETS.asphaltBright, 7, 7);
-  if (sidewalk) enhanceTextureFromUrl(sidewalk, ROAD_TEXTURE_ASSETS.sidewalk, 7, 20);
+  // Preserve caller-defined world-scale repeat values. The renderer creates
+  // separate texture instances for each road orientation and segment size.
+  enhanceTextureFromUrl(asphalt, ROAD_TEXTURE_ASSETS.asphalt);
+  enhanceTextureFromUrl(ground, ROAD_TEXTURE_ASSETS.asphaltBright);
+  if (sidewalk) enhanceTextureFromUrl(sidewalk, ROAD_TEXTURE_ASSETS.sidewalk);
 }
 
 export function disposeObjectTree(root: THREE.Object3D): void {

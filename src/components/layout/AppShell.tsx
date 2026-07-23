@@ -97,6 +97,9 @@ export default function AppShell() {
     .map((part) => part[0]?.toUpperCase())
     .join("") || "LI";
   const isDashboard = location.pathname === "/";
+  const isReconstructionWorkspace =
+    location.pathname === "/reconstruction" ||
+    location.pathname.endsWith("/reconstruction");
 
   const quickInfo = [
     ["Case ID", activeCase?.caseNumber ?? "No active case"],
@@ -147,12 +150,12 @@ export default function AppShell() {
               end={end}
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-  `flex items-center gap-3 rounded-md px-3 py-2.5 text-[11px] font-semibold transition-colors duration-100 ${
-    isActive
-      ? "bg-[#091a35] text-[#8ebcff]"
-      : "text-slate-400 hover:bg-[#040912] hover:text-slate-100"
-  }`
-}
+                `flex items-center gap-3 rounded-md px-3 py-2.5 text-[11px] font-semibold transition-colors duration-100 ${
+                  isActive
+                    ? "bg-[#0d2448] text-[#8ebcff]"
+                    : "text-slate-400 hover:bg-[#081122] hover:text-slate-100"
+                }`
+              }
             >
               <Icon size={15} strokeWidth={1.65} />
               <span>{label}</span>
@@ -202,6 +205,7 @@ export default function AppShell() {
       )}
 
       <div className="lg:pl-[214px]">
+        {!isReconstructionWorkspace && (
         <header className="sticky top-0 z-30 border-b border-[#182849] bg-[#040918]/96 backdrop-blur">
           <div className="flex min-h-[68px] items-center gap-3 px-3 sm:px-4 lg:px-5">
             <button
@@ -298,15 +302,16 @@ export default function AppShell() {
             </div>
           </div>
         </header>
+        )}
 
-        <main>
-          {!isDashboard && (
+        <main className={isReconstructionWorkspace ? "reconstruction-shell-main" : undefined}>
+          {!isDashboard && !isReconstructionWorkspace && (
             <div className="border-b border-[#14213a] bg-[#050b18] px-4 py-3.5 lg:px-5">
               <h1 className="text-base font-bold tracking-tight text-slate-100">{title}</h1>
               <p className="mt-1 text-[10px] text-slate-500">{description}</p>
             </div>
           )}
-          <div className={isDashboard ? "p-2.5 sm:p-3" : "p-3 sm:p-4 lg:p-5"}>
+          <div className={isReconstructionWorkspace ? "p-0" : isDashboard ? "p-2.5 sm:p-3" : "p-3 sm:p-4 lg:p-5"}>
             <Outlet />
           </div>
         </main>

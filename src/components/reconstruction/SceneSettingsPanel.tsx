@@ -122,7 +122,7 @@ function ToggleSetting({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-sm border border-gray-200 p-3">
+    <label className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-3">
       <span>
         <span className="block text-sm font-medium text-gray-700">
           {label}
@@ -323,6 +323,85 @@ export default function SceneSettingsPanel({
             onChange({ trafficVolume })
           }
         />
+
+        <div className="rounded-xl border border-gray-200 p-3">
+          <div>
+            <h4 className="text-sm font-semibold text-gray-800">
+              Real-world terrain
+            </h4>
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Builds the surrounding land from GPS elevation tiles. A confirmed GPS calibration or detected road coordinate is required.
+            </p>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            <ToggleSetting
+              label="Use real elevation"
+              description="Load and cache terrain around the accident location."
+              checked={settings.useRealTerrain}
+              onChange={(useRealTerrain) =>
+                onChange({ useRealTerrain })
+              }
+            />
+
+            {settings.useRealTerrain && (
+              <>
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-600">
+                    Terrain area
+                  </span>
+                  <select
+                    value={settings.terrainAreaMetres}
+                    onChange={(event) =>
+                      onChange({
+                        terrainAreaMetres: Number(event.target.value),
+                      })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value={500}>500 m × 500 m</option>
+                    <option value={1000}>1 km × 1 km</option>
+                    <option value={3000}>3 km × 3 km</option>
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="flex items-center justify-between text-xs font-medium text-gray-600">
+                    <span>Elevation scale</span>
+                    <strong className="text-gray-900">
+                      {settings.terrainExaggeration.toFixed(2)}×
+                    </strong>
+                  </span>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={2}
+                    step={0.05}
+                    value={settings.terrainExaggeration}
+                    onChange={(event) =>
+                      onChange({
+                        terrainExaggeration: Number(event.target.value),
+                      })
+                    }
+                    className="mt-2 w-full"
+                  />
+                  <span className="mt-1 block text-[11px] leading-4 text-gray-500">
+                    Keep 1.00× for investigation and reporting. Higher values are visual aids only.
+                  </span>
+                </label>
+
+                <ToggleSetting
+                  label="Conform road to terrain"
+                  description="Bend road surfaces and scene positions along the elevation profile."
+                  checked={settings.conformRoadToTerrain}
+                  onChange={(conformRoadToTerrain) =>
+                    onChange({ conformRoadToTerrain })
+                  }
+                />
+              </>
+            )}
+          </div>
+        </div>
 
         <ToggleSetting
           label="Pavements"

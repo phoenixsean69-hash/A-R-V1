@@ -13,6 +13,24 @@ import type {
 } from "react";
 
 import { Link } from "react-router-dom";
+import {
+  Activity,
+  ArrowLeft,
+  Camera,
+  Crosshair,
+  Expand,
+  Layers3,
+  Move,
+  Pause,
+  Play,
+  RotateCcw,
+  RotateCw,
+  Ruler,
+  Save,
+  ScanLine,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
 
 import { ReconstructionService } from "../../services/reconstructionService";
 import { FieldPlacementService } from "../../services/fieldPlacementService";
@@ -99,6 +117,15 @@ interface AccidentReconstructionEditorProps {
   onFootageSaved?: (footage: ReconstructionFootage) => void;
 }
 
+type WorkspaceCameraMode = "Orbit" | "Overhead" | "Roadside" | "Driver";
+
+type WorkspaceLayerState = {
+  paths: boolean;
+  objects: boolean;
+  evidence: boolean;
+  physics: boolean;
+};
+
 type DragState =
   | {
       kind: "participant-path-point";
@@ -126,6 +153,15 @@ type DragState =
   | {
       kind: "collision-point";
     };
+
+type WorkspaceTool =
+  | "Select"
+  | "Move"
+  | "Rotate"
+  | "Scale"
+  | "Timeline"
+  | "Measure"
+  | "Camera";
 
 interface ParticipantShapeProps {
   participant: ReconstructionVehicle;
@@ -777,7 +813,20 @@ export default function AccidentReconstructionEditor({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sceneExpanded, setSceneExpanded] = useState(false);
-  const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("2D");
+  const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("3D");
+  const [activeWorkspaceTool, setActiveWorkspaceTool] =
+    useState<WorkspaceTool>("Select");
+  const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
+  const [workspacePropertiesOpen, setWorkspacePropertiesOpen] = useState(true);
+  const [cameraCycleToken, setCameraCycleToken] = useState(0);
+  const [workspaceCameraMode, setWorkspaceCameraMode] =
+    useState<WorkspaceCameraMode>("Orbit");
+  const [workspaceLayers, setWorkspaceLayers] = useState<WorkspaceLayerState>({
+    paths: true,
+    objects: true,
+    evidence: true,
+    physics: true,
+  });
   const [sceneView, setSceneView] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>(reconstruction.fieldCalibration ? "Satellite" : "Diagram");
   const [routeDrawingParticipantId, setRouteDrawingParticipantId] = useState<string | null>(null);
@@ -1000,6 +1049,24 @@ export default function AccidentReconstructionEditor({
       ) ?? null,
     [reconstruction.sceneObjects, selectedSceneObjectId],
   );
+
+  const selectedParticipantState = useMemo(
+    () =>
+      selectedParticipant
+        ? getParticipantStateAtTime(selectedParticipant, currentTime)
+        : null,
+    [currentTime, selectedParticipant],
+  );
+
+  const selectedPhysicsEvent = useMemo(() => {
+    const events = reconstruction.lastPhysicsSimulation?.collisionEvents ?? [];
+    if (selectedParticipantId) {
+      return [...events]
+        .reverse()
+        .find((event) => event.participantIds.includes(selectedParticipantId)) ?? null;
+    }
+    return events[events.length - 1] ?? null;
+  }, [reconstruction.lastPhysicsSimulation, selectedParticipantId]);
 
   const impactEffect = useMemo(
     () => getReconstructionImpactEffectState(reconstruction, currentTime),
@@ -2385,101 +2452,133 @@ export default function AccidentReconstructionEditor({
       ? "cursor-crosshair"
       : "";
 
+  const handleWorkspaceTool = (tool: WorkspaceTool) => {
+    setActiveWorkspaceTool(tool);
+
+    if (tool === "Select") {
+      setMeasurementToolActive(false);
+      setMeasurementDraftStart(null);
+      setCollisionPlacementActive(false);
+      setActiveEvidencePlacementId(null);
+      setActiveSceneObjectType(null);
+      setTraceToolObjectId(null);
+      return;
+    }
+
+    if (tool === "Measure") {
+      setActiveReconstructionView("2D");
+      setMeasurementToolActive(true);
+      setMeasurementDraftStart(null);
+      setCollisionPlacementActive(false);
+      setActiveEvidencePlacementId(null);
+      setActiveSceneObjectType(null);
+      setTraceToolObjectId(null);
+      return;
+    }
+
+    if (tool === "Timeline") {
+      document
+        .getElementById("reconstruction-timeline-workspace")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (tool === "Camera") {
+      setActiveReconstructionView("3D");
+      setCameraCycleToken((value) => value + 1);
+      return;
+    }
+
+    setWorkspacePropertiesOpen(true);
+    if (tool === "Scale") setWorkspaceSettingsOpen(true);
+  };
+
+  const workspaceTools: Array<{
+    label: WorkspaceTool;
+    icon: typeof Crosshair;
+  }> = [
+    { label: "Select", icon: Crosshair },
+    { label: "Move", icon: Move },
+    { label: "Rotate", icon: RotateCw },
+    { label: "Scale", icon: Expand },
+    { label: "Timeline", icon: ScanLine },
+    { label: "Measure", icon: Ruler },
+    { label: "Camera", icon: Camera },
+  ];
+
+  const renderWorkspaceTools = () => (
+    <nav className="reconstruction-workspace__tools" aria-label="Reconstruction tools">
+      {workspaceTools.map(({ label, icon: Icon }) => (
+        <button
+          key={label}
+          type="button"
+          onClick={() => handleWorkspaceTool(label)}
+          className={activeWorkspaceTool === label ? "is-active" : ""}
+          title={label}
+        >
+          <Icon size={15} />
+          <span>{label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
   return (
-    <div className="reconstruction-editor space-y-3">
-      <div className="mx-auto max-w-[2200px] space-y-3">
-        <div className="ui-panel flex flex-wrap items-center justify-between gap-4 px-4 py-3">
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#79adfa]">
-              {caseContext ? caseContext.caseNumber : "RoadSafe AR"}
+    <div className="reconstruction-editor reconstruction-workspace">
+      <div className="reconstruction-workspace__header">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            to={caseContext?.casePath ?? "/"}
+            className="reconstruction-workspace__icon-button"
+            aria-label={caseContext ? "Back to case" : "Back to dashboard"}
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <div className="min-w-0">
+            <p className="truncate text-[10px] font-bold uppercase tracking-[0.08em] text-slate-200">
+              {(caseContext?.caseNumber ?? reconstruction.accidentId) || "RoadSafe AR"}
+              <span className="mx-2 text-slate-600">·</span>
+              {caseContext?.caseTitle ?? reconstruction.title}
             </p>
-            <h1 className="mt-1 text-base font-bold text-slate-100">
-              Accident Reconstruction Editor
-            </h1>
-            {caseContext && (
-              <p className="mt-1 text-[10px] font-semibold text-slate-400">
-                Linked case: {caseContext.caseTitle}
-              </p>
-            )}
-            <p className="mt-1 max-w-3xl text-[9px] leading-4 text-slate-600">
-              Build detailed multi-point movement paths, connect actions to the
-              timeline and trace curved physical evidence directly on the road.
+            <p className="mt-1 truncate text-[8px] uppercase tracking-[0.12em] text-slate-600">
+              Accident reconstruction workspace
             </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {saveMessage && (
-              <span
-                role={saveMessageType === "error" ? "alert" : "status"}
-                className={`max-w-xl rounded-lg px-3 py-2 text-sm font-semibold ${
-                  saveMessageType === "error"
-                    ? "bg-red-50 text-red-700"
-                    : saveMessageType === "info"
-                      ? "bg-blue-50 text-blue-700"
-                      : "bg-green-50 text-green-700"
-                }`}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          <div className="reconstruction-workspace__view-switch">
+            {(["2D", "3D"] as const).map((view) => (
+              <button
+                key={view}
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setActiveReconstructionView(view);
+                }}
+                className={activeReconstructionView === view ? "is-active" : ""}
               >
-                {saveMessage}
-              </span>
-            )}
+                {view} View
+              </button>
+            ))}
+          </div>
 
-            {caseContext ? (
-              <>
-                <Link
-                  to={caseContext.casePath}
-                  className="ui-button"
-                >
-                  ← Back to Case
-                </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveReconstructionView("2D");
+              setWorkspaceSettingsOpen((value) => !value);
+            }}
+            className="reconstruction-workspace__button"
+          >
+            Panels
+          </button>
 
-                <Link
-                  to={caseContext.reportPath}
-                  className="ui-button"
-                >
-                  View Report
-                </Link>
-
-                <Link
-                  to={caseContext.footagePath}
-                  className="ui-button"
-                >
-                  Saved Footage
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/"
-                  className="ui-button"
-                >
-                  ← Back to Dashboard
-                </Link>
-
-                <Link
-                  to="/cases"
-                  className="ui-button"
-                >
-                  Accident Cases
-                </Link>
-
-                <Link
-                  to="/cases/new"
-                  className="ui-button"
-                >
-                  + New Case
-                </Link>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={() => openFieldPlacementForTarget(null)}
-              className="ui-button"
-            >
-              Field GPS Placement
-            </button>
-
-            {caseContext && (
+          {caseContext && (
+            <>
+              <Link to={caseContext.reportPath} className="reconstruction-workspace__button">
+                Export
+              </Link>
               <ReconstructionRecorder
                 reconstruction={reconstruction}
                 caseId={caseContext.caseId}
@@ -2489,83 +2588,261 @@ export default function AccidentReconstructionEditor({
                   setIsPlaying(false);
                   setCurrentTime(0);
                   currentTimeRef.current = 0;
-                  const physicsSettings = {
-                    ...DEFAULT_PHYSICS_SETTINGS,
-                    ...(reconstruction.physicsSettings ?? {}),
-                  };
-                  const preparedReconstruction =
-                    physicsSettings.enabled &&
-                    physicsSettings.mode === "Physics After Primary Impact" &&
-                    physicsSettings.autoRunOnPlay &&
-                    reconstruction.vehicles.length > 0
-                      ? applyPhysicsSimulation(reconstruction)
-                      : reconstruction;
-                  const recordToSave = {
-                    ...preparedReconstruction,
+                  const prepared = preparePhysicsForPlayback(reconstruction);
+                  const saved = ReconstructionService.save({
+                    ...prepared,
                     accidentId: caseContext.caseNumber,
-                  };
-                  const saved = ReconstructionService.save(recordToSave);
+                  });
                   setReconstruction(saved);
                   onReconstructionSaved?.(saved);
                   return saved;
                 }}
                 onSaved={(footage) => {
                   onFootageSaved?.(footage);
-                  showSaveMessage(
-                    "Reconstruction footage saved to the case.",
-                    "success",
-                    3000,
-                  );
+                  showSaveMessage("Reconstruction footage saved to the case.");
                 }}
               />
-            )}
+            </>
+          )}
 
-            <button
-              type="button"
-              onClick={handleSave}
-              className="ui-button-primary px-5"
-            >
-              Save Reconstruction
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="reconstruction-workspace__button reconstruction-workspace__button--primary"
+          >
+            <Save size={14} />
+            Save
+          </button>
         </div>
+      </div>
 
-        <div className="ui-panel flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
-          <div className="flex items-center gap-3">
-            <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">View mode</span>
-            <div className="flex rounded-md border border-[#1d2c4b] bg-[#070c18] p-1">
-            {(["2D", "3D"] as const).map((view) => (
-              <button
-                key={view}
-                type="button"
-                onClick={() => {
-                  setIsPlaying(false);
-                  setActiveReconstructionView(view);
-                }}
-                className={`rounded px-5 py-1.5 text-[10px] font-bold transition-colors ${activeReconstructionView === view ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
-              >
-                {view === "2D" ? "2D" : "3D"}
-              </button>
-            ))}
-            </div>
-          </div>
-          <span className="text-[9px] text-slate-600">One synchronized physics timeline powers both views.</span>
+      {saveMessage && (
+        <div
+          role={saveMessageType === "error" ? "alert" : "status"}
+          className={`reconstruction-workspace__toast ${saveMessageType === "error" ? "is-error" : ""}`}
+        >
+          {saveMessage}
         </div>
+      )}
 
+      <div className="reconstruction-workspace__body">
         {activeReconstructionView === "3D" && (
-          <Suspense fallback={<div className="rounded-2xl bg-slate-950 p-8 text-center text-sm font-bold text-sky-200">Loading interactive 3D reconstruction…</div>}>
-            <Reconstruction3DViewer
-              reconstruction={reconstruction}
-              onSwitchTo2D={() => setActiveReconstructionView("2D")}
-              onRunPhysics={handleRunPhysics}
-              onPreparePlayback={handlePreparePlayback}
-            />
-          </Suspense>
+          <div className="reconstruction-workspace__stage-grid reconstruction-workspace__stage-grid--3d">
+            <div className="reconstruction-workspace__stage-main">
+              {renderWorkspaceTools()}
+              <Suspense
+                fallback={
+                  <div className="reconstruction-workspace__loading">
+                    Loading interactive 3D reconstruction…
+                  </div>
+                }
+              >
+                <Reconstruction3DViewer
+                  reconstruction={reconstruction}
+                  onSwitchTo2D={() => setActiveReconstructionView("2D")}
+                  onRunPhysics={handleRunPhysics}
+                  onPreparePlayback={handlePreparePlayback}
+                  workspaceMode
+                  selectedParticipantId={selectedParticipantId}
+                  onSelectParticipant={(participantId) =>
+                    handleSelectParticipant(participantId)
+                  }
+                  cameraCycleToken={cameraCycleToken}
+                  workspaceTimeSeconds={currentTime}
+                  workspacePlaying={isPlaying}
+                  workspacePlaybackSpeed={playbackSpeed}
+                  workspaceCameraMode={workspaceCameraMode}
+                  workspaceLayers={workspaceLayers}
+                />
+              </Suspense>
+            </div>
+
+            {workspacePropertiesOpen ? (
+              <aside className="reconstruction-workspace__properties reconstruction-workspace__context-panel">
+                <div className="reconstruction-workspace__panel-header">
+                  <div>
+                    <p>3D Context Inspector</p>
+                    <span>
+                      {selectedParticipant
+                        ? selectedParticipant.name
+                        : "Scene and simulation controls"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setWorkspacePropertiesOpen(false)}
+                    aria-label="Close context inspector"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {selectedParticipant && selectedParticipantState ? (
+                  <div className="reconstruction-workspace__property-list">
+                    <label>
+                      <span>Name</span>
+                      <input
+                        value={selectedParticipant.name}
+                        onChange={(event) =>
+                          updateParticipant(selectedParticipant.id, {
+                            name: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <div>
+                      <span>Type</span>
+                      <strong>{selectedParticipant.type}</strong>
+                    </div>
+                    <div>
+                      <span>Speed</span>
+                      <strong>{selectedParticipantState.speedKmh.toFixed(1)} km/h</strong>
+                    </div>
+                    <div>
+                      <span>Mass</span>
+                      <strong>{selectedParticipant.physics?.massKg ?? "—"} kg</strong>
+                    </div>
+                    <div>
+                      <span>Position</span>
+                      <strong>
+                        X {selectedParticipantState.position.x.toFixed(2)} · Y {selectedParticipantState.position.y.toFixed(2)}
+                      </strong>
+                    </div>
+                    <label>
+                      <span>Heading</span>
+                      <input
+                        type="number"
+                        value={Math.round(selectedParticipantState.rotation)}
+                        onChange={(event) =>
+                          updatePathPoint(
+                            selectedParticipant.id,
+                            selectedParticipantState.activePointId,
+                            { rotation: Number(event.target.value) },
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="reconstruction-workspace__empty-properties">
+                    Select a participant in the 3D scene to inspect its motion,
+                    mass, heading and collision response.
+                  </div>
+                )}
+
+                <div className="reconstruction-workspace__context-section">
+                  <div className="reconstruction-workspace__context-title">
+                    <Camera size={13} />
+                    Camera
+                  </div>
+                  <div className="reconstruction-workspace__segmented-grid">
+                    {(["Orbit", "Overhead", "Roadside", "Driver"] as WorkspaceCameraMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setWorkspaceCameraMode(mode)}
+                        className={workspaceCameraMode === mode ? "is-active" : ""}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__context-section">
+                  <div className="reconstruction-workspace__context-title">
+                    <Layers3 size={13} />
+                    Layers and overlays
+                  </div>
+                  <div className="reconstruction-workspace__layer-list">
+                    {(
+                      [
+                        ["paths", "Participant paths"],
+                        ["objects", "Scene objects"],
+                        ["evidence", "Evidence and measurements"],
+                        ["physics", "Physics effects"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key}>
+                        <span>{label}</span>
+                        <input
+                          type="checkbox"
+                          checked={workspaceLayers[key]}
+                          onChange={(event) =>
+                            setWorkspaceLayers((current) => ({
+                              ...current,
+                              [key]: event.target.checked,
+                            }))
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__context-section">
+                  <div className="reconstruction-workspace__context-title">
+                    <Activity size={13} />
+                    Physics telemetry
+                  </div>
+                  <div className="reconstruction-workspace__telemetry-grid">
+                    <div>
+                      <span>Impact speed</span>
+                      <strong>{selectedPhysicsEvent?.relativeSpeedKmh.toFixed(1) ?? "—"} km/h</strong>
+                    </div>
+                    <div>
+                      <span>Normal impulse</span>
+                      <strong>{selectedPhysicsEvent ? `${selectedPhysicsEvent.normalImpulseNs.toFixed(0)} N·s` : "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Energy</span>
+                      <strong>{selectedPhysicsEvent ? `${selectedPhysicsEvent.estimatedEnergyKj.toFixed(1)} kJ` : "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Collisions</span>
+                      <strong>{reconstruction.lastPhysicsSimulation?.participantCollisions ?? 0}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__context-section">
+                  <div className="reconstruction-workspace__context-title">Scene environment</div>
+                  <div className="reconstruction-workspace__property-list reconstruction-workspace__property-list--compact">
+                    <div><span>Weather</span><strong>{reconstruction.scene.weather}</strong></div>
+                    <div><span>Surface</span><strong>{reconstruction.scene.roadSurface}</strong></div>
+                    <div><span>Visibility</span><strong>{reconstruction.scene.visibility}</strong></div>
+                    <div><span>Terrain</span><strong>{reconstruction.scene.useRealTerrain ? `${reconstruction.scene.terrainAreaMetres}m DEM` : "Flat"}</strong></div>
+                  </div>
+                </div>
+              </aside>
+            ) : (
+              <button
+                type="button"
+                className="reconstruction-workspace__inspector-tab"
+                onClick={() => setWorkspacePropertiesOpen(true)}
+              >
+                <Layers3 size={14} />
+                Inspector
+              </button>
+            )}
+          </div>
         )}
 
-        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} items-start gap-3 xl:grid-cols-[245px_minmax(0,1fr)_300px] 2xl:grid-cols-[260px_minmax(0,1fr)_315px]`}>
-          <aside className="ui-panel p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-            <h2 className="text-lg font-bold text-gray-900">Accident Case</h2>
+        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} reconstruction-workspace__2d-grid`}>
+          <aside className={`ui-panel reconstruction-workspace__settings ${workspaceSettingsOpen ? "is-open" : ""}`}>
+            <div className="reconstruction-workspace__panel-header">
+              <div>
+                <p>Workspace panels</p>
+                <span>Case, scene and participants</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWorkspaceSettingsOpen(false)}
+                aria-label="Close workspace panels"
+              >
+                ×
+              </button>
+            </div>
 
             <div className="mt-5 space-y-4">
               <label className="block">
@@ -2580,7 +2857,7 @@ export default function AccidentReconstructionEditor({
                       title: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>
 
@@ -2637,7 +2914,7 @@ export default function AccidentReconstructionEditor({
                     }))
                   }
                   rows={4}
-                  className="mt-1.5 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
+                  className="mt-1.5 w-full resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
                 />
               </label>
 
@@ -2715,7 +2992,7 @@ export default function AccidentReconstructionEditor({
                     key={participant.id}
                     type="button"
                     onClick={() => handleSelectParticipant(participant.id)}
-                    className={`flex w-full items-center gap-3 rounded-sm border p-3 text-left transition ${
+                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
                       selectedParticipantId === participant.id
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:bg-gray-50"
@@ -2746,7 +3023,7 @@ export default function AccidentReconstructionEditor({
           </aside>
 
           <main
-            className={`ui-panel min-w-0 overflow-hidden ${
+            className={`ui-panel reconstruction-workspace__canvas min-w-0 overflow-hidden ${
               sceneExpanded
                 ? "fixed inset-2 z-[100] flex flex-col shadow-2xl sm:inset-4"
                 : ""
@@ -2823,7 +3100,8 @@ export default function AccidentReconstructionEditor({
                   : { height: "clamp(700px, 76vh, 1000px)" }
               }
             >
-              <div data-scene-interactive="true" className="absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-sm bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur">
+              {renderWorkspaceTools()}
+              <div data-scene-interactive="true" className="absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-xl bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur">
                 <span />
                 <button type="button" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY + 40 }))} className="rounded bg-white/15 p-2 font-black">↑</button>
                 <button type="button" onClick={() => setSceneView((view) => ({ ...view, zoom: Math.min(2.5, view.zoom + 0.2) }))} className="rounded bg-white/15 p-2 font-black">+</button>
@@ -3152,62 +3430,23 @@ export default function AccidentReconstructionEditor({
             </div>
             </div>
 
-            <div className="shrink-0 border-t border-gray-200 p-4">
-              <input
-                type="range"
-                min={0}
-                max={reconstruction.durationSeconds}
-                step={0.01}
-                value={currentTime}
-                onChange={(event) => {
-                  setIsPlaying(false);
-                  setCurrentTime(Number(event.target.value));
-                }}
-                className="w-full"
-              />
-
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handlePlayPause}
-                    disabled={reconstruction.vehicles.length === 0}
-                    className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-                  >
-                    {isPlaying ? "Pause" : "Play"}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {currentTime.toFixed(1)}s / {reconstruction.durationSeconds}s
-                  </span>
-                  <select
-                    value={playbackSpeed}
-                    onChange={(event) =>
-                      setPlaybackSpeed(Number(event.target.value))
-                    }
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    <option value={0.25}>0.25×</option>
-                    <option value={0.5}>0.5×</option>
-                    <option value={1}>1×</option>
-                    <option value={1.5}>1.5×</option>
-                    <option value={2}>2×</option>
-                  </select>
-                </div>
-              </div>
-            </div>
           </main>
 
-          <aside className="ui-panel p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+          <aside className={`ui-panel reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel ${workspacePropertiesOpen ? "is-open" : ""}`}>
+            <div className="reconstruction-workspace__panel-header">
+              <div>
+                <p>2D Context Inspector</p>
+                <span>{selectedSceneObject ? selectedSceneObject.label : selectedParticipant?.name ?? "Select a scene item"}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWorkspacePropertiesOpen(false)}
+                aria-label="Close context inspector"
+              >
+                ×
+              </button>
+            </div>
+
             {selectedSceneObject ? (
               <SceneObjectSettingsPanel
                 object={selectedSceneObject}
@@ -3236,7 +3475,7 @@ export default function AccidentReconstructionEditor({
                 </h2>
 
                 {!selectedParticipant ? (
-                  <p className="mt-5 rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+                  <p className="mt-5 rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
                     Select or add a participant to edit movement and route details.
                   </p>
                 ) : (
@@ -3250,7 +3489,7 @@ export default function AccidentReconstructionEditor({
                             name: event.target.value,
                           })
                         }
-                        className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm"
+                        className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
                       />
                     </label>
 
@@ -3387,7 +3626,7 @@ export default function AccidentReconstructionEditor({
                     <button
                       type="button"
                       onClick={handleDeleteParticipant}
-                      className="w-full rounded-sm border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
+                      className="w-full rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
                     >
                       Delete Participant
                     </button>
@@ -3399,6 +3638,130 @@ export default function AccidentReconstructionEditor({
 
         </div>
 
+        <section className="reconstruction-playback" aria-label="Reconstruction playback controls">
+          <div className="reconstruction-playback__scrubber">
+            <input
+              type="range"
+              min={0}
+              max={reconstruction.durationSeconds}
+              step={0.01}
+              value={currentTime}
+              onChange={(event) => {
+                setIsPlaying(false);
+                setCurrentTime(Number(event.target.value));
+              }}
+              aria-label="Playback position"
+            />
+            <div
+              className="reconstruction-playback__progress"
+              style={{
+                width: `${(currentTime / Math.max(0.1, reconstruction.durationSeconds)) * 100}%`,
+              }}
+            />
+          </div>
+
+          <div className="reconstruction-playback__controls">
+            <div className="reconstruction-playback__transport">
+              <button
+                type="button"
+                onClick={handleReset}
+                title="Reset playback"
+              >
+                <RotateCcw size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentTime((time) => Math.max(0, time - 0.1));
+                }}
+                title="Step backward 0.1 seconds"
+              >
+                <SkipBack size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={handlePlayPause}
+                disabled={reconstruction.vehicles.length === 0}
+                className="reconstruction-playback__play"
+                title={isPlaying ? "Pause playback" : "Start playback"}
+              >
+                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                <span>{isPlaying ? "Pause" : "Play"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentTime((time) =>
+                    Math.min(reconstruction.durationSeconds, time + 0.1),
+                  );
+                }}
+                title="Step forward 0.1 seconds"
+              >
+                <SkipForward size={15} />
+              </button>
+            </div>
+
+            <div className="reconstruction-playback__clock">
+              <strong>{currentTime.toFixed(2)}s</strong>
+              <span>/ {reconstruction.durationSeconds.toFixed(1)}s</span>
+            </div>
+
+            <div className="reconstruction-playback__summary">
+              <span>
+                <Activity size={13} />
+                {reconstruction.lastPhysicsSimulation?.participantCollisions ?? 0} collision(s)
+              </span>
+              <span>
+                {reconstruction.lastPhysicsSimulation
+                  ? `${reconstruction.lastPhysicsSimulation.estimatedImpactEnergyKj.toFixed(1)} kJ`
+                  : "Physics not baked"}
+              </span>
+            </div>
+
+            <label className="reconstruction-playback__speed">
+              <span>Playback speed</span>
+              <select
+                value={playbackSpeed}
+                onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
+              >
+                <option value={0.25}>0.25×</option>
+                <option value={0.5}>0.5×</option>
+                <option value={1}>1×</option>
+                <option value={1.5}>1.5×</option>
+                <option value={2}>2×</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <div id="reconstruction-timeline-workspace" className="reconstruction-workspace__timeline-wrap">
+          <AccidentTimeline
+            durationSeconds={reconstruction.durationSeconds}
+            currentTime={currentTime}
+            participants={reconstruction.vehicles}
+            sceneObjects={reconstruction.sceneObjects}
+            events={reconstruction.timelineEvents}
+            onEventsChange={(timelineEvents) =>
+              setReconstruction((current) => ({
+                ...current,
+                timelineEvents,
+              }))
+            }
+            onSeek={(time) => {
+              setIsPlaying(false);
+              setCurrentTime(time);
+            }}
+            onSelectParticipantPathPoint={(participantId, pointId) =>
+              handleSelectParticipant(participantId, pointId)
+            }
+            onSelectSceneObject={handleSelectSceneObject}
+          />
+        </div>
+
+        <div className="reconstruction-workspace__modules">
+          <div className="reconstruction-module reconstruction-module--impact">
         <CollisionSetupPanel
           reconstruction={reconstruction}
           placementActive={collisionPlacementActive}
@@ -3415,15 +3778,21 @@ export default function AccidentReconstructionEditor({
           }}
           onCancelPlacement={() => setCollisionPlacementActive(false)}
         />
+          </div>
 
+          <div className="reconstruction-module reconstruction-module--physics">
         <PhysicsControlsPanel
           reconstruction={reconstruction}
           onChange={handleReconstructionChange}
           onRunPhysics={handleRunPhysics}
         />
+          </div>
 
+          <div className="reconstruction-module reconstruction-module--audit">
         <ReconstructionValidationPanel reconstruction={reconstruction} />
+          </div>
 
+          <div className="reconstruction-module reconstruction-module--hypotheses">
         <ReconstructionScenarioWorkspace
           reconstruction={reconstruction}
           onLoadScenario={(scenario) => {
@@ -3434,9 +3803,13 @@ export default function AccidentReconstructionEditor({
             showSaveMessage(`${scenario.name} loaded into the editor. The saved scenario remains unchanged until you explicitly replace it.`, "info", 4500);
           }}
         />
+          </div>
 
+          <div className="reconstruction-module reconstruction-module--guide">
         <ReconstructionGuide />
+          </div>
 
+          <div className="reconstruction-module reconstruction-module--documentation">
 <EvidenceWorkspacePanel
   measurements={reconstruction.measurements}
   selectedMeasurementId={selectedMeasurementId}
@@ -3574,28 +3947,10 @@ export default function AccidentReconstructionEditor({
     }))
   }
 />
+          </div>
+        </div>
 
-<AccidentTimeline
-          durationSeconds={reconstruction.durationSeconds}
-          currentTime={currentTime}
-          participants={reconstruction.vehicles}
-          sceneObjects={reconstruction.sceneObjects}
-          events={reconstruction.timelineEvents}
-          onEventsChange={(timelineEvents) =>
-            setReconstruction((current) => ({
-              ...current,
-              timelineEvents,
-            }))
-          }
-          onSeek={(time) => {
-            setIsPlaying(false);
-            setCurrentTime(time);
-          }}
-          onSelectParticipantPathPoint={(participantId, pointId) =>
-            handleSelectParticipant(participantId, pointId)
-          }
-          onSelectSceneObject={handleSelectSceneObject}
-        />
+
 
         {fieldPlacementOpen && (
           <FieldPlacementPanel

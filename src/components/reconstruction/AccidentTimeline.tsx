@@ -4,6 +4,20 @@ import {
 } from "react";
 
 import type {
+  PointerEvent as ReactPointerEvent,
+} from "react";
+
+import {
+  Activity,
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+
+import type {
   AccidentTimelineEvent,
   ReconstructionSceneObject,
   ReconstructionVehicle,
@@ -37,6 +51,14 @@ interface DisplayTimelineEvent {
   generated: boolean;
 }
 
+interface TimelineTrack {
+  id: string;
+  label: string;
+  subtitle: string;
+  colour: string;
+  events: DisplayTimelineEvent[];
+}
+
 const EVENT_TYPES: TimelineEventType[] = [
   "Participant Action",
   "Collision",
@@ -45,6 +67,8 @@ const EVENT_TYPES: TimelineEventType[] = [
   "Observation",
 ];
 
+const ZOOM_LEVELS = [1, 1.5, 2.25, 3.5];
+
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -52,16 +76,25 @@ function createId(prefix: string): string {
 function getEventColour(type: TimelineEventType): string {
   switch (type) {
     case "Collision":
-      return "#dc2626";
+      return "#ef4444";
     case "Evidence":
-      return "#9333ea";
+      return "#f59e0b";
     case "Environment":
-      return "#0891b2";
+      return "#14b8a6";
     case "Observation":
-      return "#475569";
+      return "#94a3b8";
     default:
-      return "#2563eb";
+      return "#3b82f6";
   }
+}
+
+function getTrackColour(index: number): string {
+  const colours = ["#3b82f6", "#ef4444", "#22c55e", "#a855f7", "#f59e0b", "#06b6d4"];
+  return colours[index % colours.length];
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
 export default function AccidentTimeline({
@@ -76,13 +109,20 @@ export default function AccidentTimeline({
   onSelectSceneObject,
 }: AccidentTimelineProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [zoomIndex, setZoomIndex] = useState(1);
+  const [showGenerated, setShowGenerated] = useState(true);
+  const [showManual, setShowManual] = useState(true);
+
+  const safeDuration = Math.max(0.1, durationSeconds);
+  const zoom = ZOOM_LEVELS[zoomIndex];
+  const trackWidth = Math.max(920, Math.round(safeDuration * 90 * zoom));
 
   const displayEvents = useMemo<DisplayTimelineEvent[]>(() => {
     const generated = participants.flatMap((participant) =>
       participant.pathPoints.map((point) => ({
         id: `path:${participant.id}:${point.id}`,
         timeSeconds: point.timeSeconds,
-        title: `${participant.name}: ${point.label}`,
+        title: point.label || point.action,
         description:
           point.notes ||
           `${point.action} at ${point.speedKmh.toFixed(0)} km/h`,
@@ -102,10 +142,59 @@ export default function AccidentTimeline({
       generated: false,
     }));
 
-    return [...generated, ...manual].sort(
-      (first, second) => first.timeSeconds - second.timeSeconds,
+    return [...generated, ...manual]
+      .filter((event) => (event.generated ? showGenerated : showManual))
+      .sort((first, second) => first.timeSeconds - second.timeSeconds);
+  }, [events, participants, showGenerated, showManual]);
+
+  const tracks = useMemo<TimelineTrack[]>(() => {
+    const participantTracks = participants.map((participant, index) => ({
+      id: `participant:${participant.id}`,
+      label: participant.name,
+      subtitle: participant.type,
+      colour: getTrackColour(index),
+      events: displayEvents.filter(
+        (event) => event.participantId === participant.id,
+      ),
+    }));
+
+    const impactEvents = displayEvents.filter(
+      (event) => event.type === "Collision",
     );
-  }, [events, participants]);
+    const evidenceEvents = displayEvents.filter(
+      (event) => event.type === "Evidence",
+    );
+    const sceneEvents = displayEvents.filter(
+      (event) =>
+        !event.participantId &&
+        (event.type === "Environment" || event.type === "Observation"),
+    );
+
+    return [
+      ...participantTracks,
+      {
+        id: "system:impact",
+        label: "Impacts",
+        subtitle: `${impactEvents.length} recorded`,
+        colour: "#ef4444",
+        events: impactEvents,
+      },
+      {
+        id: "system:evidence",
+        label: "Evidence",
+        subtitle: `${evidenceEvents.length} linked`,
+        colour: "#f59e0b",
+        events: evidenceEvents,
+      },
+      {
+        id: "system:scene",
+        label: "Scene notes",
+        subtitle: `${sceneEvents.length} event(s)`,
+        colour: "#14b8a6",
+        events: sceneEvents,
+      },
+    ];
+  }, [displayEvents, participants]);
 
   const selectedEvent = displayEvents.find(
     (event) => event.id === selectedEventId,
@@ -116,10 +205,30 @@ export default function AccidentTimeline({
       ? events.find((event) => event.id === selectedEvent.id) ?? null
       : null;
 
+  const tickStep = useMemo(() => {
+    const targetTicks = Math.max(8, Math.min(24, trackWidth / 95));
+    const rawStep = safeDuration / targetTicks;
+    if (rawStep <= 0.5) return 0.5;
+    if (rawStep <= 1) return 1;
+    if (rawStep <= 2) return 2;
+    if (rawStep <= 5) return 5;
+    if (rawStep <= 10) return 10;
+    return 15;
+  }, [safeDuration, trackWidth]);
+
+  const ticks = useMemo(() => {
+    const output: number[] = [];
+    for (let value = 0; value <= safeDuration + 0.001; value += tickStep) {
+      output.push(Number(value.toFixed(2)));
+    }
+    if (output[output.length - 1] !== safeDuration) output.push(safeDuration);
+    return output;
+  }, [safeDuration, tickStep]);
+
   const handleAddEvent = () => {
     const event: AccidentTimelineEvent = {
       id: createId("timeline-event"),
-      timeSeconds: Math.min(durationSeconds, Math.max(0, currentTime)),
+      timeSeconds: clamp(currentTime, 0, safeDuration),
       title: "New observation",
       description: "",
       type: "Observation",
@@ -161,285 +270,294 @@ export default function AccidentTimeline({
     }
   };
 
+  const seekFromTrack = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const progress = clamp((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1);
+    onSeek(progress * safeDuration);
+  };
+
   return (
-    <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <section className="reconstruction-timeline" aria-label="Interactive accident timeline">
+      <header className="reconstruction-timeline__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
-            Interactive timeline
-          </p>
-          <h2 className="mt-1 text-xl font-bold text-gray-900">
-            Accident sequence
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Path actions appear automatically. Add officer observations,
-            evidence or environmental events at any time.
+          <p className="reconstruction-timeline__eyebrow">Interactive timeline</p>
+          <h2>Accident sequence</h2>
+          <p>
+            Scrub, inspect and edit the exact event sequence shared by the 2D and 3D views.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleAddEvent}
-          className="rounded-sm bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-800"
-        >
-          Add event at {currentTime.toFixed(1)}s
-        </button>
+        <div className="reconstruction-timeline__actions">
+          <button
+            type="button"
+            onClick={() => setShowGenerated((value) => !value)}
+            className={showGenerated ? "is-active" : ""}
+            title="Toggle generated path events"
+          >
+            {showGenerated ? <Eye size={13} /> : <EyeOff size={13} />}
+            Auto
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowManual((value) => !value)}
+            className={showManual ? "is-active" : ""}
+            title="Toggle investigator events"
+          >
+            {showManual ? <Eye size={13} /> : <EyeOff size={13} />}
+            Manual
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoomIndex((value) => Math.max(0, value - 1))}
+            disabled={zoomIndex === 0}
+            title="Zoom out timeline"
+          >
+            <ZoomOut size={13} />
+          </button>
+          <span className="reconstruction-timeline__zoom">{zoom.toFixed(2)}×</span>
+          <button
+            type="button"
+            onClick={() =>
+              setZoomIndex((value) => Math.min(ZOOM_LEVELS.length - 1, value + 1))
+            }
+            disabled={zoomIndex === ZOOM_LEVELS.length - 1}
+            title="Zoom in timeline"
+          >
+            <ZoomIn size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={handleAddEvent}
+            className="reconstruction-timeline__add"
+          >
+            <Plus size={13} />
+            Add at {currentTime.toFixed(1)}s
+          </button>
+        </div>
+      </header>
+
+      <div className="reconstruction-timeline__scrubber">
+        <input
+          type="range"
+          min={0}
+          max={safeDuration}
+          step={0.01}
+          value={clamp(currentTime, 0, safeDuration)}
+          onChange={(event) => onSeek(Number(event.target.value))}
+          aria-label="Timeline playback position"
+        />
+        <div>
+          <span>{currentTime.toFixed(2)}s</span>
+          <strong>{safeDuration.toFixed(1)}s</strong>
+        </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto pb-2">
-        <div className="min-w-[760px]">
-          <div className="relative h-24 rounded-sm border border-gray-200 bg-gray-50 px-4">
-            <div className="absolute left-4 right-4 top-12 h-1 rounded-full bg-gray-300" />
+      <div className="reconstruction-timeline__viewport">
+        <div className="reconstruction-timeline__labels">
+          <div className="reconstruction-timeline__label reconstruction-timeline__label--ruler">
+            <Activity size={13} />
+            Tracks
+          </div>
+          {tracks.map((track) => (
+            <div key={track.id} className="reconstruction-timeline__label">
+              <span style={{ backgroundColor: track.colour }} />
+              <div>
+                <strong>{track.label}</strong>
+                <small>{track.subtitle}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="reconstruction-timeline__scroll">
+          <div className="reconstruction-timeline__surface" style={{ width: trackWidth }}>
+            <div className="reconstruction-timeline__ruler">
+              {ticks.map((tick) => {
+                const left = (tick / safeDuration) * 100;
+                return (
+                  <span key={tick} style={{ left: `${left}%` }}>
+                    <i />
+                    {tick.toFixed(tickStep < 1 ? 1 : 0)}s
+                  </span>
+                );
+              })}
+            </div>
 
             <div
-              className="absolute bottom-2 top-2 w-0.5 bg-red-500"
-              style={{
-                left: `calc(1rem + ${(currentTime / durationSeconds) * 100}% - ${(currentTime / durationSeconds) * 2}rem)`,
-              }}
+              className="reconstruction-timeline__cursor"
+              style={{ left: `${(clamp(currentTime, 0, safeDuration) / safeDuration) * 100}%` }}
             >
-              <span className="absolute -left-5 -top-1 rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                {currentTime.toFixed(1)}s
-              </span>
+              <span>{currentTime.toFixed(1)}s</span>
             </div>
 
-            {displayEvents.map((event, index) => {
-              const position = Math.min(
-                100,
-                Math.max(0, (event.timeSeconds / durationSeconds) * 100),
-              );
-
-              return (
-                <button
-                  key={event.id}
-                  type="button"
-                  onClick={() => handleEventClick(event)}
-                  className="absolute z-10 -translate-x-1/2"
-                  style={{
-                    left: `calc(1rem + ${position}% - ${position * 0.02}rem)`,
-                    top: index % 2 === 0 ? 20 : 49,
-                  }}
-                  title={`${event.timeSeconds.toFixed(1)}s — ${event.title}`}
-                >
-                  <span
-                    className={`block h-4 w-4 rounded-full border-2 border-white shadow ${
-                      selectedEventId === event.id ? "ring-4 ring-blue-300/60" : ""
-                    }`}
-                    style={{ backgroundColor: getEventColour(event.type) }}
+            {tracks.map((track) => (
+              <div
+                key={track.id}
+                className="reconstruction-timeline__track"
+                onPointerDown={seekFromTrack}
+              >
+                <div className="reconstruction-timeline__track-line" />
+                {ticks.map((tick) => (
+                  <i
+                    key={`${track.id}-${tick}`}
+                    className="reconstruction-timeline__grid-line"
+                    style={{ left: `${(tick / safeDuration) * 100}%` }}
                   />
-                </button>
-              );
-            })}
-
-            <div className="absolute bottom-1 left-4 right-4 flex justify-between text-[10px] font-medium text-gray-500">
-              <span>0s</span>
-              <span>{durationSeconds.toFixed(1)}s</span>
-            </div>
+                ))}
+                {track.events.map((event) => {
+                  const left = (clamp(event.timeSeconds, 0, safeDuration) / safeDuration) * 100;
+                  return (
+                    <button
+                      key={`${track.id}:${event.id}`}
+                      type="button"
+                      className={`reconstruction-timeline__marker ${selectedEventId === event.id ? "is-selected" : ""}`}
+                      style={{
+                        left: `${left}%`,
+                        borderColor: getEventColour(event.type),
+                        backgroundColor: `${getEventColour(event.type)}26`,
+                      }}
+                      onPointerDown={(pointerEvent) => pointerEvent.stopPropagation()}
+                      onClick={() => handleEventClick(event)}
+                      title={`${event.timeSeconds.toFixed(2)}s — ${event.title}`}
+                    >
+                      <span style={{ backgroundColor: getEventColour(event.type) }} />
+                      <strong>{event.title}</strong>
+                      {event.generated && <small>AUTO</small>}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="max-h-[330px] space-y-2 overflow-y-auto pr-1">
-          {displayEvents.map((event) => (
-            <button
-              key={event.id}
-              type="button"
-              onClick={() => handleEventClick(event)}
-              className={`flex w-full items-start gap-3 rounded-sm border p-3 text-left transition ${
-                selectedEventId === event.id
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:bg-gray-50"
-              }`}
-            >
-              <span
-                className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                style={{ backgroundColor: getEventColour(event.type) }}
-              />
-
-              <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-gray-900">
-                    {event.timeSeconds.toFixed(1)}s
-                  </span>
-                  <span className="truncate text-sm font-semibold text-gray-800">
-                    {event.title}
-                  </span>
-                  {event.generated && (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-bold text-blue-700">
-                      AUTO
-                    </span>
-                  )}
-                </span>
-
-                <span className="mt-1 block text-xs leading-5 text-gray-500">
-                  {event.description || event.type}
-                </span>
-              </span>
-            </button>
-          ))}
-
-          {displayEvents.length === 0 && (
-            <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
-              Add participants, movement points or manual events to build the
-              accident timeline.
-            </p>
-          )}
-        </div>
-
-        <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
-          {!selectedEvent ? (
-            <p className="text-sm text-gray-500">
-              Select a timeline event to inspect or edit it.
-            </p>
-          ) : selectedEvent.generated ? (
+      <div className="reconstruction-timeline__inspector">
+        {!selectedEvent ? (
+          <div className="reconstruction-timeline__empty">
+            Select a marker to inspect it, or click any track to move playback to that time.
+          </div>
+        ) : selectedEvent.generated ? (
+          <div className="reconstruction-timeline__selected-event">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-                Generated from movement path
-              </p>
-              <h3 className="mt-2 font-bold text-gray-900">
-                {selectedEvent.title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {selectedEvent.description}
-              </p>
-              <p className="mt-3 text-xs text-gray-500">
-                Edit this event from the participant&apos;s movement point
-                controls.
-              </p>
-            </div>
-          ) : selectedManualEvent ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
-                  Manual event
-                </p>
-                <button
-                  type="button"
-                  onClick={() => deleteManualEvent(selectedManualEvent.id)}
-                  className="text-xs font-bold text-red-600 hover:text-red-700"
-                >
-                  Delete
-                </button>
+              <span style={{ backgroundColor: getEventColour(selectedEvent.type) }} />
+              <div>
+                <small>Generated movement event</small>
+                <strong>{selectedEvent.title}</strong>
               </div>
-
-              <label className="block">
-                <span className="text-xs font-medium text-gray-600">Title</span>
-                <input
-                  value={selectedManualEvent.title}
-                  onChange={(event) =>
-                    updateManualEvent(selectedManualEvent.id, {
-                      title: event.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className="text-xs font-medium text-gray-600">
-                    Time (s)
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={durationSeconds}
-                    step={0.1}
-                    value={Number(selectedManualEvent.timeSeconds.toFixed(1))}
-                    onChange={(event) =>
-                      updateManualEvent(selectedManualEvent.id, {
-                        timeSeconds: Math.min(
-                          durationSeconds,
-                          Math.max(0, Number(event.target.value)),
-                        ),
-                      })
-                    }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                  />
-                </label>
-
-                <label>
-                  <span className="text-xs font-medium text-gray-600">Type</span>
-                  <select
-                    value={selectedManualEvent.type}
-                    onChange={(event) =>
-                      updateManualEvent(selectedManualEvent.id, {
-                        type: event.target.value as TimelineEventType,
-                      })
-                    }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                  >
-                    {EVENT_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="text-xs font-medium text-gray-600">
-                  Participant
-                </span>
-                <select
-                  value={selectedManualEvent.participantId ?? ""}
-                  onChange={(event) =>
-                    updateManualEvent(selectedManualEvent.id, {
-                      participantId: event.target.value || undefined,
-                    })
-                  }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                >
-                  <option value="">None</option>
-                  {participants.map((participant) => (
-                    <option key={participant.id} value={participant.id}>
-                      {participant.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-xs font-medium text-gray-600">
-                  Scene object
-                </span>
-                <select
-                  value={selectedManualEvent.sceneObjectId ?? ""}
-                  onChange={(event) =>
-                    updateManualEvent(selectedManualEvent.id, {
-                      sceneObjectId: event.target.value || undefined,
-                    })
-                  }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                >
-                  <option value="">None</option>
-                  {sceneObjects.map((object) => (
-                    <option key={object.id} value={object.id}>
-                      {object.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-xs font-medium text-gray-600">
-                  Description
-                </span>
-                <textarea
-                  value={selectedManualEvent.description}
-                  onChange={(event) =>
-                    updateManualEvent(selectedManualEvent.id, {
-                      description: event.target.value,
-                    })
-                  }
-                  rows={3}
-                  className="mt-1 w-full resize-none rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                />
-              </label>
             </div>
-          ) : null}
-        </div>
+            <p>{selectedEvent.description}</p>
+            <time>{selectedEvent.timeSeconds.toFixed(2)}s</time>
+          </div>
+        ) : selectedManualEvent ? (
+          <div className="reconstruction-timeline__editor">
+            <label>
+              <span>Title</span>
+              <input
+                value={selectedManualEvent.title}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    title: event.target.value,
+                  })
+                }
+              />
+            </label>
+
+            <label>
+              <span>Time</span>
+              <input
+                type="number"
+                min={0}
+                max={safeDuration}
+                step={0.01}
+                value={Number(selectedManualEvent.timeSeconds.toFixed(2))}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    timeSeconds: clamp(Number(event.target.value), 0, safeDuration),
+                  })
+                }
+              />
+            </label>
+
+            <label>
+              <span>Type</span>
+              <select
+                value={selectedManualEvent.type}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    type: event.target.value as TimelineEventType,
+                  })
+                }
+              >
+                {EVENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Participant</span>
+              <select
+                value={selectedManualEvent.participantId ?? ""}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    participantId: event.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">None</option>
+                {participants.map((participant) => (
+                  <option key={participant.id} value={participant.id}>
+                    {participant.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Scene object</span>
+              <select
+                value={selectedManualEvent.sceneObjectId ?? ""}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    sceneObjectId: event.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">None</option>
+                {sceneObjects.map((object) => (
+                  <option key={object.id} value={object.id}>
+                    {object.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="reconstruction-timeline__description">
+              <span>Description</span>
+              <textarea
+                value={selectedManualEvent.description}
+                onChange={(event) =>
+                  updateManualEvent(selectedManualEvent.id, {
+                    description: event.target.value,
+                  })
+                }
+                rows={2}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="reconstruction-timeline__delete"
+              onClick={() => deleteManualEvent(selectedManualEvent.id)}
+            >
+              <Trash2 size={13} />
+              Delete event
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );
