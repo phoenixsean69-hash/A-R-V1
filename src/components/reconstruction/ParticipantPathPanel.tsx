@@ -1,5 +1,8 @@
 import {
+  useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -82,6 +85,23 @@ const IMPORTANT_PHYSICS_ACTIONS =
     "Stop",
   ]);
 
+const HEADING_OPTIONS = [
+  { label: "North", degrees: 270 },
+  { label: "North-east", degrees: 315 },
+  { label: "East", degrees: 0 },
+  { label: "South-east", degrees: 45 },
+  { label: "South", degrees: 90 },
+  { label: "South-west", degrees: 135 },
+  { label: "West", degrees: 180 },
+  { label: "North-west", degrees: 225 },
+] as const;
+
+const ROUTE_DIAMOND_ATTRIBUTE =
+  "data-roadsafe-route-diamond";
+
+const ROUTE_NUMBER_ATTRIBUTE =
+  "data-roadsafe-route-number";
+
 function getActionClasses(
   action: MovementAction,
 ): string {
@@ -140,6 +160,104 @@ function getEditableActions(
   );
 }
 
+function normaliseDomText(
+  value: string | null | undefined,
+): string {
+  return (value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isButtonInsideRouteBuilder(
+  button: HTMLButtonElement,
+): boolean {
+  return Boolean(
+    button.closest(
+      '[data-roadsafe-route-builder="true"]',
+    ),
+  );
+}
+
+function clickFirstMatchingButton(
+  matcher: RegExp,
+): boolean {
+  const buttons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(
+      "button",
+    ),
+  );
+
+  const target = buttons.find((button) => {
+    if (
+      button.disabled ||
+      isButtonInsideRouteBuilder(button)
+    ) {
+      return false;
+    }
+
+    const searchable = normaliseDomText(
+      [
+        button.textContent,
+        button.title,
+        button.getAttribute("aria-label"),
+      ].join(" "),
+    );
+
+    return matcher.test(searchable);
+  });
+
+  if (!target) {
+    return false;
+  }
+
+  target.click();
+  return true;
+}
+
+function selectOptionContaining(
+  requiredParts: string[],
+): boolean {
+  const loweredParts = requiredParts
+    .map(normaliseDomText)
+    .filter(Boolean);
+
+  const selects = Array.from(
+    document.querySelectorAll<HTMLSelectElement>(
+      "select",
+    ),
+  );
+
+  for (const select of selects) {
+    const option = Array.from(
+      select.options,
+    ).find((candidate) => {
+      const candidateText = normaliseDomText(
+        candidate.textContent,
+      );
+
+      return loweredParts.every((part) =>
+        candidateText.includes(part),
+      );
+    });
+
+    if (!option) {
+      continue;
+    }
+
+    select.value = option.value;
+    select.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      }),
+    );
+
+    return true;
+  }
+
+  return false;
+}
+
 export default function ParticipantPathPanel(
   props: ParticipantPathPanelProps,
 ) {
@@ -155,12 +273,26 @@ export default function ParticipantPathPanel(
     onDeletePoint,
     onPlacePointWithGps,
     onJumpToTime,
+    onHeadingChange,
   } = props;
 
   const [
     showPhysicsSamples,
     setShowPhysicsSamples,
   ] = useState(false);
+
+  const [
+    routeMessage,
+    setRouteMessage,
+  ] = useState(
+    "Add numbered diamonds, drag them on the 2D scene, or record the route by walking it with GPS.",
+  );
+
+  const gpsSetupTimerRef =
+    useRef<number | null>(null);
+
+  const diamondRefreshTimerRef =
+    useRef<number | null>(null);
 
   const allPoints = useMemo(
     () =>
@@ -260,8 +392,313 @@ export default function ParticipantPathPanel(
         ? "border-violet-200 bg-violet-50 text-violet-800"
         : "border-amber-200 bg-amber-50 text-amber-800";
 
+  const markSceneRoutePoints =
+    useCallback(() => {
+      const buttons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(
+          'button[data-scene-interactive="true"]',
+        ),
+      );
+
+      buttons.forEach((button) => {
+        const numberText =
+          normaliseDomText(
+            button.textContent,
+          );
+
+        const hasScenePosition =
+          Boolean(button.style.left) &&
+          Boolean(button.style.top);
+
+        if (
+          !/^\d+$/.test(numberText) ||
+          !hasScenePosition
+        ) {
+          return;
+        }
+
+        button.setAttribute(
+          ROUTE_DIAMOND_ATTRIBUTE,
+          "true",
+        );
+
+        button.setAttribute(
+          ROUTE_NUMBER_ATTRIBUTE,
+          numberText,
+        );
+
+        button.setAttribute(
+          "aria-label",
+          `Route control point ${numberText}. Drag to adjust the participant route.`,
+        );
+      });
+    }, []);
+
+  const scheduleDiamondRefresh =
+    useCallback(() => {
+      if (
+        diamondRefreshTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          diamondRefreshTimerRef.current,
+        );
+      }
+
+      diamondRefreshTimerRef.current =
+        window.setTimeout(() => {
+          markSceneRoutePoints();
+          diamondRefreshTimerRef.current =
+            null;
+        }, 80);
+    }, [markSceneRoutePoints]);
+
+  useEffect(() => {
+    markSceneRoutePoints();
+
+    const observer =
+      new MutationObserver(() => {
+        scheduleDiamondRefresh();
+      });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        "style",
+        "class",
+      ],
+    });
+
+    return () => {
+      observer.disconnect();
+
+      if (
+        diamondRefreshTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          diamondRefreshTimerRef.current,
+        );
+      }
+    };
+  }, [
+    markSceneRoutePoints,
+    scheduleDiamondRefresh,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (
+        gpsSetupTimerRef.current !==
+        null
+      ) {
+        window.clearInterval(
+          gpsSetupTimerRef.current,
+        );
+      }
+    };
+  }, []);
+
+  const activateMoveTool =
+    useCallback((): boolean => {
+      const activated =
+        clickFirstMatchingButton(
+          /^(move|move tool|adjust points)$/i,
+        );
+
+      if (activated) {
+        setRouteMessage(
+          "Route adjustment is active. Drag any numbered diamond freely on the 2D scene.",
+        );
+      } else {
+        setRouteMessage(
+          "Select the Move tool in the scene toolbar, then drag the numbered diamonds.",
+        );
+      }
+
+      scheduleDiamondRefresh();
+      return activated;
+    }, [scheduleDiamondRefresh]);
+
+  const handleAddRoutePoint =
+    useCallback(() => {
+      activateMoveTool();
+      onAddPoint();
+      scheduleDiamondRefresh();
+
+      setRouteMessage(
+        "A new route diamond was added. Drag it into position, then adjust its time, speed and action below.",
+      );
+    }, [
+      activateMoveTool,
+      onAddPoint,
+      scheduleDiamondRefresh,
+    ]);
+
+  const handleDrawCompleteRoute =
+    useCallback(() => {
+      const activated =
+        clickFirstMatchingButton(
+          /(draw.*route|trace.*route|route.*draw|retrace.*path)/i,
+        );
+
+      if (activated) {
+        setRouteMessage(
+          "Route drawing is active. Hold and draw the route on the 2D scene, then release to create editable diamonds.",
+        );
+      } else {
+        activateMoveTool();
+        setRouteMessage(
+          "The freehand route tool was not visible. Use Add route point, then drag each numbered diamond into place.",
+        );
+      }
+    }, [activateMoveTool]);
+
+  const handleClearIntermediatePoints =
+    useCallback(() => {
+      const preservedStart =
+        investigatorPoints[0]?.id;
+
+      const preservedImpact =
+        investigatorPoints.find(
+          (point) =>
+            point.action === "Impact",
+        )?.id;
+
+      const removable =
+        investigatorPoints.filter(
+          (point) =>
+            point.id !== preservedStart &&
+            point.id !== preservedImpact,
+        );
+
+      if (removable.length === 0) {
+        setRouteMessage(
+          "There are no intermediate route diamonds to clear.",
+        );
+        return;
+      }
+
+      [...removable]
+        .reverse()
+        .forEach((point) => {
+          onDeletePoint(point.id);
+        });
+
+      setRouteMessage(
+        "Intermediate route diamonds were cleared. The start and impact controls were preserved.",
+      );
+
+      scheduleDiamondRefresh();
+    }, [
+      investigatorPoints,
+      onDeletePoint,
+      scheduleDiamondRefresh,
+    ]);
+
+  const handleWalkRouteWithGps =
+    useCallback(() => {
+      const anchorPoint =
+        investigatorPoints[0];
+
+      if (!anchorPoint) {
+        setRouteMessage(
+          "Add the participant start point before opening GPS route tracking.",
+        );
+        return;
+      }
+
+      onPlacePointWithGps(
+        anchorPoint.id,
+      );
+
+      setRouteMessage(
+        `Opening field capture for ${participant.name}. The system will switch to Walk Line and select this participant automatically.`,
+      );
+
+      if (
+        gpsSetupTimerRef.current !==
+        null
+      ) {
+        window.clearInterval(
+          gpsSetupTimerRef.current,
+        );
+      }
+
+      const startedAt = Date.now();
+
+      gpsSetupTimerRef.current =
+        window.setInterval(() => {
+          clickFirstMatchingButton(
+            /^capture$/i,
+          );
+
+          const lineModeSelected =
+            clickFirstMatchingButton(
+              /^(walk line|line)$/i,
+            );
+
+          const targetSelected =
+            selectOptionContaining([
+              participant.name,
+            ]) ||
+            selectOptionContaining([
+              participant.type,
+              "complete walked route",
+            ]);
+
+          if (
+            lineModeSelected &&
+            targetSelected
+          ) {
+            if (
+              gpsSetupTimerRef.current !==
+              null
+            ) {
+              window.clearInterval(
+                gpsSetupTimerRef.current,
+              );
+              gpsSetupTimerRef.current =
+                null;
+            }
+
+            setRouteMessage(
+              `GPS walking mode is ready for ${participant.name}. Press Start tracking and physically walk the route.`,
+            );
+            return;
+          }
+
+          if (
+            Date.now() - startedAt >
+            5000
+          ) {
+            if (
+              gpsSetupTimerRef.current !==
+              null
+            ) {
+              window.clearInterval(
+                gpsSetupTimerRef.current,
+              );
+              gpsSetupTimerRef.current =
+                null;
+            }
+
+            setRouteMessage(
+              "Field capture opened. Choose Walk Line and select the participant's complete walked route from the target list.",
+            );
+          }
+        }, 180);
+    }, [
+      investigatorPoints,
+      onPlacePointWithGps,
+      participant.name,
+      participant.type,
+    ]);
+
   const invalidatePhysicsBeforeStructureChange =
-    () => {
+    useCallback(() => {
       if (
         physicsPoints.length === 0 ||
         investigatorPoints.length === 0
@@ -277,61 +714,165 @@ export default function ParticipantPathPanel(
           ...anchor.position,
         },
       });
-    };
-
-  const handleAddInvestigatorPoint =
-    () => {
-      invalidatePhysicsBeforeStructureChange();
-      onAddPoint();
-    };
+    }, [
+      investigatorPoints,
+      onPointChange,
+      physicsPoints.length,
+    ]);
 
   const handleDeleteInvestigatorPoint =
-    (point: MovementPathPoint) => {
-      invalidatePhysicsBeforeStructureChange();
-      onDeletePoint(point.id);
-    };
+    useCallback(
+      (point: MovementPathPoint) => {
+        invalidatePhysicsBeforeStructureChange();
+        onDeletePoint(point.id);
+        scheduleDiamondRefresh();
+      },
+      [
+        invalidatePhysicsBeforeStructureChange,
+        onDeletePoint,
+        scheduleDiamondRefresh,
+      ],
+    );
 
   const handleInvestigatorPointChange =
-    (
-      point: MovementPathPoint,
-      updates: Partial<MovementPathPoint>,
-    ) => {
-      onPointChange(point.id, {
-        ...updates,
-        position:
-          updates.position ?? {
-            ...point.position,
-          },
-      });
-    };
+    useCallback(
+      (
+        point: MovementPathPoint,
+        updates: Partial<MovementPathPoint>,
+      ) => {
+        onPointChange(point.id, {
+          ...updates,
+          position:
+            updates.position ?? {
+              ...point.position,
+            },
+        });
+      },
+      [onPointChange],
+    );
 
   return (
-    <div className="mt-5 border-t border-gray-200 pt-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-bold text-gray-900">
-            Route & movement path
-          </h3>
+    <div
+      className="mt-5 border-t border-gray-200 pt-5"
+      data-roadsafe-route-builder="true"
+    >
+      <style>{`
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"] {
+          width: 18px !important;
+          height: 18px !important;
+          min-width: 18px !important;
+          min-height: 18px !important;
+          padding: 0 !important;
+          border-radius: 3px !important;
+          color: transparent !important;
+          font-size: 0 !important;
+          transform: translate(-50%, -50%) rotate(45deg) !important;
+          transition: transform 120ms ease, filter 120ms ease !important;
+          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.4) !important;
+        }
 
-          <p className="mt-1 text-xs leading-5 text-gray-500">
-            Enter only the approach,
-            actions and impact evidence.
-            Post-impact movement and the
-            natural resting position are
-            calculated by the physics
-            solver.
-          </p>
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]::after {
+          content: attr(${ROUTE_NUMBER_ATTRIBUTE});
+          display: grid;
+          place-items: center;
+          width: 100%;
+          height: 100%;
+          color: white;
+          font-size: 9px;
+          font-weight: 900;
+          line-height: 1;
+          transform: rotate(-45deg);
+          text-shadow: 0 1px 2px rgba(15, 23, 42, 0.9);
+        }
+
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:hover,
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:focus-visible {
+          transform: translate(-50%, -50%) rotate(45deg) scale(1.18) !important;
+          filter: brightness(1.12);
+          z-index: 70 !important;
+        }
+      `}</style>
+
+      <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">
+              Participant route builder
+            </p>
+
+            <h3 className="mt-1 text-base font-black text-slate-950">
+              Numbered smooth-route controls
+            </h3>
+
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
+              Diamonds are editable control points. The participant follows a continuously smoothed curve through them rather than travelling through sharp corners.
+            </p>
+          </div>
+
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">
+            Smooth curve active
+          </span>
         </div>
 
-        <button
-          type="button"
-          onClick={
-            handleAddInvestigatorPoint
-          }
-          className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"
-        >
-          Add approach point
-        </button>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <button
+            type="button"
+            onClick={handleAddRoutePoint}
+            className="rounded-lg bg-sky-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-sky-700"
+          >
+            + Add route point
+          </button>
+
+          <button
+            type="button"
+            onClick={activateMoveTool}
+            className="rounded-lg border border-sky-300 bg-white px-3 py-2.5 text-xs font-black text-sky-800 hover:bg-sky-50"
+          >
+            Adjust diamonds
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDrawCompleteRoute}
+            className="rounded-lg border border-cyan-300 bg-white px-3 py-2.5 text-xs font-black text-cyan-800 hover:bg-cyan-50"
+          >
+            Draw complete route
+          </button>
+
+          <button
+            type="button"
+            onClick={handleWalkRouteWithGps}
+            className="rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700"
+          >
+            Walk route with GPS
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClearIntermediatePoints}
+            className="rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-xs font-black text-rose-700 hover:bg-rose-50"
+          >
+            Clear intermediate points
+          </button>
+        </div>
+
+        <div className="mt-3 rounded-lg border border-sky-100 bg-white/80 px-3 py-2.5 text-[11px] leading-5 text-slate-600">
+          {routeMessage}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+            {investigatorPoints.length} editable diamond{investigatorPoints.length === 1 ? "" : "s"}
+          </span>
+
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+            GPS route supported
+          </span>
+
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+            Physics begins at contact
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -345,8 +886,7 @@ export default function ParticipantPathPanel(
           </p>
 
           <p className="mt-1 text-[10px] leading-4 text-blue-800">
-            Editable approach and
-            evidence points
+            Editable route diamonds and evidence points
           </p>
         </div>
 
@@ -360,8 +900,7 @@ export default function ParticipantPathPanel(
           </p>
 
           <p className="mt-1 text-[10px] leading-4 text-violet-800">
-            Solver-owned impact and
-            post-impact samples
+            Solver-owned impact and post-impact samples
           </p>
         </div>
 
@@ -393,9 +932,7 @@ export default function ParticipantPathPanel(
           </span>
 
           <input
-            value={
-              participant.originLocation
-            }
+            value={participant.originLocation}
             onChange={(event) =>
               onParticipantChange({
                 originLocation:
@@ -413,10 +950,7 @@ export default function ParticipantPathPanel(
           </span>
 
           <input
-            value={
-              participant
-                .destinationLocation
-            }
+            value={participant.destinationLocation}
             onChange={(event) =>
               onParticipantChange({
                 destinationLocation:
@@ -430,19 +964,30 @@ export default function ParticipantPathPanel(
 
         <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-black text-slate-900">
-            Route ownership rule
+            Quick direction
           </p>
 
           <p className="mt-1 text-[11px] leading-5 text-slate-600">
-            Destination text is report
-            context only. The visible
-            approach is controlled by the
-            investigator&apos;s timed dots.
-            After physical contact,
-            generated dots are treated as
-            solver output and shown as
-            read-only in this inspector.
+            This rotates the authored approach direction. The route diamonds remain freely adjustable afterward.
           </p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {HEADING_OPTIONS.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                onClick={() =>
+                  onHeadingChange(
+                    option.label,
+                    option.degrees,
+                  )
+                }
+                className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-[10px] font-black text-slate-700 hover:border-sky-300 hover:bg-sky-50"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -451,21 +996,15 @@ export default function ParticipantPathPanel(
           <div className="flex items-center justify-between gap-3 rounded-sm border border-violet-200 bg-violet-50 p-3">
             <p className="text-xs leading-5 text-violet-900">
               <strong>
-                {hiddenPhysicsSamples}{" "}
-                detailed physics samples
-                hidden.
+                {hiddenPhysicsSamples} detailed physics samples hidden.
               </strong>{" "}
-              The important contact,
-              deflection and rest results
-              remain visible.
+              Important contact, deflection and rest results remain visible.
             </p>
 
             <button
               type="button"
               onClick={() =>
-                setShowPhysicsSamples(
-                  true,
-                )
+                setShowPhysicsSamples(true)
               }
               className="shrink-0 rounded-lg bg-violet-700 px-3 py-2 text-[10px] font-black text-white"
             >
@@ -479,22 +1018,18 @@ export default function ParticipantPathPanel(
             <button
               type="button"
               onClick={() =>
-                setShowPhysicsSamples(
-                  false,
-                )
+                setShowPhysicsSamples(false)
               }
               className="w-full rounded-lg border border-violet-200 px-3 py-2 text-xs font-black text-violet-800"
             >
-              Hide detailed physics
-              samples
+              Hide detailed physics samples
             </button>
           )}
 
         {displayedPoints.map(
           (point, index) => {
             const selected =
-              selectedPointId ===
-              point.id;
+              selectedPointId === point.id;
 
             const physicsGenerated =
               isPhysicsGeneratedPathPoint(
@@ -506,6 +1041,12 @@ export default function ParticipantPathPanel(
 
             const actionOptions =
               getEditableActions(point);
+
+            const investigatorOrder =
+              investigatorPoints.findIndex(
+                (item) =>
+                  item.id === point.id,
+              );
 
             return (
               <div
@@ -524,25 +1065,35 @@ export default function ParticipantPathPanel(
                   <button
                     type="button"
                     onClick={() =>
-                      onSelectPoint(
-                        point.id,
-                      )
+                      onSelectPoint(point.id)
                     }
                     className="min-w-0 flex-1 text-left"
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-3">
                       <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+                        className={`grid h-6 w-6 shrink-0 rotate-45 place-items-center rounded-[4px] text-[10px] font-black text-white shadow-sm ${
                           physicsGenerated
                             ? "bg-violet-700"
-                            : "bg-gray-900"
+                            : "bg-sky-700"
                         }`}
                       >
-                        {index + 1}
+                        <span className="-rotate-45">
+                          {physicsGenerated
+                            ? "P"
+                            : investigatorOrder + 1}
+                        </span>
                       </span>
 
-                      <span className="truncate text-sm font-bold text-gray-900">
-                        {point.label}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-gray-900">
+                          {point.label}
+                        </span>
+
+                        {!physicsGenerated && (
+                          <span className="mt-0.5 block text-[9px] font-bold uppercase tracking-[0.1em] text-sky-700">
+                            Route diamond {investigatorOrder + 1}
+                          </span>
+                        )}
                       </span>
                     </span>
 
@@ -568,7 +1119,7 @@ export default function ParticipantPathPanel(
                           ? "Physics · read only"
                           : observedRest
                             ? "Observed evidence"
-                            : "Investigator input"}
+                            : "Editable route point"}
                       </span>
                     </span>
                   </button>
@@ -595,8 +1146,7 @@ export default function ParticipantPathPanel(
                           )
                         }
                         disabled={
-                          investigatorPoints.length <=
-                          2
+                          investigatorPoints.length <= 2
                         }
                         className="rounded-lg border border-red-200 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
@@ -611,21 +1161,11 @@ export default function ParticipantPathPanel(
                     <div className="mt-4 space-y-3 border-t border-violet-200 pt-3">
                       <div className="rounded-lg border border-violet-200 bg-white p-3">
                         <p className="text-xs font-black text-violet-950">
-                          Physics-generated
-                          result
+                          Physics-generated result
                         </p>
 
                         <p className="mt-1 text-[11px] leading-5 text-violet-800">
-                          This solver result
-                          is read-only in this
-                          inspector and cannot
-                          be GPS-placed or
-                          manually edited here.
-                          Change an input such
-                          as speed, route, mass,
-                          surface or impact
-                          geometry, then rerun
-                          the simulation.
+                          This solver result is read-only. Change route, speed, mass, surface or impact geometry and rerun the simulation instead of dragging this result.
                         </p>
                       </div>
 
@@ -634,12 +1174,8 @@ export default function ParticipantPathPanel(
                           <dt className="text-gray-500">
                             Time
                           </dt>
-
                           <dd className="mt-1 font-black text-gray-900">
-                            {point.timeSeconds.toFixed(
-                              2,
-                            )}{" "}
-                            s
+                            {point.timeSeconds.toFixed(2)} s
                           </dd>
                         </div>
 
@@ -647,12 +1183,8 @@ export default function ParticipantPathPanel(
                           <dt className="text-gray-500">
                             Speed
                           </dt>
-
                           <dd className="mt-1 font-black text-gray-900">
-                            {point.speedKmh.toFixed(
-                              1,
-                            )}{" "}
-                            km/h
+                            {point.speedKmh.toFixed(1)} km/h
                           </dd>
                         </div>
 
@@ -660,12 +1192,8 @@ export default function ParticipantPathPanel(
                           <dt className="text-gray-500">
                             Rotation
                           </dt>
-
                           <dd className="mt-1 font-black text-gray-900">
-                            {point.rotation.toFixed(
-                              1,
-                            )}
-                            °
+                            {point.rotation.toFixed(1)}°
                           </dd>
                         </div>
 
@@ -673,15 +1201,8 @@ export default function ParticipantPathPanel(
                           <dt className="text-gray-500">
                             Scene position
                           </dt>
-
                           <dd className="mt-1 font-black text-gray-900">
-                            {point.position.x.toFixed(
-                              1,
-                            )}
-                            ,{" "}
-                            {point.position.y.toFixed(
-                              1,
-                            )}
+                            {point.position.x.toFixed(1)}, {point.position.y.toFixed(1)}
                           </dd>
                         </div>
                       </dl>
@@ -697,20 +1218,14 @@ export default function ParticipantPathPanel(
                 {selected &&
                   !physicsGenerated && (
                     <div className="mt-4 space-y-3 border-t border-blue-200 pt-3">
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                        <p className="text-xs font-black text-emerald-950">
-                          Real-world position
-                        </p>
-
-                        <p className="mt-1 text-[11px] leading-5 text-emerald-800">
-                          Use GPS only for a
-                          position supported by
-                          scene evidence. A
-                          resting point entered
-                          here is treated as an
-                          observed location, not
-                          a calculated result.
-                        </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={activateMoveTool}
+                          className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-800 hover:bg-sky-100"
+                        >
+                          Drag diamond on scene
+                        </button>
 
                         <button
                           type="button"
@@ -719,10 +1234,9 @@ export default function ParticipantPathPanel(
                               point.id,
                             )
                           }
-                          className="mt-2 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700"
+                          className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700"
                         >
-                          Place This Point Using
-                          GPS
+                          Place this point with GPS
                         </button>
                       </div>
 
@@ -738,8 +1252,7 @@ export default function ParticipantPathPanel(
                               point,
                               {
                                 label:
-                                  event.target
-                                    .value,
+                                  event.target.value,
                               },
                             )
                           }
@@ -759,8 +1272,7 @@ export default function ParticipantPathPanel(
                               point,
                               {
                                 action:
-                                  event.target
-                                    .value as MovementAction,
+                                  event.target.value as MovementAction,
                               },
                             )
                           }
@@ -788,14 +1300,10 @@ export default function ParticipantPathPanel(
                           <input
                             type="number"
                             min={0}
-                            max={
-                              durationSeconds
-                            }
+                            max={durationSeconds}
                             step={0.1}
                             value={Number(
-                              point.timeSeconds.toFixed(
-                                1,
-                              ),
+                              point.timeSeconds.toFixed(1),
                             )}
                             onChange={(event) =>
                               handleInvestigatorPointChange(
@@ -804,9 +1312,7 @@ export default function ParticipantPathPanel(
                                   timeSeconds:
                                     clampNumber(
                                       Number(
-                                        event
-                                          .target
-                                          .value,
+                                        event.target.value,
                                       ),
                                       0,
                                       durationSeconds,
@@ -829,9 +1335,7 @@ export default function ParticipantPathPanel(
                             max={220}
                             step={1}
                             value={Number(
-                              point.speedKmh.toFixed(
-                                1,
-                              ),
+                              point.speedKmh.toFixed(1),
                             )}
                             onChange={(event) =>
                               handleInvestigatorPointChange(
@@ -840,9 +1344,7 @@ export default function ParticipantPathPanel(
                                   speedKmh:
                                     clampNumber(
                                       Number(
-                                        event
-                                          .target
-                                          .value,
+                                        event.target.value,
                                       ),
                                       0,
                                       220,
@@ -862,9 +1364,7 @@ export default function ParticipantPathPanel(
                           <input
                             type="number"
                             value={Number(
-                              point.rotation.toFixed(
-                                1,
-                              ),
+                              point.rotation.toFixed(1),
                             )}
                             onChange={(event) =>
                               handleInvestigatorPointChange(
@@ -872,9 +1372,7 @@ export default function ParticipantPathPanel(
                                 {
                                   rotation:
                                     Number(
-                                      event
-                                        .target
-                                        .value,
+                                      event.target.value,
                                     ),
                                 },
                               )
@@ -896,9 +1394,7 @@ export default function ParticipantPathPanel(
                             max={100}
                             step={0.1}
                             value={Number(
-                              point.position.x.toFixed(
-                                1,
-                              ),
+                              point.position.x.toFixed(1),
                             )}
                             onChange={(event) =>
                               handleInvestigatorPointChange(
@@ -908,9 +1404,7 @@ export default function ParticipantPathPanel(
                                     ...point.position,
                                     x: clampNumber(
                                       Number(
-                                        event
-                                          .target
-                                          .value,
+                                        event.target.value,
                                       ),
                                       0,
                                       100,
@@ -934,9 +1428,7 @@ export default function ParticipantPathPanel(
                             max={100}
                             step={0.1}
                             value={Number(
-                              point.position.y.toFixed(
-                                1,
-                              ),
+                              point.position.y.toFixed(1),
                             )}
                             onChange={(event) =>
                               handleInvestigatorPointChange(
@@ -946,9 +1438,7 @@ export default function ParticipantPathPanel(
                                     ...point.position,
                                     y: clampNumber(
                                       Number(
-                                        event
-                                          .target
-                                          .value,
+                                        event.target.value,
                                       ),
                                       0,
                                       100,
@@ -977,8 +1467,7 @@ export default function ParticipantPathPanel(
                               point,
                               {
                                 linkedSceneObjectId:
-                                  event.target
-                                    .value ||
+                                  event.target.value ||
                                   undefined,
                               },
                             )
@@ -993,13 +1482,9 @@ export default function ParticipantPathPanel(
                             (object) => (
                               <option
                                 key={object.id}
-                                value={
-                                  object.id
-                                }
+                                value={object.id}
                               >
-                                {
-                                  object.label
-                                }
+                                {object.label}
                               </option>
                             ),
                           )}
@@ -1012,16 +1497,13 @@ export default function ParticipantPathPanel(
                         </span>
 
                         <textarea
-                          value={
-                            point.notes ?? ""
-                          }
+                          value={point.notes ?? ""}
                           onChange={(event) =>
                             handleInvestigatorPointChange(
                               point,
                               {
                                 notes:
-                                  event.target
-                                    .value,
+                                  event.target.value,
                               },
                             )
                           }
