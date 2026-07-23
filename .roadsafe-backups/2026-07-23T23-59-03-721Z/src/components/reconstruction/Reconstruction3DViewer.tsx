@@ -793,16 +793,12 @@ function addRoad(
   const roadHeightAt = reconstruction.scene.conformRoadToTerrain
     ? terrainHeightAt
     : () => 0;
-  const realSceneGeometry = reconstruction.scene.realSceneGeometry?.status === "ready"
-    ? reconstruction.scene.realSceneGeometry
-    : null;
-  const exactSelectedSceneGround = Boolean(realSceneGeometry);
 
   asphaltTexture.repeat.set(1, 1);
   sidewalkTexture.repeat.set(1, 1);
   enhanceRoadTextures(asphaltTexture, groundTexture, sidewalkTexture);
 
-  if (terrainSurface && !exactSelectedSceneGround) {
+  if (terrainSurface) {
     const terrainTexture = cloneWorldTiledTexture(
       groundTexture,
       terrainSurface.grid.areaMetres,
@@ -820,41 +816,28 @@ function addRoad(
     terrain.receiveShadow = true;
     scene.add(terrain);
   } else {
-    const groundWidth = exactSelectedSceneGround ? width : width * 1.7;
-    const groundDepth = exactSelectedSceneGround ? height : height * 1.7;
+    const groundWidth = width * 1.7;
+    const groundDepth = height * 1.7;
     groundTexture.repeat.set(
       Math.max(1, groundWidth / 6),
       Math.max(1, groundDepth / 6),
     );
-    const ground = terrainSurface && exactSelectedSceneGround
-      ? createConformingSurfaceMesh(
-          groundWidth,
-          groundDepth,
-          0,
-          0,
-          terrainHeightAt,
-          -0.02,
-          new THREE.MeshStandardMaterial({
-            map: groundTexture,
-            color: groundSurfaceColour(reconstruction.scene.groundSurface),
-            roughness: 1,
-          }),
-          3,
-        )
-      : new THREE.Mesh(
-          new THREE.PlaneGeometry(groundWidth, groundDepth),
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(groundWidth, groundDepth),
       new THREE.MeshStandardMaterial({
         map: groundTexture,
         color: groundSurfaceColour(reconstruction.scene.groundSurface),
         roughness: 1,
       }),
-        );
-    if (!(terrainSurface && exactSelectedSceneGround)) {
-      ground.rotation.x = -Math.PI / 2;
-    }
+    );
+    ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
   }
+
+  const realSceneGeometry = reconstruction.scene.realSceneGeometry?.status === "ready"
+    ? reconstruction.scene.realSceneGeometry
+    : null;
 
   if (realSceneGeometry) {
     addRealSceneGeometryToThreeScene({

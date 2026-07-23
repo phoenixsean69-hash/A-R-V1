@@ -41,8 +41,6 @@ import RoadLocationMap, {
   type RoadLocationMapHandle,
 } from "./RoadLocationMap";
 
-import "./NewCaseRoadWizard.css";
-
 interface NewCaseRoadWizardProps {
   initialValues: AccidentCaseFormValues;
 }
@@ -149,7 +147,6 @@ export default function NewCaseRoadWizard({
   const [averaging, setAveraging] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
   const locationMapRef = useRef<RoadLocationMapHandle | null>(null);
-  const wizardRootRef = useRef<HTMLDivElement | null>(null);
   const previousSceneAnchorRef = useRef<string | null>(null);
   const [sceneArea, setSceneArea] =
     useState<RealSceneAreaSelection | null>(null);
@@ -211,19 +208,6 @@ export default function NewCaseRoadWizard({
 
     previousSceneAnchorRef.current = identity;
   }, [selectedCoordinate]);
-
-  useEffect(() => {
-    // RoadSafe case-wizard page shell: theme the route container as one workspace.
-    const rootElement = wizardRootRef.current;
-    const pageElement = rootElement?.parentElement ?? null;
-    document.body.classList.add("roadsafe-case-wizard-open");
-    pageElement?.classList.add("roadsafe-case-page-shell");
-
-    return () => {
-      document.body.classList.remove("roadsafe-case-wizard-open");
-      pageElement?.classList.remove("roadsafe-case-page-shell");
-    };
-  }, []);
 
   const locationDisplay = useMemo(() => {
     if (!selectedCoordinate) return "No accident position confirmed yet.";
@@ -372,7 +356,7 @@ export default function NewCaseRoadWizard({
       setDetectionResult(null);
       setSceneSettings(null);
       setSceneExtractionMessage(
-        `Scene ready: ${result.geometry.roads.length} road section(s), ${result.geometry.buildings.length} building footprint(s), ${result.geometry.vegetation?.length ?? 0} vegetation item(s), ${result.geometry.landCover?.length ?? 0} mapped land-cover area(s), ${result.geometry.sceneWidthMetres.toFixed(1)} × ${result.geometry.sceneHeightMetres.toFixed(1)} m.`,
+        `Scene ready: ${result.geometry.roads.length} road section(s), ${result.geometry.buildings.length} building footprint(s), ${result.geometry.sceneWidthMetres.toFixed(1)} × ${result.geometry.sceneHeightMetres.toFixed(1)} m.`,
       );
     } catch (error) {
       setRealSceneGeometry(null);
@@ -527,18 +511,8 @@ export default function NewCaseRoadWizard({
   };
 
   return (
-    <div ref={wizardRootRef} className="roadsafe-case-wizard">
+    <div>
       <WizardProgress step={step} />
-
-      {step === 2 && (
-        <div className="roadsafe-wizard-command" role="status">
-          <span className="roadsafe-wizard-command__number">1–2</span>
-          <div>
-            <strong>Mark the accident spot, then select the complete scene area.</strong>
-            <p>Place the red accident marker first. Next, draw the blue boundary around everything that must appear in the reconstruction. Only that selected area will be captured, extracted and used in 2D and 3D.</p>
-          </div>
-        </div>
-      )}
 
       {step === 1 && (
         <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -662,8 +636,8 @@ export default function NewCaseRoadWizard({
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <SectionHeading
             eyebrow="Step 2 of 4"
-            title="Mark the accident spot and select the complete scene area"
-            description="GPS may centre the map, but the officer remains in control: mark the collision spot, then draw the exact boundary that RoadSafe must reproduce."
+            title="Confirm the physical accident location"
+            description="Use GPS only to centre the map. The officer must then draw the exact accident-scene area that will be reconstructed."
           />
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
@@ -802,7 +776,7 @@ export default function NewCaseRoadWizard({
                   setSceneSettings(null);
                   setSceneExtractionMessage(
                     selection
-                      ? "Scene boundary selected. This exact area—not a larger generated map—will become the shared 2D/3D reconstruction scene."
+                      ? "Scene boundary selected. Extract it to create the shared 2D/3D geometry."
                       : "Select the accident-scene area on the map.",
                   );
                 }}
@@ -892,7 +866,7 @@ export default function NewCaseRoadWizard({
                       <div className="rounded-lg bg-white/75 p-2">
                         <dt className="font-bold text-slate-500">Geometry</dt>
                         <dd className="mt-1 font-black">
-                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover
+                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings
                         </dd>
                       </div>
                     </dl>
@@ -1237,16 +1211,6 @@ export default function NewCaseRoadWizard({
                   value={`±${selectedCoordinate.accuracyMetres.toFixed(1)} m`}
                 />
                 <SummaryRow
-                  label="Selected scene size"
-                  value={`${realSceneGeometry?.sceneWidthMetres.toFixed(1) ?? sceneSettings.sceneWidthMetres.toFixed(1)} × ${realSceneGeometry?.sceneHeightMetres.toFixed(1) ?? sceneSettings.sceneHeightMetres.toFixed(1)} m`}
-                />
-                <SummaryRow
-                  label="Mapped content"
-                  value={realSceneGeometry
-                    ? `${realSceneGeometry.buildings.length} buildings · ${realSceneGeometry.vegetation?.length ?? 0} vegetation · ${realSceneGeometry.landCover?.length ?? 0} land-cover areas`
-                    : "No extracted map content"}
-                />
-                <SummaryRow
                   label="Environment"
                   value={sceneSettings.sceneEnvironment}
                 />
@@ -1259,7 +1223,13 @@ export default function NewCaseRoadWizard({
                 )}
                 <SummaryRow
                   label="Geometry source"
-                  value="Officer-selected exact map area with verified extracted geometry"
+                  value={
+                    usesGeneratedRoad(sceneSettings)
+                      ? detectionResult?.roadQuerySucceeded
+                        ? "Map data with officer confirmation"
+                        : "Officer-confirmed road settings"
+                      : "Real-location ground only"
+                  }
                 />
               </SummaryCard>
 
@@ -1357,9 +1327,9 @@ function NeutralScenePreview({
 function WizardProgress({ step }: { step: WizardStep }) {
   const steps = [
     "Case Details",
-    "Mark Scene",
-    "Verify Geometry",
-    "Create Case",
+    "Current Location",
+    "Scene Environment",
+    "Create Scene",
   ];
 
   return (
