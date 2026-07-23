@@ -43,7 +43,6 @@ interface Reconstruction3DViewerProps {
   onSelectParticipant?: (participantId: string) => void;
   cameraCycleToken?: number;
   workspaceTimeSeconds?: number;
-  workspaceTimeSourceRef?: { readonly current: number };
   workspacePlaying?: boolean;
   workspacePlaybackSpeed?: number;
   workspaceCameraMode?: CameraMode;
@@ -1088,7 +1087,6 @@ function Reconstruction3DViewer({
   onSelectParticipant,
   cameraCycleToken = 0,
   workspaceTimeSeconds,
-  workspaceTimeSourceRef,
   workspacePlaying,
   workspacePlaybackSpeed,
   workspaceCameraMode,
@@ -1510,12 +1508,10 @@ function Reconstruction3DViewer({
     let previous = performance.now();
     let lastUiUpdate = 0;
     const animate = (now: number) => {
-      const delta = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+      const delta = Math.min(0.08, (now - previous) / 1000);
       previous = now;
       if (controlledWorkspace) {
-        timeRef.current =
-          workspaceTimeSourceRef?.current ??
-          workspaceTimeRef.current;
+        timeRef.current = workspaceTimeRef.current;
       } else if (playingRef.current) {
         timeRef.current += delta * speedRef.current;
         if (timeRef.current >= reconstruction.durationSeconds) {
@@ -1688,7 +1684,7 @@ function Reconstruction3DViewer({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [controlledWorkspace, reconstruction, effectiveShowEvidence, effectiveShowObjects, effectiveShowPaths, effectiveShowPhysicsEffects, terrainGrid, workspaceMode, workspaceTimeSourceRef]);
+  }, [controlledWorkspace, reconstruction, effectiveShowEvidence, effectiveShowObjects, effectiveShowPaths, effectiveShowPhysicsEffects, terrainGrid, workspaceMode]);
 
   const setTime = (value: number) => {
     timeRef.current = value;

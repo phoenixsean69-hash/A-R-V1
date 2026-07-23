@@ -51,6 +51,7 @@ import { averageGeoCoordinates } from "../../utils/locationAveraging";
 import FieldPlacementMap from "./FieldPlacementMap";
 import FieldSceneLivePreview from "./FieldSceneLivePreview";
 import LocationAccuracyBadge from "./LocationAccuracyBadge";
+import "./FieldPlacementPanel.css";
 
 interface FieldPlacementPanelProps {
   open: boolean;
@@ -147,26 +148,30 @@ function captureModeCopy(mode: FieldCaptureMode): {
 } {
   if (mode === "Point") {
     return {
-      title: "Place Point",
+      title: "Place point",
       description:
         "Walk to the item, stand at its centre and collect a stabilised GPS position.",
     };
   }
+
   if (mode === "Line") {
     return {
-      title: "Walk Line",
+      title: "Walk line",
       description:
-        "Start at one end and physically follow the mark, wall, barrier or route.",
+        "Start at one end and physically follow the mark, wall, barrier or participant route.",
     };
   }
+
   return {
-    title: "Walk Boundary",
+    title: "Walk boundary",
     description:
       "Walk around the outside edge. The system closes the boundary and calculates its area.",
   };
 }
 
-function traceTargetTypeForObject(type: SceneObjectType): FieldWalkingTrackTargetType {
+function traceTargetTypeForObject(
+  type: SceneObjectType,
+): FieldWalkingTrackTargetType {
   if (type === "Skid Mark") return "SkidMark";
   if (type === "Tyre Mark") return "TyreMark";
   if (type === "Road Crack") return "RoadCrack";
@@ -184,10 +189,13 @@ function buildCaptureTargets(
       const object = reconstruction.sceneObjects.find(
         (item) => item.id === target.targetId,
       );
+
       if (!object) return;
+
       const modes: FieldCaptureMode[] = ["Point"];
       if (LINE_OBJECT_TYPES.has(object.type)) modes.push("Line");
       if (BOUNDARY_OBJECT_TYPES.has(object.type)) modes.push("Boundary");
+
       options.push({
         key: `scene-object:${object.id}`,
         label: object.label,
@@ -232,9 +240,9 @@ function buildCaptureTargets(
 }
 
 function modeIcon(mode: FieldCaptureMode) {
-  if (mode === "Point") return <CircleDot size={18} />;
-  if (mode === "Line") return <Route size={18} />;
-  return <Pentagon size={18} />;
+  if (mode === "Point") return <CircleDot size={14} />;
+  if (mode === "Line") return <Route size={14} />;
+  return <Pentagon size={14} />;
 }
 
 export default function FieldPlacementPanel({
@@ -260,6 +268,7 @@ export default function FieldPlacementPanel({
     clearSamples: clearGeolocationSamples,
     getSamplesSince,
   } = geolocation;
+
   const [tab, setTab] = useState<FieldTab>(() =>
     reconstruction.fieldCalibration ? "Capture" : "Calibration",
   );
@@ -287,8 +296,10 @@ export default function FieldPlacementPanel({
     () => buildCaptureTargets(reconstruction),
     [reconstruction],
   );
+
   const initialTargetKey = useMemo(() => {
     if (!initialTarget) return "";
+
     return (
       captureTargets.find(
         (option) =>
@@ -297,16 +308,16 @@ export default function FieldPlacementPanel({
       )?.key ?? ""
     );
   }, [captureTargets, initialTarget]);
-  const [targetKey, setTargetKey] = useState(initialTargetKey);
 
+  const [targetKey, setTargetKey] = useState(initialTargetKey);
   const [isTracing, setIsTracing] = useState(false);
   const [tracePaused, setTracePaused] = useState(false);
   const [traceStartedAt, setTraceStartedAt] = useState("");
   const [rawTraceCoordinates, setRawTraceCoordinates] = useState<GeoCoordinate[]>([]);
-  const [traceReview, setTraceReview] = useState<ProcessedWalkingTrace | null>(null);
-  const [guidancePlacementId, setGuidancePlacementId] = useState<string | null>(
-    null,
-  );
+  const [traceReview, setTraceReview] =
+    useState<ProcessedWalkingTrace | null>(null);
+  const [guidancePlacementId, setGuidancePlacementId] =
+    useState<string | null>(null);
 
   const wakeLock = useScreenWakeLock(isAveraging || isTracing);
 
@@ -314,22 +325,26 @@ export default function FieldPlacementPanel({
     () => captureTargets.filter((target) => target.modes.includes(captureMode)),
     [captureMode, captureTargets],
   );
+
   const effectiveTargetKey = availableTargets.some(
     (target) => target.key === targetKey,
   )
     ? targetKey
     : availableTargets[0]?.key ?? "";
+
   const selectedTargetOption = useMemo(
     () =>
       availableTargets.find((target) => target.key === effectiveTargetKey) ??
       null,
     [availableTargets, effectiveTargetKey],
   );
+
   const selectedPointTarget =
     captureMode === "Point" ? selectedTargetOption?.pointTarget ?? null : null;
 
   useEffect(() => {
     if (!open || !initialTargetKey) return;
+
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
@@ -337,6 +352,7 @@ export default function FieldPlacementPanel({
       setTargetKey(initialTargetKey);
       setTab(reconstruction.fieldCalibration ? "Capture" : "Calibration");
     });
+
     return () => {
       active = false;
     };
@@ -344,6 +360,7 @@ export default function FieldPlacementPanel({
 
   const liveScenePosition = useMemo(() => {
     if (!currentCoordinate || !reconstruction.fieldCalibration) return null;
+
     return coordinateToScenePosition(
       currentCoordinate,
       reconstruction.fieldCalibration,
@@ -353,6 +370,7 @@ export default function FieldPlacementPanel({
 
   const pendingScenePosition = useMemo(() => {
     if (!pendingCapture || !reconstruction.fieldCalibration) return null;
+
     return coordinateToScenePosition(
       pendingCapture.coordinate,
       reconstruction.fieldCalibration,
@@ -362,6 +380,7 @@ export default function FieldPlacementPanel({
 
   const pendingBounds = useMemo(() => {
     if (!pendingCapture || !reconstruction.fieldCalibration) return null;
+
     return assessCoordinateAgainstScene(
       pendingCapture.coordinate,
       reconstruction.fieldCalibration,
@@ -370,6 +389,7 @@ export default function FieldPlacementPanel({
 
   const rawTraceScenePoints = useMemo(() => {
     if (!reconstruction.fieldCalibration) return [];
+
     return rawTraceCoordinates.map((coordinate) =>
       coordinateToScenePosition(
         coordinate,
@@ -381,6 +401,7 @@ export default function FieldPlacementPanel({
 
   const processedTraceScenePoints = useMemo(() => {
     if (!reconstruction.fieldCalibration || !traceReview) return [];
+
     return traceReview.processedCoordinates.map((coordinate) =>
       coordinateToScenePosition(
         coordinate,
@@ -392,10 +413,13 @@ export default function FieldPlacementPanel({
 
   const guidance = useMemo(() => {
     if (!currentCoordinate || !guidancePlacementId) return null;
+
     const placement = reconstruction.fieldPlacements.find(
       (item) => item.id === guidancePlacementId,
     );
+
     if (!placement) return null;
+
     return {
       placement,
       ...getDistanceAndBearing(currentCoordinate, placement.coordinate),
@@ -414,14 +438,17 @@ export default function FieldPlacementPanel({
 
   useEffect(() => {
     if (!isTracing || tracePaused || !currentCoordinate) return;
+
     const coordinate = currentCoordinate;
     queueMicrotask(() => {
       setRawTraceCoordinates((current) => {
         const previous = current[current.length - 1];
         if (!previous) return [coordinate];
         if (previous.capturedAt === coordinate.capturedAt) return current;
+
         const distance = haversineDistanceMetres(previous, coordinate);
         if (distance < 0.05) return current;
+
         return [...current, coordinate];
       });
     });
@@ -450,6 +477,7 @@ export default function FieldPlacementPanel({
             "No GPS samples were received. Move outdoors and keep the device still.",
           );
         }
+
         return createSingleCapture(currentCoordinate);
       }
 
@@ -468,9 +496,11 @@ export default function FieldPlacementPanel({
 
     try {
       const result = await captureAverage();
+
       if (kind === "origin") setCalibrationOrigin(result.coordinate);
       else if (kind === "direction") setCalibrationDirection(result.coordinate);
       else setCalibrationWidth(result.coordinate);
+
       setMessage(
         `${kind === "origin" ? "Origin" : kind === "direction" ? "Road direction" : "Width reference"} captured from ${result.sampleCount} accepted GPS sample(s).`,
       );
@@ -498,7 +528,11 @@ export default function FieldPlacementPanel({
         sceneHeightMetres: reconstruction.scene.sceneHeightMetres,
         createdBy: officerName,
       });
-      onUpdate((current) => ({ ...current, fieldCalibration: calibration }));
+
+      onUpdate((current) => ({
+        ...current,
+        fieldCalibration: calibration,
+      }));
       setMessage("Field scene calibration saved. Capture tools are ready.");
       setError("");
       setTab("Capture");
@@ -516,6 +550,7 @@ export default function FieldPlacementPanel({
       setError("Wait until the device has a current GPS reading.");
       return;
     }
+
     setPendingCapture(createSingleCapture(currentCoordinate));
     setAllowPoorAccuracy(false);
     setMessage("Current reading prepared. Review it before confirming.");
@@ -525,6 +560,7 @@ export default function FieldPlacementPanel({
   const prepareAverageCapture = async (): Promise<void> => {
     setError("");
     setMessage("");
+
     try {
       const result = await captureAverage();
       setPendingCapture(result);
@@ -546,16 +582,19 @@ export default function FieldPlacementPanel({
       setError("Select an item that supports point placement.");
       return;
     }
+
     if (!pendingCapture) {
       setError("Capture the current position first.");
       return;
     }
+
     if (!pendingBounds?.insideScene) {
       setError(
         "This position lies outside the calibrated scene. Expand or recalibrate the scene before confirming it.",
       );
       return;
     }
+
     if (pendingCapture.averageAccuracyMetres > 10 && !allowPoorAccuracy) {
       setError(
         "GPS accuracy is currently poor. Wait for a better signal or explicitly accept the warning.",
@@ -594,10 +633,12 @@ export default function FieldPlacementPanel({
       setTab("Calibration");
       return;
     }
+
     if (!selectedTargetOption?.traceTargetType) {
       setError("Select an item that supports this walking capture method.");
       return;
     }
+
     if (!currentCoordinate) {
       setError("Wait until the device has a current GPS reading.");
       return;
@@ -619,11 +660,13 @@ export default function FieldPlacementPanel({
   const finishWalkingTrace = (): void => {
     setIsTracing(false);
     setTracePaused(false);
+
     try {
       const review = FieldCaptureProcessingService.processWalkingTrace({
         coordinates: rawTraceCoordinates,
         captureMode: captureMode === "Boundary" ? "Boundary" : "Line",
       });
+
       setTraceReview(review);
       setMessage(
         `Capture processed: ${review.acceptedCoordinates.length} accepted and ${review.rejectedCoordinates.length} rejected sample(s).`,
@@ -659,10 +702,14 @@ export default function FieldPlacementPanel({
           recordedBy: officerName,
         }),
       );
+
       if (selectedTargetOption.pointTarget) {
         onPlacementConfirmed?.(selectedTargetOption.pointTarget);
       }
-      setMessage(`${selectedTargetOption.label} was updated from field walking data.`);
+
+      setMessage(
+        `${selectedTargetOption.label} was updated from field walking data.`,
+      );
       setError("");
       setRawTraceCoordinates([]);
       setTraceReview(null);
@@ -674,6 +721,17 @@ export default function FieldPlacementPanel({
           : "The walking capture could not be saved.",
       );
     }
+  };
+
+  const closeFieldMode = (): void => {
+    setIsTracing(false);
+    setTracePaused(false);
+    setRawTraceCoordinates([]);
+    setTraceReview(null);
+    setPendingCapture(null);
+    setMessage("");
+    setError("");
+    onClose();
   };
 
   if (!open) return null;
@@ -698,65 +756,56 @@ export default function FieldPlacementPanel({
       : undefined);
 
   const modeCopy = captureModeCopy(captureMode);
+  const traceStatus = isTracing
+    ? tracePaused
+      ? "Paused"
+      : "Recording"
+    : traceReview
+      ? "Review"
+      : "Ready";
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/90 p-2 backdrop-blur-sm sm:p-4">
-      <div className="mx-auto min-h-[calc(100vh-1rem)] max-w-[1600px] overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl sm:min-h-[calc(100vh-2rem)]">
-        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 bg-slate-950/95 px-4 py-4 backdrop-blur-xl sm:px-6">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-400">
-              RoadSafe AR · Field Capture V2
-            </p>
-            <h2 className="mt-1 text-2xl font-black text-white">
-              Real-world scene capture
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm text-slate-400">
-              Select an item, physically walk to or along it, review the GPS geometry, then confirm it into the reconstruction.
+    <div className="field-mode-backdrop">
+      <div className="field-mode-shell">
+        <header className="field-mode-header">
+          <div className="field-mode-heading">
+            <p className="field-mode-eyebrow">RoadSafe AR · Field mode</p>
+            <h2>Real-world scene capture</h2>
+            <p>
+              Capture calibrated positions, walked routes and evidence geometry,
+              then review the GPS result before applying it to the reconstruction.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="field-mode-toolbar">
             <LocationAccuracyBadge
               accuracyMetres={currentCoordinate?.accuracyMetres ?? null}
             />
             <button
               type="button"
               onClick={geolocationIsWatching ? geolocation.stop : geolocation.start}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-black text-slate-100 hover:bg-slate-700"
+              className="field-mode-button"
             >
-              <Radio size={16} />
+              <Radio size={14} />
               {geolocationIsWatching ? "Pause GPS" : "Start GPS"}
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsTracing(false);
-                setTracePaused(false);
-                setRawTraceCoordinates([]);
-                setTraceReview(null);
-                setPendingCapture(null);
-                setMessage("");
-                setError("");
-                onClose();
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-sky-400"
+              onClick={closeFieldMode}
+              className="field-mode-button field-mode-button--primary"
             >
-              <X size={16} /> Close Field Mode
+              <X size={14} /> Close field mode
             </button>
           </div>
         </header>
 
-        <nav className="flex gap-2 overflow-x-auto border-b border-slate-800 bg-slate-900 px-4 py-3 sm:px-6">
+        <nav className="field-mode-tabs" aria-label="Field mode sections">
           {(["Capture", "Calibration", "History"] as FieldTab[]).map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setTab(item)}
-              className={`rounded-lg px-4 py-2 text-xs font-black ${
-                tab === item
-                  ? "bg-sky-500 text-slate-950"
-                  : "border border-slate-700 bg-slate-800 text-slate-300"
-              }`}
+              className={`field-mode-tab ${tab === item ? "is-active" : ""}`}
             >
               {item}
             </button>
@@ -764,25 +813,25 @@ export default function FieldPlacementPanel({
         </nav>
 
         {(message || error || geolocationError) && (
-          <div className="space-y-2 px-4 pt-4 sm:px-6">
+          <div className="field-mode-message-stack">
             {message && (
-              <div className="flex items-start gap-3 rounded-xl border border-emerald-700/60 bg-emerald-950/50 p-3 text-sm font-semibold text-emerald-200">
-                <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
-                {message}
+              <div className="field-mode-alert">
+                <CheckCircle2 size={15} />
+                <span>{message}</span>
               </div>
             )}
             {(error || geolocationError) && (
-              <div className="flex items-start gap-3 rounded-xl border border-rose-800/70 bg-rose-950/50 p-3 text-sm font-semibold text-rose-200">
-                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
-                {error || geolocationError}
+              <div className="field-mode-alert field-mode-alert--error">
+                <AlertTriangle size={15} />
+                <span>{error || geolocationError}</span>
               </div>
             )}
           </div>
         )}
 
-        <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[minmax(0,1.25fr)_420px]">
-          <section className="space-y-4">
-            <div className="grid gap-4 2xl:grid-cols-2">
+        <div className="field-mode-layout">
+          <section className="field-mode-visual-column">
+            <div className="field-mode-visual-grid">
               <FieldPlacementMap
                 current={currentCoordinate}
                 calibration={calibrationForMap}
@@ -807,50 +856,64 @@ export default function FieldPlacementPanel({
               />
             </div>
 
-            <div className="grid gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-4 sm:grid-cols-4">
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Permission</p>
-                <p className="mt-1 text-sm font-black text-white">{geolocationPermission}</p>
+            <div className="field-mode-telemetry">
+              <div className="field-mode-metric">
+                <span>Permission</span>
+                <strong>{geolocationPermission}</strong>
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Live samples</p>
-                <p className="mt-1 text-sm font-black text-white">{geolocationSampleCount}</p>
+              <div className="field-mode-metric">
+                <span>Live samples</span>
+                <strong>{geolocationSampleCount}</strong>
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Coordinate</p>
-                <p className="mt-1 break-all text-xs font-bold text-slate-300">{formatCoordinate(currentCoordinate)}</p>
+              <div className="field-mode-metric">
+                <span>Coordinate</span>
+                <strong className="is-coordinate">
+                  {formatCoordinate(currentCoordinate)}
+                </strong>
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Screen awake</p>
-                <p className="mt-1 text-sm font-black text-white">{wakeLock.locked ? "Locked" : wakeLock.supported ? "Ready" : "Unsupported"}</p>
+              <div className="field-mode-metric">
+                <span>Screen awake</span>
+                <strong>
+                  {wakeLock.locked
+                    ? "Locked"
+                    : wakeLock.supported
+                      ? "Ready"
+                      : "Unsupported"}
+                </strong>
               </div>
             </div>
           </section>
 
-          <aside className="self-start rounded-2xl border border-slate-700 bg-slate-900 shadow-xl xl:sticky xl:top-28">
+          <aside className="field-mode-inspector">
             {tab === "Capture" && (
               <div>
-                <div className="border-b border-slate-700 px-5 py-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Capture workflow</p>
-                  <h3 className="mt-1 text-lg font-black text-white">Choose, capture, review, confirm</h3>
+                <div className="field-mode-panel-header">
+                  <p className="field-mode-section-kicker">Capture workflow</p>
+                  <h3>Choose, capture, review, confirm</h3>
                 </div>
 
-                <div className="space-y-5 p-5">
+                <div className="field-mode-panel-body">
                   {!reconstruction.fieldCalibration && (
-                    <div className="rounded-xl border border-amber-700/60 bg-amber-950/40 p-4 text-sm font-semibold text-amber-200">
-                      Calibrate the scene before placing field items.
-                      <button
-                        type="button"
-                        onClick={() => setTab("Calibration")}
-                        className="mt-3 w-full rounded-lg bg-amber-400 px-3 py-2 font-black text-slate-950"
-                      >
-                        Open Calibration
-                      </button>
+                    <div className="field-mode-alert field-mode-alert--warning">
+                      <AlertTriangle size={15} />
+                      <div>
+                        <span>Calibrate the scene before placing field items.</span>
+                        <button
+                          type="button"
+                          onClick={() => setTab("Calibration")}
+                          className="field-mode-button field-mode-button--full"
+                          style={{ marginTop: "0.5rem" }}
+                        >
+                          Open calibration
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-wide text-slate-400">1. Select item or participant</label>
+                  <label className="field-mode-control">
+                    <span className="field-mode-label">
+                      1. Select item or participant
+                    </span>
                     <select
                       value={effectiveTargetKey}
                       onChange={(event) => {
@@ -859,109 +922,161 @@ export default function FieldPlacementPanel({
                         setRawTraceCoordinates([]);
                         setTraceReview(null);
                       }}
-                      className="mt-2 w-full rounded-xl border border-slate-600 bg-slate-950 px-3 py-3 text-sm font-bold text-white outline-none focus:border-sky-400"
                     >
-                      {availableTargets.length === 0 && <option value="">No compatible targets</option>}
+                      {availableTargets.length === 0 && (
+                        <option value="">No compatible targets</option>
+                      )}
                       {availableTargets.map((target) => (
-                        <option key={target.key} value={target.key}>{target.label} — {target.detail}</option>
+                        <option key={target.key} value={target.key}>
+                          {target.label} — {target.detail}
+                        </option>
                       ))}
                     </select>
                     {selectedTargetOption && (
-                      <p className="mt-2 text-xs text-slate-400">{selectedTargetOption.detail}</p>
+                      <small>{selectedTargetOption.detail}</small>
                     )}
-                  </div>
+                  </label>
 
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-wide text-slate-400">2. Choose capture method</p>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {(["Point", "Line", "Boundary"] as FieldCaptureMode[]).map((mode) => {
-                        const compatible = captureTargets.some((target) => target.modes.includes(mode));
-                        return (
-                          <button
-                            key={mode}
-                            type="button"
-                            disabled={!compatible || isTracing}
-                            onClick={() => {
-                              setCaptureMode(mode);
-                              setPendingCapture(null);
-                              setRawTraceCoordinates([]);
-                              setTraceReview(null);
-                            }}
-                            className={`flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-[11px] font-black ${
-                              captureMode === mode
-                                ? "border-sky-400 bg-sky-500 text-slate-950"
-                                : "border-slate-600 bg-slate-800 text-slate-300"
-                            } disabled:opacity-30`}
-                          >
-                            {modeIcon(mode)}
-                            {mode}
-                          </button>
-                        );
-                      })}
+                  <div className="field-mode-control">
+                    <span className="field-mode-label">2. Choose capture method</span>
+                    <div className="field-mode-method-grid">
+                      {(["Point", "Line", "Boundary"] as FieldCaptureMode[]).map(
+                        (mode) => {
+                          const compatible = captureTargets.some((target) =>
+                            target.modes.includes(mode),
+                          );
+
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              disabled={!compatible || isTracing}
+                              onClick={() => {
+                                setCaptureMode(mode);
+                                setPendingCapture(null);
+                                setRawTraceCoordinates([]);
+                                setTraceReview(null);
+                              }}
+                              className={`field-mode-method ${
+                                captureMode === mode ? "is-active" : ""
+                              }`}
+                            >
+                              {modeIcon(mode)}
+                              {mode}
+                            </button>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-700 bg-slate-950 p-4">
-                    <p className="text-sm font-black text-white">{modeCopy.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">{modeCopy.description}</p>
+                  <div className="field-mode-info-strip">
+                    <strong>{modeCopy.title}</strong>
+                    <p className="field-mode-copy">{modeCopy.description}</p>
                   </div>
 
                   {captureMode === "Point" ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="field-mode-panel-body" style={{ padding: 0 }}>
+                      <div className="field-mode-button-row">
                         <button
                           type="button"
                           onClick={prepareCurrentCapture}
-                          disabled={!currentCoordinate || !reconstruction.fieldCalibration || isAveraging}
-                          className="rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200 disabled:opacity-40"
+                          disabled={
+                            !currentCoordinate ||
+                            !reconstruction.fieldCalibration ||
+                            isAveraging
+                          }
+                          className="field-mode-button"
+                          style={{ flex: 1 }}
                         >
-                          Use Current Reading
+                          Use current reading
                         </button>
                         <button
                           type="button"
                           onClick={() => void prepareAverageCapture()}
                           disabled={!reconstruction.fieldCalibration || isAveraging}
-                          className="rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-40"
+                          className="field-mode-button field-mode-button--primary"
+                          style={{ flex: 1 }}
                         >
-                          {isAveraging ? `Stabilising ${Math.round(averageProgress * 100)}%` : "Capture Here · 5 sec"}
+                          {isAveraging
+                            ? `Stabilising ${Math.round(averageProgress * 100)}%`
+                            : "Capture here · 5 sec"}
                         </button>
                       </div>
 
                       {isAveraging && (
-                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                          <div className="h-full bg-sky-500" style={{ width: `${averageProgress * 100}%` }} />
+                        <div className="field-mode-progress">
+                          <div style={{ width: `${averageProgress * 100}%` }} />
                         </div>
                       )}
 
                       {pendingCapture && (
-                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950 p-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-black text-white">Point review</p>
-                            <span className="rounded-lg bg-slate-800 px-2 py-1 text-[10px] font-black text-slate-300">{pendingCapture.sampleCount} samples</span>
+                        <div className="field-mode-review">
+                          <div className="field-mode-review-header">
+                            <h4>Point review</h4>
+                            <span className="field-mode-badge">
+                              {pendingCapture.sampleCount} samples
+                            </span>
                           </div>
-                          <dl className="grid grid-cols-2 gap-3 text-xs">
-                            <div><dt className="text-slate-500">Average accuracy</dt><dd className="font-black text-white">±{pendingCapture.averageAccuracyMetres.toFixed(1)}m</dd></div>
-                            <div><dt className="text-slate-500">Estimated uncertainty</dt><dd className="font-black text-white">±{(pendingCapture.estimatedUncertaintyMetres ?? pendingCapture.averageAccuracyMetres).toFixed(1)}m</dd></div>
-                            <div><dt className="text-slate-500">Observed spread</dt><dd className="font-black text-white">{(pendingCapture.observedSpreadMetres ?? 0).toFixed(1)}m</dd></div>
-                            <div><dt className="text-slate-500">Rejected samples</dt><dd className="font-black text-white">{pendingCapture.rejectedSampleCount}</dd></div>
+
+                          <dl className="field-mode-review-grid">
+                            <div>
+                              <dt>Average accuracy</dt>
+                              <dd>
+                                ±{pendingCapture.averageAccuracyMetres.toFixed(1)}m
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Estimated uncertainty</dt>
+                              <dd>
+                                ±
+                                {(
+                                  pendingCapture.estimatedUncertaintyMetres ??
+                                  pendingCapture.averageAccuracyMetres
+                                ).toFixed(1)}
+                                m
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Observed spread</dt>
+                              <dd>
+                                {(pendingCapture.observedSpreadMetres ?? 0).toFixed(1)}m
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Rejected samples</dt>
+                              <dd>{pendingCapture.rejectedSampleCount}</dd>
+                            </div>
                           </dl>
-                          <p className="break-all text-[11px] font-semibold text-slate-400">{formatCoordinate(pendingCapture.coordinate)}</p>
+
+                          <p className="field-mode-review-note">
+                            {formatCoordinate(pendingCapture.coordinate)}
+                          </p>
 
                           {pendingBounds && !pendingBounds.insideScene && (
-                            <div className="rounded-lg border border-rose-800 bg-rose-950/50 p-3 text-xs font-semibold text-rose-200">
-                              Outside calibrated scene. Recalibrate or expand the scene before confirming. No silent edge-clamping will be applied.
+                            <div className="field-mode-alert field-mode-alert--error">
+                              <AlertTriangle size={14} />
+                              <span>
+                                Outside the calibrated scene. Recalibrate or expand
+                                the scene before confirming. No silent edge clamping
+                                will be applied.
+                              </span>
                             </div>
                           )}
 
                           {pendingCapture.averageAccuracyMetres > 10 && (
-                            <label className="flex items-start gap-3 rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-xs font-semibold text-amber-200">
+                            <label className="field-mode-checkbox">
                               <input
                                 type="checkbox"
                                 checked={allowPoorAccuracy}
-                                onChange={(event) => setAllowPoorAccuracy(event.target.checked)}
-                                className="mt-0.5 h-4 w-4"
+                                onChange={(event) =>
+                                  setAllowPoorAccuracy(event.target.checked)
+                                }
                               />
-                              Accept this poor-accuracy position and preserve the warning in the audit record.
+                              <span>
+                                Accept this poor-accuracy position and preserve the
+                                warning in the audit record.
+                              </span>
                             </label>
                           )}
                         </div>
@@ -970,55 +1085,81 @@ export default function FieldPlacementPanel({
                       <button
                         type="button"
                         onClick={confirmPlacement}
-                        disabled={!selectedPointTarget || !pendingCapture || !pendingBounds?.insideScene}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
+                        disabled={
+                          !selectedPointTarget ||
+                          !pendingCapture ||
+                          !pendingBounds?.insideScene
+                        }
+                        className="field-mode-button field-mode-button--primary field-mode-button--full"
                       >
-                        <MapPin size={17} /> Confirm Point Placement
+                        <MapPin size={15} /> Confirm point placement
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-700 bg-slate-950 p-3 text-center">
-                        <div><p className="text-[9px] font-black uppercase text-slate-500">Raw points</p><p className="mt-1 text-lg font-black text-white">{rawTraceCoordinates.length}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-500">Raw distance</p><p className="mt-1 text-lg font-black text-white">{calculateTrackDistanceMetres(rawTraceCoordinates).toFixed(1)}m</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-500">Status</p><p className="mt-1 text-xs font-black text-white">{isTracing ? tracePaused ? "Paused" : "Recording" : traceReview ? "Review" : "Ready"}</p></div>
+                    <div className="field-mode-panel-body" style={{ padding: 0 }}>
+                      <div className="field-mode-track-metrics">
+                        <div>
+                          <span>Raw points</span>
+                          <strong>{rawTraceCoordinates.length}</strong>
+                        </div>
+                        <div>
+                          <span>Raw distance</span>
+                          <strong>
+                            {calculateTrackDistanceMetres(
+                              rawTraceCoordinates,
+                            ).toFixed(1)}
+                            m
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Status</span>
+                          <strong>{traceStatus}</strong>
+                        </div>
                       </div>
 
                       {!isTracing && !traceReview && (
                         <button
                           type="button"
                           onClick={startWalkingTrace}
-                          disabled={!selectedTargetOption?.traceTargetType || !reconstruction.fieldCalibration}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
+                          disabled={
+                            !selectedTargetOption?.traceTargetType ||
+                            !reconstruction.fieldCalibration
+                          }
+                          className="field-mode-button field-mode-button--primary field-mode-button--full"
                         >
-                          <Play size={17} /> Start {captureMode === "Boundary" ? "Boundary" : "Line"} Capture
+                          <Play size={15} /> Start {captureMode.toLowerCase()} capture
                         </button>
                       )}
 
                       {isTracing && (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="field-mode-button-row">
                           <button
                             type="button"
                             onClick={() => setTracePaused((value) => !value)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200"
+                            className="field-mode-button"
+                            style={{ flex: 1 }}
                           >
-                            {tracePaused ? <Play size={16} /> : <Pause size={16} />}
+                            {tracePaused ? <Play size={14} /> : <Pause size={14} />}
                             {tracePaused ? "Resume" : "Pause"}
                           </button>
                           <button
                             type="button"
                             onClick={finishWalkingTrace}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950"
+                            className="field-mode-button field-mode-button--primary"
+                            style={{ flex: 1 }}
                           >
-                            <Square size={15} /> Finish and Review
+                            <Square size={13} /> Finish and review
                           </button>
                           <button
                             type="button"
-                            onClick={() => setRawTraceCoordinates((current) => current.slice(0, -1))}
+                            onClick={() =>
+                              setRawTraceCoordinates((current) => current.slice(0, -1))
+                            }
                             disabled={rawTraceCoordinates.length <= 1}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200 disabled:opacity-35"
+                            className="field-mode-button"
+                            style={{ flex: 1 }}
                           >
-                            <Undo2 size={16} /> Undo Last
+                            <Undo2 size={14} /> Undo last
                           </button>
                           <button
                             type="button"
@@ -1028,30 +1169,60 @@ export default function FieldPlacementPanel({
                               setRawTraceCoordinates([]);
                               setTraceReview(null);
                             }}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-800 bg-rose-950/40 px-3 py-3 text-xs font-black text-rose-200"
+                            className="field-mode-button field-mode-button--danger"
+                            style={{ flex: 1 }}
                           >
-                            <Trash2 size={16} /> Discard
+                            <Trash2 size={14} /> Discard
                           </button>
                         </div>
                       )}
 
                       {traceReview && (
-                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950 p-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-black text-white">Geometry review</p>
-                            <span className="rounded-lg bg-sky-500 px-2 py-1 text-[10px] font-black text-slate-950">{traceReview.captureMode}</span>
+                        <div className="field-mode-review">
+                          <div className="field-mode-review-header">
+                            <h4>Geometry review</h4>
+                            <span className="field-mode-badge">
+                              {traceReview.captureMode}
+                            </span>
                           </div>
-                          <dl className="grid grid-cols-2 gap-3 text-xs">
-                            <div><dt className="text-slate-500">Raw distance</dt><dd className="font-black text-white">{traceReview.rawDistanceMetres.toFixed(1)}m</dd></div>
-                            <div><dt className="text-slate-500">Processed distance</dt><dd className="font-black text-white">{traceReview.processedDistanceMetres.toFixed(1)}m</dd></div>
-                            <div><dt className="text-slate-500">Accepted / rejected</dt><dd className="font-black text-white">{traceReview.acceptedCoordinates.length} / {traceReview.rejectedCoordinates.length}</dd></div>
-                            <div><dt className="text-slate-500">Uncertainty</dt><dd className="font-black text-white">±{traceReview.estimatedUncertaintyMetres.toFixed(1)}m</dd></div>
+
+                          <dl className="field-mode-review-grid">
+                            <div>
+                              <dt>Raw distance</dt>
+                              <dd>{traceReview.rawDistanceMetres.toFixed(1)}m</dd>
+                            </div>
+                            <div>
+                              <dt>Processed distance</dt>
+                              <dd>
+                                {traceReview.processedDistanceMetres.toFixed(1)}m
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Accepted / rejected</dt>
+                              <dd>
+                                {traceReview.acceptedCoordinates.length} / {" "}
+                                {traceReview.rejectedCoordinates.length}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Uncertainty</dt>
+                              <dd>
+                                ±{traceReview.estimatedUncertaintyMetres.toFixed(1)}m
+                              </dd>
+                            </div>
                             {traceReview.areaSquareMetres !== undefined && (
-                              <div className="col-span-2"><dt className="text-slate-500">Boundary area</dt><dd className="font-black text-white">{traceReview.areaSquareMetres.toFixed(1)}m²</dd></div>
+                              <div style={{ gridColumn: "1 / -1" }}>
+                                <dt>Boundary area</dt>
+                                <dd>{traceReview.areaSquareMetres.toFixed(1)}m²</dd>
+                              </div>
                             )}
                           </dl>
-                          <p className="text-[10px] leading-4 text-slate-500">{traceReview.processingMethod}</p>
-                          <div className="grid grid-cols-2 gap-2">
+
+                          <p className="field-mode-review-note">
+                            {traceReview.processingMethod}
+                          </p>
+
+                          <div className="field-mode-button-row">
                             <button
                               type="button"
                               onClick={() => {
@@ -1059,16 +1230,18 @@ export default function FieldPlacementPanel({
                                 setTraceReview(null);
                                 setTraceStartedAt("");
                               }}
-                              className="rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200"
+                              className="field-mode-button"
+                              style={{ flex: 1 }}
                             >
-                              Retry Capture
+                              Retry capture
                             </button>
                             <button
                               type="button"
                               onClick={saveWalkingTrace}
-                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950"
+                              className="field-mode-button field-mode-button--primary"
+                              style={{ flex: 1 }}
                             >
-                              <Save size={16} /> Confirm Geometry
+                              <Save size={14} /> Confirm geometry
                             </button>
                           </div>
                         </div>
@@ -1081,43 +1254,80 @@ export default function FieldPlacementPanel({
 
             {tab === "Calibration" && (
               <div>
-                <div className="border-b border-slate-700 px-5 py-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Scene reference</p>
-                  <h3 className="mt-1 text-lg font-black text-white">GPS calibration</h3>
+                <div className="field-mode-panel-header">
+                  <p className="field-mode-section-kicker">Scene reference</p>
+                  <h3>GPS calibration</h3>
                 </div>
-                <div className="space-y-4 p-5">
-                  <p className="text-xs leading-5 text-slate-400">
-                    Capture the scene origin, then walk at least 3 metres along the road direction. A longer baseline gives a more reliable orientation.
+
+                <div className="field-mode-panel-body">
+                  <p className="field-mode-copy">
+                    Capture the scene origin, then walk at least 3 metres along
+                    the road direction. A longer baseline gives a more reliable
+                    orientation.
                   </p>
-                  {([
-                    ["origin", "1. Scene origin", calibrationOrigin],
-                    ["direction", "2. Road direction reference", calibrationDirection],
-                    ["width", "3. Width-side reference (optional)", calibrationWidth],
-                  ] as const).map(([kind, label, coordinate]) => (
-                    <div key={kind} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-black text-white">{label}</p>
-                          <p className="mt-1 break-all text-[10px] font-semibold text-slate-500">{formatCoordinate(coordinate)}</p>
+
+                  <div className="field-mode-calibration-list">
+                    {([
+                      ["origin", "1. Scene origin", calibrationOrigin],
+                      [
+                        "direction",
+                        "2. Road direction reference",
+                        calibrationDirection,
+                      ],
+                      [
+                        "width",
+                        "3. Width-side reference (optional)",
+                        calibrationWidth,
+                      ],
+                    ] as const).map(([kind, label, coordinate]) => (
+                      <div key={kind} className="field-mode-calibration-item">
+                        <div className="field-mode-calibration-row">
+                          <div>
+                            <h4>{label}</h4>
+                            <p>{formatCoordinate(coordinate)}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void captureCalibrationPoint(kind)}
+                            disabled={isAveraging}
+                            className="field-mode-button field-mode-button--primary"
+                          >
+                            Capture
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => void captureCalibrationPoint(kind)}
-                          disabled={isAveraging}
-                          className="rounded-lg bg-sky-500 px-3 py-2 text-xs font-black text-slate-950 disabled:opacity-40"
-                        >
-                          Capture
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {reconstruction.fieldCalibration && (
-                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4 text-xs text-slate-300">
-                      <p>Road bearing: <b className="text-white">{reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}°</b></p>
-                      <p className="mt-1">Direction baseline: <b className="text-white">{reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(1)}m</b></p>
-                      {reconstruction.fieldCalibration.directionReferenceDistanceMetres < 10 && (
-                        <p className="mt-3 rounded-lg border border-amber-700 bg-amber-950/40 p-2 font-semibold text-amber-200">A baseline below 10m can produce unstable road orientation. Use a longer reference when practical.</p>
+                    <div className="field-mode-review">
+                      <dl className="field-mode-review-grid">
+                        <div>
+                          <dt>Road bearing</dt>
+                          <dd>
+                            {reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}°
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Direction baseline</dt>
+                          <dd>
+                            {reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(
+                              1,
+                            )}
+                            m
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {reconstruction.fieldCalibration
+                        .directionReferenceDistanceMetres < 10 && (
+                        <div className="field-mode-alert field-mode-alert--warning">
+                          <AlertTriangle size={14} />
+                          <span>
+                            A baseline below 10m can produce unstable road
+                            orientation. Use a longer reference when practical.
+                          </span>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1126,9 +1336,9 @@ export default function FieldPlacementPanel({
                     type="button"
                     onClick={saveCalibration}
                     disabled={!calibrationOrigin || !calibrationDirection}
-                    className="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
+                    className="field-mode-button field-mode-button--primary field-mode-button--full"
                   >
-                    Save Calibration
+                    Save calibration
                   </button>
                 </div>
               </div>
@@ -1136,53 +1346,99 @@ export default function FieldPlacementPanel({
 
             {tab === "History" && (
               <div>
-                <div className="border-b border-slate-700 px-5 py-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Forensic audit</p>
-                  <h3 className="mt-1 text-lg font-black text-white">Captured field data</h3>
+                <div className="field-mode-panel-header">
+                  <p className="field-mode-section-kicker">Forensic audit</p>
+                  <h3>Captured field data</h3>
                 </div>
-                <div className="max-h-[68vh] space-y-4 overflow-y-auto p-5 overscroll-contain">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4"><p className="text-[10px] font-black uppercase text-slate-500">Points</p><p className="mt-1 text-2xl font-black text-white">{reconstruction.fieldPlacements.length}</p></div>
-                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4"><p className="text-[10px] font-black uppercase text-slate-500">Walked geometry</p><p className="mt-1 text-2xl font-black text-white">{reconstruction.fieldWalkingTracks.length}</p></div>
+
+                <div className="field-mode-panel-body">
+                  <div className="field-mode-history-stats">
+                    <div className="field-mode-history-stat">
+                      <span>Points</span>
+                      <strong>{reconstruction.fieldPlacements.length}</strong>
+                    </div>
+                    <div className="field-mode-history-stat">
+                      <span>Walked geometry</span>
+                      <strong>{reconstruction.fieldWalkingTracks.length}</strong>
+                    </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => downloadJson(`${reconstruction.accidentId || "roadsafe"}-field-data.json`, {
-                      calibration: reconstruction.fieldCalibration,
-                      placements: reconstruction.fieldPlacements,
-                      walkingTracks: reconstruction.fieldWalkingTracks,
-                    })}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-xs font-black text-slate-200"
+                    onClick={() =>
+                      downloadJson(
+                        `${reconstruction.accidentId || "roadsafe"}-field-data.json`,
+                        {
+                          calibration: reconstruction.fieldCalibration,
+                          placements: reconstruction.fieldPlacements,
+                          walkingTracks: reconstruction.fieldWalkingTracks,
+                        },
+                      )
+                    }
+                    className="field-mode-button field-mode-button--full"
                   >
-                    <FileClock size={16} /> Export Field Audit JSON
+                    <FileClock size={14} /> Export field audit JSON
                   </button>
 
                   {guidance && (
-                    <div className="rounded-xl border border-amber-700 bg-amber-950/40 p-4 text-xs text-amber-200">
-                      <p className="font-black">Guidance to {guidance.placement.targetLabel}</p>
-                      <p className="mt-1">{guidance.distanceMetres.toFixed(1)}m {guidance.directionLabel} · bearing {guidance.bearingDegrees.toFixed(0)}°</p>
+                    <div className="field-mode-guidance">
+                      <strong>Guidance to {guidance.placement.targetLabel}</strong>
+                      <p>
+                        {guidance.distanceMetres.toFixed(1)}m {guidance.directionLabel}
+                        {" · "}bearing {guidance.bearingDegrees.toFixed(0)}°
+                      </p>
                     </div>
                   )}
 
-                  <div className="space-y-3">
-                    {[...reconstruction.fieldPlacements].reverse().map((placement) => (
-                      <article key={placement.id} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div><h4 className="text-sm font-black text-white">{placement.targetLabel}</h4><p className="mt-1 text-[10px] font-semibold text-slate-500">{placement.method} · {placement.sampleCount} sample(s) · ±{(placement.estimatedUncertaintyMetres ?? placement.averageAccuracyMetres).toFixed(1)}m</p></div>
-                          <button type="button" onClick={() => setGuidancePlacementId(placement.id)} className="rounded-lg border border-amber-700 bg-amber-950/40 px-2 py-1.5 text-[10px] font-black text-amber-200">Guide</button>
-                        </div>
-                        <p className="mt-2 break-all text-[10px] text-slate-500">{formatCoordinate(placement.coordinate)}</p>
-                      </article>
-                    ))}
+                  <div className="field-mode-history-list">
+                    {[...reconstruction.fieldPlacements]
+                      .reverse()
+                      .map((placement) => (
+                        <article key={placement.id} className="field-mode-history-card">
+                          <div className="field-mode-history-header">
+                            <div>
+                              <h4>{placement.targetLabel}</h4>
+                              <p>
+                                {placement.method} · {placement.sampleCount} sample(s)
+                                {" · "}±
+                                {(
+                                  placement.estimatedUncertaintyMetres ??
+                                  placement.averageAccuracyMetres
+                                ).toFixed(1)}
+                                m
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setGuidancePlacementId(placement.id)}
+                              className="field-mode-button"
+                            >
+                              Guide
+                            </button>
+                          </div>
+                          <p>{formatCoordinate(placement.coordinate)}</p>
+                        </article>
+                      ))}
 
-                    {[...reconstruction.fieldWalkingTracks].reverse().map((track) => (
-                      <article key={track.id} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
-                        <h4 className="text-sm font-black text-white">{track.targetLabel}</h4>
-                        <p className="mt-1 text-[10px] font-semibold text-slate-500">{track.captureMode ?? "Line"} · {track.distanceMetres.toFixed(1)}m · ±{(track.estimatedUncertaintyMetres ?? track.averageAccuracyMetres).toFixed(1)}m</p>
-                        {track.areaSquareMetres !== undefined && <p className="mt-2 text-xs font-black text-sky-300">Area {track.areaSquareMetres.toFixed(1)}m²</p>}
-                      </article>
-                    ))}
+                    {[...reconstruction.fieldWalkingTracks]
+                      .reverse()
+                      .map((track) => (
+                        <article key={track.id} className="field-mode-history-card">
+                          <h4>{track.targetLabel}</h4>
+                          <p>
+                            {track.captureMode ?? "Line"} · {track.distanceMetres.toFixed(1)}m
+                            {" · "}±
+                            {(
+                              track.estimatedUncertaintyMetres ??
+                              track.averageAccuracyMetres
+                            ).toFixed(1)}
+                            m
+                          </p>
+                          {track.areaSquareMetres !== undefined && (
+                            <p>Area {track.areaSquareMetres.toFixed(1)}m²</p>
+                          )}
+                        </article>
+                      ))}
                   </div>
                 </div>
               </div>

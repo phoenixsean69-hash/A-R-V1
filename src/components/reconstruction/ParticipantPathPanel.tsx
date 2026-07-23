@@ -5,6 +5,21 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
+
+import {
+  Activity,
+  Compass,
+  Copy,
+  Crosshair,
+  Gauge,
+  MapPin,
+  Move,
+  Navigation,
+  Route,
+  Satellite,
+  Trash2,
+} from "lucide-react";
 
 import type {
   MovementAction,
@@ -102,39 +117,48 @@ const ROUTE_DIAMOND_ATTRIBUTE =
 const ROUTE_NUMBER_ATTRIBUTE =
   "data-roadsafe-route-number";
 
+const PENDING_DUPLICATE_STORAGE_KEY =
+  "roadsafe-pending-participant-duplicate";
+
+interface PendingParticipantDuplicate {
+  sourceParticipantId: string;
+  createdAt: number;
+  updates: Partial<ReconstructionVehicle>;
+}
+
 function getActionClasses(
   action: MovementAction,
 ): string {
   switch (action) {
     case "Start":
     case "Enter Scene":
-      return "bg-green-100 text-green-700";
+      return "is-start";
 
     case "Brake":
-      return "bg-amber-100 text-amber-700";
+      return "is-brake";
 
     case "Impact":
-      return "bg-red-100 text-red-700";
+      return "is-impact";
 
     case "Swerve":
     case "Turn Left":
     case "Turn Right":
     case "Deflect":
-      return "bg-cyan-100 text-cyan-700";
+      return "is-turn";
 
     case "Ricochet":
-      return "bg-orange-100 text-orange-700";
+      return "is-ricochet";
 
     case "Slide":
     case "Fall":
-      return "bg-purple-100 text-purple-700";
+      return "is-slide";
 
     case "Stop":
     case "Exit Scene":
-      return "bg-gray-200 text-gray-700";
+      return "is-stop";
 
     default:
-      return "bg-blue-100 text-blue-700";
+      return "is-cruise";
   }
 }
 
@@ -322,6 +346,12 @@ export default function ParticipantPathPanel(
 
   const panelRootRef =
     useRef<HTMLDivElement | null>(null);
+
+  const originalDeleteButtonRef =
+    useRef<HTMLButtonElement | null>(null);
+
+  const [headerActionsHost, setHeaderActionsHost] =
+    useState<HTMLDivElement | null>(null);
 
   const pointCardRefs = useRef(
     new Map<string, HTMLDivElement>(),
@@ -554,6 +584,261 @@ export default function ParticipantPathPanel(
     selectedPointId,
   ]);
 
+  useEffect(() => {
+    const inspector =
+      panelRootRef.current?.closest<HTMLElement>(
+        ".reconstruction-workspace__properties--2d",
+      );
+
+    const scrollContainer =
+      inspector?.querySelector<HTMLElement>(
+        ".reconstruction-workspace__context-scroll",
+      );
+
+    const originalDeleteButton =
+      inspector?.querySelector<HTMLButtonElement>(
+        ".reconstruction-workspace__delete-participant",
+      ) ?? null;
+
+    if (!scrollContainer || !originalDeleteButton) {
+      return;
+    }
+
+    const previousDisplay =
+      originalDeleteButton.style.display;
+
+    originalDeleteButtonRef.current =
+      originalDeleteButton;
+
+    originalDeleteButton.style.display =
+      "none";
+
+    const host =
+      document.createElement("div");
+
+    host.className =
+      "roadsafe-participant-header-actions";
+
+    host.setAttribute(
+      "data-roadsafe-participant-header-actions",
+      "true",
+    );
+
+    scrollContainer.appendChild(host);
+    setHeaderActionsHost(host);
+
+    return () => {
+      originalDeleteButton.style.display =
+        previousDisplay;
+
+      originalDeleteButtonRef.current =
+        null;
+
+      host.remove();
+      setHeaderActionsHost(null);
+    };
+  }, [participant.id]);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(
+      PENDING_DUPLICATE_STORAGE_KEY,
+    );
+
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const pending = JSON.parse(
+        raw,
+      ) as PendingParticipantDuplicate;
+
+      const isFresh =
+        Date.now() - pending.createdAt <
+        10_000;
+
+      const isNewParticipant =
+        pending.sourceParticipantId !==
+        participant.id;
+
+      const matchesParticipantType =
+        !pending.updates.type ||
+        pending.updates.type ===
+          participant.type;
+
+      if (!isFresh) {
+        sessionStorage.removeItem(
+          PENDING_DUPLICATE_STORAGE_KEY,
+        );
+        return;
+      }
+
+      if (
+        !isNewParticipant ||
+        !matchesParticipantType
+      ) {
+        return;
+      }
+
+      sessionStorage.removeItem(
+        PENDING_DUPLICATE_STORAGE_KEY,
+      );
+
+      onParticipantChange(
+        pending.updates,
+      );
+
+      const firstPointId =
+        pending.updates.pathPoints?.[0]
+          ?.id;
+
+      if (firstPointId) {
+        onSelectPoint(firstPointId);
+      }
+
+      setRouteMessage(
+        `${pending.updates.name ?? "Participant copy"} was duplicated with an offset editable route.`,
+      );
+    } catch {
+      sessionStorage.removeItem(
+        PENDING_DUPLICATE_STORAGE_KEY,
+      );
+    }
+  }, [
+    onParticipantChange,
+    onSelectPoint,
+    participant.id,
+  ]);
+
+  const handleDeleteParticipantFromHeader =
+    useCallback(() => {
+      originalDeleteButtonRef.current
+        ?.click();
+    }, []);
+
+  const handleDuplicateParticipant =
+    useCallback(() => {
+      const inspector =
+        panelRootRef.current?.closest<HTMLElement>(
+          ".reconstruction-workspace__properties--2d",
+        );
+
+      const participantAdd =
+        inspector?.querySelector<HTMLElement>(
+          ".reconstruction-workspace__participant-add",
+        );
+
+      const typeSelect =
+        participantAdd?.querySelector<HTMLSelectElement>(
+          "select",
+        );
+
+      const addButton =
+        participantAdd?.querySelector<HTMLButtonElement>(
+          "button",
+        );
+
+      if (!typeSelect || !addButton) {
+        setRouteMessage(
+          "The participant could not be duplicated because the participant controls were not available.",
+        );
+        return;
+      }
+
+      const duplicateStamp =
+        Date.now();
+
+      const editablePoints =
+        getInvestigatorPathPoints(
+          participant,
+        );
+
+      const duplicatedPoints =
+        editablePoints.map(
+          (point, index) => ({
+            ...point,
+            id: `path-copy-${duplicateStamp}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+            position: {
+              x: clampNumber(
+                point.position.x + 2,
+                0,
+                100,
+              ),
+              y: clampNumber(
+                point.position.y + 2,
+                0,
+                100,
+              ),
+            },
+          }),
+        );
+
+      const participantCopy =
+        JSON.parse(
+          JSON.stringify(participant),
+        ) as Partial<ReconstructionVehicle>;
+
+      delete participantCopy.id;
+
+      participantCopy.name =
+        `${participant.name} Copy`;
+
+      participantCopy.pathPoints =
+        duplicatedPoints;
+
+      participantCopy.startPosition =
+        duplicatedPoints[0]
+          ?.position ??
+        participant.startPosition;
+
+      participantCopy.collisionPosition =
+        duplicatedPoints.find(
+          (point) =>
+            point.action === "Impact",
+        )?.position ??
+        duplicatedPoints[
+          Math.min(
+            1,
+            Math.max(
+              0,
+              duplicatedPoints.length - 1,
+            ),
+          )
+        ]?.position ??
+        participant.collisionPosition;
+
+      participantCopy.finalPosition =
+        duplicatedPoints[
+          duplicatedPoints.length - 1
+        ]?.position ??
+        participant.finalPosition;
+
+      const pending: PendingParticipantDuplicate = {
+        sourceParticipantId:
+          participant.id,
+        createdAt: duplicateStamp,
+        updates: participantCopy,
+      };
+
+      sessionStorage.setItem(
+        PENDING_DUPLICATE_STORAGE_KEY,
+        JSON.stringify(pending),
+      );
+
+      typeSelect.value =
+        participant.type;
+
+      typeSelect.dispatchEvent(
+        new Event("change", {
+          bubbles: true,
+        }),
+      );
+
+      window.requestAnimationFrame(
+        () => addButton.click(),
+      );
+    }, [participant]);
+
   const observedRestPoint =
     useMemo(
       () =>
@@ -585,10 +870,10 @@ export default function ParticipantPathPanel(
 
   const restStatusClasses =
     observedRestPoint
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      ? "is-observed"
       : calculatedRestPoint
-        ? "border-violet-200 bg-violet-50 text-violet-800"
-        : "border-amber-200 bg-amber-50 text-amber-800";
+        ? "is-calculated"
+        : "is-pending";
 
   const markSceneRoutePoints =
     useCallback(() => {
@@ -1073,40 +1358,178 @@ export default function ParticipantPathPanel(
       className="roadsafe-route-inspector mt-0 border-0 pb-24 pt-0"
       data-roadsafe-route-builder="true"
     >
+      {headerActionsHost &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              onClick={
+                handleDuplicateParticipant
+              }
+              className="roadsafe-participant-header-actions__button"
+              title="Create an editable copy of the selected participant and route"
+            >
+              <span className="roadsafe-participant-header-actions__icon">
+                <Copy size={13} />
+              </span>
+              <span className="roadsafe-participant-header-actions__copy">
+                <strong>Duplicate</strong>
+                <small>Participant</small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                handleDeleteParticipantFromHeader
+              }
+              className="roadsafe-participant-header-actions__button is-danger"
+              title="Delete the selected participant"
+            >
+              <span className="roadsafe-participant-header-actions__icon">
+                <Trash2 size={13} />
+              </span>
+              <span className="roadsafe-participant-header-actions__copy">
+                <strong>Delete</strong>
+                <small>Participant</small>
+              </span>
+            </button>
+          </>,
+          headerActionsHost,
+        )}
+
       <style>{`
         button[${ROUTE_DIAMOND_ATTRIBUTE}="true"] {
-          width: 18px !important;
-          height: 18px !important;
-          min-width: 18px !important;
-          min-height: 18px !important;
+          width: 16px !important;
+          height: 16px !important;
+          min-width: 16px !important;
+          min-height: 16px !important;
           padding: 0 !important;
-          border-radius: 3px !important;
+          border: 1px solid #8bb9fa !important;
+          border-radius: 2px !important;
           color: transparent !important;
           font-size: 0 !important;
           transform: translate(-50%, -50%) rotate(45deg) !important;
-          transition: transform 120ms ease, filter 120ms ease !important;
-          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.4) !important;
+          box-shadow: 0 0 0 2px rgba(4, 10, 23, .72), 0 5px 14px rgba(0, 0, 0, .38) !important;
+          transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease !important;
         }
 
         button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]::after {
           content: attr(${ROUTE_NUMBER_ATTRIBUTE});
           display: grid;
-          place-items: center;
           width: 100%;
           height: 100%;
-          color: white;
-          font-size: 9px;
+          place-items: center;
+          color: #f8fbff;
+          font-size: 8px;
           font-weight: 900;
           line-height: 1;
           transform: rotate(-45deg);
-          text-shadow: 0 1px 2px rgba(15, 23, 42, 0.9);
+          text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
         }
 
         button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:hover,
         button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:focus-visible {
-          transform: translate(-50%, -50%) rotate(45deg) scale(1.18) !important;
-          filter: brightness(1.12);
+          border-color: #d7e8ff !important;
+          transform: translate(-50%, -50%) rotate(45deg) scale(1.14) !important;
+          filter: brightness(1.08);
           z-index: 70 !important;
+        }
+
+        .reconstruction-workspace__properties--2d >
+        .reconstruction-workspace__context-scroll {
+          display: flex !important;
+          min-height: 100% !important;
+          flex-direction: column !important;
+        }
+
+        .roadsafe-participant-header-actions {
+          position: sticky;
+          z-index: 35;
+          bottom: 0;
+          display: grid;
+          width: 100%;
+          grid-template-columns: repeat(2, minmax(0, 132px));
+          justify-content: center;
+          gap: .55rem;
+          margin-top: auto;
+          border-top: 1px solid #172744;
+          background: linear-gradient(180deg, rgba(5, 11, 24, .18), #071020 34%);
+          padding: .75rem .7rem .85rem;
+        }
+
+        .roadsafe-participant-header-actions__button {
+          display: grid;
+          min-width: 0;
+          min-height: 42px;
+          grid-template-columns: 28px minmax(0, 1fr);
+          align-items: center;
+          gap: .48rem;
+          border: 1px solid #203758;
+          border-radius: .48rem;
+          background: #0a1528;
+          padding: .43rem .55rem;
+          color: #b2c1d6;
+          text-align: left;
+          transition: border-color 120ms ease, background 120ms ease, color 120ms ease, transform 120ms ease;
+        }
+
+        .roadsafe-participant-header-actions__button:hover {
+          border-color: #35639b;
+          background: #10213b;
+          color: #f1f7ff;
+          transform: translateY(-1px);
+        }
+
+        .roadsafe-participant-header-actions__icon {
+          display: grid;
+          width: 28px;
+          height: 28px;
+          place-items: center;
+          border: 1px solid #28456c;
+          border-radius: .38rem;
+          background: #0e203b;
+          color: #7fb1f5;
+        }
+
+        .roadsafe-participant-header-actions__copy {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          line-height: 1.08;
+        }
+
+        .roadsafe-participant-header-actions__copy strong {
+          color: inherit;
+          font-size: .58rem;
+          font-weight: 850;
+          letter-spacing: .01em;
+        }
+
+        .roadsafe-participant-header-actions__copy small {
+          margin-top: .16rem;
+          color: #667b98;
+          font-size: .46rem;
+          font-weight: 700;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger {
+          border-color: #4b2c38;
+          background: #1a1018;
+          color: #d5a1ad;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger
+        .roadsafe-participant-header-actions__icon {
+          border-color: #5d3341;
+          background: #25131c;
+          color: #e49aaa;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger:hover {
+          border-color: #784252;
+          background: #28151f;
+          color: #ffd0d9;
         }
 
         .reconstruction-workspace__2d-grid {
@@ -1118,7 +1541,7 @@ export default function ParticipantPathPanel(
         .reconstruction-workspace__properties--2d {
           position: sticky !important;
           inset: auto !important;
-          top: 0.75rem !important;
+          top: .75rem !important;
           align-self: start !important;
           width: 100% !important;
           height: calc(100vh - 7.25rem) !important;
@@ -1128,31 +1551,7 @@ export default function ParticipantPathPanel(
           overflow-y: auto !important;
           overscroll-behavior: contain;
           scrollbar-gutter: stable;
-          padding: 0.72rem 0.72rem 7rem !important;
-        }
-
-        .reconstruction-workspace__properties--2d
-        .reconstruction-workspace__context-panel {
-          min-height: 0 !important;
-        }
-
-        .reconstruction-workspace__properties--2d
-        .reconstruction-workspace__context-section {
-          margin: 0 0 0.62rem !important;
-          border: 1px solid #182b49 !important;
-          border-radius: 0.45rem !important;
-          background: linear-gradient(180deg, #071120 0%, #050c19 100%) !important;
-          padding: 0.68rem !important;
-          box-shadow: inset 0 1px 0 rgba(124, 164, 220, 0.035) !important;
-        }
-
-        .reconstruction-workspace__properties--2d
-        .reconstruction-workspace__context-title {
-          color: #dce7f7 !important;
-          font-size: 0.61rem !important;
-          font-weight: 800 !important;
-          letter-spacing: 0.075em !important;
-          text-transform: uppercase !important;
+          padding: .72rem .72rem 7rem !important;
         }
 
         .reconstruction-workspace__properties--2d
@@ -1178,100 +1577,549 @@ export default function ParticipantPathPanel(
         }
 
         .roadsafe-route-inspector {
-          color: #b9c7da;
+          color: #9eacc0;
+          font-size: .56rem;
         }
 
-        .roadsafe-route-inspector [class*="bg-gradient-to-br"] {
-          border-color: #214066 !important;
-          background: linear-gradient(145deg, #09182c 0%, #071222 56%, #08101d 100%) !important;
-          box-shadow: inset 0 1px 0 rgba(125, 177, 255, 0.04) !important;
+        .roadsafe-route-inspector__section {
+          margin-top: .72rem;
+          border-top: 1px solid #152744;
+          padding-top: .68rem;
         }
 
-        .roadsafe-route-inspector [class*="bg-white"],
-        .roadsafe-route-inspector [class*="bg-blue-50"],
-        .roadsafe-route-inspector [class*="bg-sky-50"],
-        .roadsafe-route-inspector [class*="bg-cyan-50"],
-        .roadsafe-route-inspector [class*="bg-violet-50"],
-        .roadsafe-route-inspector [class*="bg-emerald-50"],
-        .roadsafe-route-inspector [class*="bg-amber-50"],
-        .roadsafe-route-inspector [class*="bg-red-50"],
-        .roadsafe-route-inspector [class*="bg-gray-50"],
-        .roadsafe-route-inspector [class*="bg-slate-50"] {
-          background-color: #071120 !important;
+        .roadsafe-route-inspector__section:first-of-type {
+          margin-top: 0;
+          border-top: 0;
+          padding-top: 0;
         }
 
-        .roadsafe-route-inspector [class*="border-blue-"],
-        .roadsafe-route-inspector [class*="border-sky-"],
-        .roadsafe-route-inspector [class*="border-cyan-"],
-        .roadsafe-route-inspector [class*="border-violet-"],
-        .roadsafe-route-inspector [class*="border-emerald-"],
-        .roadsafe-route-inspector [class*="border-amber-"],
-        .roadsafe-route-inspector [class*="border-red-"],
-        .roadsafe-route-inspector [class*="border-rose-"],
-        .roadsafe-route-inspector [class*="border-gray-"],
-        .roadsafe-route-inspector [class*="border-slate-"] {
-          border-color: #1a3152 !important;
+        .roadsafe-route-inspector__heading {
+          display: flex;
+          align-items: center;
+          gap: .4rem;
+          margin: 0;
+          color: #9bb2d1;
+          font-size: .54rem;
+          font-weight: 900;
+          letter-spacing: .08em;
+          text-transform: uppercase;
         }
 
-        .roadsafe-route-inspector button:not([${ROUTE_DIAMOND_ATTRIBUTE}="true"]) {
+        .roadsafe-route-inspector__description {
+          margin-top: .35rem;
+          color: #66758d;
+          font-size: .5rem;
+          line-height: 1.55;
+        }
+
+        .roadsafe-route-inspector__header-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: .65rem;
+        }
+
+        .roadsafe-route-inspector__badge {
+          display: inline-flex;
+          flex: 0 0 auto;
+          align-items: center;
+          gap: .25rem;
+          border: 1px solid #284a7b;
+          border-radius: .26rem;
+          background: #112241;
+          padding: .24rem .4rem;
+          color: #7fb1ff;
+          font-size: .45rem;
+          font-weight: 900;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__toolbar {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .58rem;
+        }
+
+        .roadsafe-route-inspector__toolbar .ui-button,
+        .roadsafe-route-inspector__toolbar .ui-button-primary {
           min-height: 31px;
-          border-radius: 0.34rem !important;
-          box-shadow: none !important;
+          justify-content: flex-start;
+          padding: .38rem .48rem;
+          font-size: .49rem;
+          font-weight: 800;
         }
 
-        .roadsafe-route-inspector button[class*="bg-sky-600"],
-        .roadsafe-route-inspector button[class*="bg-blue-600"] {
-          border: 1px solid #3d70b7 !important;
-          background: #163a73 !important;
-          color: #f4f8ff !important;
+        .roadsafe-route-inspector__toolbar-danger {
+          border-color: #50303a !important;
+          background: #1d1119 !important;
+          color: #c88d9a !important;
         }
 
-        .roadsafe-route-inspector button[class*="bg-sky-600"]:hover,
-        .roadsafe-route-inspector button[class*="bg-blue-600"]:hover {
-          background: #1b4789 !important;
+        .roadsafe-route-inspector__toolbar-danger:hover {
+          border-color: #71404d !important;
+          background: #291720 !important;
+          color: #efb5c1 !important;
         }
 
-        .roadsafe-route-inspector button[class*="bg-emerald-600"] {
-          border: 1px solid #2f7168 !important;
-          background: #123c39 !important;
-          color: #b8ebe2 !important;
+        .roadsafe-route-inspector__message {
+          display: flex;
+          align-items: flex-start;
+          gap: .4rem;
+          margin-top: .5rem;
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .45rem .5rem;
+          color: #7f90a8;
+          font-size: .49rem;
+          line-height: 1.5;
         }
 
-        .roadsafe-route-inspector button[class*="bg-emerald-600"]:hover {
-          background: #174b47 !important;
+        .roadsafe-route-inspector__chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .28rem;
+          margin-top: .45rem;
         }
 
-        .roadsafe-route-inspector input,
-        .roadsafe-route-inspector select,
-        .roadsafe-route-inspector textarea {
-          border: 1px solid #1d3558 !important;
-          border-radius: 0.34rem !important;
-          background: #050d1b !important;
-          color: #dce7f7 !important;
-          box-shadow: none !important;
+        .roadsafe-route-inspector__chip {
+          border: 1px solid #1a2e4d;
+          border-radius: .25rem;
+          background: #071124;
+          padding: .22rem .34rem;
+          color: #71839d;
+          font-size: .43rem;
+          font-weight: 800;
         }
 
-        .roadsafe-route-inspector input:focus,
-        .roadsafe-route-inspector select:focus,
-        .roadsafe-route-inspector textarea:focus {
-          border-color: #477fc8 !important;
-          box-shadow: 0 0 0 2px rgba(71, 127, 200, 0.16) !important;
+        .roadsafe-route-inspector__speed-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 78px;
+          gap: .45rem;
+          align-items: center;
+          margin-top: .55rem;
         }
 
-        .roadsafe-route-inspector input[type="range"] {
+        .roadsafe-route-inspector__speed-grid input[type="range"] {
+          width: 100%;
           accent-color: #4d8cf5;
         }
 
-        .roadsafe-route-inspector .roadsafe-route-speed-card {
-          margin-top: 0.65rem;
-          border: 1px solid #214066;
-          border-radius: 0.45rem;
-          background: linear-gradient(145deg, #08172b, #060e1c);
-          padding: 0.72rem;
+        .roadsafe-route-inspector__number-wrap {
+          position: relative;
         }
 
-        .roadsafe-route-inspector .roadsafe-route-point-card {
+        .roadsafe-route-inspector__number-wrap input {
+          width: 100%;
+          padding-right: 1.8rem !important;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__number-unit {
+          position: absolute;
+          right: .38rem;
+          top: 50%;
+          pointer-events: none;
+          transform: translateY(-50%);
+          color: #5f7088;
+          font-size: .42rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__presets {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .28rem;
+          margin-top: .42rem;
+        }
+
+        .roadsafe-route-inspector__presets button {
+          min-height: 26px;
+          border: 1px solid #1a2e4e;
+          border-radius: .28rem;
+          background: #071124;
+          padding: .28rem .42rem;
+          color: #7588a4;
+          font-size: .45rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__presets button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-inspector__metrics {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .58rem;
+        }
+
+        .roadsafe-route-inspector__metric {
+          min-width: 0;
+          border: 1px solid #142743;
+          border-radius: .32rem;
+          background: #061020;
+          padding: .46rem;
+        }
+
+        .roadsafe-route-inspector__metric span {
+          display: block;
+          color: #61728b;
+          font-size: .43rem;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__metric strong {
+          display: block;
+          margin-top: .2rem;
+          overflow: hidden;
+          color: #d8e6f8;
+          font-size: .58rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .roadsafe-route-inspector__metric small {
+          display: block;
+          margin-top: .18rem;
+          color: #55657b;
+          font-size: .4rem;
+          line-height: 1.35;
+        }
+
+        .roadsafe-route-inspector__metric.is-observed strong { color: #9ed8ca; }
+        .roadsafe-route-inspector__metric.is-calculated strong { color: #aebef8; }
+        .roadsafe-route-inspector__metric.is-pending strong { color: #c6b17a; }
+
+        .roadsafe-route-inspector__field-list {
+          display: grid;
+          gap: .42rem;
+          margin-top: .55rem;
+        }
+
+        .roadsafe-route-inspector__field-list label > span,
+        .roadsafe-route-inspector__point-fields label > span {
+          display: block;
+          margin-bottom: .24rem;
+          color: #718097;
+          font-size: .46rem;
+          font-weight: 700;
+        }
+
+        .roadsafe-route-inspector :is(input:not([type="range"]), select, textarea) {
+          width: 100%;
+          border: 1px solid #1c3152 !important;
+          border-radius: .28rem !important;
+          background: #061020 !important;
+          padding: .36rem .44rem !important;
+          color: #dce7f7 !important;
+          font-size: .52rem !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-inspector :is(input, select, textarea):focus {
+          border-color: #3d6da9 !important;
+          outline: none !important;
+          box-shadow: 0 0 0 2px rgba(61, 109, 169, .15) !important;
+        }
+
+        .roadsafe-route-inspector__direction-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .52rem;
+        }
+
+        .roadsafe-route-inspector__direction-grid button {
+          min-height: 30px;
+          border: 1px solid #1a2e4e;
+          border-radius: .3rem;
+          background: #071124;
+          color: #7588a4;
+          font-size: .47rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__direction-grid button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-inspector__notice {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: .5rem;
+          margin-top: .65rem;
+          border: 1px solid #192d4d;
+          border-radius: .32rem;
+          background: #071124;
+          padding: .48rem;
+          color: #7e90a9;
+          font-size: .48rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__notice button {
+          min-height: 27px;
+          flex: 0 0 auto;
+        }
+
+        .roadsafe-route-point-card {
+          margin-top: .45rem;
           scroll-margin-block: 4.5rem;
+          border: 1px solid #142743 !important;
+          border-radius: .34rem !important;
+          background: #061020 !important;
+          padding: .52rem !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-point-card.is-selected {
+          border-color: #315d96 !important;
+          background: #0a1830 !important;
+        }
+
+        .roadsafe-route-point-card.is-physics {
+          border-color: #263151 !important;
+          background: #090f20 !important;
+        }
+
+        .roadsafe-route-point-card__select {
+          border: 0 !important;
+          background: transparent !important;
+          padding: 0 !important;
+          color: inherit !important;
+          text-align: left;
+        }
+
+        .roadsafe-route-point-card__diamond {
+          display: grid;
+          width: 20px;
+          height: 20px;
+          flex: 0 0 20px;
+          place-items: center;
+          border: 1px solid #5f8fcd;
+          border-radius: 2px;
+          background: #102a53;
+          transform: rotate(45deg);
+          color: #f5f9ff;
+          font-size: .46rem;
+          font-weight: 900;
+        }
+
+        .roadsafe-route-point-card__diamond > span {
+          transform: rotate(-45deg);
+        }
+
+        .roadsafe-route-point-card__title {
+          display: block;
+          overflow: hidden;
+          color: #dce7f7;
+          font-size: .56rem;
+          font-weight: 800;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .roadsafe-route-point-card__subtitle {
+          display: block;
+          margin-top: .14rem;
+          color: #61728b;
+          font-size: .42rem;
+          font-weight: 800;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-action {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #1a2e4d;
+          border-radius: .24rem;
+          background: #071124;
+          padding: .2rem .32rem;
+          color: #8597b0;
+          font-size: .42rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-action.is-impact { border-color: #57313b; color: #d8909f; }
+        .roadsafe-route-action.is-brake { border-color: #51452b; color: #c7ae72; }
+        .roadsafe-route-action.is-turn { border-color: #24516b; color: #7eb9d2; }
+        .roadsafe-route-action.is-start { border-color: #245246; color: #87c9b7; }
+        .roadsafe-route-action.is-ricochet,
+        .roadsafe-route-action.is-slide { border-color: #40375d; color: #a9a2d8; }
+        .roadsafe-route-action.is-stop { color: #8793a5; }
+
+        .roadsafe-route-point-card__status {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #1a2e4d;
+          border-radius: .24rem;
+          background: #071124;
+          padding: .2rem .32rem;
+          color: #687b96;
+          font-size: .4rem;
+          font-weight: 800;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-point-card__actions {
+          display: flex;
+          align-items: center;
+          gap: .28rem;
+        }
+
+        .roadsafe-route-point-card__actions button {
+          min-height: 26px;
+          border: 1px solid #1a2e4e;
+          border-radius: .28rem;
+          background: #071124;
+          padding: .26rem .4rem;
+          color: #7588a4;
+          font-size: .43rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-point-card__actions button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-point-card__actions button.is-delete {
+          border-color: #50303a;
+          color: #c88d9a;
+        }
+
+        .roadsafe-route-point-card__details {
+          margin-top: .52rem;
+          border-top: 1px solid #142743;
+          padding-top: .52rem;
+        }
+
+        .roadsafe-route-inspector__gps-box {
+          border: 1px solid #192d4d;
+          border-radius: .32rem;
+          background: #071124;
+          padding: .48rem;
+        }
+
+        .roadsafe-route-inspector__gps-box strong {
+          display: block;
+          color: #b8c7dc;
+          font-size: .5rem;
+        }
+
+        .roadsafe-route-inspector__gps-box p {
+          margin-top: .2rem;
+          color: #61728b;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__gps-box button {
+          width: 100%;
+          margin-top: .4rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box {
+          border: 1px solid #263151;
+          border-radius: .32rem;
+          background: #090f20;
+          padding: .48rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box strong {
+          display: block;
+          color: #b7c4df;
+          font-size: .5rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box p {
+          margin-top: .2rem;
+          color: #65748b;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__physics-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .45rem;
+        }
+
+        .roadsafe-route-inspector__physics-grid > div {
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .42rem;
+        }
+
+        .roadsafe-route-inspector__physics-grid dt {
+          color: #61728b;
+          font-size: .42rem;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__physics-grid dd {
+          margin-top: .18rem;
+          color: #d8e6f8;
+          font-size: .52rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__physics-note {
+          margin-top: .45rem;
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .44rem;
+          color: #66758d;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__edit-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+        }
+
+        .roadsafe-route-inspector__edit-actions .ui-button {
+          min-height: 30px;
+          justify-content: flex-start;
+          padding: .36rem .46rem;
+          font-size: .47rem;
+        }
+
+        .roadsafe-route-inspector__point-fields {
+          display: grid;
+          gap: .42rem;
+          margin-top: .48rem;
+        }
+
+        .roadsafe-route-inspector__point-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .36rem;
+        }
+
+        .roadsafe-route-inspector__point-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .36rem;
         }
 
         @media (max-width: 980px) {
@@ -1285,105 +2133,103 @@ export default function ParticipantPathPanel(
         }
       `}</style>
 
-      <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <section className="roadsafe-route-inspector__section">
+        <div className="roadsafe-route-inspector__header-row">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">
+            <h3 className="roadsafe-route-inspector__heading">
+              <Route size={13} />
               Participant route builder
-            </p>
-
-            <h3 className="mt-1 text-base font-black text-slate-950">
-              Numbered smooth-route controls
             </h3>
-
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
-              Diamonds are editable control points. The participant follows a continuously smoothed curve through them rather than travelling through sharp corners.
+            <p className="roadsafe-route-inspector__description">
+              Add, draw or GPS-record editable route points. The participant follows a continuous smoothed curve through the numbered diamonds.
             </p>
           </div>
 
-          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">
-            Smooth curve active
+          <span className="roadsafe-route-inspector__badge">
+            <Activity size={10} />
+            Smooth curve
           </span>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="roadsafe-route-inspector__toolbar">
           <button
             type="button"
             onClick={handleAddRoutePoint}
-            className="rounded-lg bg-sky-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-sky-700"
+            className="ui-button-primary"
           >
-            + Add route point
+            <Crosshair size={12} />
+            Add route point
           </button>
 
           <button
             type="button"
             onClick={activateMoveTool}
-            className="rounded-lg border border-sky-300 bg-white px-3 py-2.5 text-xs font-black text-sky-800 hover:bg-sky-50"
+            className="ui-button"
           >
+            <Move size={12} />
             Adjust diamonds
           </button>
 
           <button
             type="button"
             onClick={handleDrawCompleteRoute}
-            className="rounded-lg border border-cyan-300 bg-white px-3 py-2.5 text-xs font-black text-cyan-800 hover:bg-cyan-50"
+            className="ui-button"
           >
+            <Route size={12} />
             Draw complete route
           </button>
 
           <button
             type="button"
             onClick={handleWalkRouteWithGps}
-            className="rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700"
+            className="ui-button"
           >
+            <Satellite size={12} />
             Walk route with GPS
           </button>
 
           <button
             type="button"
             onClick={handleClearIntermediatePoints}
-            className="rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-xs font-black text-rose-700 hover:bg-rose-50"
+            className="ui-button roadsafe-route-inspector__toolbar-danger"
           >
+            <Trash2 size={12} />
             Clear intermediate points
           </button>
         </div>
 
-        <div className="mt-3 rounded-lg border border-sky-100 bg-white/80 px-3 py-2.5 text-[11px] leading-5 text-slate-600">
-          {routeMessage}
+        <div className="roadsafe-route-inspector__message">
+          <Navigation size={12} />
+          <span>{routeMessage}</span>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
-            {investigatorPoints.length} editable diamond{investigatorPoints.length === 1 ? "" : "s"}
+        <div className="roadsafe-route-inspector__chips">
+          <span className="roadsafe-route-inspector__chip">
+            {investigatorPoints.length} editable point{investigatorPoints.length === 1 ? "" : "s"}
           </span>
-
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
-            GPS route supported
-          </span>
-
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
-            Physics begins at contact
-          </span>
+          <span className="roadsafe-route-inspector__chip">GPS route supported</span>
+          <span className="roadsafe-route-inspector__chip">Physics after contact</span>
         </div>
-      </div>
+      </section>
 
-      <section className="roadsafe-route-speed-card">
-        <div className="flex items-start justify-between gap-3">
+      <section className="roadsafe-route-inspector__section">
+        <div className="roadsafe-route-inspector__header-row">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-300">
+            <h3 className="roadsafe-route-inspector__heading">
+              <Gauge size={13} />
               Exact participant speed
-            </p>
-            <p className="mt-1 text-[11px] leading-5 text-slate-400">
-              This changes the authored route speed itself, not only the displayed value. Playback timing is scaled so a value such as 1 km/h actually moves this participant slowly.
+            </h3>
+            <p className="roadsafe-route-inspector__description">
+              This updates the participant&apos;s authored route speed and recalculates route timing. Entering 1 km/h makes this participant move at 1 km/h during playback.
             </p>
           </div>
 
-          <span className="shrink-0 rounded border border-[#2c5688] bg-[#0d2342] px-2 py-1 text-[10px] font-black text-[#9cc5ff]">
+          <span className="roadsafe-route-inspector__badge">
             {formatSpeedValue(participant.estimatedSpeedKmh)} km/h
           </span>
         </div>
 
-        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
+        <div className="roadsafe-route-inspector__speed-grid">
           <input
             type="range"
             min={0.1}
@@ -1391,25 +2237,19 @@ export default function ParticipantPathPanel(
             step={0.1}
             value={participant.estimatedSpeedKmh}
             onChange={(event) =>
-              applyParticipantSpeed(
-                Number(event.target.value),
-              )
+              applyParticipantSpeed(Number(event.target.value))
             }
             aria-label="Participant route speed"
           />
 
-          <div className="relative">
+          <div className="roadsafe-route-inspector__number-wrap">
             <input
               type="number"
               min={0.1}
               max={speedLimit}
               step={0.1}
               value={speedDraft}
-              onChange={(event) =>
-                setSpeedDraft(
-                  event.target.value,
-                )
-              }
+              onChange={(event) => setSpeedDraft(event.target.value)}
               onBlur={commitSpeedDraft}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -1418,30 +2258,20 @@ export default function ParticipantPathPanel(
                   event.currentTarget.blur();
                 }
               }}
-              className="w-full pr-7 text-right text-xs font-black"
               aria-label="Exact speed in kilometres per hour"
             />
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-bold text-slate-500">
-              km/h
-            </span>
+            <span className="roadsafe-route-inspector__number-unit">km/h</span>
           </div>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="roadsafe-route-inspector__presets">
           {[1, 5, 10, 20, 40, 60]
-            .filter((speed) =>
-              speed <= speedLimit,
-            )
+            .filter((speed) => speed <= speedLimit)
             .map((speed) => (
               <button
                 key={speed}
                 type="button"
-                onClick={() =>
-                  applyParticipantSpeed(
-                    speed,
-                  )
-                }
-                className="border border-[#28466d] bg-[#0a162a] px-2 py-1 text-[9px] font-black text-slate-300 hover:border-[#477fc8] hover:bg-[#102445] hover:text-white"
+                onClick={() => applyParticipantSpeed(speed)}
               >
                 {speed} km/h
               </button>
@@ -1449,126 +2279,96 @@ export default function ParticipantPathPanel(
         </div>
       </section>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-sm border border-blue-200 bg-blue-50 p-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
-            Investigator input
-          </p>
+      <section className="roadsafe-route-inspector__section">
+        <h3 className="roadsafe-route-inspector__heading">
+          <Activity size={13} />
+          Route status
+        </h3>
 
-          <p className="mt-1 text-lg font-black text-blue-950">
-            {investigatorPoints.length}
-          </p>
+        <div className="roadsafe-route-inspector__metrics">
+          <div className="roadsafe-route-inspector__metric">
+            <span>Investigator input</span>
+            <strong>{investigatorPoints.length} points</strong>
+            <small>Editable route and evidence controls</small>
+          </div>
 
-          <p className="mt-1 text-[10px] leading-4 text-blue-800">
-            Editable route diamonds and evidence points
-          </p>
-        </div>
+          <div className="roadsafe-route-inspector__metric">
+            <span>Physics output</span>
+            <strong>{physicsPoints.length} samples</strong>
+            <small>Solver-owned post-impact movement</small>
+          </div>
 
-        <div className="rounded-sm border border-violet-200 bg-violet-50 p-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
-            Physics result
-          </p>
-
-          <p className="mt-1 text-lg font-black text-violet-950">
-            {physicsPoints.length}
-          </p>
-
-          <p className="mt-1 text-[10px] leading-4 text-violet-800">
-            Solver-owned impact and post-impact samples
-          </p>
-        </div>
-
-        <div
-          className={`rounded-sm border p-3 ${restStatusClasses}`}
-        >
-          <p className="text-[10px] font-black uppercase tracking-[0.12em]">
-            Resting position
-          </p>
-
-          <p className="mt-1 text-sm font-black">
-            {restStatus}
-          </p>
-
-          <p className="mt-1 text-[10px] leading-4">
-            {observedRestPoint
-              ? "Confirmed from investigator-entered evidence."
-              : calculatedRestPoint
-                ? "Generated after velocity falls below the stop threshold."
-                : "No resting location is assigned before simulation."}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3">
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">
-            Came from
-          </span>
-
-          <input
-            value={participant.originLocation}
-            onChange={(event) =>
-              onParticipantChange({
-                originLocation:
-                  event.target.value,
-              })
-            }
-            placeholder="e.g. Chipadze residential area"
-            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">
-            Heading to
-          </span>
-
-          <input
-            value={participant.destinationLocation}
-            onChange={(event) =>
-              onParticipantChange({
-                destinationLocation:
-                  event.target.value,
-              })
-            }
-            placeholder="e.g. Bindura CBD"
-            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-          />
-        </label>
-
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-black text-slate-900">
-            Quick direction
-          </p>
-
-          <p className="mt-1 text-[11px] leading-5 text-slate-600">
-            This rotates the authored approach direction. The route diamonds remain freely adjustable afterward.
-          </p>
-
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {HEADING_OPTIONS.map((option) => (
-              <button
-                key={option.label}
-                type="button"
-                onClick={() =>
-                  onHeadingChange(
-                    option.label,
-                    option.degrees,
-                  )
-                }
-                className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-[10px] font-black text-slate-700 hover:border-sky-300 hover:bg-sky-50"
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className={`roadsafe-route-inspector__metric ${restStatusClasses}`}>
+            <span>Resting position</span>
+            <strong>{restStatus}</strong>
+            <small>
+              {observedRestPoint
+                ? "Confirmed from evidence"
+                : calculatedRestPoint
+                  ? "Calculated by physics"
+                  : "Not assigned before simulation"}
+            </small>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section className="roadsafe-route-inspector__section">
+        <h3 className="roadsafe-route-inspector__heading">
+          <MapPin size={13} />
+          Route context
+        </h3>
+
+        <div className="roadsafe-route-inspector__field-list">
+          <label>
+            <span>Came from</span>
+            <input
+              value={participant.originLocation}
+              onChange={(event) =>
+                onParticipantChange({ originLocation: event.target.value })
+              }
+              placeholder="e.g. Chipadze residential area"
+            />
+          </label>
+
+          <label>
+            <span>Heading to</span>
+            <input
+              value={participant.destinationLocation}
+              onChange={(event) =>
+                onParticipantChange({ destinationLocation: event.target.value })
+              }
+              placeholder="e.g. Bindura CBD"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="roadsafe-route-inspector__section">
+        <h3 className="roadsafe-route-inspector__heading">
+          <Compass size={13} />
+          Quick direction
+        </h3>
+        <p className="roadsafe-route-inspector__description">
+          Apply a starting approach direction, then fine-tune the numbered route points directly on the scene.
+        </p>
+
+        <div className="roadsafe-route-inspector__direction-grid">
+          {HEADING_OPTIONS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => onHeadingChange(option.label, option.degrees)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <div className="mt-4 space-y-3">
         {hiddenPhysicsSamples > 0 && (
-          <div className="flex items-center justify-between gap-3 rounded-sm border border-violet-200 bg-violet-50 p-3">
-            <p className="text-xs leading-5 text-violet-900">
+          <div className="roadsafe-route-inspector__notice">
+            <p>
               <strong>
                 {hiddenPhysicsSamples} detailed physics samples hidden.
               </strong>{" "}
@@ -1580,7 +2380,7 @@ export default function ParticipantPathPanel(
               onClick={() =>
                 setShowPhysicsSamples(true)
               }
-              className="shrink-0 rounded-lg bg-violet-700 px-3 py-2 text-[10px] font-black text-white"
+              className="ui-button"
             >
               Show all
             </button>
@@ -1594,7 +2394,7 @@ export default function ParticipantPathPanel(
               onClick={() =>
                 setShowPhysicsSamples(false)
               }
-              className="w-full rounded-lg border border-violet-200 px-3 py-2 text-xs font-black text-violet-800"
+              className="ui-button w-full"
             >
               Hide detailed physics samples
             </button>
@@ -1637,15 +2437,9 @@ export default function ParticipantPathPanel(
                     );
                   }
                 }}
-                className={`roadsafe-route-point-card rounded-sm border p-3 transition ${
-                  physicsGenerated
-                    ? selected
-                      ? "border-violet-500 bg-violet-50"
-                      : "border-violet-200 bg-violet-50/60"
-                    : selected
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white"
-                }`}
+                className={`roadsafe-route-point-card ${
+                  selected ? "is-selected" : ""
+                } ${physicsGenerated ? "is-physics" : ""}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <button
@@ -1653,15 +2447,11 @@ export default function ParticipantPathPanel(
                     onClick={() =>
                       onSelectPoint(point.id)
                     }
-                    className="min-w-0 flex-1 text-left"
+                    className="roadsafe-route-point-card__select min-w-0 flex-1"
                   >
                     <span className="flex items-center gap-3">
                       <span
-                        className={`grid h-6 w-6 shrink-0 rotate-45 place-items-center rounded-[4px] text-[10px] font-black text-white shadow-sm ${
-                          physicsGenerated
-                            ? "bg-violet-700"
-                            : "bg-sky-700"
-                        }`}
+                        className="roadsafe-route-point-card__diamond"
                       >
                         <span className="-rotate-45">
                           {physicsGenerated
@@ -1671,12 +2461,12 @@ export default function ParticipantPathPanel(
                       </span>
 
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold text-gray-900">
+                        <span className="roadsafe-route-point-card__title">
                           {point.label}
                         </span>
 
                         {!physicsGenerated && (
-                          <span className="mt-0.5 block text-[9px] font-bold uppercase tracking-[0.1em] text-sky-700">
+                          <span className="roadsafe-route-point-card__subtitle">
                             Route diamond {investigatorOrder + 1}
                           </span>
                         )}
@@ -1685,21 +2475,13 @@ export default function ParticipantPathPanel(
 
                     <span className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${getActionClasses(
-                          point.action,
-                        )}`}
+                        className={`roadsafe-route-action ${getActionClasses(point.action)}`}
                       >
                         {point.action}
                       </span>
 
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] ${
-                          physicsGenerated
-                            ? "bg-violet-200 text-violet-800"
-                            : observedRest
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
+                        className="roadsafe-route-point-card__status"
                       >
                         {physicsGenerated
                           ? "Physics · read only"
@@ -1710,7 +2492,7 @@ export default function ParticipantPathPanel(
                     </span>
                   </button>
 
-                  <div className="flex items-center gap-1">
+                  <div className="roadsafe-route-point-card__actions">
                     <button
                       type="button"
                       onClick={() =>
@@ -1718,7 +2500,7 @@ export default function ParticipantPathPanel(
                           point.timeSeconds,
                         )
                       }
-                      className="rounded-lg border border-gray-300 px-2 py-1 text-[10px] font-bold text-gray-600 hover:bg-gray-100"
+                      className=""
                     >
                       Jump
                     </button>
@@ -1734,7 +2516,7 @@ export default function ParticipantPathPanel(
                         disabled={
                           investigatorPoints.length <= 2
                         }
-                        className="rounded-lg border border-red-200 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="is-delete disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Delete
                       </button>
@@ -1744,57 +2526,55 @@ export default function ParticipantPathPanel(
 
                 {selected &&
                   physicsGenerated && (
-                    <div className="mt-4 space-y-3 border-t border-violet-200 pt-3">
-                      <div className="rounded-lg border border-violet-200 bg-white p-3">
-                        <p className="text-xs font-black text-violet-950">
-                          Physics-generated result
-                        </p>
+                    <div className="roadsafe-route-point-card__details">
+                      <div className="roadsafe-route-inspector__read-only-box">
+                        <strong>Physics-generated result</strong>
 
-                        <p className="mt-1 text-[11px] leading-5 text-violet-800">
+                        <p>
                           This solver result is read-only. Change route, speed, mass, surface or impact geometry and rerun the simulation instead of dragging this result.
                         </p>
                       </div>
 
-                      <dl className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
-                        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-                          <dt className="text-gray-500">
+                      <dl className="roadsafe-route-inspector__physics-grid">
+                        <div>
+                          <dt>
                             Time
                           </dt>
-                          <dd className="mt-1 font-black text-gray-900">
+                          <dd>
                             {point.timeSeconds.toFixed(2)} s
                           </dd>
                         </div>
 
-                        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-                          <dt className="text-gray-500">
+                        <div>
+                          <dt>
                             Speed
                           </dt>
-                          <dd className="mt-1 font-black text-gray-900">
+                          <dd>
                             {point.speedKmh.toFixed(1)} km/h
                           </dd>
                         </div>
 
-                        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-                          <dt className="text-gray-500">
+                        <div>
+                          <dt>
                             Rotation
                           </dt>
-                          <dd className="mt-1 font-black text-gray-900">
+                          <dd>
                             {point.rotation.toFixed(1)}°
                           </dd>
                         </div>
 
-                        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-                          <dt className="text-gray-500">
+                        <div>
+                          <dt>
                             Scene position
                           </dt>
-                          <dd className="mt-1 font-black text-gray-900">
+                          <dd>
                             {point.position.x.toFixed(1)}, {point.position.y.toFixed(1)}
                           </dd>
                         </div>
                       </dl>
 
                       {point.notes && (
-                        <p className="rounded-lg border border-gray-200 bg-white p-3 text-[11px] leading-5 text-gray-600">
+                        <p className="roadsafe-route-inspector__physics-note">
                           {point.notes}
                         </p>
                       )}
@@ -1803,12 +2583,12 @@ export default function ParticipantPathPanel(
 
                 {selected &&
                   !physicsGenerated && (
-                    <div className="mt-4 space-y-3 border-t border-blue-200 pt-3">
-                      <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="roadsafe-route-point-card__details">
+                      <div className="roadsafe-route-inspector__edit-actions">
                         <button
                           type="button"
                           onClick={activateMoveTool}
-                          className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-800 hover:bg-sky-100"
+                          className="ui-button"
                         >
                           Drag diamond on scene
                         </button>
@@ -1820,14 +2600,15 @@ export default function ParticipantPathPanel(
                               point.id,
                             )
                           }
-                          className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700"
+                          className="ui-button"
                         >
                           Place this point with GPS
                         </button>
                       </div>
 
-                      <label className="block">
-                        <span className="text-xs font-medium text-gray-600">
+                      <div className="roadsafe-route-inspector__point-fields">
+                      <label>
+                        <span>
                           Point label
                         </span>
 
@@ -1842,12 +2623,12 @@ export default function ParticipantPathPanel(
                               },
                             )
                           }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
+                         
                         />
                       </label>
 
-                      <label className="block">
-                        <span className="text-xs font-medium text-gray-600">
+                      <label>
+                        <span>
                           Action
                         </span>
 
@@ -1862,7 +2643,7 @@ export default function ParticipantPathPanel(
                               },
                             )
                           }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
+                         
                         >
                           {actionOptions.map(
                             (action) => (
@@ -1877,9 +2658,9 @@ export default function ParticipantPathPanel(
                         </select>
                       </label>
 
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="roadsafe-route-inspector__point-grid-3">
                         <label>
-                          <span className="text-[11px] font-medium text-gray-600">
+                          <span>
                             Time (s)
                           </span>
 
@@ -1906,12 +2687,12 @@ export default function ParticipantPathPanel(
                                 },
                               )
                             }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                           
                           />
                         </label>
 
                         <label>
-                          <span className="text-[11px] font-medium text-gray-600">
+                          <span>
                             Speed
                           </span>
 
@@ -1938,12 +2719,12 @@ export default function ParticipantPathPanel(
                                 },
                               )
                             }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                           
                           />
                         </label>
 
                         <label>
-                          <span className="text-[11px] font-medium text-gray-600">
+                          <span>
                             Rotation°
                           </span>
 
@@ -1963,14 +2744,14 @@ export default function ParticipantPathPanel(
                                 },
                               )
                             }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                           
                           />
                         </label>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="roadsafe-route-inspector__point-grid-2">
                         <label>
-                          <span className="text-[11px] font-medium text-gray-600">
+                          <span>
                             X position
                           </span>
 
@@ -1999,12 +2780,12 @@ export default function ParticipantPathPanel(
                                 },
                               )
                             }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                           
                           />
                         </label>
 
                         <label>
-                          <span className="text-[11px] font-medium text-gray-600">
+                          <span>
                             Y position
                           </span>
 
@@ -2033,13 +2814,13 @@ export default function ParticipantPathPanel(
                                 },
                               )
                             }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                           
                           />
                         </label>
                       </div>
 
-                      <label className="block">
-                        <span className="text-xs font-medium text-gray-600">
+                      <label>
+                        <span>
                           Related scene object
                         </span>
 
@@ -2058,7 +2839,7 @@ export default function ParticipantPathPanel(
                               },
                             )
                           }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
+                         
                         >
                           <option value="">
                             None
@@ -2077,8 +2858,8 @@ export default function ParticipantPathPanel(
                         </select>
                       </label>
 
-                      <label className="block">
-                        <span className="text-xs font-medium text-gray-600">
+                      <label>
+                        <span>
                           Point notes
                         </span>
 
@@ -2094,9 +2875,10 @@ export default function ParticipantPathPanel(
                             )
                           }
                           rows={2}
-                          className="mt-1 w-full resize-none rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
+                         
                         />
                       </label>
+                      </div>
                     </div>
                   )}
               </div>
@@ -2107,7 +2889,7 @@ export default function ParticipantPathPanel(
 
       <div
         aria-hidden="true"
-        className="h-24"
+        className="h-16"
       />
     </div>
   );

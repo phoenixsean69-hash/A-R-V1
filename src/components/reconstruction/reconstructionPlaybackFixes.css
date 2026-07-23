@@ -1,0 +1,64 @@
+/*
+ * RoadSafe reconstruction playback/layout refinements.
+ * Kept separate from index.css so this update does not overwrite the wider theme.
+ */
+
+.reconstruction-workspace__stage-grid--3d {
+  min-height: 0;
+  align-items: stretch;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__stage-main {
+  min-height: 0;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__properties.reconstruction-workspace__context-panel {
+  display: flex;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__properties
+  > .reconstruction-workspace__panel-header {
+  flex: 0 0 auto;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__properties
+  > .reconstruction-workspace__context-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: 2.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__context-scroll
+  > :last-child {
+  margin-bottom: 1rem;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar-track {
+  background: #060b16;
+}
+
+.reconstruction-workspace__stage-grid--3d
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #243a5c;
+}

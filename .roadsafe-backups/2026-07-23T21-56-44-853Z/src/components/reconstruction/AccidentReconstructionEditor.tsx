@@ -109,8 +109,6 @@ import {
   updateMeasurementDistance,
 } from "../../utils/evidenceGeometry";
 
-import "./reconstructionPlaybackFixes.css";
-
 const Reconstruction3DViewer = lazy(() => import("./Reconstruction3DViewer"));
 
 export interface ReconstructionCaseContext {
@@ -236,8 +234,6 @@ const HUMAN_TYPES: ReconstructionVehicleType[] = [
 ];
 
 const MAX_TRACE_POINTS = 250;
-const MAX_PLAYBACK_FRAME_DELTA_SECONDS = 0.05;
-const THREE_D_REACT_PAINT_INTERVAL_MS = 80;
 
 type SaveMessageType = "success" | "error" | "info";
 
@@ -890,7 +886,7 @@ export default function AccidentReconstructionEditor({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sceneExpanded, setSceneExpanded] = useState(false);
-  const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("2D");
+  const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("3D");
   const [activeWorkspaceTool, setActiveWorkspaceTool] =
     useState<WorkspaceTool>("Select");
   const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
@@ -1041,7 +1037,6 @@ export default function AccidentReconstructionEditor({
       setCurrentTime(0);
       currentTimeRef.current = 0;
       setIsPlaying(false);
-      setActiveReconstructionView("2D");
       setDragState(null);
       setActiveSceneObjectType(null);
       setTraceToolObjectId(null);
@@ -1110,7 +1105,7 @@ export default function AccidentReconstructionEditor({
   const physicsParticipantCount = reconstruction.vehicles.length;
 
   useEffect(() => {
-    if (isPlaying || !livePhysicsEnabled || physicsParticipantCount < 1) return;
+    if (!livePhysicsEnabled || physicsParticipantCount < 1) return;
     if (livePhysicsTimerRef.current !== null) {
       window.clearTimeout(livePhysicsTimerRef.current);
     }
@@ -1123,7 +1118,7 @@ export default function AccidentReconstructionEditor({
         window.clearTimeout(livePhysicsTimerRef.current);
       }
     };
-  }, [isPlaying, livePhysicsEnabled, physicsInputSignature, physicsParticipantCount]);
+  }, [livePhysicsEnabled, physicsInputSignature, physicsParticipantCount]);
 
   useEffect(() => {
     if (!sceneExpanded) return;
@@ -2474,46 +2469,32 @@ export default function AccidentReconstructionEditor({
     }
 
     const animate = (timestamp: number) => {
-      const previousTimestamp = lastFrameTimeRef.current ?? timestamp;
-      const elapsedSeconds = clamp(
-        (timestamp - previousTimestamp) / 1000,
-        0,
-        MAX_PLAYBACK_FRAME_DELTA_SECONDS,
-      );
-      lastFrameTimeRef.current = timestamp;
-
-      const nextTime = Math.min(
-        reconstruction.durationSeconds,
-        currentTimeRef.current + elapsedSeconds * playbackSpeed,
-      );
-
-      // This ref is the authoritative clock shared by 2D and 3D.
-      currentTimeRef.current = nextTime;
-
-      // 2D needs a React paint every animation frame. The Three.js view reads the
-      // shared ref directly, so its surrounding React UI can update less often.
-      const reactPaintInterval =
-        activeReconstructionView === "2D"
-          ? 0
-          : THREE_D_REACT_PAINT_INTERVAL_MS;
-
-      if (
-        reactPaintInterval === 0 ||
-        lastPlaybackPaintRef.current === null ||
-        timestamp - lastPlaybackPaintRef.current >= reactPaintInterval ||
-        nextTime >= reconstruction.durationSeconds
-      ) {
-        lastPlaybackPaintRef.current = timestamp;
-        setCurrentTime(nextTime);
+      if (lastFrameTimeRef.current === null) {
+        lastFrameTimeRef.current = timestamp;
       }
 
+      const elapsedSeconds = (timestamp - lastFrameTimeRef.current) / 1000;
+      lastFrameTimeRef.current = timestamp;
+
+      const nextTime =
+        currentTimeRef.current + elapsedSeconds * playbackSpeed;
+
       if (nextTime >= reconstruction.durationSeconds) {
+        currentTimeRef.current = reconstruction.durationSeconds;
         setCurrentTime(reconstruction.durationSeconds);
         setIsPlaying(false);
         animationFrameRef.current = null;
         return;
       }
 
+      currentTimeRef.current = nextTime;
+      if (
+        lastPlaybackPaintRef.current === null ||
+        timestamp - lastPlaybackPaintRef.current >= 30
+      ) {
+        lastPlaybackPaintRef.current = timestamp;
+        setCurrentTime(nextTime);
+      }
       animationFrameRef.current = window.requestAnimationFrame(animate);
     };
 
@@ -2528,12 +2509,7 @@ export default function AccidentReconstructionEditor({
       lastFrameTimeRef.current = null;
       lastPlaybackPaintRef.current = null;
     };
-  }, [
-    activeReconstructionView,
-    isPlaying,
-    playbackSpeed,
-    reconstruction.durationSeconds,
-  ]);
+  }, [isPlaying, playbackSpeed, reconstruction.durationSeconds]);
 
   useEffect(() => {
     if (!dragState && !traceToolObjectId && !routeDrawingParticipantId) {
@@ -3239,7 +3215,6 @@ export default function AccidentReconstructionEditor({
                   }
                   cameraCycleToken={cameraCycleToken}
                   workspaceTimeSeconds={currentTime}
-                  workspaceTimeSourceRef={currentTimeRef}
                   workspacePlaying={isPlaying}
                   workspacePlaybackSpeed={playbackSpeed}
                   workspaceCameraMode={workspaceCameraMode}
