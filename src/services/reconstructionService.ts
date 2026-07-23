@@ -546,6 +546,9 @@ function normaliseReconstruction(
     photos: Array.isArray(reconstruction.photos)
       ? reconstruction.photos.map(normalisePhoto)
       : [],
+    siteCoordinate: reconstruction.siteCoordinate
+      ? normaliseGeoCoordinate(reconstruction.siteCoordinate)
+      : undefined,
     fieldCalibration: reconstruction.fieldCalibration
       ? normaliseFieldCalibration(reconstruction.fieldCalibration)
       : undefined,

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { AccidentCaseService } from "../services/accidentCaseService";
 import { AccidentReportService } from "../services/accidentReportService";
+import { usesGeneratedRoad } from "../types/reconstruction";
 
 export default function AccidentReportPage() {
   const { caseId } = useParams<{ caseId: string }>();
@@ -118,18 +119,30 @@ export default function AccidentReportPage() {
           </p>
         </ReportSection>
 
-        <ReportSection title="Road and Environmental Conditions">
+        <ReportSection title="Scene and Environmental Conditions">
           {reconstruction ? (
             <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              <ReportValue label="Road layout" value={reconstruction.scene.roadLayout} />
-              <ReportValue label="Lanes" value={String(reconstruction.scene.laneCount)} />
-              <ReportValue label="Driving side" value={reconstruction.scene.drivingSide} />
-              <ReportValue label="Speed limit" value={`${reconstruction.scene.speedLimitKmh} km/h`} />
+              <ReportValue label="Scene environment" value={reconstruction.scene.sceneEnvironment} />
+              <ReportValue label="Ground classification" value={reconstruction.scene.groundSurface} />
+              {usesGeneratedRoad(reconstruction.scene) && (
+                <>
+                  <ReportValue label="Road layout" value={reconstruction.scene.roadLayout} />
+                  <ReportValue label="Lanes" value={String(reconstruction.scene.laneCount)} />
+                  <ReportValue label="Driving side" value={reconstruction.scene.drivingSide} />
+                  <ReportValue label="Speed limit" value={`${reconstruction.scene.speedLimitKmh} km/h`} />
+                  <ReportValue label="Road surface" value={reconstruction.scene.roadSurface} />
+                  <ReportValue label="Traffic volume" value={reconstruction.scene.trafficVolume} />
+                </>
+              )}
               <ReportValue label="Weather" value={reconstruction.scene.weather} />
-              <ReportValue label="Road surface" value={reconstruction.scene.roadSurface} />
               <ReportValue label="Visibility" value={reconstruction.scene.visibility} />
-              <ReportValue label="Traffic volume" value={reconstruction.scene.trafficVolume} />
               <ReportValue label="Time of day" value={reconstruction.scene.timeOfDay} />
+              {reconstruction.siteCoordinate && (
+                <ReportValue
+                  label="Real scene coordinate"
+                  value={`${reconstruction.siteCoordinate.latitude.toFixed(6)}, ${reconstruction.siteCoordinate.longitude.toFixed(6)}`}
+                />
+              )}
             </div>
           ) : (
             <p className="text-sm text-slate-600">No reconstruction is linked.</p>

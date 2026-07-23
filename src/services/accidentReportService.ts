@@ -1,11 +1,12 @@
 import type { AccidentCase } from "../types/accidentCase";
 import type { ReconstructionFootage } from "../types/reconstructionFootage";
 import { ReconstructionFootageService } from "./reconstructionFootageService";
-import type {
-  AccidentReconstruction,
-  AccidentTimelineEvent,
-  MovementPathPoint,
-  ReconstructionVehicle,
+import {
+  usesGeneratedRoad,
+  type AccidentReconstruction,
+  type AccidentTimelineEvent,
+  type MovementPathPoint,
+  type ReconstructionVehicle,
 } from "../types/reconstruction";
 
 export interface ReportTimelineEntry {
@@ -359,7 +360,11 @@ th { background: #eff6ff; }
 <h2>Case Summary</h2>
 <p>${escapeHtml(accidentCase.summary || "No case summary recorded.")}</p>
 <h2>Scene Conditions</h2>
-<p>${reconstruction ? `${escapeHtml(reconstruction.scene.roadLayout)}, ${reconstruction.scene.laneCount} lane(s), ${escapeHtml(reconstruction.scene.drivingSide)}-hand driving, ${escapeHtml(reconstruction.scene.weather)} weather, ${escapeHtml(reconstruction.scene.roadSurface)} road surface, ${escapeHtml(reconstruction.scene.visibility)} visibility.` : "No reconstruction available."}</p>
+<p>${reconstruction ? (
+  usesGeneratedRoad(reconstruction.scene)
+    ? `${escapeHtml(reconstruction.scene.sceneEnvironment)}; ${escapeHtml(reconstruction.scene.roadLayout)}, ${reconstruction.scene.laneCount} lane(s), ${escapeHtml(reconstruction.scene.drivingSide)}-hand driving, ${escapeHtml(reconstruction.scene.weather)} weather, ${escapeHtml(reconstruction.scene.roadSurface)} road surface, ${escapeHtml(reconstruction.scene.visibility)} visibility.`
+    : `${escapeHtml(reconstruction.scene.sceneEnvironment)} at the real recorded location; ${escapeHtml(reconstruction.scene.groundSurface)}, ${escapeHtml(reconstruction.scene.weather)} weather, ${escapeHtml(reconstruction.scene.visibility)} visibility. No road geometry was generated.`
+) : "No reconstruction available."}</p>
 <h2>Participants</h2>
 <table><thead><tr><th>Name</th><th>Type</th><th>Came From</th><th>Heading To</th><th>Default Speed</th></tr></thead><tbody>${participantRows}</tbody></table>
 <h2>Generated Accident Narrative</h2>

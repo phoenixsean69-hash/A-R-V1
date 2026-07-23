@@ -48,6 +48,13 @@ function normaliseCase(record: AccidentCase): AccidentCase {
     roadLayoutDetection: record.roadLayoutDetection
       ? RoadLayoutDetectionService.normalise(record.roadLayoutDetection)
       : undefined,
+    siteCoordinate: record.siteCoordinate
+      ? {
+          ...record.siteCoordinate,
+          accuracyMetres: Math.max(0, Number(record.siteCoordinate.accuracyMetres ?? 0)),
+          capturedAt: record.siteCoordinate.capturedAt || now,
+        }
+      : undefined,
     footageIds: Array.isArray(record.footageIds) ? record.footageIds : [],
     primaryFootageId: record.primaryFootageId || undefined,
     summary: record.summary || "",
@@ -92,6 +99,7 @@ function createEmptyReconstruction(
     vehicles: [],
     collisionPoint: { x: 50, y: 50 },
     scene: sceneSettings,
+    siteCoordinate: accidentCase.siteCoordinate,
     roadLayoutDetection,
     sceneObjects: [],
     timelineEvents: [],
@@ -206,14 +214,16 @@ export const AccidentCaseService = {
     return persistCase(linkedRecord);
   },
 
-  createWithRoadLayout(
+  createWithSceneEnvironment(
     values: AccidentCaseFormValues,
-    roadLayoutDetection: RoadLayoutDetection,
+    siteCoordinate: AccidentCase["siteCoordinate"],
     sceneSettings: RoadSceneSettings,
+    roadLayoutDetection?: RoadLayoutDetection,
   ): AccidentCase {
     const now = new Date().toISOString();
-    const normalisedDetection =
-      RoadLayoutDetectionService.normalise(roadLayoutDetection);
+    const normalisedDetection = roadLayoutDetection
+      ? RoadLayoutDetectionService.normalise(roadLayoutDetection)
+      : undefined;
 
     const baseRecord = normaliseCase({
       id: createId("case"),
@@ -221,6 +231,7 @@ export const AccidentCaseService = {
       junctionId: values.junctionId.trim() || undefined,
       reconstructionId: undefined,
       roadLayoutDetection: normalisedDetection,
+      siteCoordinate,
       footageIds: [],
       primaryFootageId: undefined,
       createdAt: now,
@@ -228,17 +239,26 @@ export const AccidentCaseService = {
     });
 
     const reconstruction = ReconstructionService.save(
-      createEmptyReconstruction(
-        baseRecord,
-        sceneSettings,
-        normalisedDetection,
-      ),
+      createEmptyReconstruction(baseRecord, sceneSettings, normalisedDetection),
     );
 
     return persistCase({
       ...baseRecord,
       reconstructionId: reconstruction.id,
     });
+  },
+
+  createWithRoadLayout(
+    values: AccidentCaseFormValues,
+    roadLayoutDetection: RoadLayoutDetection,
+    sceneSettings: RoadSceneSettings,
+  ): AccidentCase {
+    return this.createWithSceneEnvironment(
+      values,
+      roadLayoutDetection.coordinate,
+      sceneSettings,
+      roadLayoutDetection,
+    );
   },
 
   save(record: AccidentCase): AccidentCase {
@@ -293,11 +313,12 @@ export const AccidentCaseService = {
 
     const sourceReconstruction = getLinkedReconstructionFromRecord(source);
 
-    return source.roadLayoutDetection && sourceReconstruction
-      ? this.createWithRoadLayout(
+    return sourceReconstruction
+      ? this.createWithSceneEnvironment(
           values,
-          source.roadLayoutDetection,
+          source.siteCoordinate ?? sourceReconstruction.siteCoordinate,
           sourceReconstruction.scene,
+          source.roadLayoutDetection,
         )
       : this.create(values);
   },

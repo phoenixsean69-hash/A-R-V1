@@ -246,6 +246,10 @@ export function getTerrainOrigin(
     return reconstruction.fieldCalibration.origin;
   }
 
+  if (reconstruction.siteCoordinate) {
+    return reconstruction.siteCoordinate;
+  }
+
   if (reconstruction.roadLayoutDetection?.coordinate) {
     const coordinate = reconstruction.roadLayoutDetection.coordinate;
     return {

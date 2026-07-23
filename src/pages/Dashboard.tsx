@@ -1,37 +1,27 @@
-import { lazy, Suspense, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Bike,
-  BusFront,
+  Activity,
   Camera,
-  CarFront,
-  CircleDot,
-  CloudSun,
-  Download,
-  Eye,
+  FileText,
   FolderKanban,
-  Gauge,
-  Import,
-  MapPin,
+  MapPinned,
   Play,
   Plus,
-  Route,
-  Skull,
-  TrafficCone,
-  Truck,
-  UserRound,
+  ShieldAlert,
   Users,
+  Video,
 } from "lucide-react";
 import AccidentMap, { type VisualizationMode } from "../components/map/AccidentMap";
 import ForensicScenePreview from "../components/reconstruction/ForensicScenePreview";
-import { AccidentCaseService } from "../services/accidentCaseService";
+import { WorkspaceDataService } from "../services/workspaceDataService";
 import { preparePhysicsForPlayback } from "../services/reconstructionPhysicsService";
 import { ReconstructionService } from "../services/reconstructionService";
-import { WorkspaceDataService } from "../services/workspaceDataService";
 import { createDefaultHeatmapFilters } from "../types/heatmap";
-import type {
-  AccidentReconstruction,
-  ReconstructionVehicle,
+import {
+  sceneEnvironmentLabel,
+  usesGeneratedRoad,
+  type AccidentReconstruction,
 } from "../types/reconstruction";
 
 const Reconstruction3DViewer = lazy(
@@ -39,59 +29,27 @@ const Reconstruction3DViewer = lazy(
 );
 
 function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value || "Not recorded";
   return new Intl.DateTimeFormat(undefined, {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(date);
-}
-
-function participantIcon(participant: ReconstructionVehicle) {
-  const props = { size: 21, strokeWidth: 1.45 };
-  switch (participant.type) {
-    case "Bus":
-      return <BusFront {...props} />;
-    case "Truck":
-      return <Truck {...props} />;
-    case "Motorcycle":
-    case "Bicycle":
-      return <Bike {...props} />;
-    case "Pedestrian":
-    case "Officer":
-    case "Witness":
-      return <UserRound {...props} />;
-    case "Car":
-    default:
-      return <CarFront {...props} />;
-  }
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  }).format(new Date(value));
 }
 
 export default function Dashboard() {
   const summary = WorkspaceDataService.getSummary();
   const monthlyActivity = WorkspaceDataService.getMonthlyActivity().slice(-7);
   const [mapMode, setMapMode] = useState<VisualizationMode>("heatmap");
-  const [previewMode, setPreviewMode] = useState<"2D" | "3D">("3D");
+  const [previewMode, setPreviewMode] = useState<"2D" | "3D">("2D");
   const [previewReconstruction, setPreviewReconstruction] =
     useState<AccidentReconstruction | null>(summary.latestReconstruction);
-  const [importMessage, setImportMessage] = useState("");
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   const latestCase = summary.latestCase;
-  const reconstructionPath = latestCase
-    ? `/cases/${latestCase.id}/reconstruction`
-    : "/reconstruction";
-
   const cards = [
     {
-      label: "Total cases",
+      label: "Investigation cases",
       value: summary.totalCases,
-      note: `${summary.activeCases} active investigations`,
+      note: `${summary.activeCases} active`,
       icon: FolderKanban,
       to: "/cases",
     },
@@ -99,36 +57,36 @@ export default function Dashboard() {
       label: "Reconstructions",
       value: summary.reconstructionCount,
       note: `${summary.completedCases} completed cases`,
-      icon: Route,
+      icon: Activity,
       to: "/reconstruction",
     },
     {
-      label: "Fatalities",
-      value: summary.totalFatalities,
-      note: "Recorded accident dataset",
-      icon: Skull,
-      to: "/analytics",
-    },
-    {
-      label: "Injuries",
+      label: "Recorded injuries",
       value: summary.totalInjuries,
-      note: "Recorded accident dataset",
+      note: "Verified accident dataset",
       icon: Users,
       to: "/analytics",
     },
     {
-      label: "Blackspots",
+      label: "High-risk junctions",
       value: summary.highRiskJunctions,
-      note: "High-risk junctions",
-      icon: CircleDot,
+      note: "Current blackspot register",
+      icon: ShieldAlert,
       to: "/scene-map",
     },
     {
-      label: "Evidence items",
+      label: "Evidence records",
       value: summary.evidenceCount,
       note: `${summary.photoCount} attached photos`,
       icon: Camera,
       to: "/evidence",
+    },
+    {
+      label: "Saved footage",
+      value: summary.footageCount,
+      note: "Playable browser recordings",
+      icon: Video,
+      to: "/footage",
     },
   ] as const;
 
@@ -136,6 +94,11 @@ export default function Dashboard() {
     1,
     ...monthlyActivity.map((record) => record.accidents + record.cases),
   );
+
+  const participantCount =
+    previewReconstruction?.vehicles.length ?? 0;
+  const evidenceCount =
+    previewReconstruction?.evidenceRecords.length ?? 0;
 
   const runPreviewPhysics = (): AccidentReconstruction => {
     if (!previewReconstruction) {
@@ -151,243 +114,129 @@ export default function Dashboard() {
     if (!previewReconstruction) return [];
     const scene = previewReconstruction.scene;
     return [
-      { label: "Weather", value: scene.weather, icon: CloudSun },
-      { label: "Road surface", value: scene.roadSurface, icon: Route },
-      { label: "Light conditions", value: scene.timeOfDay, icon: Eye },
-      { label: "Visibility", value: scene.visibility, icon: Eye },
-      { label: "Traffic", value: scene.trafficVolume, icon: TrafficCone },
-      { label: "Driving side", value: scene.drivingSide, icon: MapPin },
-      { label: "Speed limit", value: `${scene.speedLimitKmh} km/h`, icon: Gauge },
+      ["Environment", sceneEnvironmentLabel(scene)],
+      ["Weather", scene.weather],
+      ["Surface", usesGeneratedRoad(scene) ? scene.roadSurface : scene.groundSurface],
+      ["Visibility", scene.visibility],
+      ["Traffic", usesGeneratedRoad(scene) ? scene.trafficVolume : "Not applicable"],
+      ["Speed limit", usesGeneratedRoad(scene) ? `${scene.speedLimitKmh} km/h` : "Not applicable"],
     ];
   }, [previewReconstruction]);
 
-  const handleImport = async (file: File | undefined) => {
-    if (!file) return;
-    try {
-      const parsed: unknown = JSON.parse(await file.text());
-      const candidates: unknown[] = [];
-
-      if (isObject(parsed) && Array.isArray(parsed.reconstructions)) {
-        candidates.push(...parsed.reconstructions);
-      } else if (isObject(parsed) && isObject(parsed.reconstruction)) {
-        candidates.push(parsed.reconstruction);
-      } else {
-        candidates.push(parsed);
-      }
-
-      let imported = 0;
-      candidates.forEach((candidate) => {
-        if (
-          isObject(candidate) &&
-          typeof candidate.id === "string" &&
-          typeof candidate.title === "string" &&
-          Array.isArray(candidate.vehicles) &&
-          isObject(candidate.scene)
-        ) {
-          ReconstructionService.save(candidate as unknown as AccidentReconstruction);
-          imported += 1;
-        }
-      });
-
-      if (isObject(parsed) && Array.isArray(parsed.cases)) {
-        parsed.cases.forEach((candidate) => {
-          if (
-            isObject(candidate) &&
-            typeof candidate.id === "string" &&
-            typeof candidate.caseNumber === "string" &&
-            typeof candidate.title === "string"
-          ) {
-            AccidentCaseService.save(
-              candidate as unknown as Parameters<typeof AccidentCaseService.save>[0],
-            );
-            imported += 1;
-          }
-        });
-      }
-
-      if (imported === 0) {
-        throw new Error("The selected JSON file does not contain RoadSafe case or reconstruction records.");
-      }
-
-      setImportMessage(`${imported} record${imported === 1 ? "" : "s"} imported. Refreshing…`);
-      window.setTimeout(() => window.location.reload(), 700);
-    } catch (error) {
-      setImportMessage(error instanceof Error ? error.message : "Unable to import the selected file.");
-    } finally {
-      if (importInputRef.current) importInputRef.current.value = "";
-    }
-  };
-
   return (
-    <div className="dashboard-command-grid space-y-2.5">
-      <section className="dashboard-stat-grid">
+    <div className="space-y-3">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         {cards.map(({ label, value, note, icon: Icon, to }) => (
-          <Link
-            key={label}
-            to={to}
-            className="dashboard-stat-card group"
-          >
-            <div className="dashboard-stat-icon">
-              <Icon size={22} strokeWidth={1.45} />
+          <Link key={label} to={to} className="ui-panel group flex min-h-24 items-center gap-3 p-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#24395f] bg-[#0c1730] text-[#8bb8ff] transition-colors group-hover:border-[#36598f]">
+              <Icon size={20} strokeWidth={1.55} />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-[8px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                {label}
-              </p>
-              <p className="mt-0.5 text-[22px] font-bold leading-none text-slate-100">
-                {value}
-              </p>
-              <p className="mt-1.5 truncate text-[8px] text-[#6fa8ff]">{note}</p>
+              <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+              <p className="mt-1 text-xl font-bold text-slate-100">{value}</p>
+              <p className="mt-1 truncate text-[9px] text-[#6e9fe8]">{note}</p>
             </div>
           </Link>
         ))}
       </section>
 
-      <section className="dashboard-primary-row">
-        <article className="ui-panel min-h-[350px] overflow-hidden">
+      <section className="grid gap-3 xl:grid-cols-[1.08fr_.95fr_1.35fr]">
+        <article className="ui-panel overflow-hidden">
           <div className="ui-panel-header">
             <div>
-              <h2 className="ui-panel-title">Accident heatmap</h2>
-              <p className="mt-1 text-[8px] text-slate-600">
-                Bundled accident and junction records
-              </p>
+              <h2 className="ui-panel-title">Accident intelligence map</h2>
+              <p className="mt-1 text-[9px] text-slate-600">Live from the bundled junction and accident register</p>
             </div>
-            <Link to="/scene-map" className="text-[9px] font-semibold text-[#78adfa]">
-              Open map
-            </Link>
+            <span className="ui-badge">{mapMode}</span>
           </div>
-          <div className="h-[304px]">
+          <div className="h-[360px] min-h-0">
             <AccidentMap
               visualizationMode={mapMode}
               onVisualizationModeChange={setMapMode}
               heatmapFilters={createDefaultHeatmapFilters()}
-              compactSelectionPanel
             />
-          </div>
-          <div className="flex items-center gap-2 border-t border-[#182849] px-3 py-2 text-[8px] uppercase tracking-[0.1em] text-slate-500">
-            <span>Low risk</span>
-            <div className="h-1.5 flex-1 rounded-full bg-gradient-to-r from-[#193c74] via-[#3277c8] to-[#b42d43]" />
-            <span>High risk</span>
           </div>
         </article>
 
-        <article className="ui-panel min-h-[350px] overflow-hidden">
-          <div className="ui-panel-header">
-            <h2 className="ui-panel-title">Recent cases</h2>
-            <Link to="/cases" className="text-[9px] font-semibold text-[#78adfa]">
-              View all
-            </Link>
-          </div>
-          {summary.cases.length === 0 ? (
-            <div className="grid h-[176px] place-items-center p-6 text-center">
-              <div>
-                <p className="text-[10px] font-semibold text-slate-300">No stored cases</p>
-                <Link to="/cases/new" className="ui-button-primary mt-3 py-1.5">
-                  <Plus size={12} /> New case
-                </Link>
-              </div>
+        <div className="space-y-3">
+          <article className="ui-panel">
+            <div className="ui-panel-header">
+              <h2 className="ui-panel-title">Recent investigation cases</h2>
+              <Link to="/cases" className="text-[10px] font-semibold text-[#79adfa]">View all</Link>
             </div>
-          ) : (
-            <div className="divide-y divide-[#14233e]">
-              {summary.cases.slice(0, 5).map((record) => (
-                <Link
-                  key={record.id}
-                  to={`/cases/${record.id}`}
-                  className="grid grid-cols-[1.05fr_1fr_.72fr_auto] items-center gap-2 px-3 py-2.5 text-[8px] transition-colors duration-100 hover:bg-[#0a1427]"
-                >
-                  <span className="truncate font-semibold text-slate-300">{record.caseNumber}</span>
-                  <span className="truncate text-slate-500">{record.location}</span>
-                  <span className="truncate text-slate-600">{formatDate(record.accidentDate)}</span>
-                  <span className="text-[#71a9ff]">{record.status}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="border-t border-[#182849] px-3 py-2.5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
-                Case timeline overview
-              </h3>
-              <span className="text-[7px] text-slate-600">Cases + accident records</span>
-            </div>
-            {monthlyActivity.length === 0 ? (
-              <div className="grid h-24 place-items-center text-[8px] text-slate-600">
-                No dated records
+            {summary.cases.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-xs font-semibold text-slate-300">No case records yet</p>
+                <p className="mt-2 text-[10px] leading-5 text-slate-500">Create a case to populate this operational list.</p>
+                <Link to="/cases/new" className="ui-button-primary mt-4"><Plus size={13} />Create case</Link>
               </div>
             ) : (
-              <div className="mt-3 flex h-[92px] items-end gap-2 border-b border-l border-[#233453] px-2 pb-1.5">
+              <div className="divide-y divide-[#15233d]">
+                {summary.cases.slice(0, 5).map((record) => (
+                  <Link
+                    key={record.id}
+                    to={`/cases/${record.id}`}
+                    className="grid grid-cols-[1.15fr_1fr_auto] items-center gap-2 px-4 py-3 text-[10px] hover:bg-[#0c1426]"
+                  >
+                    <span className="font-semibold text-slate-300">{record.caseNumber}</span>
+                    <span className="truncate text-slate-500">{record.location}</span>
+                    <span className="text-[#70a8ff]">{record.status}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="ui-panel p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="ui-panel-title">Recorded activity timeline</h2>
+              <span className="text-[9px] text-slate-600">Cases + accident records</span>
+            </div>
+            {monthlyActivity.length === 0 ? (
+              <div className="grid h-32 place-items-center text-[10px] text-slate-600">No dated records available.</div>
+            ) : (
+              <div className="mt-5 flex h-28 items-end gap-3 border-b border-l border-[#233453] px-3 pb-2">
                 {monthlyActivity.map((record) => {
                   const total = record.accidents + record.cases;
                   return (
-                    <div
-                      key={record.label}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
-                      title={`${total} record(s)`}
-                    >
+                    <div key={record.label} className="flex flex-1 flex-col items-center gap-2" title={`${total} record(s)`}>
                       <div
-                        className="w-full max-w-2 bg-gradient-to-t from-[#244e91] to-[#8ab7ff]"
-                        style={{ height: `${Math.max(5, (total / maxMonthly) * 70)}px` }}
+                        className="w-full max-w-5 rounded-t-sm bg-gradient-to-t from-[#1d4f95] to-[#76aaff]"
+                        style={{ height: `${Math.max(7, (total / maxMonthly) * 86)}px` }}
                       />
-                      <span className="max-w-full truncate text-[6px] text-slate-600">
-                        {record.label}
-                      </span>
+                      <span className="whitespace-nowrap text-[7px] text-slate-600">{record.label}</span>
                     </div>
                   );
                 })}
               </div>
             )}
-          </div>
-        </article>
+          </article>
+        </div>
 
-        <article className="ui-panel min-h-[350px] overflow-hidden">
+        <article className="ui-panel overflow-hidden">
           <div className="ui-panel-header">
             <div>
-              <h2 className="ui-panel-title">Reconstruction preview</h2>
-              <p className="mt-1 text-[8px] text-slate-600">
-                Latest stored scene and participant routes
-              </p>
+              <h2 className="ui-panel-title">Latest reconstruction</h2>
+              <p className="mt-1 text-[9px] text-slate-600">Actual saved participant paths and scene state</p>
             </div>
             <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => setPreviewMode("2D")}
-                className={previewMode === "2D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}
-              >
-                2D view
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode("3D")}
-                className={previewMode === "3D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}
-              >
-                3D view
-              </button>
+              <button onClick={() => setPreviewMode("2D")} className={previewMode === "2D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}>2D</button>
+              <button onClick={() => setPreviewMode("3D")} className={previewMode === "3D" ? "ui-button-primary py-1.5" : "ui-button py-1.5"}>3D</button>
             </div>
           </div>
-          <div className="h-[304px] bg-[#030711]">
+          <div className="h-[360px] bg-[#070b13]">
             {!previewReconstruction ? (
               <div className="grid h-full place-items-center p-8 text-center">
                 <div>
-                  <p className="text-[10px] font-semibold text-slate-300">No reconstruction available</p>
-                  <p className="mt-2 text-[8px] leading-4 text-slate-500">
-                    Create a case and add participant routes to activate this panel.
-                  </p>
-                  <Link to="/cases/new" className="ui-button-primary mt-3 py-1.5">
-                    <Plus size={12} /> New case
-                  </Link>
+                  <p className="text-xs font-semibold text-slate-300">No reconstruction available</p>
+                  <p className="mt-2 max-w-xs text-[10px] leading-5 text-slate-500">Create a case and add participant routes to activate this preview.</p>
+                  <Link to="/cases/new" className="ui-button-primary mt-4"><Plus size={13} />New case</Link>
                 </div>
               </div>
             ) : previewMode === "2D" ? (
               <ForensicScenePreview reconstruction={previewReconstruction} className="h-full" />
             ) : (
-              <Suspense
-                fallback={
-                  <div className="grid h-full place-items-center text-[9px] text-slate-500">
-                    Loading 3D reconstruction…
-                  </div>
-                }
-              >
+              <Suspense fallback={<div className="grid h-full place-items-center text-xs text-slate-500">Loading 3D reconstruction…</div>}>
                 <div className="dashboard-3d-preview h-full">
                   <Reconstruction3DViewer
                     reconstruction={previewReconstruction}
@@ -403,170 +252,72 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="dashboard-secondary-row">
+      <section className="grid gap-3 xl:grid-cols-[1.15fr_1fr_1fr_.85fr]">
         <article className="ui-panel overflow-hidden">
-          <div className="ui-panel-header">
-            <div>
-              <h2 className="ui-panel-title">Active reconstruction</h2>
-              <p className="mt-1 text-[8px] text-slate-600">
-                {latestCase ? `${latestCase.caseNumber} · ${latestCase.location}` : "No active case"}
-              </p>
-            </div>
-            {previewReconstruction && (
-              <Link to={reconstructionPath} className="text-[9px] font-semibold text-[#78adfa]">
-                Open editor
-              </Link>
-            )}
-          </div>
-          <div className="h-[268px] bg-[#030711]">
-            {previewReconstruction ? (
-              <ForensicScenePreview reconstruction={previewReconstruction} className="h-full" />
-            ) : (
-              <div className="grid h-full place-items-center text-[9px] text-slate-600">
-                No reconstruction selected
+          <div className="ui-panel-header"><h2 className="ui-panel-title">Active case</h2></div>
+          {latestCase ? (
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold text-[#79adfa]">{latestCase.caseNumber}</p>
+                  <h3 className="mt-1 text-sm font-semibold text-slate-200">{latestCase.title}</h3>
+                  <p className="mt-2 text-[10px] leading-5 text-slate-500">{latestCase.location}</p>
+                </div>
+                <span className="ui-badge">{latestCase.status}</span>
               </div>
-            )}
-          </div>
-          {previewReconstruction && (
-            <div className="flex items-center justify-between border-t border-[#182849] px-3 py-2 text-[8px] text-slate-600">
-              <span>Zoom 100%</span>
-              <span>
-                Collision X: {previewReconstruction.collisionPoint.x.toFixed(1)} · Y:{" "}
-                {previewReconstruction.collisionPoint.y.toFixed(1)}
-              </span>
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-[10px]">
+                <div><dt className="text-slate-600">Accident date</dt><dd className="mt-1 text-slate-300">{formatDate(latestCase.accidentDate)}</dd></div>
+                <div><dt className="text-slate-600">Officer</dt><dd className="mt-1 text-slate-300">{latestCase.investigatingOfficer || "Not recorded"}</dd></div>
+              </dl>
+              <Link to={`/cases/${latestCase.id}`} className="ui-button mt-4 w-full">Open case</Link>
             </div>
+          ) : (
+            <div className="p-6 text-center text-[10px] text-slate-500">No active case has been created.</div>
           )}
         </article>
 
-        <article className="ui-panel overflow-hidden">
-          <div className="ui-panel-header">
-            <h2 className="ui-panel-title">
-              Participants ({previewReconstruction?.vehicles.length ?? 0})
-            </h2>
-            {previewReconstruction && (
-              <Link to={reconstructionPath} className="text-[9px] font-semibold text-[#78adfa]">
-                Edit
-              </Link>
-            )}
-          </div>
-          <div className="divide-y divide-[#14233e]">
+        <article className="ui-panel p-4">
+          <div className="flex items-center justify-between"><h2 className="ui-panel-title">Participants ({participantCount})</h2>{previewReconstruction && <Link to="/reconstruction" className="text-[9px] text-[#79adfa]">Edit</Link>}</div>
+          <div className="mt-3 space-y-2">
             {previewReconstruction?.vehicles.slice(0, 4).map((participant, index) => (
-              <div key={participant.id} className="flex items-center gap-3 px-3 py-3">
-                <span className="rounded border border-[#2d4d79] bg-[#0a1730] px-2 py-1 text-[8px] text-[#8bb8ff]">
-                  P{index + 1}
-                </span>
-                <div className="grid h-9 w-11 place-items-center rounded border border-[#1b3154] bg-[#0a1222] text-slate-400">
-                  {participantIcon(participant)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[9px] font-semibold text-slate-200">{participant.name}</p>
-                  <p className="mt-1 truncate text-[7px] text-slate-600">
-                    {participant.type} · {participant.estimatedSpeedKmh} km/h
-                  </p>
-                </div>
-                <div className="text-right text-[7px] text-slate-600">
-                  <p>{participant.physics?.massKg ?? "—"} kg</p>
-                  <p className="mt-1">{participant.role ?? "Participant"}</p>
-                </div>
+              <div key={participant.id} className="flex items-center gap-3 rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <span className="rounded border border-[#2b456f] px-2 py-1 text-[9px] text-[#8db8fb]">P{index + 1}</span>
+                <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-semibold text-slate-200">{participant.name}</p><p className="mt-0.5 text-[9px] text-slate-500">{participant.type} · {participant.estimatedSpeedKmh} km/h</p></div>
               </div>
             ))}
-            {!previewReconstruction && (
-              <p className="px-3 py-8 text-center text-[8px] text-slate-600">No participant data</p>
-            )}
-          </div>
-          <div className="border-t border-[#182849] p-2.5">
-            <Link to={reconstructionPath} className="ui-button w-full py-1.5">
-              <Plus size={12} /> Add participant
-            </Link>
+            {!previewReconstruction && <p className="py-6 text-center text-[10px] text-slate-600">No participant data.</p>}
           </div>
         </article>
-      </section>
 
-      <section className="dashboard-tertiary-row">
-        <article className="ui-panel overflow-hidden">
-          <div className="ui-panel-header">
-            <h2 className="ui-panel-title">Evidence markers</h2>
-            <Link to="/evidence" className="text-[9px] font-semibold text-[#78adfa]">
-              View all
-            </Link>
-          </div>
-          <div className="divide-y divide-[#14233e]">
+        <article className="ui-panel p-4">
+          <div className="flex items-center justify-between"><h2 className="ui-panel-title">Evidence markers ({evidenceCount})</h2><Link to="/evidence" className="text-[9px] text-[#79adfa]">View all</Link></div>
+          <div className="mt-3 divide-y divide-[#17243d]">
             {previewReconstruction?.evidenceRecords.slice(0, 5).map((item) => (
-              <div key={item.id} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="rounded border border-[#2d4d79] bg-[#0a1730] px-2 py-1 text-[8px] text-[#8bb8ff]">
-                  E{item.evidenceNumber}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[9px] font-semibold text-slate-300">{item.title}</p>
-                  <p className="mt-1 truncate text-[7px] text-slate-600">
-                    {item.category} · {item.status}
-                  </p>
-                </div>
-                <span className="text-[7px] text-slate-600">{formatDate(item.recordedAt)}</span>
-              </div>
+              <div key={item.id} className="flex items-center gap-3 py-2.5"><span className="rounded border border-[#2a3e64] px-2 py-1 text-[9px] text-slate-400">E{item.evidenceNumber}</span><div className="min-w-0"><p className="truncate text-[10px] text-slate-300">{item.title}</p><p className="mt-0.5 text-[8px] text-slate-600">{item.category} · {item.status}</p></div></div>
             ))}
-            {previewReconstruction && previewReconstruction.evidenceRecords.length === 0 && (
-              <p className="px-3 py-8 text-center text-[8px] text-slate-600">
-                No evidence markers recorded
-              </p>
-            )}
-            {!previewReconstruction && (
-              <p className="px-3 py-8 text-center text-[8px] text-slate-600">
-                No reconstruction selected
-              </p>
-            )}
-          </div>
-          <div className="border-t border-[#182849] p-2.5">
-            <Link to="/evidence" className="ui-button w-full py-1.5">
-              View all evidence
-            </Link>
+            {previewReconstruction && previewReconstruction.evidenceRecords.length === 0 && <p className="py-6 text-center text-[10px] text-slate-600">No evidence markers recorded.</p>}
+            {!previewReconstruction && <p className="py-6 text-center text-[10px] text-slate-600">No reconstruction selected.</p>}
           </div>
         </article>
 
-        <article className="ui-panel overflow-hidden">
-          <div className="ui-panel-header">
-            <h2 className="ui-panel-title">Scene conditions</h2>
-          </div>
-          <div className="divide-y divide-[#14233e] px-3">
-            {sceneConditions.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex items-center gap-2 py-2.5 text-[8px]">
-                <Icon size={13} strokeWidth={1.5} className="shrink-0 text-slate-500" />
-                <span className="min-w-0 flex-1 uppercase tracking-[0.08em] text-slate-600">{label}</span>
-                <span className="max-w-[46%] truncate text-right text-slate-300">{value}</span>
-              </div>
-            ))}
-            {sceneConditions.length === 0 && (
-              <p className="py-8 text-center text-[8px] text-slate-600">No scene configuration</p>
-            )}
+        <article className="ui-panel p-4">
+          <h2 className="ui-panel-title">Scene conditions</h2>
+          <div className="mt-4 space-y-3 text-[10px]">
+            {sceneConditions.map(([label, value]) => <div key={label} className="flex justify-between gap-4"><span className="text-slate-500">{label}</span><span className="text-right text-slate-300">{value}</span></div>)}
+            {sceneConditions.length === 0 && <p className="py-6 text-center text-slate-600">No scene configuration.</p>}
           </div>
         </article>
       </section>
 
-      <section className="flex flex-wrap items-center gap-2 rounded-md border border-[#182849] bg-[#06101f] p-2.5">
-        <Link to="/cases/new" className="ui-button min-w-32">
-          <Plus size={13} /> New case
-        </Link>
-        <button
-          type="button"
-          onClick={() => importInputRef.current?.click()}
-          className="ui-button min-w-32"
-        >
-          <Import size={13} /> Import data
-        </button>
-        <input
-          ref={importInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(event) => void handleImport(event.target.files?.[0])}
-        />
-        <Link to="/reports" className="ui-button min-w-32">
-          <Download size={13} /> Export report
-        </Link>
-        {importMessage && <p className="text-[8px] text-slate-500">{importMessage}</p>}
-        <Link to={reconstructionPath} className="ui-button-primary ml-auto min-w-56 px-6 py-2.5">
-          <Play size={14} /> Start reconstruction
-        </Link>
+      <section className="flex flex-wrap gap-2">
+        <Link to="/cases/new" className="ui-button"><Plus size={14} />New case</Link>
+        <Link to="/scene-map" className="ui-button"><MapPinned size={14} />Open map</Link>
+        <Link to="/reports" className="ui-button"><FileText size={14} />Reports</Link>
+        {previewReconstruction ? (
+          <Link to={latestCase ? `/cases/${latestCase.id}/reconstruction` : "/reconstruction"} className="ui-button-primary ml-auto px-6"><Play size={14} />Continue reconstruction</Link>
+        ) : (
+          <Link to="/cases/new" className="ui-button-primary ml-auto px-6"><Plus size={14} />Start first reconstruction</Link>
+        )}
       </section>
     </div>
   );

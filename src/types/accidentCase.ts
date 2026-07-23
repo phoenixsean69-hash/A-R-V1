@@ -1,4 +1,5 @@
 import type { RoadLayoutDetection } from "./roadLayoutDetection";
+import type { GeoCoordinate } from "./fieldPlacement";
 
 export type AccidentCaseStatus =
   | "Open"
@@ -20,6 +21,7 @@ export interface AccidentCase {
   status: AccidentCaseStatus;
   reconstructionId?: string;
   roadLayoutDetection?: RoadLayoutDetection;
+  siteCoordinate?: GeoCoordinate;
   footageIds: string[];
   primaryFootageId?: string;
   summary: string;

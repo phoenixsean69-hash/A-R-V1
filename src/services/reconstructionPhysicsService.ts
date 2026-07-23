@@ -1,15 +1,16 @@
-import type {
-  AccidentReconstruction,
-  MovementPathPoint,
-  ParticipantPhysicsProfile,
-  PhysicsCollisionEvent,
-  PhysicsCollisionShape,
-  PhysicsSimulationSummary,
-  ReconstructionPhysicsSettings,
-  ReconstructionPosition,
-  ReconstructionSceneObject,
-  ReconstructionVehicle,
-  SceneObjectPhysicsProfile,
+import {
+  usesGeneratedRoad,
+  type AccidentReconstruction,
+  type MovementPathPoint,
+  type ParticipantPhysicsProfile,
+  type PhysicsCollisionEvent,
+  type PhysicsCollisionShape,
+  type PhysicsSimulationSummary,
+  type ReconstructionPhysicsSettings,
+  type ReconstructionPosition,
+  type ReconstructionSceneObject,
+  type ReconstructionVehicle,
+  type SceneObjectPhysicsProfile,
 } from "../types/reconstruction";
 
 import {
@@ -556,11 +557,38 @@ function getImpactPoint(participant: ReconstructionVehicle): MovementPathPoint {
   );
 }
 
-function surfaceFriction(reconstruction: AccidentReconstruction): number {
-  const surface = reconstruction.scene.roadSurface;
-  const weather = reconstruction.scene.weather;
+function groundSurfaceFriction(
+  surface: AccidentReconstruction["scene"]["groundSurface"],
+): number {
+  switch (surface) {
+    case "Firm Soil": return 0.62;
+    case "Loose Soil": return 0.42;
+    case "Grass": return 0.45;
+    case "Gravel": return 0.5;
+    case "Sand": return 0.35;
+    case "Mud": return 0.28;
+    case "Concrete": return 0.82;
+    case "Paved Yard": return 0.75;
+    case "Mixed Surface": return 0.5;
+    case "Unclassified Ground":
+    default:
+      return 0.5;
+  }
+}
 
-  let coefficient = surface === "Wet" ? 0.52 : surface === "Damaged" ? 0.62 : 0.78;
+function surfaceFriction(reconstruction: AccidentReconstruction): number {
+  const scene = reconstruction.scene;
+  const weather = scene.weather;
+  const roadCoefficient =
+    scene.roadSurface === "Wet" ? 0.52 : scene.roadSurface === "Damaged" ? 0.62 : 0.78;
+  const groundCoefficient = groundSurfaceFriction(scene.groundSurface);
+
+  let coefficient = usesGeneratedRoad(scene)
+    ? scene.sceneEnvironment === "Mixed Site"
+      ? (roadCoefficient + groundCoefficient) / 2
+      : roadCoefficient
+    : groundCoefficient;
+
   if (weather === "Rain") coefficient *= 0.82;
   if (weather === "Dust") coefficient *= 0.9;
   return coefficient;
@@ -1119,6 +1147,17 @@ export function applyPhysicsSimulation(
   const participants = source.vehicles.filter((participant) => participant.physics?.enabled ?? true);
   const warnings: string[] = [];
   const collisionEvents: PhysicsCollisionEvent[] = [];
+
+  if (!usesGeneratedRoad(source.scene) && source.scene.groundSurface === "Unclassified Ground") {
+    warnings.push(
+      "Ground surface is unclassified. Physics uses a generic 0.50 friction estimate until the officer classifies the site.",
+    );
+  }
+  if (source.scene.sceneEnvironment === "Mixed Site") {
+    warnings.push(
+      "Mixed Site currently uses a blended road/ground friction estimate. Surface-region physics is not yet enabled.",
+    );
+  }
 
   if (settings.collisionToleranceMetres > 0.35) {
     warnings.push(

@@ -23,11 +23,12 @@ import {
   loadRealisticSceneObjectModel,
 } from "../../services/realisticSceneAssetService";
 
-import type {
-  AccidentReconstruction,
-  ReconstructionPosition,
-  ReconstructionSceneObject,
-  ReconstructionVehicle,
+import {
+  usesGeneratedRoad,
+  type AccidentReconstruction,
+  type ReconstructionPosition,
+  type ReconstructionSceneObject,
+  type ReconstructionVehicle,
 } from "../../types/reconstruction";
 import { getParticipantStateAtTime, sortMovementPathPoints } from "../../utils/reconstructionGeometry";
 
@@ -749,6 +750,25 @@ function createConformingSurfaceMesh(
   return mesh;
 }
 
+function groundSurfaceColour(
+  surface: AccidentReconstruction["scene"]["groundSurface"],
+): number {
+  switch (surface) {
+    case "Firm Soil": return 0x6a5b48;
+    case "Loose Soil": return 0x7a674f;
+    case "Grass": return 0x4d6649;
+    case "Gravel": return 0x686965;
+    case "Sand": return 0x8d7958;
+    case "Mud": return 0x4d4034;
+    case "Concrete": return 0x777c7d;
+    case "Paved Yard": return 0x5b6061;
+    case "Mixed Surface": return 0x5b5e54;
+    case "Unclassified Ground":
+    default:
+      return 0x596653;
+  }
+}
+
 function addRoad(
   scene: THREE.Scene,
   reconstruction: AccidentReconstruction,
@@ -780,7 +800,7 @@ function addRoad(
       createTerrainGeometry(terrainSurface),
       new THREE.MeshStandardMaterial({
         map: terrainTexture,
-        color: 0x596653,
+        color: groundSurfaceColour(reconstruction.scene.groundSurface),
         roughness: 1,
       }),
     );
@@ -797,13 +817,17 @@ function addRoad(
       new THREE.PlaneGeometry(groundWidth, groundDepth),
       new THREE.MeshStandardMaterial({
         map: groundTexture,
-        color: 0x687164,
+        color: groundSurfaceColour(reconstruction.scene.groundSurface),
         roughness: 1,
       }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
+  }
+
+  if (!usesGeneratedRoad(reconstruction.scene)) {
+    return;
   }
 
   const createRoadMaterial = (worldWidth: number, worldDepth: number) =>
@@ -1242,10 +1266,13 @@ function Reconstruction3DViewer({
           (object) => object.visible && !(object.tracePoints && object.tracePoints.length > 1),
         ).length
       : 0;
-    const hasCrossRoad = !["Straight Road", "Pedestrian Crossing"].includes(
-      reconstruction.scene.roadLayout,
-    );
-    const environmentAssetCount = 4 + (hasCrossRoad ? 8 : 4);
+    const generatedRoad = usesGeneratedRoad(reconstruction.scene);
+    const hasCrossRoad =
+      generatedRoad &&
+      !["Straight Road", "Pedestrian Crossing"].includes(
+        reconstruction.scene.roadLayout,
+      );
+    const environmentAssetCount = generatedRoad ? 4 + (hasCrossRoad ? 8 : 4) : 0;
     const totalAssets =
       reconstruction.vehicles.length + visibleObjectCount + environmentAssetCount;
     setAssetStatus({ loaded: 0, total: totalAssets, failed: 0 });

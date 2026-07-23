@@ -125,6 +125,24 @@ export type ReconstructionVehicleType = ReconstructionEntityType;
 export type ReconstructionVehicleColour = ReconstructionEntityColour;
 export type ReconstructionVehicle = ReconstructionEntity;
 
+export type SceneEnvironmentType =
+  | "Road / Junction"
+  | "Open Ground"
+  | "Mixed Site"
+  | "Custom Site";
+
+export type GroundSurfaceType =
+  | "Unclassified Ground"
+  | "Firm Soil"
+  | "Loose Soil"
+  | "Grass"
+  | "Gravel"
+  | "Sand"
+  | "Mud"
+  | "Concrete"
+  | "Paved Yard"
+  | "Mixed Surface";
+
 export type RoadLayoutType =
   | "Four-way Intersection"
   | "T-Junction"
@@ -169,6 +187,9 @@ export type SceneTrafficVolume =
   | "Heavy";
 
 export interface RoadSceneSettings {
+  /** Controls whether RoadSafe generates road geometry or preserves neutral ground. */
+  sceneEnvironment: SceneEnvironmentType;
+  groundSurface: GroundSurfaceType;
   roadLayout: RoadLayoutType;
   laneCount: number;
   roadRotation: number;
@@ -197,6 +218,8 @@ export interface RoadSceneSettings {
 
 export function createDefaultRoadSceneSettings(): RoadSceneSettings {
   return {
+    sceneEnvironment: "Road / Junction",
+    groundSurface: "Unclassified Ground",
     roadLayout: "Four-way Intersection",
     laneCount: 2,
     roadRotation: 0,
@@ -218,6 +241,37 @@ export function createDefaultRoadSceneSettings(): RoadSceneSettings {
     terrainExaggeration: 1,
     conformRoadToTerrain: true,
   };
+}
+
+
+export function createDefaultGroundSceneSettings(
+  sceneEnvironment: Extract<SceneEnvironmentType, "Open Ground" | "Custom Site"> = "Open Ground",
+): RoadSceneSettings {
+  return {
+    ...createDefaultRoadSceneSettings(),
+    sceneEnvironment,
+    groundSurface: "Unclassified Ground",
+    roadLayout: "Straight Road",
+    laneCount: 1,
+    roadRotation: 0,
+    drivingSide: "Left",
+    trafficControl: "None",
+    speedLimitKmh: 0,
+    showPavements: false,
+    showLaneMarkings: false,
+    showPedestrianCrossing: false,
+    trafficVolume: "Light",
+  };
+}
+
+export function usesGeneratedRoad(settings: Pick<RoadSceneSettings, "sceneEnvironment">): boolean {
+  return settings.sceneEnvironment === "Road / Junction" || settings.sceneEnvironment === "Mixed Site";
+}
+
+export function sceneEnvironmentLabel(settings: Pick<RoadSceneSettings, "sceneEnvironment" | "roadLayout" | "groundSurface">): string {
+  if (settings.sceneEnvironment === "Road / Junction") return settings.roadLayout;
+  if (settings.sceneEnvironment === "Mixed Site") return `Mixed Site · ${settings.roadLayout}`;
+  return `${settings.sceneEnvironment} · ${settings.groundSurface}`;
 }
 
 export type SceneObjectCategory =
@@ -489,6 +543,9 @@ export interface AccidentReconstruction {
   measurements: SceneMeasurement[];
   evidenceRecords: EvidenceRecord[];
   photos: ScenePhotoAttachment[];
+
+  /** Real-world anchor retained even when no road geometry is generated. */
+  siteCoordinate?: GeoCoordinate;
 
   /** Real-world scene calibration and permanent GPS field audit. */
   fieldCalibration?: FieldSceneCalibration;

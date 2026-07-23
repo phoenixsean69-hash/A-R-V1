@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
+import { usesGeneratedRoad } from "../../types/reconstruction";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: Home, end: true },
@@ -109,7 +110,16 @@ export default function AppShell() {
     ["Investigator", activeCase?.investigatingOfficer || "Not assigned"],
     ["Station", activeCase?.policeStation || "Not recorded"],
     ["Weather", activeReconstruction?.scene.weather || "Not configured"],
-    ["Road", activeReconstruction?.scene.roadSurface || "Not configured"],
+    [
+      activeReconstruction && usesGeneratedRoad(activeReconstruction.scene)
+        ? "Road"
+        : "Ground",
+      activeReconstruction
+        ? usesGeneratedRoad(activeReconstruction.scene)
+          ? activeReconstruction.scene.roadSurface
+          : activeReconstruction.scene.groundSurface
+        : "Not configured",
+    ],
   ];
 
   return (

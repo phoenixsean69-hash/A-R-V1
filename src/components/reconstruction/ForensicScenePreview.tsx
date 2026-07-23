@@ -1,8 +1,10 @@
-import type {
-  AccidentReconstruction,
-  EvidenceRecord,
-  ReconstructionPosition,
-  ReconstructionVehicle,
+import {
+  sceneEnvironmentLabel,
+  usesGeneratedRoad,
+  type AccidentReconstruction,
+  type EvidenceRecord,
+  type ReconstructionPosition,
+  type ReconstructionVehicle,
 } from "../../types/reconstruction";
 import { getParticipantStateAtTime } from "../../utils/reconstructionGeometry";
 
@@ -154,7 +156,9 @@ export default function ForensicScenePreview({
       </defs>
       <rect width="100" height="100" fill="#1b241f" />
       <rect width="100" height="100" filter={`url(#noise-${reconstruction.id})`} opacity="0.4" />
-      <RoadGeometry reconstruction={reconstruction} />
+      {usesGeneratedRoad(reconstruction.scene) && (
+        <RoadGeometry reconstruction={reconstruction} />
+      )}
       <g opacity="0.85">
         {showPaths && reconstruction.vehicles.map((participant) => (
           <polyline
@@ -191,7 +195,9 @@ export default function ForensicScenePreview({
         </g>
       )}
       <rect x="1.5" y="92.5" width="31" height="5.5" rx="1" fill="#050914" fillOpacity="0.82" stroke="#263650" strokeWidth="0.35" />
-      <text x="3.2" y="96" fontSize="2.3" fill="#aeb9c8">{reconstruction.scene.roadLayout} · {reconstruction.scene.roadSurface}</text>
+      <text x="3.2" y="96" fontSize="2.3" fill="#aeb9c8">
+        {sceneEnvironmentLabel(reconstruction.scene)}
+      </text>
     </svg>
   );
 }

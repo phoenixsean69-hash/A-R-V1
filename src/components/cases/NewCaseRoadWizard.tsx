@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -18,13 +17,19 @@ import type {
   RoadDetectionCoordinate,
   RoadDetectionResult,
 } from "../../types/roadLayoutDetection";
-import type {
-  DrivingSide,
-  RoadLayoutType,
-  RoadSceneSettings,
-  TrafficControlType,
+import {
+  createDefaultGroundSceneSettings,
+  createDefaultRoadSceneSettings,
+  usesGeneratedRoad,
+  type DrivingSide,
+  type GroundSurfaceType,
+  type RoadLayoutType,
+  type RoadSceneSettings,
+  type SceneEnvironmentType,
+  type TrafficControlType,
 } from "../../types/reconstruction";
 
+import RoadSceneEnvironment from "../reconstruction/RoadSceneEnvironment";
 import RoadDetectionPreview from "./RoadDetectionPreview";
 import RoadLocationMap from "./RoadLocationMap";
 
@@ -55,6 +60,46 @@ const TRAFFIC_CONTROLS: TrafficControlType[] = [
   "Traffic Lights",
   "Stop Signs",
   "Give Way Signs",
+];
+
+const SCENE_ENVIRONMENTS: Array<{
+  value: SceneEnvironmentType;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "Road / Junction",
+    title: "Road / Junction",
+    description: "Detect and generate road, lane, kerb and traffic-control geometry.",
+  },
+  {
+    value: "Open Ground",
+    title: "Open Ground",
+    description: "Keep the real location and terrain, but generate no road or junction.",
+  },
+  {
+    value: "Mixed Site",
+    title: "Mixed Site",
+    description: "Use a road plus surrounding field, verge, yard or other open ground.",
+  },
+  {
+    value: "Custom Site",
+    title: "Custom Site",
+    description: "Start with real-location ground and add every structure manually or by GPS.",
+  },
+];
+
+const GROUND_SURFACES: GroundSurfaceType[] = [
+  "Unclassified Ground",
+  "Firm Soil",
+  "Loose Soil",
+  "Grass",
+  "Gravel",
+  "Sand",
+  "Mud",
+  "Concrete",
+  "Paved Yard",
+  "Mixed Surface",
 ];
 
 function delay(milliseconds: number): Promise<void> {
@@ -94,6 +139,8 @@ export default function NewCaseRoadWizard({
   const [averaging, setAveraging] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
 
+  const [selectedEnvironment, setSelectedEnvironment] =
+    useState<SceneEnvironmentType | null>(null);
   const [detectionResult, setDetectionResult] =
     useState<RoadDetectionResult | null>(null);
   const [sceneSettings, setSceneSettings] =
@@ -101,6 +148,24 @@ export default function NewCaseRoadWizard({
   const [detectingRoad, setDetectingRoad] = useState(false);
   const [roadError, setRoadError] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const liveCoordinate = geolocation.current;
+
+  useEffect(() => {
+    if (selectedCoordinate || !liveCoordinate) return;
+
+    const nextCoordinate = {
+      latitude: liveCoordinate.latitude,
+      longitude: liveCoordinate.longitude,
+      accuracyMetres: liveCoordinate.accuracyMetres,
+      capturedAt: liveCoordinate.capturedAt,
+    };
+    const timer = window.setTimeout(() => {
+      setSelectedCoordinate((current) => current ?? nextCoordinate);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [liveCoordinate, selectedCoordinate]);
 
   const locationDisplay = useMemo(() => {
     if (!selectedCoordinate) return "No accident position confirmed yet.";
@@ -223,70 +288,63 @@ export default function NewCaseRoadWizard({
     setLocationMessage("Manual coordinate applied. Confirm it on the map.");
   };
 
-  const detectRoadLayout = useCallback(
-    async (forceRefresh: boolean) => {
-      if (!selectedCoordinate) return;
+  const detectRoadLayout = async (
+    forceRefresh: boolean,
+    environment: SceneEnvironmentType = selectedEnvironment ?? "Road / Junction",
+  ) => {
+    if (!selectedCoordinate) return;
 
-      setDetectingRoad(true);
-      setRoadError("");
+    setDetectingRoad(true);
+    setRoadError("");
 
-      try {
-        const result = await RoadLayoutDetectionService.detectAtCoordinate(
-          selectedCoordinate,
-          80,
-          forceRefresh,
-        );
-        setDetectionResult(result);
-        setSceneSettings(result.detection.suggestedSceneSettings);
-
-        const detectedLocation = result.detection.address.displayName.trim();
-        if (detectedLocation) {
-          setValues((current) => ({
-            ...current,
-            location: detectedLocation,
-          }));
-        }
-      } catch (error) {
-        setRoadError(
-          error instanceof Error
-            ? error.message
-            : "Road-layout detection failed. Select the layout manually.",
-        );
-      } finally {
-        setDetectingRoad(false);
-      }
-    },
-    [selectedCoordinate],
-  );
-
-  const currentLocation = geolocation.current;
-
-  useEffect(() => {
-    if (selectedCoordinate || !currentLocation) return;
-
-    const timer = window.setTimeout(() => {
-      setSelectedCoordinate({
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude,
-        accuracyMetres: currentLocation.accuracyMetres,
-        capturedAt: currentLocation.capturedAt,
+    try {
+      const result = await RoadLayoutDetectionService.detectAtCoordinate(
+        selectedCoordinate,
+        80,
+        forceRefresh,
+      );
+      setDetectionResult(result);
+      setSceneSettings({
+        ...result.detection.suggestedSceneSettings,
+        sceneEnvironment: environment,
+        groundSurface: "Unclassified Ground",
       });
-    }, 0);
 
-    return () => window.clearTimeout(timer);
-  }, [currentLocation, selectedCoordinate]);
+      const detectedLocation = result.detection.address.displayName.trim();
+      if (detectedLocation) {
+        setValues((current) => ({
+          ...current,
+          location: detectedLocation,
+        }));
+      }
+    } catch (error) {
+      setRoadError(
+        error instanceof Error
+          ? error.message
+          : "Road-layout detection failed. Select the layout manually.",
+      );
+    } finally {
+      setDetectingRoad(false);
+    }
+  };
 
-  useEffect(() => {
-    if (step !== 3 || !selectedCoordinate || detectionResult || detectingRoad) {
+  const selectEnvironment = (sceneEnvironment: SceneEnvironmentType) => {
+    setSelectedEnvironment(sceneEnvironment);
+    setDetectionResult(null);
+    setRoadError("");
+
+    if (sceneEnvironment === "Open Ground" || sceneEnvironment === "Custom Site") {
+      setSceneSettings(createDefaultGroundSceneSettings(sceneEnvironment));
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      void detectRoadLayout(false);
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [detectRoadLayout, detectionResult, detectingRoad, selectedCoordinate, step]);
+    setSceneSettings({
+      ...createDefaultRoadSceneSettings(),
+      sceneEnvironment,
+      groundSurface: "Unclassified Ground",
+    });
+    void detectRoadLayout(false, sceneEnvironment);
+  };
 
   const createCaseAndScene = () => {
     if (!selectedCoordinate || !sceneSettings) return;
@@ -294,35 +352,38 @@ export default function NewCaseRoadWizard({
     setCreating(true);
 
     try {
-      const baseDetection = detectionResult?.detection ??
-        RoadLayoutDetectionService.createManualDetection(
-          selectedCoordinate,
-          {
-            roadLayout: sceneSettings.roadLayout,
-            laneCount: sceneSettings.laneCount,
-            roadRotation: sceneSettings.roadRotation,
-            drivingSide: sceneSettings.drivingSide,
-            trafficControl: sceneSettings.trafficControl,
-            speedLimitKmh: sceneSettings.speedLimitKmh,
-            showPedestrianCrossing: sceneSettings.showPedestrianCrossing,
-          },
-          undefined,
-          roadError || "The officer selected the road layout manually.",
-        );
+      let confirmedDetection = undefined;
+      if (usesGeneratedRoad(sceneSettings)) {
+        const baseDetection =
+          detectionResult?.detection ??
+          RoadLayoutDetectionService.createManualDetection(
+            selectedCoordinate,
+            {
+              roadLayout: sceneSettings.roadLayout,
+              laneCount: sceneSettings.laneCount,
+              roadRotation: sceneSettings.roadRotation,
+              drivingSide: sceneSettings.drivingSide,
+              trafficControl: sceneSettings.trafficControl,
+              speedLimitKmh: sceneSettings.speedLimitKmh,
+              showPedestrianCrossing: sceneSettings.showPedestrianCrossing,
+            },
+            undefined,
+            roadError || "The officer selected the road layout manually.",
+          );
 
-      const confirmedDetection =
-        RoadLayoutDetectionService.applyOfficerCorrections(
+        confirmedDetection = RoadLayoutDetectionService.applyOfficerCorrections(
           baseDetection,
           sceneSettings,
           values.investigatingOfficer,
         );
+      }
 
       const finalLocation =
         values.location.trim() ||
-        confirmedDetection.address.displayName ||
+        confirmedDetection?.address.displayName ||
         coordinateLabel(selectedCoordinate);
 
-      const saved = AccidentCaseService.createWithRoadLayout(
+      const saved = AccidentCaseService.createWithSceneEnvironment(
         {
           ...values,
           caseNumber: values.caseNumber.trim(),
@@ -334,8 +395,9 @@ export default function NewCaseRoadWizard({
           summary: values.summary.trim(),
           status: "Open",
         },
-        confirmedDetection,
+        selectedCoordinate,
         sceneSettings,
+        confirmedDetection,
       );
 
       navigate(`/cases/${saved.id}/reconstruction`);
@@ -460,7 +522,7 @@ export default function NewCaseRoadWizard({
               }}
               className={primaryButtonClass}
             >
-              Continue to Location Detection
+              Continue to Location Detection →
             </button>
           </WizardActions>
         </section>
@@ -515,7 +577,7 @@ export default function NewCaseRoadWizard({
                   <button
                     type="button"
                     onClick={startLocationTracking}
-                    className="rounded-sm bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
+                    className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
                   >
                     {geolocation.isWatching
                       ? "Location Tracking Active"
@@ -526,7 +588,7 @@ export default function NewCaseRoadWizard({
                     type="button"
                     disabled={averaging}
                     onClick={() => void averageLocation()}
-                    className="rounded-sm border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
                   >
                     {averaging ? "Averaging for 5 seconds..." : "Average Location for 5 Seconds"}
                   </button>
@@ -542,7 +604,7 @@ export default function NewCaseRoadWizard({
                           capturedAt: geolocation.current!.capturedAt,
                         })
                       }
-                      className="rounded-sm border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
                     >
                       Use Current Reading
                     </button>
@@ -551,7 +613,7 @@ export default function NewCaseRoadWizard({
 
                 {(geolocation.error || locationMessage) && (
                   <p
-                    className={`mt-4 rounded-sm p-3 text-xs font-semibold ${
+                    className={`mt-4 rounded-xl p-3 text-xs font-semibold ${
                       geolocation.error
                         ? "bg-red-50 text-red-700"
                         : "bg-blue-50 text-blue-700"
@@ -586,7 +648,7 @@ export default function NewCaseRoadWizard({
                 <button
                   type="button"
                   onClick={useManualCoordinate}
-                  className="mt-3 w-full rounded-sm border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
+                  className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
                 >
                   Apply Manual Coordinate
                 </button>
@@ -630,13 +692,14 @@ export default function NewCaseRoadWizard({
               type="button"
               disabled={!selectedCoordinate}
               onClick={() => {
+                setSelectedEnvironment(null);
                 setDetectionResult(null);
                 setSceneSettings(null);
                 setStep(3);
               }}
               className={primaryButtonClass}
             >
-              Detect Nearby Road Layout →
+              Choose Scene Environment →
             </button>
           </WizardActions>
         </section>
@@ -646,223 +709,243 @@ export default function NewCaseRoadWizard({
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <SectionHeading
             eyebrow="Step 3 of 4"
-            title="Detect and verify the road layout"
-            description="RoadSafe AR queries nearby OpenStreetMap road geometry, suggests a template, and keeps every field editable."
+            title="Choose the real-world scene environment"
+            description="The coordinate remains real in every mode. RoadSafe only generates road geometry when the officer explicitly chooses a road-based environment."
           />
 
-          {detectingRoad && (
-            <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-8 text-center">
-              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-              <p className="mt-4 font-black text-blue-950">Fetching nearby road data...</p>
-              <p className="mt-2 text-sm text-blue-700">
-                Reading the address, road geometry, junction branches and traffic controls.
-              </p>
-            </div>
-          )}
-
-          {roadError && !detectionResult && (
-            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5">
-              <p className="font-black text-red-900">Automatic detection failed</p>
-              <p className="mt-2 text-sm text-red-700">{roadError}</p>
-              <button
-                type="button"
-                onClick={() => void detectRoadLayout(true)}
-                className="mt-4 rounded-sm bg-red-700 px-4 py-2.5 text-sm font-black text-white"
-              >
-                Retry Road Detection
-              </button>
-            </div>
-          )}
-
-          {detectionResult && sceneSettings && (
-            <div className="mt-6 space-y-6">
-              <div className="grid gap-4 md:grid-cols-4">
-                <SummaryMetric
-                  label="Suggested layout"
-                  value={detectionResult.detection.detectedLayout}
-                />
-                <SummaryMetric
-                  label="Confidence"
-                  value={`${Math.round(
-                    detectionResult.detection.confidence * 100,
-                  )}% · ${detectionResult.detection.confidenceLabel}`}
-                  toneClass={getConfidenceTone(
-                    detectionResult.detection.confidence,
-                  )}
-                />
-                <SummaryMetric
-                  label="Road branches"
-                  value={String(detectionResult.detection.branchCount)}
-                />
-                <SummaryMetric
-                  label="Mapped roads"
-                  value={String(detectionResult.detection.roads.length)}
-                />
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Detected address
-                    </p>
-                    <p className="mt-2 font-bold text-slate-900">
-                      {detectionResult.detection.address.displayName}
-                    </p>
-                    {detectionResult.detection.roadNames.length > 0 && (
-                      <p className="mt-2 text-sm text-slate-600">
-                        Roads: {detectionResult.detection.roadNames.join(", ")}
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void detectRoadLayout(true)}
-                    className="rounded-sm border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50"
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {SCENE_ENVIRONMENTS.map((environment) => {
+              const selected = selectedEnvironment === environment.value;
+              return (
+                <button
+                  key={environment.value}
+                  type="button"
+                  onClick={() => selectEnvironment(environment.value)}
+                  className={`rounded-2xl border p-5 text-left transition ${
+                    selected
+                      ? "border-blue-500 bg-blue-50 shadow-sm"
+                      : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-white"
+                  }`}
+                >
+                  <span className="block text-sm font-black text-slate-950">
+                    {environment.title}
+                  </span>
+                  <span className="mt-2 block text-xs leading-5 text-slate-600">
+                    {environment.description}
+                  </span>
+                  <span
+                    className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+                      selected
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-200 text-slate-600"
+                    }`}
                   >
-                    Retry Detection
-                  </button>
+                    {selected ? "Selected" : "Choose"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {sceneSettings && selectedEnvironment && (
+            <div className="mt-6 space-y-6">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                    Real scene anchor
+                  </p>
+                  <p className="mt-2 break-all font-mono text-sm font-bold text-slate-900">
+                    {coordinateLabel(selectedCoordinate)}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">
+                    Reported GPS accuracy ±{selectedCoordinate.accuracyMetres.toFixed(1)} m.
+                    This coordinate remains the terrain and field-placement anchor even when no road is generated.
+                  </p>
                 </div>
+
+                <SelectField<GroundSurfaceType>
+                  label="Ground classification"
+                  value={sceneSettings.groundSurface}
+                  options={GROUND_SURFACES}
+                  onChange={(groundSurface) =>
+                    setSceneSettings((current) =>
+                      current ? { ...current, groundSurface } : current,
+                    )
+                  }
+                />
               </div>
 
-              {(!detectionResult.roadQuerySucceeded ||
-                detectionResult.detection.confidence < 0.6) && (
+              {!usesGeneratedRoad(sceneSettings) && (
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+                  <NeutralScenePreview
+                    settings={sceneSettings}
+                    coordinate={selectedCoordinate}
+                  />
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                    <p className="font-black text-blue-950">
+                      Ground-only scene confirmed
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-blue-800">
+                      Road detection and lane snapping are disabled. The scene still uses
+                      the real GPS location, north orientation, metre scale and optional
+                      elevation terrain.
+                    </p>
+                    <ul className="mt-4 space-y-2 text-xs leading-5 text-blue-800">
+                      <li>• Place objects at real GPS points.</li>
+                      <li>• Walk curved lines such as drag marks or trails.</li>
+                      <li>• Walk boundaries for debris, spills or damaged areas.</li>
+                      <li>• Add roads later only when the officer confirms one.</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {usesGeneratedRoad(sceneSettings) && detectingRoad && (
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-8 text-center">
+                  <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                  <p className="mt-4 font-black text-blue-950">
+                    Fetching nearby road data...
+                  </p>
+                  <p className="mt-2 text-sm text-blue-700">
+                    The selected environment permits a generated road, so RoadSafe is reading nearby geometry for officer review.
+                  </p>
+                </div>
+              )}
+
+              {usesGeneratedRoad(sceneSettings) && roadError && !detectionResult && (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
                   <p className="font-black text-amber-950">
-                    Officer confirmation is required
+                    Automatic road detection was unavailable
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-amber-800">
-                    The road service could not confidently classify this location. Select the layout below that best matches the physical scene. Case creation will not be blocked.
-                  </p>
+                  <p className="mt-2 text-sm text-amber-800">{roadError}</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void detectRoadLayout(true)}
+                      className="rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-black text-white"
+                    >
+                      Retry Detection
+                    </button>
+                    <span className="rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-900">
+                      Manual road settings remain available below
+                    </span>
+                  </div>
                 </div>
               )}
 
-              {detectionResult.warnings.length > 0 && (
+              {usesGeneratedRoad(sceneSettings) && detectionResult && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <SummaryMetric
+                      label="Suggested layout"
+                      value={detectionResult.detection.detectedLayout}
+                    />
+                    <SummaryMetric
+                      label="Confidence"
+                      value={`${Math.round(
+                        detectionResult.detection.confidence * 100,
+                      )}% · ${detectionResult.detection.confidenceLabel}`}
+                      toneClass={getConfidenceTone(
+                        detectionResult.detection.confidence,
+                      )}
+                    />
+                    <SummaryMetric
+                      label="Road branches"
+                      value={String(detectionResult.detection.branchCount)}
+                    />
+                    <SummaryMetric
+                      label="Mapped roads"
+                      value={String(detectionResult.detection.roads.length)}
+                    />
+                  </div>
+
+                  <RoadDetectionPreview
+                    detection={detectionResult.detection}
+                    sceneSettings={sceneSettings}
+                  />
+                </>
+              )}
+
+              {usesGeneratedRoad(sceneSettings) && (
                 <div className="rounded-2xl border border-slate-200 p-5">
-                  <p className="font-black text-slate-900">Detection notes</p>
-                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    {detectionResult.warnings.map((warning) => (
-                      <li key={warning}>• {warning}</li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h3 className="font-black text-slate-900">
+                      Confirm or correct the generated road
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      The selected real coordinate is authoritative. These road values are editable suggestions only.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <SelectField<RoadLayoutType>
+                      label="Road layout"
+                      value={sceneSettings.roadLayout}
+                      options={ROAD_LAYOUTS}
+                      onChange={(roadLayout) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, roadLayout } : current,
+                        )
+                      }
+                    />
+                    <SelectField<DrivingSide>
+                      label="Driving side"
+                      value={sceneSettings.drivingSide}
+                      options={["Left", "Right"]}
+                      onChange={(drivingSide) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, drivingSide } : current,
+                        )
+                      }
+                    />
+                    <SelectField<TrafficControlType>
+                      label="Traffic control"
+                      value={sceneSettings.trafficControl}
+                      options={TRAFFIC_CONTROLS}
+                      onChange={(trafficControl) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, trafficControl } : current,
+                        )
+                      }
+                    />
+                    <NumberField
+                      label="Lane count"
+                      value={sceneSettings.laneCount}
+                      minimum={1}
+                      maximum={6}
+                      onChange={(laneCount) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, laneCount } : current,
+                        )
+                      }
+                    />
+                    <NumberField
+                      label="Road rotation"
+                      value={sceneSettings.roadRotation}
+                      minimum={-180}
+                      maximum={180}
+                      suffix="°"
+                      onChange={(roadRotation) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, roadRotation } : current,
+                        )
+                      }
+                    />
+                    <NumberField
+                      label="Speed limit"
+                      value={Math.max(10, sceneSettings.speedLimitKmh || 60)}
+                      minimum={10}
+                      maximum={160}
+                      suffix=" km/h"
+                      onChange={(speedLimitKmh) =>
+                        setSceneSettings((current) =>
+                          current ? { ...current, speedLimitKmh } : current,
+                        )
+                      }
+                    />
+                  </div>
                 </div>
               )}
-
-              <RoadDetectionPreview
-                detection={detectionResult.detection}
-                sceneSettings={sceneSettings}
-              />
-
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <div>
-                  <h3 className="font-black text-slate-900">
-                    Confirm or correct the generated scene
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Automatic values are suggestions. The investigating officer remains responsible for confirming the physical road layout.
-                  </p>
-                </div>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <SelectField<RoadLayoutType>
-                    label="Road layout"
-                    value={sceneSettings.roadLayout}
-                    options={ROAD_LAYOUTS}
-                    onChange={(roadLayout) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, roadLayout } : current,
-                      )
-                    }
-                  />
-
-                  <SelectField<DrivingSide>
-                    label="Driving side"
-                    value={sceneSettings.drivingSide}
-                    options={["Left", "Right"]}
-                    onChange={(drivingSide) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, drivingSide } : current,
-                      )
-                    }
-                  />
-
-                  <SelectField<TrafficControlType>
-                    label="Traffic control"
-                    value={sceneSettings.trafficControl}
-                    options={TRAFFIC_CONTROLS}
-                    onChange={(trafficControl) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, trafficControl } : current,
-                      )
-                    }
-                  />
-
-                  <NumberField
-                    label="Lane count"
-                    value={sceneSettings.laneCount}
-                    minimum={1}
-                    maximum={6}
-                    onChange={(laneCount) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, laneCount } : current,
-                      )
-                    }
-                  />
-
-                  <NumberField
-                    label="Road rotation"
-                    value={sceneSettings.roadRotation}
-                    minimum={-180}
-                    maximum={180}
-                    suffix="°"
-                    onChange={(roadRotation) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, roadRotation } : current,
-                      )
-                    }
-                  />
-
-                  <NumberField
-                    label="Speed limit"
-                    value={sceneSettings.speedLimitKmh}
-                    minimum={10}
-                    maximum={160}
-                    suffix=" km/h"
-                    onChange={(speedLimitKmh) =>
-                      setSceneSettings((current) =>
-                        current ? { ...current, speedLimitKmh } : current,
-                      )
-                    }
-                  />
-                </div>
-
-                <label className="mt-4 flex items-center justify-between gap-4 rounded-sm border border-slate-200 p-4">
-                  <span>
-                    <span className="block text-sm font-black text-slate-800">
-                      Pedestrian crossing present
-                    </span>
-                    <span className="mt-1 block text-xs text-slate-500">
-                      Enable when a crossing exists even if it was missing from map data.
-                    </span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={sceneSettings.showPedestrianCrossing}
-                    onChange={(event) =>
-                      setSceneSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              showPedestrianCrossing: event.target.checked,
-                            }
-                          : current,
-                      )
-                    }
-                    className="h-5 w-5"
-                  />
-                </label>
-              </div>
             </div>
           )}
 
@@ -871,6 +954,7 @@ export default function NewCaseRoadWizard({
               type="button"
               onClick={() => {
                 setStep(2);
+                setSelectedEnvironment(null);
                 setDetectionResult(null);
                 setSceneSettings(null);
               }}
@@ -890,12 +974,12 @@ export default function NewCaseRoadWizard({
         </section>
       )}
 
-      {step === 4 && selectedCoordinate && sceneSettings && detectionResult && (
+      {step === 4 && selectedCoordinate && sceneSettings && (
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <SectionHeading
             eyebrow="Step 4 of 4"
-            title="Confirm the case and create the 2D reconstruction"
-            description="The linked reconstruction is created only after this confirmation."
+            title="Confirm the case and create the reconstruction"
+            description="The real coordinate and selected scene environment are saved together."
           />
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
@@ -913,36 +997,62 @@ export default function NewCaseRoadWizard({
                 />
               </SummaryCard>
 
-              <SummaryCard title="Location and road">
+              <SummaryCard title="Real location and scene">
                 <SummaryRow
                   label="Location"
-                  value={detectionResult.detection.address.displayName}
+                  value={
+                    detectionResult?.detection.address.displayName ||
+                    values.location ||
+                    coordinateLabel(selectedCoordinate)
+                  }
                 />
-                <SummaryRow label="Coordinates" value={coordinateLabel(selectedCoordinate)} />
+                <SummaryRow
+                  label="Coordinates"
+                  value={coordinateLabel(selectedCoordinate)}
+                />
                 <SummaryRow
                   label="Reported accuracy"
                   value={`±${selectedCoordinate.accuracyMetres.toFixed(1)} m`}
                 />
-                <SummaryRow label="Layout" value={sceneSettings.roadLayout} />
                 <SummaryRow
-                  label="Detection source"
+                  label="Environment"
+                  value={sceneSettings.sceneEnvironment}
+                />
+                <SummaryRow
+                  label="Ground"
+                  value={sceneSettings.groundSurface}
+                />
+                {usesGeneratedRoad(sceneSettings) && (
+                  <SummaryRow label="Road layout" value={sceneSettings.roadLayout} />
+                )}
+                <SummaryRow
+                  label="Geometry source"
                   value={
-                    detectionResult.roadQuerySucceeded
-                      ? "OpenStreetMap with officer confirmation"
-                      : "Officer-selected fallback"
+                    usesGeneratedRoad(sceneSettings)
+                      ? detectionResult?.roadQuerySucceeded
+                        ? "Map data with officer confirmation"
+                        : "Officer-confirmed road settings"
+                      : "Real-location ground only"
                   }
                 />
               </SummaryCard>
 
               <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm leading-6 text-blue-800">
-                The generated road scene remains editable. After creation, the officer can use Field GPS Placement to position participants, path points, evidence and measurements precisely.
+                Field Capture remains available for GPS point placement, curved walking traces and walked boundaries at this location.
               </div>
             </div>
 
-            <RoadDetectionPreview
-              detection={detectionResult.detection}
-              sceneSettings={sceneSettings}
-            />
+            {usesGeneratedRoad(sceneSettings) && detectionResult ? (
+              <RoadDetectionPreview
+                detection={detectionResult.detection}
+                sceneSettings={sceneSettings}
+              />
+            ) : (
+              <NeutralScenePreview
+                settings={sceneSettings}
+                coordinate={selectedCoordinate}
+              />
+            )}
           </div>
 
           <WizardActions>
@@ -951,17 +1061,17 @@ export default function NewCaseRoadWizard({
               onClick={() => setStep(3)}
               className={secondaryButtonClass}
             >
-              ← Back to Road Confirmation
+              ← Back to Environment
             </button>
             <button
               type="button"
               disabled={creating}
               onClick={createCaseAndScene}
-              className="rounded-sm bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               {creating
                 ? "Creating Case and Scene..."
-                : "Create Case and Open 2D Reconstruction →"}
+                : "Create Case and Open Reconstruction →"}
             </button>
           </WizardActions>
         </section>
@@ -970,11 +1080,59 @@ export default function NewCaseRoadWizard({
   );
 }
 
+function NeutralScenePreview({
+  settings,
+  coordinate,
+}: {
+  settings: RoadSceneSettings;
+  coordinate: RoadDetectionCoordinate;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
+      <div className="relative aspect-[16/9] min-h-[320px] overflow-hidden">
+        <RoadSceneEnvironment settings={settings} />
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <div className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-blue-600 shadow-lg" />
+          <div className="absolute left-1/2 top-[calc(50%+18px)] -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/80 px-2.5 py-1.5 text-[10px] font-black text-white backdrop-blur-sm">
+            Real scene anchor
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 border-t border-slate-700 bg-slate-900 p-4 text-xs text-slate-300 sm:grid-cols-3">
+        <div>
+          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
+            Environment
+          </span>
+          <strong className="mt-1 block text-slate-100">
+            {settings.sceneEnvironment}
+          </strong>
+        </div>
+        <div>
+          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
+            Ground
+          </span>
+          <strong className="mt-1 block text-slate-100">
+            {settings.groundSurface}
+          </strong>
+        </div>
+        <div>
+          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
+            Coordinate
+          </span>
+          <strong className="mt-1 block font-mono text-slate-100">
+            {coordinate.latitude.toFixed(5)}, {coordinate.longitude.toFixed(5)}
+          </strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WizardProgress({ step }: { step: WizardStep }) {
   const steps = [
     "Case Details",
     "Current Location",
-    "Road Detection",
+    "Scene Environment",
     "Create Scene",
   ];
 
@@ -989,7 +1147,7 @@ function WizardProgress({ step }: { step: WizardStep }) {
           return (
             <div
               key={label}
-              className={`rounded-sm border px-3 py-3 ${
+              className={`rounded-xl border px-3 py-3 ${
                 active
                   ? "border-blue-500 bg-blue-50"
                   : completed
@@ -1179,7 +1337,7 @@ function WizardActions({ children }: { children: React.ReactNode }) {
 }
 
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-sm border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
+  return `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-100"
       : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
@@ -1187,7 +1345,7 @@ function inputClass(hasError: boolean): string {
 }
 
 const primaryButtonClass =
-  "rounded-sm bg-blue-950 px-6 py-3 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-400";
+  "rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400";
 
 const secondaryButtonClass =
-  "rounded-sm border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";
+  "rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";
