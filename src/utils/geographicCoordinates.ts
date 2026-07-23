@@ -3,6 +3,7 @@ import type {
   FieldSceneCalibration,
   FieldScenePosition,
   GeoCoordinate,
+  SceneBoundsAssessment,
 } from "../types/fieldPlacement";
 
 const EARTH_RADIUS_METRES = 6_371_008.8;
@@ -84,6 +85,35 @@ export function coordinateToLocalMetres(
     Math.cos(meanLatitude);
 
   return { eastMetres, northMetres };
+}
+
+
+export function localOffsetToCoordinate(
+  origin: Pick<GeoCoordinate, "latitude" | "longitude">,
+  eastMetres: number,
+  northMetres: number,
+): GeoCoordinate {
+  const latitude =
+    origin.latitude +
+    (northMetres / EARTH_RADIUS_METRES) * RADIANS_TO_DEGREES;
+  const latitudeRadians =
+    ((origin.latitude + latitude) / 2) * DEGREES_TO_RADIANS;
+  const longitude =
+    origin.longitude +
+    (eastMetres /
+      (EARTH_RADIUS_METRES *
+        Math.max(0.001, Math.cos(latitudeRadians)))) *
+      RADIANS_TO_DEGREES;
+
+  return {
+    latitude,
+    longitude,
+    accuracyMetres: 0,
+    altitudeMetres: null,
+    headingDegrees: null,
+    speedMetresPerSecond: null,
+    capturedAt: new Date().toISOString(),
+  };
 }
 
 export function coordinateToScenePosition(
@@ -258,4 +288,67 @@ export function sampleSceneTrack(
       y: start.y + (end.y - start.y) * ratio,
     };
   });
+}
+
+
+export function assessCoordinateAgainstScene(
+  coordinate: Pick<GeoCoordinate, "latitude" | "longitude">,
+  calibration: FieldSceneCalibration,
+): SceneBoundsAssessment {
+  const rawPosition = coordinateToScenePosition(coordinate, calibration, false);
+  const outsideWestPercent = Math.max(0, -rawPosition.x);
+  const outsideEastPercent = Math.max(0, rawPosition.x - 100);
+  const outsideNorthPercent = Math.max(0, -rawPosition.y);
+  const outsideSouthPercent = Math.max(0, rawPosition.y - 100);
+
+  return {
+    rawPosition,
+    insideScene:
+      outsideWestPercent === 0 &&
+      outsideEastPercent === 0 &&
+      outsideNorthPercent === 0 &&
+      outsideSouthPercent === 0,
+    outsideEastMetres:
+      (outsideEastPercent / 100) * calibration.sceneWidthMetres,
+    outsideWestMetres:
+      (outsideWestPercent / 100) * calibration.sceneWidthMetres,
+    outsideNorthMetres:
+      (outsideNorthPercent / 100) * calibration.sceneHeightMetres,
+    outsideSouthMetres:
+      (outsideSouthPercent / 100) * calibration.sceneHeightMetres,
+  };
+}
+
+export function scenePositionToCoordinate(
+  position: FieldScenePosition,
+  calibration: FieldSceneCalibration,
+): GeoCoordinate {
+  const directionVector = coordinateToLocalMetres(
+    calibration.origin,
+    calibration.directionReference,
+  );
+  const directionLength = Math.max(
+    0.001,
+    Math.hypot(directionVector.eastMetres, directionVector.northMetres),
+  );
+  const xAxis = {
+    east: directionVector.eastMetres / directionLength,
+    north: directionVector.northMetres / directionLength,
+  };
+  const leftYAxis = { east: -xAxis.north, north: xAxis.east };
+  const yAxis =
+    calibration.yAxisSide === "Left"
+      ? leftYAxis
+      : { east: -leftYAxis.east, north: -leftYAxis.north };
+
+  const xMetres = (position.x / 100) * calibration.sceneWidthMetres;
+  const yMetres =
+    ((100 - position.y) / 100) * calibration.sceneHeightMetres;
+  const eastMetres = xMetres * xAxis.east + yMetres * yAxis.east;
+  const northMetres = xMetres * xAxis.north + yMetres * yAxis.north;
+  return localOffsetToCoordinate(
+    calibration.origin,
+    eastMetres,
+    northMetres,
+  );
 }

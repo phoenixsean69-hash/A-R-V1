@@ -340,6 +340,12 @@ function normaliseFieldPlacement(
       x: clamp(Number(placement.scenePosition?.x ?? 50), 0, 100),
       y: clamp(Number(placement.scenePosition?.y ?? 50), 0, 100),
     },
+    rawScenePosition: placement.rawScenePosition
+      ? {
+          x: Number(placement.rawScenePosition.x ?? placement.scenePosition?.x ?? 50),
+          y: Number(placement.rawScenePosition.y ?? placement.scenePosition?.y ?? 50),
+        }
+      : undefined,
     sampleCount: Math.max(1, Number(placement.sampleCount ?? 1)),
     averageAccuracyMetres: Math.max(
       0,
@@ -349,6 +355,23 @@ function normaliseFieldPlacement(
       0,
       Number(placement.bestAccuracyMetres ?? placement.coordinate?.accuracyMetres ?? 0),
     ),
+    observedSpreadMetres:
+      placement.observedSpreadMetres === undefined
+        ? undefined
+        : Math.max(0, Number(placement.observedSpreadMetres)),
+    estimatedUncertaintyMetres:
+      placement.estimatedUncertaintyMetres === undefined
+        ? undefined
+        : Math.max(0, Number(placement.estimatedUncertaintyMetres)),
+    rawSamples: Array.isArray(placement.rawSamples)
+      ? placement.rawSamples.map(normaliseGeoCoordinate)
+      : undefined,
+    rejectedSamples: Array.isArray(placement.rejectedSamples)
+      ? placement.rejectedSamples.map((sample) => ({
+          coordinate: normaliseGeoCoordinate(sample.coordinate),
+          reason: sample.reason,
+        }))
+      : undefined,
     method: placement.method ?? "Single GPS",
     acceptedPoorAccuracy: placement.acceptedPoorAccuracy ?? false,
     manuallyAdjusted: placement.manuallyAdjusted ?? false,
@@ -369,23 +392,53 @@ function normaliseFieldWalkingTrack(
   return {
     ...track,
     id: track.id || createId("field-track"),
+    captureMode: track.captureMode ?? "Line",
     coordinates: Array.isArray(track.coordinates)
       ? track.coordinates.map(normaliseGeoCoordinate)
       : [],
+    rawCoordinates: Array.isArray(track.rawCoordinates)
+      ? track.rawCoordinates.map(normaliseGeoCoordinate)
+      : undefined,
+    rejectedCoordinates: Array.isArray(track.rejectedCoordinates)
+      ? track.rejectedCoordinates.map((sample) => ({
+          coordinate: normaliseGeoCoordinate(sample.coordinate),
+          reason: sample.reason,
+        }))
+      : undefined,
     scenePoints: Array.isArray(track.scenePoints)
       ? track.scenePoints.map((point) => ({
           x: clamp(Number(point.x ?? 50), 0, 100),
           y: clamp(Number(point.y ?? 50), 0, 100),
         }))
       : [],
+    rawScenePoints: Array.isArray(track.rawScenePoints)
+      ? track.rawScenePoints.map((point) => ({
+          x: Number(point.x ?? 50),
+          y: Number(point.y ?? 50),
+        }))
+      : undefined,
     startedAt: track.startedAt || new Date().toISOString(),
     completedAt: track.completedAt || new Date().toISOString(),
     distanceMetres: Math.max(0, Number(track.distanceMetres ?? 0)),
+    rawDistanceMetres:
+      track.rawDistanceMetres === undefined
+        ? undefined
+        : Math.max(0, Number(track.rawDistanceMetres)),
+    areaSquareMetres:
+      track.areaSquareMetres === undefined
+        ? undefined
+        : Math.max(0, Number(track.areaSquareMetres)),
+    closedBoundary: track.closedBoundary ?? false,
     averageAccuracyMetres: Math.max(
       0,
       Number(track.averageAccuracyMetres ?? 0),
     ),
     bestAccuracyMetres: Math.max(0, Number(track.bestAccuracyMetres ?? 0)),
+    estimatedUncertaintyMetres:
+      track.estimatedUncertaintyMetres === undefined
+        ? undefined
+        : Math.max(0, Number(track.estimatedUncertaintyMetres)),
+    processingMethod: track.processingMethod ?? "Legacy walking trace",
     recordedBy: track.recordedBy ?? "",
   };
 }

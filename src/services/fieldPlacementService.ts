@@ -11,10 +11,11 @@ import type {
   FieldWalkingTrack,
   FieldWalkingTrackTargetType,
   GeoCoordinate,
+  ProcessedWalkingTrace,
 } from "../types/fieldPlacement";
 
 import {
-  calculateTrackDistanceMetres,
+  assessCoordinateAgainstScene,
   coordinateToLocalMetres,
   coordinateToScenePosition,
   haversineDistanceMetres,
@@ -123,9 +124,14 @@ function createPlacementRecord(input: {
     targetLabel: input.target.label,
     coordinate: input.coordinate,
     scenePosition: input.scenePosition,
+    rawScenePosition: input.scenePosition,
     sampleCount: input.capture.sampleCount,
     averageAccuracyMetres: input.capture.averageAccuracyMetres,
     bestAccuracyMetres: input.capture.bestAccuracyMetres,
+    observedSpreadMetres: input.capture.observedSpreadMetres,
+    estimatedUncertaintyMetres: input.capture.estimatedUncertaintyMetres,
+    rawSamples: input.capture.rawSamples,
+    rejectedSamples: input.capture.rejectedSamples,
     method: input.method,
     acceptedPoorAccuracy: input.acceptedPoorAccuracy,
     manuallyAdjusted: false,
@@ -156,10 +162,32 @@ export function applyFieldPlacement(input: {
     throw new Error("Calibrate the scene before placing field items.");
   }
 
-  const scenePosition = coordinateToScenePosition(
+  const bounds = assessCoordinateAgainstScene(
     input.capture.coordinate,
     calibration,
   );
+  if (!bounds.insideScene) {
+    const offsets = [
+      bounds.outsideEastMetres > 0
+        ? `${bounds.outsideEastMetres.toFixed(1)}m east`
+        : "",
+      bounds.outsideWestMetres > 0
+        ? `${bounds.outsideWestMetres.toFixed(1)}m west`
+        : "",
+      bounds.outsideNorthMetres > 0
+        ? `${bounds.outsideNorthMetres.toFixed(1)}m north`
+        : "",
+      bounds.outsideSouthMetres > 0
+        ? `${bounds.outsideSouthMetres.toFixed(1)}m south`
+        : "",
+    ].filter(Boolean);
+    throw new Error(
+      `The GPS position is outside the calibrated scene (${offsets.join(
+        ", ",
+      )}). Expand or recalibrate the scene before confirming it.`,
+    );
+  }
+  const scenePosition = bounds.rawPosition;
   const record = createPlacementRecord({
     target: input.target,
     coordinate: input.capture.coordinate,
@@ -254,24 +282,12 @@ export function applyFieldPlacement(input: {
   return reconstruction;
 }
 
-function getAverageAccuracy(coordinates: GeoCoordinate[]): number {
-  if (coordinates.length === 0) return 0;
-  return Number(
-    (
-      coordinates.reduce(
-        (total, coordinate) => total + coordinate.accuracyMetres,
-        0,
-      ) / coordinates.length
-    ).toFixed(2),
-  );
-}
-
 export function applyWalkingTrack(input: {
   reconstruction: AccidentReconstruction;
   targetType: FieldWalkingTrackTargetType;
   targetId: string;
   targetLabel: string;
-  coordinates: GeoCoordinate[];
+  processedTrace: ProcessedWalkingTrace;
   startedAt: string;
   recordedBy: string;
 }): AccidentReconstruction {
@@ -281,12 +297,28 @@ export function applyWalkingTrack(input: {
     throw new Error("Calibrate the scene before recording a walking trace.");
   }
 
-  if (input.coordinates.length < 2) {
+  const coordinates = input.processedTrace.processedCoordinates;
+  if (coordinates.length < 2) {
     throw new Error("A walking trace needs at least two usable GPS points.");
   }
 
-  const scenePoints = input.coordinates.map((coordinate) =>
-    coordinateToScenePosition(coordinate, calibration),
+  const outside = coordinates
+    .map((coordinate, index) => ({
+      index,
+      assessment: assessCoordinateAgainstScene(coordinate, calibration),
+    }))
+    .find((item) => !item.assessment.insideScene);
+  if (outside) {
+    throw new Error(
+      `Trace point ${outside.index + 1} lies outside the calibrated scene. Expand or recalibrate the scene before saving this capture.`,
+    );
+  }
+
+  const scenePoints = coordinates.map((coordinate) =>
+    coordinateToScenePosition(coordinate, calibration, false),
+  );
+  const rawScenePoints = input.processedTrace.rawCoordinates.map((coordinate) =>
+    coordinateToScenePosition(coordinate, calibration, false),
   );
 
   const track: FieldWalkingTrack = {
@@ -294,19 +326,28 @@ export function applyWalkingTrack(input: {
     targetType: input.targetType,
     targetId: input.targetId,
     targetLabel: input.targetLabel,
-    coordinates: input.coordinates,
+    captureMode: input.processedTrace.captureMode,
+    coordinates,
+    rawCoordinates: input.processedTrace.rawCoordinates,
+    rejectedCoordinates: input.processedTrace.rejectedCoordinates,
     scenePoints,
+    rawScenePoints,
     startedAt: input.startedAt,
     completedAt: new Date().toISOString(),
     distanceMetres: Number(
-      calculateTrackDistanceMetres(input.coordinates).toFixed(2),
+      input.processedTrace.processedDistanceMetres.toFixed(2),
     ),
-    averageAccuracyMetres: getAverageAccuracy(input.coordinates),
-    bestAccuracyMetres: Number(
-      Math.min(...input.coordinates.map((item) => item.accuracyMetres)).toFixed(
-        2,
-      ),
-    ),
+    rawDistanceMetres: Number(input.processedTrace.rawDistanceMetres.toFixed(2)),
+    areaSquareMetres:
+      input.processedTrace.areaSquareMetres === undefined
+        ? undefined
+        : Number(input.processedTrace.areaSquareMetres.toFixed(2)),
+    closedBoundary: input.processedTrace.closedBoundary,
+    averageAccuracyMetres: input.processedTrace.averageAccuracyMetres,
+    bestAccuracyMetres: input.processedTrace.bestAccuracyMetres,
+    estimatedUncertaintyMetres:
+      input.processedTrace.estimatedUncertaintyMetres,
+    processingMethod: input.processedTrace.processingMethod,
     recordedBy: input.recordedBy,
   };
 
@@ -348,6 +389,10 @@ export function applyWalkingTrack(input: {
       }),
     };
   } else {
+    const centroidPoints =
+      input.processedTrace.closedBoundary && scenePoints.length > 1
+        ? scenePoints.slice(0, -1)
+        : scenePoints;
     reconstruction = {
       ...reconstruction,
       sceneObjects: reconstruction.sceneObjects.map((object) =>
@@ -355,7 +400,7 @@ export function applyWalkingTrack(input: {
           ? {
               ...object,
               tracePoints: scenePoints,
-              position: getPointsCentroid(scenePoints),
+              position: getPointsCentroid(centroidPoints),
               lengthMetres: track.distanceMetres,
             }
           : object,

@@ -3,29 +3,50 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleDot,
+  FileClock,
+  MapPin,
+  Pause,
+  Pentagon,
+  Play,
+  Radio,
+  Route,
+  Save,
+  Square,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
 
-import type { AccidentReconstruction } from "../../types/reconstruction";
+import type {
+  AccidentReconstruction,
+  SceneObjectType,
+} from "../../types/reconstruction";
 import type {
   AveragedLocationResult,
+  FieldCaptureMode,
   FieldPlacementTarget,
   FieldSceneCalibration,
   FieldWalkingTrackTargetType,
   GeoCoordinate,
+  ProcessedWalkingTrace,
 } from "../../types/fieldPlacement";
 
 import { useLiveGeolocation } from "../../hooks/useLiveGeolocation";
 import { useScreenWakeLock } from "../../hooks/useScreenWakeLock";
+import { FieldCaptureProcessingService } from "../../services/fieldCaptureProcessingService";
+import { FieldPlacementService } from "../../services/fieldPlacementService";
 import {
-  FieldPlacementService,
-} from "../../services/fieldPlacementService";
-import {
+  assessCoordinateAgainstScene,
   calculateTrackDistanceMetres,
   coordinateToScenePosition,
   getDistanceAndBearing,
   haversineDistanceMetres,
 } from "../../utils/geographicCoordinates";
 import { averageGeoCoordinates } from "../../utils/locationAveraging";
-import { isTraceableSceneObjectType } from "../../utils/reconstructionGeometry";
 
 import FieldPlacementMap from "./FieldPlacementMap";
 import FieldSceneLivePreview from "./FieldSceneLivePreview";
@@ -44,22 +65,41 @@ interface FieldPlacementPanelProps {
   ) => void;
 }
 
-type FieldTab = "Calibration" | "Place Item" | "Walk Trace" | "History";
+type FieldTab = "Capture" | "Calibration" | "History";
 type CalibrationPointKind = "origin" | "direction" | "width";
 
-interface TraceTargetOption {
+interface CaptureTargetOption {
   key: string;
-  targetType: FieldWalkingTrackTargetType;
-  targetId: string;
   label: string;
+  detail: string;
+  modes: FieldCaptureMode[];
+  pointTarget?: FieldPlacementTarget;
+  traceTargetType?: FieldWalkingTrackTargetType;
+  targetId: string;
 }
+
+const LINE_OBJECT_TYPES = new Set<SceneObjectType>([
+  "Skid Mark",
+  "Tyre Mark",
+  "Road Crack",
+  "Guardrail",
+  "Wall",
+  "Fence",
+  "Road Barrier",
+]);
+
+const BOUNDARY_OBJECT_TYPES = new Set<SceneObjectType>([
+  "Pothole",
+  "Puddle",
+  "Oil Spill",
+  "Loose Gravel",
+  "Debris",
+  "Broken Glass",
+  "Bush",
+]);
 
 function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
-}
-
-function getTimestampMilliseconds(): number {
-  return Date.now();
 }
 
 function createSingleCapture(
@@ -71,6 +111,10 @@ function createSingleCapture(
     averageAccuracyMetres: coordinate.accuracyMetres,
     bestAccuracyMetres: coordinate.accuracyMetres,
     rejectedSampleCount: 0,
+    observedSpreadMetres: 0,
+    estimatedUncertaintyMetres: coordinate.accuracyMetres,
+    rawSamples: [coordinate],
+    rejectedSamples: [],
   };
 }
 
@@ -97,6 +141,102 @@ function downloadJson(filename: string, value: unknown): void {
   URL.revokeObjectURL(url);
 }
 
+function captureModeCopy(mode: FieldCaptureMode): {
+  title: string;
+  description: string;
+} {
+  if (mode === "Point") {
+    return {
+      title: "Place Point",
+      description:
+        "Walk to the item, stand at its centre and collect a stabilised GPS position.",
+    };
+  }
+  if (mode === "Line") {
+    return {
+      title: "Walk Line",
+      description:
+        "Start at one end and physically follow the mark, wall, barrier or route.",
+    };
+  }
+  return {
+    title: "Walk Boundary",
+    description:
+      "Walk around the outside edge. The system closes the boundary and calculates its area.",
+  };
+}
+
+function traceTargetTypeForObject(type: SceneObjectType): FieldWalkingTrackTargetType {
+  if (type === "Skid Mark") return "SkidMark";
+  if (type === "Tyre Mark") return "TyreMark";
+  if (type === "Road Crack") return "RoadCrack";
+  return "SceneObjectLine";
+}
+
+function buildCaptureTargets(
+  reconstruction: AccidentReconstruction,
+): CaptureTargetOption[] {
+  const pointTargets = FieldPlacementService.getTargets(reconstruction);
+  const options: CaptureTargetOption[] = [];
+
+  pointTargets.forEach((target) => {
+    if (target.type === "SceneObject") {
+      const object = reconstruction.sceneObjects.find(
+        (item) => item.id === target.targetId,
+      );
+      if (!object) return;
+      const modes: FieldCaptureMode[] = ["Point"];
+      if (LINE_OBJECT_TYPES.has(object.type)) modes.push("Line");
+      if (BOUNDARY_OBJECT_TYPES.has(object.type)) modes.push("Boundary");
+      options.push({
+        key: `scene-object:${object.id}`,
+        label: object.label,
+        detail: `${object.type} · scene object`,
+        modes,
+        pointTarget: target,
+        traceTargetType: traceTargetTypeForObject(object.type),
+        targetId: object.id,
+      });
+      return;
+    }
+
+    options.push({
+      key: `point:${getTargetKey(target)}`,
+      label: target.label,
+      detail:
+        target.type === "CollisionPoint"
+          ? "Primary collision location"
+          : target.type === "ParticipantPathPoint"
+            ? "Participant route control point"
+            : target.type === "EvidenceRecord"
+              ? "Evidence location"
+              : "Measured scene point",
+      modes: ["Point"],
+      pointTarget: target,
+      targetId: target.targetId,
+    });
+  });
+
+  reconstruction.vehicles.forEach((participant) => {
+    options.push({
+      key: `participant-route:${participant.id}`,
+      label: participant.name,
+      detail: `${participant.type} · complete walked route`,
+      modes: ["Line"],
+      traceTargetType: "ParticipantPath",
+      targetId: participant.id,
+    });
+  });
+
+  return options;
+}
+
+function modeIcon(mode: FieldCaptureMode) {
+  if (mode === "Point") return <CircleDot size={18} />;
+  if (mode === "Line") return <Route size={18} />;
+  return <Pentagon size={18} />;
+}
+
 export default function FieldPlacementPanel({
   open,
   reconstruction,
@@ -108,17 +248,22 @@ export default function FieldPlacementPanel({
   onUpdate,
 }: FieldPlacementPanelProps) {
   const geolocation = useLiveGeolocation();
-  const currentLocation = geolocation.current;
-  const startLocation = geolocation.start;
-  const stopLocation = geolocation.stop;
-  const locationSupported = geolocation.supported;
-  const getLocationSamplesSince = geolocation.getSamplesSince;
-
+  const {
+    current: currentCoordinate,
+    supported: geolocationSupported,
+    permission: geolocationPermission,
+    isWatching: geolocationIsWatching,
+    error: geolocationError,
+    sampleCount: geolocationSampleCount,
+    start: startGeolocation,
+    stop: stopGeolocation,
+    clearSamples: clearGeolocationSamples,
+    getSamplesSince,
+  } = geolocation;
   const [tab, setTab] = useState<FieldTab>(() =>
-    initialTarget && reconstruction.fieldCalibration
-      ? "Place Item"
-      : "Calibration",
+    reconstruction.fieldCalibration ? "Capture" : "Calibration",
   );
+  const [captureMode, setCaptureMode] = useState<FieldCaptureMode>("Point");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isAveraging, setIsAveraging] = useState(false);
@@ -138,144 +283,157 @@ export default function FieldPlacementPanel({
       reconstruction.fieldCalibration?.widthReference ?? null,
     );
 
-  const targets = useMemo(
-    () => FieldPlacementService.getTargets(reconstruction),
+  const captureTargets = useMemo(
+    () => buildCaptureTargets(reconstruction),
     [reconstruction],
   );
-  const [targetKey, setTargetKey] = useState(() =>
-    initialTarget ? getTargetKey(initialTarget) : "",
-  );
+  const initialTargetKey = useMemo(() => {
+    if (!initialTarget) return "";
+    return (
+      captureTargets.find(
+        (option) =>
+          option.pointTarget &&
+          getTargetKey(option.pointTarget) === getTargetKey(initialTarget),
+      )?.key ?? ""
+    );
+  }, [captureTargets, initialTarget]);
+  const [targetKey, setTargetKey] = useState(initialTargetKey);
 
-  const traceTargets = useMemo<TraceTargetOption[]>(() => {
-    const participantTargets = reconstruction.vehicles.map((participant) => ({
-      key: `ParticipantPath:${participant.id}`,
-      targetType: "ParticipantPath" as const,
-      targetId: participant.id,
-      label: `Participant route — ${participant.name}`,
-    }));
-
-    const objectTargets = reconstruction.sceneObjects
-      .filter((object) => isTraceableSceneObjectType(object.type))
-      .map((object) => ({
-        key: `${object.type.replaceAll(" ", "")}:${object.id}`,
-        targetType:
-          object.type === "Skid Mark"
-            ? ("SkidMark" as const)
-            : object.type === "Tyre Mark"
-              ? ("TyreMark" as const)
-              : ("RoadCrack" as const),
-        targetId: object.id,
-        label: `Walking trace — ${object.label}`,
-      }));
-
-    return [...participantTargets, ...objectTargets];
-  }, [reconstruction.sceneObjects, reconstruction.vehicles]);
-
-  const [traceTargetKey, setTraceTargetKey] = useState("");
   const [isTracing, setIsTracing] = useState(false);
+  const [tracePaused, setTracePaused] = useState(false);
   const [traceStartedAt, setTraceStartedAt] = useState("");
-  const [traceCoordinates, setTraceCoordinates] = useState<GeoCoordinate[]>([]);
+  const [rawTraceCoordinates, setRawTraceCoordinates] = useState<GeoCoordinate[]>([]);
+  const [traceReview, setTraceReview] = useState<ProcessedWalkingTrace | null>(null);
   const [guidancePlacementId, setGuidancePlacementId] = useState<string | null>(
     null,
   );
 
   const wakeLock = useScreenWakeLock(isAveraging || isTracing);
 
-  const selectedTarget = useMemo<FieldPlacementTarget | null>(
+  const availableTargets = useMemo(
+    () => captureTargets.filter((target) => target.modes.includes(captureMode)),
+    [captureMode, captureTargets],
+  );
+  const effectiveTargetKey = availableTargets.some(
+    (target) => target.key === targetKey,
+  )
+    ? targetKey
+    : availableTargets[0]?.key ?? "";
+  const selectedTargetOption = useMemo(
     () =>
-      targets.find((target) => getTargetKey(target) === targetKey) ?? null,
-    [targetKey, targets],
+      availableTargets.find((target) => target.key === effectiveTargetKey) ??
+      null,
+    [availableTargets, effectiveTargetKey],
   );
+  const selectedPointTarget =
+    captureMode === "Point" ? selectedTargetOption?.pointTarget ?? null : null;
 
-  const selectedTraceTarget = useMemo(
-    () => traceTargets.find((target) => target.key === traceTargetKey) ?? null,
-    [traceTargetKey, traceTargets],
-  );
+  useEffect(() => {
+    if (!open || !initialTargetKey) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setCaptureMode("Point");
+      setTargetKey(initialTargetKey);
+      setTab(reconstruction.fieldCalibration ? "Capture" : "Calibration");
+    });
+    return () => {
+      active = false;
+    };
+  }, [initialTargetKey, open, reconstruction.fieldCalibration]);
 
   const liveScenePosition = useMemo(() => {
-    if (!currentLocation || !reconstruction.fieldCalibration) return null;
+    if (!currentCoordinate || !reconstruction.fieldCalibration) return null;
     return coordinateToScenePosition(
-      currentLocation,
+      currentCoordinate,
       reconstruction.fieldCalibration,
       false,
     );
-  }, [currentLocation, reconstruction.fieldCalibration]);
+  }, [currentCoordinate, reconstruction.fieldCalibration]);
 
-  const traceScenePoints = useMemo(() => {
+  const pendingScenePosition = useMemo(() => {
+    if (!pendingCapture || !reconstruction.fieldCalibration) return null;
+    return coordinateToScenePosition(
+      pendingCapture.coordinate,
+      reconstruction.fieldCalibration,
+      false,
+    );
+  }, [pendingCapture, reconstruction.fieldCalibration]);
+
+  const pendingBounds = useMemo(() => {
+    if (!pendingCapture || !reconstruction.fieldCalibration) return null;
+    return assessCoordinateAgainstScene(
+      pendingCapture.coordinate,
+      reconstruction.fieldCalibration,
+    );
+  }, [pendingCapture, reconstruction.fieldCalibration]);
+
+  const rawTraceScenePoints = useMemo(() => {
     if (!reconstruction.fieldCalibration) return [];
-    return traceCoordinates.map((coordinate) =>
+    return rawTraceCoordinates.map((coordinate) =>
       coordinateToScenePosition(
         coordinate,
         reconstruction.fieldCalibration!,
         false,
       ),
     );
-  }, [reconstruction.fieldCalibration, traceCoordinates]);
+  }, [rawTraceCoordinates, reconstruction.fieldCalibration]);
+
+  const processedTraceScenePoints = useMemo(() => {
+    if (!reconstruction.fieldCalibration || !traceReview) return [];
+    return traceReview.processedCoordinates.map((coordinate) =>
+      coordinateToScenePosition(
+        coordinate,
+        reconstruction.fieldCalibration!,
+        false,
+      ),
+    );
+  }, [reconstruction.fieldCalibration, traceReview]);
 
   const guidance = useMemo(() => {
-    if (!currentLocation || !guidancePlacementId) return null;
+    if (!currentCoordinate || !guidancePlacementId) return null;
     const placement = reconstruction.fieldPlacements.find(
       (item) => item.id === guidancePlacementId,
     );
     if (!placement) return null;
     return {
       placement,
-      ...getDistanceAndBearing(currentLocation, placement.coordinate),
+      ...getDistanceAndBearing(currentCoordinate, placement.coordinate),
     };
   }, [
-    currentLocation,
+    currentCoordinate,
     guidancePlacementId,
     reconstruction.fieldPlacements,
   ]);
 
   useEffect(() => {
     if (!open) return;
-    startLocation();
-    return () => stopLocation();
-  }, [open, startLocation, stopLocation]);
+    startGeolocation();
+    return () => stopGeolocation();
+  }, [open, startGeolocation, stopGeolocation]);
 
   useEffect(() => {
-    if (!isTracing || !currentLocation || currentLocation.accuracyMetres > 25) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setTraceCoordinates((current) => {
+    if (!isTracing || tracePaused || !currentCoordinate) return;
+    const coordinate = currentCoordinate;
+    queueMicrotask(() => {
+      setRawTraceCoordinates((current) => {
         const previous = current[current.length - 1];
-        if (
-          previous &&
-          haversineDistanceMetres(previous, currentLocation) < 0.4
-        ) {
-          return current;
-        }
-        return [...current, currentLocation];
+        if (!previous) return [coordinate];
+        if (previous.capturedAt === coordinate.capturedAt) return current;
+        const distance = haversineDistanceMetres(previous, coordinate);
+        if (distance < 0.05) return current;
+        return [...current, coordinate];
       });
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [currentLocation, isTracing]);
-
-  useEffect(() => {
-    if (open) return;
-
-    const timer = window.setTimeout(() => {
-      setIsTracing(false);
-      setTraceCoordinates([]);
-      setPendingCapture(null);
-      setMessage("");
-      setError("");
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [open]);
+    });
+  }, [currentCoordinate, isTracing, tracePaused]);
 
   const captureAverage = async (): Promise<AveragedLocationResult> => {
-    if (!locationSupported) {
+    if (!geolocationSupported) {
       throw new Error("This device or browser does not support geolocation.");
     }
 
-    startLocation();
-    const startedAt = getTimestampMilliseconds();
+    startGeolocation();
+    clearGeolocationSamples();
     setIsAveraging(true);
     setAverageProgress(0);
 
@@ -285,14 +443,14 @@ export default function FieldPlacementPanel({
         setAverageProgress(index / 20);
       }
 
-      const samples = getLocationSamplesSince(startedAt);
+      const samples = getSamplesSince(0);
       if (samples.length === 0) {
-        if (!currentLocation) {
+        if (!currentCoordinate) {
           throw new Error(
             "No GPS samples were received. Move outdoors and keep the device still.",
           );
         }
-        return createSingleCapture(currentLocation);
+        return createSingleCapture(currentCoordinate);
       }
 
       return averageGeoCoordinates(samples);
@@ -313,9 +471,8 @@ export default function FieldPlacementPanel({
       if (kind === "origin") setCalibrationOrigin(result.coordinate);
       else if (kind === "direction") setCalibrationDirection(result.coordinate);
       else setCalibrationWidth(result.coordinate);
-
       setMessage(
-        `${kind === "origin" ? "Origin" : kind === "direction" ? "Road direction" : "Width reference"} captured using ${result.sampleCount} GPS sample(s).`,
+        `${kind === "origin" ? "Origin" : kind === "direction" ? "Road direction" : "Width reference"} captured from ${result.sampleCount} accepted GPS sample(s).`,
       );
     } catch (captureError) {
       setError(
@@ -341,14 +498,10 @@ export default function FieldPlacementPanel({
         sceneHeightMetres: reconstruction.scene.sceneHeightMetres,
         createdBy: officerName,
       });
-
-      onUpdate((current) => ({
-        ...current,
-        fieldCalibration: calibration,
-      }));
-      setMessage("Field scene calibration saved successfully.");
+      onUpdate((current) => ({ ...current, fieldCalibration: calibration }));
+      setMessage("Field scene calibration saved. Capture tools are ready.");
       setError("");
-      setTab("Place Item");
+      setTab("Capture");
     } catch (calibrationError) {
       setError(
         calibrationError instanceof Error
@@ -359,26 +512,25 @@ export default function FieldPlacementPanel({
   };
 
   const prepareCurrentCapture = (): void => {
-    if (!geolocation.current) {
+    if (!currentCoordinate) {
       setError("Wait until the device has a current GPS reading.");
       return;
     }
-    setPendingCapture(createSingleCapture(geolocation.current));
+    setPendingCapture(createSingleCapture(currentCoordinate));
     setAllowPoorAccuracy(false);
-    setMessage("Current GPS reading prepared. Review it before confirming.");
+    setMessage("Current reading prepared. Review it before confirming.");
     setError("");
   };
 
   const prepareAverageCapture = async (): Promise<void> => {
     setError("");
     setMessage("");
-
     try {
       const result = await captureAverage();
       setPendingCapture(result);
       setAllowPoorAccuracy(false);
       setMessage(
-        `Averaged location prepared from ${result.sampleCount} accepted sample(s).`,
+        `Position prepared from ${result.sampleCount} accepted sample(s).`,
       );
     } catch (captureError) {
       setError(
@@ -390,20 +542,23 @@ export default function FieldPlacementPanel({
   };
 
   const confirmPlacement = (): void => {
-    if (!selectedTarget) {
-      setError("Select the participant point, object or evidence item to place.");
+    if (!selectedPointTarget) {
+      setError("Select an item that supports point placement.");
       return;
     }
     if (!pendingCapture) {
-      setError("Prepare a current or averaged GPS reading first.");
+      setError("Capture the current position first.");
       return;
     }
-    if (
-      pendingCapture.averageAccuracyMetres > 15 &&
-      !allowPoorAccuracy
-    ) {
+    if (!pendingBounds?.insideScene) {
       setError(
-        "This reading has poor accuracy. Wait for a better signal, average again, or explicitly allow the reading with a warning.",
+        "This position lies outside the calibrated scene. Expand or recalibrate the scene before confirming it.",
+      );
+      return;
+    }
+    if (pendingCapture.averageAccuracyMetres > 10 && !allowPoorAccuracy) {
+      setError(
+        "GPS accuracy is currently poor. Wait for a better signal or explicitly accept the warning.",
       );
       return;
     }
@@ -412,7 +567,7 @@ export default function FieldPlacementPanel({
       onUpdate((current) =>
         FieldPlacementService.applyPlacement({
           reconstruction: current,
-          target: selectedTarget,
+          target: selectedPointTarget,
           capture: pendingCapture,
           method:
             pendingCapture.sampleCount > 1 ? "Averaged GPS" : "Single GPS",
@@ -420,8 +575,8 @@ export default function FieldPlacementPanel({
           acceptedPoorAccuracy: allowPoorAccuracy,
         }),
       );
-      onPlacementConfirmed?.(selectedTarget);
-      setMessage(`${selectedTarget.label} was placed from the field GPS reading.`);
+      onPlacementConfirmed?.(selectedPointTarget);
+      setMessage(`${selectedPointTarget.label} was placed from field GPS.`);
       setError("");
       setPendingCapture(null);
     } catch (placementError) {
@@ -435,36 +590,57 @@ export default function FieldPlacementPanel({
 
   const startWalkingTrace = (): void => {
     if (!reconstruction.fieldCalibration) {
-      setError("Calibrate the field scene before recording a walking trace.");
+      setError("Calibrate the scene before recording a walking capture.");
       setTab("Calibration");
       return;
     }
-    if (!selectedTraceTarget) {
-      setError("Select a participant route or traceable scene object.");
+    if (!selectedTargetOption?.traceTargetType) {
+      setError("Select an item that supports this walking capture method.");
       return;
     }
-    if (!geolocation.current) {
+    if (!currentCoordinate) {
       setError("Wait until the device has a current GPS reading.");
       return;
     }
 
-    setTraceCoordinates([geolocation.current]);
+    setRawTraceCoordinates([currentCoordinate]);
+    setTraceReview(null);
     setTraceStartedAt(new Date().toISOString());
+    setTracePaused(false);
     setIsTracing(true);
     setError("");
-    setMessage("Walking trace started. Walk slowly along the required route.");
-  };
-
-  const stopWalkingTrace = (): void => {
-    setIsTracing(false);
     setMessage(
-      `Walking trace stopped with ${traceCoordinates.length} usable point(s).`,
+      captureMode === "Boundary"
+        ? "Boundary recording started. Walk around the outside edge and return near the start."
+        : "Line recording started. Walk slowly along the physical feature.",
     );
   };
 
+  const finishWalkingTrace = (): void => {
+    setIsTracing(false);
+    setTracePaused(false);
+    try {
+      const review = FieldCaptureProcessingService.processWalkingTrace({
+        coordinates: rawTraceCoordinates,
+        captureMode: captureMode === "Boundary" ? "Boundary" : "Line",
+      });
+      setTraceReview(review);
+      setMessage(
+        `Capture processed: ${review.acceptedCoordinates.length} accepted and ${review.rejectedCoordinates.length} rejected sample(s).`,
+      );
+      setError("");
+    } catch (traceError) {
+      setError(
+        traceError instanceof Error
+          ? traceError.message
+          : "The walking capture could not be processed.",
+      );
+    }
+  };
+
   const saveWalkingTrace = (): void => {
-    if (!selectedTraceTarget || traceCoordinates.length < 2) {
-      setError("Record at least two usable GPS points before saving the trace.");
+    if (!selectedTargetOption?.traceTargetType || !traceReview) {
+      setError("Finish and review the walking capture before saving it.");
       return;
     }
 
@@ -472,23 +648,30 @@ export default function FieldPlacementPanel({
       onUpdate((current) =>
         FieldPlacementService.applyWalkingTrack({
           reconstruction: current,
-          targetType: selectedTraceTarget.targetType,
-          targetId: selectedTraceTarget.targetId,
-          targetLabel: selectedTraceTarget.label,
-          coordinates: traceCoordinates,
+          targetType:
+            captureMode === "Boundary"
+              ? "SceneObjectBoundary"
+              : selectedTargetOption.traceTargetType!,
+          targetId: selectedTargetOption.targetId,
+          targetLabel: selectedTargetOption.label,
+          processedTrace: traceReview,
           startedAt: traceStartedAt || new Date().toISOString(),
           recordedBy: officerName,
         }),
       );
-      setMessage(`${selectedTraceTarget.label} was updated from the walking trace.`);
+      if (selectedTargetOption.pointTarget) {
+        onPlacementConfirmed?.(selectedTargetOption.pointTarget);
+      }
+      setMessage(`${selectedTargetOption.label} was updated from field walking data.`);
       setError("");
-      setTraceCoordinates([]);
+      setRawTraceCoordinates([]);
+      setTraceReview(null);
       setTraceStartedAt("");
     } catch (traceError) {
       setError(
         traceError instanceof Error
           ? traceError.message
-          : "The walking trace could not be saved.",
+          : "The walking capture could not be saved.",
       );
     }
   };
@@ -514,51 +697,101 @@ export default function FieldPlacementPanel({
         }
       : undefined);
 
+  const modeCopy = captureModeCopy(captureMode);
+
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4">
-      <div className="mx-auto min-h-[calc(100vh-1rem)] max-w-[1500px] overflow-hidden rounded-3xl bg-gray-100 shadow-2xl sm:min-h-[calc(100vh-2rem)]">
-        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/90 p-2 backdrop-blur-sm sm:p-4">
+      <div className="mx-auto min-h-[calc(100vh-1rem)] max-w-[1600px] overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl sm:min-h-[calc(100vh-2rem)]">
+        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 bg-slate-950/95 px-4 py-4 backdrop-blur-xl sm:px-6">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">
-              RoadSafe AR Field Mode
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-400">
+              RoadSafe AR · Field Capture V2
             </p>
-            <h2 className="mt-1 text-2xl font-black text-gray-950">
-              GPS Scene Placement
+            <h2 className="mt-1 text-2xl font-black text-white">
+              Real-world scene capture
             </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Walk to a real scene position, stabilise the GPS reading, then confirm it in the 2D reconstruction.
+            <p className="mt-1 max-w-3xl text-sm text-slate-400">
+              Select an item, physically walk to or along it, review the GPS geometry, then confirm it into the reconstruction.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <LocationAccuracyBadge
-              accuracyMetres={geolocation.current?.accuracyMetres ?? null}
+              accuracyMetres={currentCoordinate?.accuracyMetres ?? null}
             />
             <button
               type="button"
-              onClick={geolocation.isWatching ? geolocation.stop : geolocation.start}
-              className="rounded-sm border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-800 hover:bg-sky-100"
+              onClick={geolocationIsWatching ? geolocation.stop : geolocation.start}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-black text-slate-100 hover:bg-slate-700"
             >
-              {geolocation.isWatching ? "Pause GPS" : "Start GPS"}
+              <Radio size={16} />
+              {geolocationIsWatching ? "Pause GPS" : "Start GPS"}
             </button>
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-sm bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black"
+              onClick={() => {
+                setIsTracing(false);
+                setTracePaused(false);
+                setRawTraceCoordinates([]);
+                setTraceReview(null);
+                setPendingCapture(null);
+                setMessage("");
+                setError("");
+                onClose();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-sky-400"
             >
-              Close Field Mode
+              <X size={16} /> Close Field Mode
             </button>
           </div>
         </header>
 
-        <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+        <nav className="flex gap-2 overflow-x-auto border-b border-slate-800 bg-slate-900 px-4 py-3 sm:px-6">
+          {(["Capture", "Calibration", "History"] as FieldTab[]).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTab(item)}
+              className={`rounded-lg px-4 py-2 text-xs font-black ${
+                tab === item
+                  ? "bg-sky-500 text-slate-950"
+                  : "border border-slate-700 bg-slate-800 text-slate-300"
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </nav>
+
+        {(message || error || geolocationError) && (
+          <div className="space-y-2 px-4 pt-4 sm:px-6">
+            {message && (
+              <div className="flex items-start gap-3 rounded-xl border border-emerald-700/60 bg-emerald-950/50 p-3 text-sm font-semibold text-emerald-200">
+                <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+                {message}
+              </div>
+            )}
+            {(error || geolocationError) && (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-800/70 bg-rose-950/50 p-3 text-sm font-semibold text-rose-200">
+                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+                {error || geolocationError}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[minmax(0,1.25fr)_420px]">
           <section className="space-y-4">
             <div className="grid gap-4 2xl:grid-cols-2">
               <FieldPlacementMap
-                current={geolocation.current}
+                current={currentCoordinate}
                 calibration={calibrationForMap}
                 placements={reconstruction.fieldPlacements}
-                traceCoordinates={traceCoordinates}
+                rawTraceCoordinates={rawTraceCoordinates}
+                processedTraceCoordinates={traceReview?.processedCoordinates ?? []}
+                rejectedTraceCoordinates={traceReview?.rejectedCoordinates ?? []}
+                pendingCoordinate={pendingCapture?.coordinate ?? null}
+                captureMode={captureMode}
                 guidancePlacementId={guidancePlacementId}
               />
 
@@ -566,530 +799,396 @@ export default function FieldPlacementPanel({
                 reconstruction={reconstruction}
                 currentTimeSeconds={currentTimeSeconds}
                 liveScenePosition={liveScenePosition}
-                selectedTarget={selectedTarget}
-                traceScenePoints={traceScenePoints}
+                pendingScenePosition={pendingScenePosition}
+                selectedTarget={selectedPointTarget}
+                rawTraceScenePoints={rawTraceScenePoints}
+                processedTraceScenePoints={processedTraceScenePoints}
+                captureMode={captureMode}
               />
             </div>
 
-            <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 sm:grid-cols-4">
+            <div className="grid gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-4 sm:grid-cols-4">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wide text-gray-500">
-                  Permission
-                </p>
-                <p className="mt-1 text-sm font-bold capitalize text-gray-900">
-                  {geolocation.permission}
-                </p>
+                <p className="text-[10px] font-black uppercase text-slate-500">Permission</p>
+                <p className="mt-1 text-sm font-black text-white">{geolocationPermission}</p>
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wide text-gray-500">
-                  Samples
-                </p>
-                <p className="mt-1 text-sm font-bold text-gray-900">
-                  {geolocation.sampleCount}
-                </p>
+                <p className="text-[10px] font-black uppercase text-slate-500">Live samples</p>
+                <p className="mt-1 text-sm font-black text-white">{geolocationSampleCount}</p>
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wide text-gray-500">
-                  Current coordinates
-                </p>
-                <p className="mt-1 break-all text-xs font-bold text-gray-900">
-                  {formatCoordinate(geolocation.current)}
-                </p>
+                <p className="text-[10px] font-black uppercase text-slate-500">Coordinate</p>
+                <p className="mt-1 break-all text-xs font-bold text-slate-300">{formatCoordinate(currentCoordinate)}</p>
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wide text-gray-500">
-                  Converted 2D position
-                </p>
-                <p className="mt-1 text-sm font-bold text-gray-900">
-                  {liveScenePosition
-                    ? `X ${liveScenePosition.x.toFixed(1)}% · Y ${liveScenePosition.y.toFixed(1)}%`
-                    : "Calibrate first"}
-                </p>
+                <p className="text-[10px] font-black uppercase text-slate-500">Screen awake</p>
+                <p className="mt-1 text-sm font-black text-white">{wakeLock.locked ? "Locked" : wakeLock.supported ? "Ready" : "Unsupported"}</p>
               </div>
             </div>
+          </section>
 
-            {guidance && (
-              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+          <aside className="self-start rounded-2xl border border-slate-700 bg-slate-900 shadow-xl xl:sticky xl:top-28">
+            {tab === "Capture" && (
+              <div>
+                <div className="border-b border-slate-700 px-5 py-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Capture workflow</p>
+                  <h3 className="mt-1 text-lg font-black text-white">Choose, capture, review, confirm</h3>
+                </div>
+
+                <div className="space-y-5 p-5">
+                  {!reconstruction.fieldCalibration && (
+                    <div className="rounded-xl border border-amber-700/60 bg-amber-950/40 p-4 text-sm font-semibold text-amber-200">
+                      Calibrate the scene before placing field items.
+                      <button
+                        type="button"
+                        onClick={() => setTab("Calibration")}
+                        className="mt-3 w-full rounded-lg bg-amber-400 px-3 py-2 font-black text-slate-950"
+                      >
+                        Open Calibration
+                      </button>
+                    </div>
+                  )}
+
                   <div>
-                    <p className="text-xs font-black uppercase tracking-wide text-amber-700">
-                      Return-to-point guidance
-                    </p>
-                    <h3 className="mt-1 font-black text-amber-950">
-                      {guidance.placement.targetLabel}
-                    </h3>
-                    <p className="mt-2 text-sm text-amber-900">
-                      Approximately <strong>{guidance.distanceMetres.toFixed(1)} metres</strong> to the {guidance.directionLabel} ({guidance.bearingDegrees.toFixed(0)}°).
-                    </p>
+                    <label className="text-xs font-black uppercase tracking-wide text-slate-400">1. Select item or participant</label>
+                    <select
+                      value={effectiveTargetKey}
+                      onChange={(event) => {
+                        setTargetKey(event.target.value);
+                        setPendingCapture(null);
+                        setRawTraceCoordinates([]);
+                        setTraceReview(null);
+                      }}
+                      className="mt-2 w-full rounded-xl border border-slate-600 bg-slate-950 px-3 py-3 text-sm font-bold text-white outline-none focus:border-sky-400"
+                    >
+                      {availableTargets.length === 0 && <option value="">No compatible targets</option>}
+                      {availableTargets.map((target) => (
+                        <option key={target.key} value={target.key}>{target.label} — {target.detail}</option>
+                      ))}
+                    </select>
+                    {selectedTargetOption && (
+                      <p className="mt-2 text-xs text-slate-400">{selectedTargetOption.detail}</p>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setGuidancePlacementId(null)}
-                    className="rounded-lg border border-amber-300 px-3 py-2 text-xs font-bold text-amber-800"
-                  >
-                    Stop guidance
-                  </button>
+
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-400">2. Choose capture method</p>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {(["Point", "Line", "Boundary"] as FieldCaptureMode[]).map((mode) => {
+                        const compatible = captureTargets.some((target) => target.modes.includes(mode));
+                        return (
+                          <button
+                            key={mode}
+                            type="button"
+                            disabled={!compatible || isTracing}
+                            onClick={() => {
+                              setCaptureMode(mode);
+                              setPendingCapture(null);
+                              setRawTraceCoordinates([]);
+                              setTraceReview(null);
+                            }}
+                            className={`flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-[11px] font-black ${
+                              captureMode === mode
+                                ? "border-sky-400 bg-sky-500 text-slate-950"
+                                : "border-slate-600 bg-slate-800 text-slate-300"
+                            } disabled:opacity-30`}
+                          >
+                            {modeIcon(mode)}
+                            {mode}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-700 bg-slate-950 p-4">
+                    <p className="text-sm font-black text-white">{modeCopy.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">{modeCopy.description}</p>
+                  </div>
+
+                  {captureMode === "Point" ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={prepareCurrentCapture}
+                          disabled={!currentCoordinate || !reconstruction.fieldCalibration || isAveraging}
+                          className="rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200 disabled:opacity-40"
+                        >
+                          Use Current Reading
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void prepareAverageCapture()}
+                          disabled={!reconstruction.fieldCalibration || isAveraging}
+                          className="rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950 disabled:opacity-40"
+                        >
+                          {isAveraging ? `Stabilising ${Math.round(averageProgress * 100)}%` : "Capture Here · 5 sec"}
+                        </button>
+                      </div>
+
+                      {isAveraging && (
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                          <div className="h-full bg-sky-500" style={{ width: `${averageProgress * 100}%` }} />
+                        </div>
+                      )}
+
+                      {pendingCapture && (
+                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-black text-white">Point review</p>
+                            <span className="rounded-lg bg-slate-800 px-2 py-1 text-[10px] font-black text-slate-300">{pendingCapture.sampleCount} samples</span>
+                          </div>
+                          <dl className="grid grid-cols-2 gap-3 text-xs">
+                            <div><dt className="text-slate-500">Average accuracy</dt><dd className="font-black text-white">±{pendingCapture.averageAccuracyMetres.toFixed(1)}m</dd></div>
+                            <div><dt className="text-slate-500">Estimated uncertainty</dt><dd className="font-black text-white">±{(pendingCapture.estimatedUncertaintyMetres ?? pendingCapture.averageAccuracyMetres).toFixed(1)}m</dd></div>
+                            <div><dt className="text-slate-500">Observed spread</dt><dd className="font-black text-white">{(pendingCapture.observedSpreadMetres ?? 0).toFixed(1)}m</dd></div>
+                            <div><dt className="text-slate-500">Rejected samples</dt><dd className="font-black text-white">{pendingCapture.rejectedSampleCount}</dd></div>
+                          </dl>
+                          <p className="break-all text-[11px] font-semibold text-slate-400">{formatCoordinate(pendingCapture.coordinate)}</p>
+
+                          {pendingBounds && !pendingBounds.insideScene && (
+                            <div className="rounded-lg border border-rose-800 bg-rose-950/50 p-3 text-xs font-semibold text-rose-200">
+                              Outside calibrated scene. Recalibrate or expand the scene before confirming. No silent edge-clamping will be applied.
+                            </div>
+                          )}
+
+                          {pendingCapture.averageAccuracyMetres > 10 && (
+                            <label className="flex items-start gap-3 rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-xs font-semibold text-amber-200">
+                              <input
+                                type="checkbox"
+                                checked={allowPoorAccuracy}
+                                onChange={(event) => setAllowPoorAccuracy(event.target.checked)}
+                                className="mt-0.5 h-4 w-4"
+                              />
+                              Accept this poor-accuracy position and preserve the warning in the audit record.
+                            </label>
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={confirmPlacement}
+                        disabled={!selectedPointTarget || !pendingCapture || !pendingBounds?.insideScene}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
+                      >
+                        <MapPin size={17} /> Confirm Point Placement
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-700 bg-slate-950 p-3 text-center">
+                        <div><p className="text-[9px] font-black uppercase text-slate-500">Raw points</p><p className="mt-1 text-lg font-black text-white">{rawTraceCoordinates.length}</p></div>
+                        <div><p className="text-[9px] font-black uppercase text-slate-500">Raw distance</p><p className="mt-1 text-lg font-black text-white">{calculateTrackDistanceMetres(rawTraceCoordinates).toFixed(1)}m</p></div>
+                        <div><p className="text-[9px] font-black uppercase text-slate-500">Status</p><p className="mt-1 text-xs font-black text-white">{isTracing ? tracePaused ? "Paused" : "Recording" : traceReview ? "Review" : "Ready"}</p></div>
+                      </div>
+
+                      {!isTracing && !traceReview && (
+                        <button
+                          type="button"
+                          onClick={startWalkingTrace}
+                          disabled={!selectedTargetOption?.traceTargetType || !reconstruction.fieldCalibration}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
+                        >
+                          <Play size={17} /> Start {captureMode === "Boundary" ? "Boundary" : "Line"} Capture
+                        </button>
+                      )}
+
+                      {isTracing && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setTracePaused((value) => !value)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200"
+                          >
+                            {tracePaused ? <Play size={16} /> : <Pause size={16} />}
+                            {tracePaused ? "Resume" : "Pause"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={finishWalkingTrace}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950"
+                          >
+                            <Square size={15} /> Finish and Review
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRawTraceCoordinates((current) => current.slice(0, -1))}
+                            disabled={rawTraceCoordinates.length <= 1}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200 disabled:opacity-35"
+                          >
+                            <Undo2 size={16} /> Undo Last
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsTracing(false);
+                              setTracePaused(false);
+                              setRawTraceCoordinates([]);
+                              setTraceReview(null);
+                            }}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-800 bg-rose-950/40 px-3 py-3 text-xs font-black text-rose-200"
+                          >
+                            <Trash2 size={16} /> Discard
+                          </button>
+                        </div>
+                      )}
+
+                      {traceReview && (
+                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-black text-white">Geometry review</p>
+                            <span className="rounded-lg bg-sky-500 px-2 py-1 text-[10px] font-black text-slate-950">{traceReview.captureMode}</span>
+                          </div>
+                          <dl className="grid grid-cols-2 gap-3 text-xs">
+                            <div><dt className="text-slate-500">Raw distance</dt><dd className="font-black text-white">{traceReview.rawDistanceMetres.toFixed(1)}m</dd></div>
+                            <div><dt className="text-slate-500">Processed distance</dt><dd className="font-black text-white">{traceReview.processedDistanceMetres.toFixed(1)}m</dd></div>
+                            <div><dt className="text-slate-500">Accepted / rejected</dt><dd className="font-black text-white">{traceReview.acceptedCoordinates.length} / {traceReview.rejectedCoordinates.length}</dd></div>
+                            <div><dt className="text-slate-500">Uncertainty</dt><dd className="font-black text-white">±{traceReview.estimatedUncertaintyMetres.toFixed(1)}m</dd></div>
+                            {traceReview.areaSquareMetres !== undefined && (
+                              <div className="col-span-2"><dt className="text-slate-500">Boundary area</dt><dd className="font-black text-white">{traceReview.areaSquareMetres.toFixed(1)}m²</dd></div>
+                            )}
+                          </dl>
+                          <p className="text-[10px] leading-4 text-slate-500">{traceReview.processingMethod}</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRawTraceCoordinates([]);
+                                setTraceReview(null);
+                                setTraceStartedAt("");
+                              }}
+                              className="rounded-xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-black text-slate-200"
+                            >
+                              Retry Capture
+                            </button>
+                            <button
+                              type="button"
+                              onClick={saveWalkingTrace}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-3 text-xs font-black text-slate-950"
+                            >
+                              <Save size={16} /> Confirm Geometry
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {(geolocation.error || error || message || wakeLock.error) && (
-              <div className="space-y-2">
-                {(geolocation.error || error) && (
-                  <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
-                    {error || geolocation.error}
-                  </div>
-                )}
-                {message && (
-                  <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                    {message}
-                  </div>
-                )}
-                {wakeLock.error && (
-                  <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
-                    Wake lock unavailable: {wakeLock.error}
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="grid grid-cols-2 border-b border-gray-200 sm:grid-cols-4">
-              {(["Calibration", "Place Item", "Walk Trace", "History"] as FieldTab[]).map(
-                (item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => {
-                      setTab(item);
-                      setError("");
-                      setMessage("");
-                    }}
-                    className={`px-3 py-3 text-xs font-black transition ${
-                      tab === item
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ),
-              )}
-            </div>
-
-            <div className="max-h-[760px] overflow-y-auto p-4 sm:p-5">
-              {tab === "Calibration" && (
-                <div className="space-y-5">
-                  <div className="rounded-sm border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-                    Stand at the virtual scene’s <strong>lower-left origin</strong>, then walk along the scene’s horizontal road direction and capture the second point. The optional width point tells the system which side of the road should face upward in the 2D editor.
-                  </div>
-
-                  {[
-                    {
-                      kind: "origin" as const,
-                      title: "1. Scene origin",
-                      coordinate: calibrationOrigin,
-                      help: "Stand at the lower-left reference corner of the scene.",
-                    },
-                    {
-                      kind: "direction" as const,
-                      title: "2. Road direction",
-                      coordinate: calibrationDirection,
-                      help: "Walk at least 3 metres along the positive horizontal road direction.",
-                    },
-                    {
-                      kind: "width" as const,
-                      title: "3. Width direction (optional)",
-                      coordinate: calibrationWidth,
-                      help: "Stand on the side that should appear toward the top of the 2D scene.",
-                    },
-                  ].map((item) => (
-                    <div key={item.kind} className="rounded-sm border border-gray-200 p-4">
-                      <div className="flex items-start justify-between gap-3">
+            {tab === "Calibration" && (
+              <div>
+                <div className="border-b border-slate-700 px-5 py-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Scene reference</p>
+                  <h3 className="mt-1 text-lg font-black text-white">GPS calibration</h3>
+                </div>
+                <div className="space-y-4 p-5">
+                  <p className="text-xs leading-5 text-slate-400">
+                    Capture the scene origin, then walk at least 3 metres along the road direction. A longer baseline gives a more reliable orientation.
+                  </p>
+                  {([
+                    ["origin", "1. Scene origin", calibrationOrigin],
+                    ["direction", "2. Road direction reference", calibrationDirection],
+                    ["width", "3. Width-side reference (optional)", calibrationWidth],
+                  ] as const).map(([kind, label, coordinate]) => (
+                    <div key={kind} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
+                      <div className="flex items-center justify-between gap-3">
                         <div>
-                          <h3 className="font-black text-gray-950">{item.title}</h3>
-                          <p className="mt-1 text-xs leading-5 text-gray-500">{item.help}</p>
-                          <p className="mt-2 break-all text-xs font-bold text-gray-800">
-                            {formatCoordinate(item.coordinate)}
-                          </p>
+                          <p className="text-sm font-black text-white">{label}</p>
+                          <p className="mt-1 break-all text-[10px] font-semibold text-slate-500">{formatCoordinate(coordinate)}</p>
                         </div>
                         <button
                           type="button"
+                          onClick={() => void captureCalibrationPoint(kind)}
                           disabled={isAveraging}
-                          onClick={() => void captureCalibrationPoint(item.kind)}
-                          className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:bg-gray-400"
+                          className="rounded-lg bg-sky-500 px-3 py-2 text-xs font-black text-slate-950 disabled:opacity-40"
                         >
-                          {item.coordinate ? "Recapture" : "Capture"}
+                          Capture
                         </button>
                       </div>
                     </div>
                   ))}
 
-                  {isAveraging && (
-                    <div className="rounded-sm bg-purple-50 p-4">
-                      <div className="flex items-center justify-between text-xs font-bold text-purple-800">
-                        <span>Averaging GPS while the device remains still…</span>
-                        <span>{Math.round(averageProgress * 100)}%</span>
-                      </div>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-purple-100">
-                        <div
-                          className="h-full rounded-full bg-purple-600 transition-all"
-                          style={{ width: `${averageProgress * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 rounded-sm bg-gray-50 p-4 text-xs">
-                    <div>
-                      <span className="font-bold text-gray-500">Scene width</span>
-                      <p className="mt-1 text-lg font-black text-gray-950">
-                        {reconstruction.scene.sceneWidthMetres}m
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-500">Scene height</span>
-                      <p className="mt-1 text-lg font-black text-gray-950">
-                        {reconstruction.scene.sceneHeightMetres}m
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={saveCalibration}
-                    disabled={!calibrationOrigin || !calibrationDirection || isAveraging}
-                    className="w-full rounded-sm bg-emerald-600 px-4 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-                  >
-                    Save Field Calibration
-                  </button>
-
                   {reconstruction.fieldCalibration && (
-                    <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
-                      <p className="font-black">Active calibration</p>
-                      <p>Road bearing: {reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}°</p>
-                      <p>Direction reference: {reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(1)}m</p>
-                      <p>Y-axis side: {reconstruction.fieldCalibration.yAxisSide}</p>
-                      <p>Captured by: {reconstruction.fieldCalibration.createdBy || "Not recorded"}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {tab === "Place Item" && (
-                <div className="space-y-5">
-                  {!reconstruction.fieldCalibration && (
-                    <button
-                      type="button"
-                      onClick={() => setTab("Calibration")}
-                      className="w-full rounded-sm border border-amber-300 bg-amber-50 p-4 text-left text-sm font-bold text-amber-900"
-                    >
-                      Calibration is required. Open the Calibration tab →
-                    </button>
-                  )}
-
-                  <label className="block">
-                    <span className="text-sm font-black text-gray-900">Placement target</span>
-                    <select
-                      value={targetKey}
-                      onChange={(event) => {
-                        setTargetKey(event.target.value);
-                        setPendingCapture(null);
-                      }}
-                      className="mt-2 w-full rounded-sm border border-gray-300 px-3 py-3 text-sm"
-                    >
-                      <option value="">Select an item…</option>
-                      {targets.map((target) => {
-                        const key = getTargetKey(target);
-                        return (
-                          <option key={key} value={key}>
-                            {target.label}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={prepareCurrentCapture}
-                      disabled={!geolocation.current || !reconstruction.fieldCalibration}
-                      className="rounded-sm border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-800 hover:bg-sky-100 disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                      Use Current Reading
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void prepareAverageCapture()}
-                      disabled={isAveraging || !reconstruction.fieldCalibration}
-                      className="rounded-sm bg-purple-600 px-4 py-3 text-sm font-black text-white hover:bg-purple-700 disabled:bg-gray-400"
-                    >
-                      Average for 5 Seconds
-                    </button>
-                  </div>
-
-                  {isAveraging && (
-                    <div className="rounded-sm bg-purple-50 p-4">
-                      <p className="text-xs font-bold text-purple-800">
-                        Keep the device still while readings are averaged.
-                      </p>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-purple-100">
-                        <div
-                          className="h-full bg-purple-600"
-                          style={{ width: `${averageProgress * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {pendingCapture && (
-                    <div className="rounded-sm border border-gray-200 bg-gray-50 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h3 className="font-black text-gray-950">Prepared location</h3>
-                        <LocationAccuracyBadge
-                          accuracyMetres={pendingCapture.averageAccuracyMetres}
-                        />
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-gray-700">
-                        <p><strong>Samples:</strong> {pendingCapture.sampleCount}</p>
-                        <p><strong>Best accuracy:</strong> ±{pendingCapture.bestAccuracyMetres.toFixed(1)}m</p>
-                        <p className="col-span-2 break-all"><strong>Coordinate:</strong> {formatCoordinate(pendingCapture.coordinate)}</p>
-                        {reconstruction.fieldCalibration && (
-                          <p className="col-span-2">
-                            <strong>2D position:</strong>{" "}
-                            {(() => {
-                              const position = coordinateToScenePosition(
-                                pendingCapture.coordinate,
-                                reconstruction.fieldCalibration,
-                                false,
-                              );
-                              return `X ${position.x.toFixed(1)}% · Y ${position.y.toFixed(1)}%`;
-                            })()}
-                          </p>
-                        )}
-                      </div>
-
-                      {pendingCapture.averageAccuracyMetres > 15 && (
-                        <label className="mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-900">
-                          <input
-                            type="checkbox"
-                            checked={allowPoorAccuracy}
-                            onChange={(event) => setAllowPoorAccuracy(event.target.checked)}
-                            className="mt-0.5 h-4 w-4"
-                          />
-                          Allow this poor-accuracy reading and preserve the warning in the field audit record.
-                        </label>
+                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4 text-xs text-slate-300">
+                      <p>Road bearing: <b className="text-white">{reconstruction.fieldCalibration.rotationDegrees.toFixed(1)}°</b></p>
+                      <p className="mt-1">Direction baseline: <b className="text-white">{reconstruction.fieldCalibration.directionReferenceDistanceMetres.toFixed(1)}m</b></p>
+                      {reconstruction.fieldCalibration.directionReferenceDistanceMetres < 10 && (
+                        <p className="mt-3 rounded-lg border border-amber-700 bg-amber-950/40 p-2 font-semibold text-amber-200">A baseline below 10m can produce unstable road orientation. Use a longer reference when practical.</p>
                       )}
                     </div>
                   )}
 
                   <button
                     type="button"
-                    onClick={confirmPlacement}
-                    disabled={!selectedTarget || !pendingCapture || !reconstruction.fieldCalibration}
-                    className="w-full rounded-sm bg-blue-600 px-4 py-3 font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    onClick={saveCalibration}
+                    disabled={!calibrationOrigin || !calibrationDirection}
+                    className="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-35"
                   >
-                    Confirm Current Position
+                    Save Calibration
                   </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {tab === "Walk Trace" && (
-                <div className="space-y-5">
-                  <div className="rounded-sm border border-purple-200 bg-purple-50 p-4 text-sm leading-6 text-purple-900">
-                    Walk slowly along a skid mark, tyre mark, road crack or estimated participant route. GPS samples with worse than ±25m accuracy are excluded automatically.
-                  </div>
-
-                  <label className="block">
-                    <span className="text-sm font-black text-gray-900">Trace target</span>
-                    <select
-                      value={traceTargetKey}
-                      onChange={(event) => setTraceTargetKey(event.target.value)}
-                      disabled={isTracing}
-                      className="mt-2 w-full rounded-sm border border-gray-300 px-3 py-3 text-sm disabled:bg-gray-100"
-                    >
-                      <option value="">Select a route or trace…</option>
-                      {traceTargets.map((target) => (
-                        <option key={target.key} value={target.key}>
-                          {target.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="grid grid-cols-3 gap-3 rounded-sm bg-gray-50 p-4 text-center">
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-gray-500">Points</p>
-                      <p className="mt-1 text-xl font-black text-gray-950">{traceCoordinates.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-gray-500">Distance</p>
-                      <p className="mt-1 text-xl font-black text-gray-950">
-                        {calculateTrackDistanceMetres(traceCoordinates).toFixed(1)}m
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-gray-500">Screen</p>
-                      <p className="mt-1 text-sm font-black text-gray-950">
-                        {wakeLock.locked ? "Kept awake" : wakeLock.supported ? "Ready" : "Manual"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {!isTracing ? (
-                    <button
-                      type="button"
-                      onClick={startWalkingTrace}
-                      disabled={!selectedTraceTarget || !reconstruction.fieldCalibration}
-                      className="w-full rounded-sm bg-red-600 px-4 py-3 font-black text-white hover:bg-red-700 disabled:bg-gray-400"
-                    >
-                      ● Start Walking Trace
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={stopWalkingTrace}
-                      className="w-full animate-pulse rounded-sm bg-red-700 px-4 py-3 font-black text-white"
-                    >
-                      ■ Stop Trace Recording
-                    </button>
-                  )}
-
-                  {!isTracing && traceCoordinates.length >= 2 && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={saveWalkingTrace}
-                        className="rounded-sm bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
-                      >
-                        Save Trace to Reconstruction
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTraceCoordinates([]);
-                          setTraceStartedAt("");
-                        }}
-                        className="rounded-sm border border-gray-300 px-4 py-3 text-sm font-black text-gray-700 hover:bg-gray-50"
-                      >
-                        Discard Trace
-                      </button>
-                    </div>
-                  )}
+            {tab === "History" && (
+              <div>
+                <div className="border-b border-slate-700 px-5 py-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">Forensic audit</p>
+                  <h3 className="mt-1 text-lg font-black text-white">Captured field data</h3>
                 </div>
-              )}
-
-              {tab === "History" && (
-                <div className="space-y-5">
+                <div className="max-h-[68vh] space-y-4 overflow-y-auto p-5 overscroll-contain">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-sm bg-blue-50 p-4">
-                      <p className="text-xs font-black uppercase text-blue-600">Captured points</p>
-                      <p className="mt-1 text-3xl font-black text-blue-950">
-                        {reconstruction.fieldPlacements.length}
-                      </p>
-                    </div>
-                    <div className="rounded-sm bg-purple-50 p-4">
-                      <p className="text-xs font-black uppercase text-purple-600">Walking traces</p>
-                      <p className="mt-1 text-3xl font-black text-purple-950">
-                        {reconstruction.fieldWalkingTracks.length}
-                      </p>
-                    </div>
+                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4"><p className="text-[10px] font-black uppercase text-slate-500">Points</p><p className="mt-1 text-2xl font-black text-white">{reconstruction.fieldPlacements.length}</p></div>
+                    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4"><p className="text-[10px] font-black uppercase text-slate-500">Walked geometry</p><p className="mt-1 text-2xl font-black text-white">{reconstruction.fieldWalkingTracks.length}</p></div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      downloadJson(
-                        `${reconstruction.accidentId || "roadsafe"}-field-data.json`,
-                        {
-                          calibration: reconstruction.fieldCalibration,
-                          placements: reconstruction.fieldPlacements,
-                          walkingTracks: reconstruction.fieldWalkingTracks,
-                        },
-                      )
-                    }
-                    className="w-full rounded-sm border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-800 hover:bg-indigo-100"
+                    onClick={() => downloadJson(`${reconstruction.accidentId || "roadsafe"}-field-data.json`, {
+                      calibration: reconstruction.fieldCalibration,
+                      placements: reconstruction.fieldPlacements,
+                      walkingTracks: reconstruction.fieldWalkingTracks,
+                    })}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-xs font-black text-slate-200"
                   >
-                    Export Field Audit JSON
+                    <FileClock size={16} /> Export Field Audit JSON
                   </button>
 
-                  <div className="space-y-3">
-                    {reconstruction.fieldPlacements.length === 0 && (
-                      <p className="rounded-sm border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
-                        No field points have been confirmed yet.
-                      </p>
-                    )}
-
-                    {[...reconstruction.fieldPlacements]
-                      .sort(
-                        (left, right) =>
-                          new Date(right.confirmedAt).getTime() -
-                          new Date(left.confirmedAt).getTime(),
-                      )
-                      .map((placement) => (
-                        <article key={placement.id} className="rounded-sm border border-gray-200 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <h3 className="font-black text-gray-950">{placement.targetLabel}</h3>
-                              <p className="mt-1 text-xs font-semibold text-gray-500">
-                                {placement.method} · {placement.sampleCount} sample(s) · ±{placement.averageAccuracyMetres.toFixed(1)}m
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setGuidancePlacementId(placement.id)}
-                              className="rounded-lg bg-amber-100 px-3 py-2 text-[11px] font-black text-amber-800 hover:bg-amber-200"
-                            >
-                              Guide me there
-                            </button>
-                          </div>
-                          <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-700">
-                            <div><dt className="font-bold text-gray-500">Coordinate</dt><dd className="break-all">{formatCoordinate(placement.coordinate)}</dd></div>
-                            <div><dt className="font-bold text-gray-500">2D position</dt><dd>X {placement.scenePosition.x.toFixed(1)}% · Y {placement.scenePosition.y.toFixed(1)}%</dd></div>
-                            <div><dt className="font-bold text-gray-500">Captured by</dt><dd>{placement.confirmedBy || "Not recorded"}</dd></div>
-                            <div><dt className="font-bold text-gray-500">Time</dt><dd>{new Date(placement.confirmedAt).toLocaleString()}</dd></div>
-                          </dl>
-                          {placement.acceptedPoorAccuracy && (
-                            <p className="mt-3 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-800">
-                              This position was explicitly accepted despite poor reported GPS accuracy.
-                            </p>
-                          )}
-                          {placement.manuallyAdjusted && (
-                            <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs font-semibold text-amber-800">
-                              This item was manually adjusted in the 2D editor after GPS capture. The original GPS position remains preserved here.
-                            </p>
-                          )}
-                        </article>
-                      ))}
-                  </div>
-
-                  {reconstruction.fieldWalkingTracks.length > 0 && (
-                    <div className="space-y-3 border-t border-gray-200 pt-5">
-                      <h3 className="font-black text-gray-950">Saved walking traces</h3>
-                      {reconstruction.fieldWalkingTracks.map((track) => (
-                        <article key={track.id} className="rounded-sm border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950">
-                          <p className="font-black">{track.targetLabel}</p>
-                          <p className="mt-1 text-xs">
-                            {track.coordinates.length} GPS points · {track.distanceMetres.toFixed(1)}m · average accuracy ±{track.averageAccuracyMetres.toFixed(1)}m
-                          </p>
-                          <p className="mt-1 text-xs text-purple-700">
-                            {new Date(track.completedAt).toLocaleString()} · {track.recordedBy || "Officer not recorded"}
-                          </p>
-                        </article>
-                      ))}
+                  {guidance && (
+                    <div className="rounded-xl border border-amber-700 bg-amber-950/40 p-4 text-xs text-amber-200">
+                      <p className="font-black">Guidance to {guidance.placement.targetLabel}</p>
+                      <p className="mt-1">{guidance.distanceMetres.toFixed(1)}m {guidance.directionLabel} · bearing {guidance.bearingDegrees.toFixed(0)}°</p>
                     </div>
                   )}
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
 
-        <footer className="border-t border-gray-200 bg-white px-4 py-3 text-xs leading-5 text-gray-600 sm:px-6">
-          Field GPS accuracy is device- and environment-dependent. The recorded accuracy radius, raw coordinate, sample count and placement method are preserved for every confirmed point. Use dedicated surveying or GNSS equipment where forensic precision is required.
-        </footer>
+                  <div className="space-y-3">
+                    {[...reconstruction.fieldPlacements].reverse().map((placement) => (
+                      <article key={placement.id} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div><h4 className="text-sm font-black text-white">{placement.targetLabel}</h4><p className="mt-1 text-[10px] font-semibold text-slate-500">{placement.method} · {placement.sampleCount} sample(s) · ±{(placement.estimatedUncertaintyMetres ?? placement.averageAccuracyMetres).toFixed(1)}m</p></div>
+                          <button type="button" onClick={() => setGuidancePlacementId(placement.id)} className="rounded-lg border border-amber-700 bg-amber-950/40 px-2 py-1.5 text-[10px] font-black text-amber-200">Guide</button>
+                        </div>
+                        <p className="mt-2 break-all text-[10px] text-slate-500">{formatCoordinate(placement.coordinate)}</p>
+                      </article>
+                    ))}
+
+                    {[...reconstruction.fieldWalkingTracks].reverse().map((track) => (
+                      <article key={track.id} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
+                        <h4 className="text-sm font-black text-white">{track.targetLabel}</h4>
+                        <p className="mt-1 text-[10px] font-semibold text-slate-500">{track.captureMode ?? "Line"} · {track.distanceMetres.toFixed(1)}m · ±{(track.estimatedUncertaintyMetres ?? track.averageAccuracyMetres).toFixed(1)}m</p>
+                        {track.areaSquareMetres !== undefined && <p className="mt-2 text-xs font-black text-sky-300">Area {track.areaSquareMetres.toFixed(1)}m²</p>}
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ export default function LocationAccuracyBadge({
 }: LocationAccuracyBadgeProps) {
   if (accuracyMetres === null) {
     return (
-      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+      <span className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-slate-300">
         Waiting for GPS
       </span>
     );
@@ -17,14 +17,14 @@ export default function LocationAccuracyBadge({
 
   const quality = getAccuracyQuality(accuracyMetres);
   const classes = {
-    Excellent: "bg-emerald-100 text-emerald-800",
-    Good: "bg-green-100 text-green-800",
-    Acceptable: "bg-amber-100 text-amber-800",
-    Poor: "bg-red-100 text-red-800",
+    Excellent: "border-emerald-600 bg-emerald-950/70 text-emerald-200",
+    Good: "border-sky-600 bg-sky-950/70 text-sky-200",
+    Acceptable: "border-amber-600 bg-amber-950/70 text-amber-200",
+    Poor: "border-rose-700 bg-rose-950/70 text-rose-200",
   }[quality];
 
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-black ${classes}`}>
+    <span className={`rounded-lg border px-3 py-2 text-xs font-black ${classes}`}>
       {quality} · ±{accuracyMetres.toFixed(1)}m
     </span>
   );

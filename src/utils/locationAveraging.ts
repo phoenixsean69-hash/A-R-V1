@@ -1,7 +1,12 @@
 import type {
   AveragedLocationResult,
   GeoCoordinate,
+  RejectedGeoCoordinate,
 } from "../types/fieldPlacement";
+import {
+  coordinateToLocalMetres,
+  localOffsetToCoordinate,
+} from "./geographicCoordinates";
 
 function median(values: number[]): number {
   if (values.length === 0) return 0;
@@ -12,6 +17,18 @@ function median(values: number[]): number {
     : sorted[middle];
 }
 
+function isValidCoordinate(sample: GeoCoordinate): boolean {
+  return (
+    Number.isFinite(sample.latitude) &&
+    Number.isFinite(sample.longitude) &&
+    Number.isFinite(sample.accuracyMetres) &&
+    sample.latitude >= -90 &&
+    sample.latitude <= 90 &&
+    sample.longitude >= -180 &&
+    sample.longitude <= 180
+  );
+}
+
 export function averageGeoCoordinates(
   samples: GeoCoordinate[],
 ): AveragedLocationResult {
@@ -19,67 +36,104 @@ export function averageGeoCoordinates(
     throw new Error("No location samples were collected.");
   }
 
+  const validSamples = samples.filter(isValidCoordinate);
+  if (validSamples.length === 0) {
+    throw new Error("The device returned no valid geographic coordinates.");
+  }
+
   const accuracyMedian = median(
-    samples.map((sample) => Math.max(1, sample.accuracyMetres)),
+    validSamples.map((sample) => Math.max(1, sample.accuracyMetres)),
   );
-  const maximumAcceptedAccuracy = Math.max(10, accuracyMedian * 2.5);
-
-  let accepted = samples.filter(
-    (sample) =>
-      Number.isFinite(sample.latitude) &&
-      Number.isFinite(sample.longitude) &&
-      Number.isFinite(sample.accuracyMetres) &&
-      sample.accuracyMetres <= maximumAcceptedAccuracy,
+  const maximumAcceptedAccuracy = Math.min(
+    30,
+    Math.max(10, accuracyMedian * 2.5),
   );
+  const rejectedSamples: RejectedGeoCoordinate[] = [];
+  const accepted = validSamples.filter((sample) => {
+    if (sample.accuracyMetres <= maximumAcceptedAccuracy) return true;
+    rejectedSamples.push({ coordinate: sample, reason: "Poor accuracy" });
+    return false;
+  });
 
-  if (accepted.length === 0) accepted = samples;
+  samples
+    .filter((sample) => !isValidCoordinate(sample))
+    .forEach((sample) =>
+      rejectedSamples.push({ coordinate: sample, reason: "Invalid coordinate" }),
+    );
 
-  const weighted = accepted.reduce(
+  const usingAccuracyFallback = accepted.length === 0;
+  const usable = usingAccuracyFallback ? validSamples : accepted;
+  const finalRejectedSamples = usingAccuracyFallback
+    ? rejectedSamples.filter((sample) => sample.reason !== "Poor accuracy")
+    : rejectedSamples;
+  const origin = usable[0];
+  const weighted = usable.reduce(
     (result, sample) => {
+      const local = coordinateToLocalMetres(origin, sample);
       const weight = 1 / Math.max(1, sample.accuracyMetres) ** 2;
-      result.latitude += sample.latitude * weight;
-      result.longitude += sample.longitude * weight;
+      result.east += local.eastMetres * weight;
+      result.north += local.northMetres * weight;
       result.weight += weight;
 
       if (sample.altitudeMetres !== null && sample.altitudeMetres !== undefined) {
         result.altitude += sample.altitudeMetres * weight;
         result.altitudeWeight += weight;
       }
-
       return result;
     },
-    {
-      latitude: 0,
-      longitude: 0,
-      altitude: 0,
-      altitudeWeight: 0,
-      weight: 0,
-    },
+    { east: 0, north: 0, altitude: 0, altitudeWeight: 0, weight: 0 },
   );
 
+  const eastMetres = weighted.east / weighted.weight;
+  const northMetres = weighted.north / weighted.weight;
+  const averagedCoordinate = localOffsetToCoordinate(
+    origin,
+    eastMetres,
+    northMetres,
+  );
+  const offsets = usable.map((sample) => {
+    const local = coordinateToLocalMetres(origin, sample);
+    return Math.hypot(
+      local.eastMetres - eastMetres,
+      local.northMetres - northMetres,
+    );
+  });
+  const observedSpreadMetres = Math.sqrt(
+    offsets.reduce((sum, offset) => sum + offset * offset, 0) /
+      Math.max(1, offsets.length),
+  );
   const averageAccuracyMetres =
-    accepted.reduce((total, sample) => total + sample.accuracyMetres, 0) /
-    accepted.length;
+    usable.reduce((total, sample) => total + sample.accuracyMetres, 0) /
+    usable.length;
   const bestAccuracyMetres = Math.min(
-    ...accepted.map((sample) => sample.accuracyMetres),
+    ...usable.map((sample) => sample.accuracyMetres),
+  );
+  // Browser GPS errors are correlated; avoid claiming 1/sqrt(n) survey precision.
+  const estimatedUncertaintyMetres = Math.max(
+    bestAccuracyMetres,
+    observedSpreadMetres * 2,
+    averageAccuracyMetres * 0.65,
   );
 
   return {
     coordinate: {
-      latitude: weighted.latitude / weighted.weight,
-      longitude: weighted.longitude / weighted.weight,
-      accuracyMetres: Number(averageAccuracyMetres.toFixed(2)),
+      ...averagedCoordinate,
+      accuracyMetres: Number(estimatedUncertaintyMetres.toFixed(2)),
       altitudeMetres:
         weighted.altitudeWeight > 0
           ? weighted.altitude / weighted.altitudeWeight
           : null,
-      headingDegrees: null,
-      speedMetresPerSecond: null,
       capturedAt: new Date().toISOString(),
     },
-    sampleCount: accepted.length,
+    sampleCount: usable.length,
     averageAccuracyMetres: Number(averageAccuracyMetres.toFixed(2)),
     bestAccuracyMetres: Number(bestAccuracyMetres.toFixed(2)),
-    rejectedSampleCount: samples.length - accepted.length,
+    rejectedSampleCount: finalRejectedSamples.length,
+    observedSpreadMetres: Number(observedSpreadMetres.toFixed(2)),
+    estimatedUncertaintyMetres: Number(
+      estimatedUncertaintyMetres.toFixed(2),
+    ),
+    rawSamples: [...samples],
+    rejectedSamples: finalRejectedSamples,
   };
 }

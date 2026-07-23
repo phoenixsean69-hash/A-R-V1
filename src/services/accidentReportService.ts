@@ -312,8 +312,8 @@ function buildWordHtml(report: AccidentReportModel): string {
       (placement) => `<tr>
         <td>${escapeHtml(placement.targetLabel)}</td>
         <td>${placement.coordinate.latitude.toFixed(7)}, ${placement.coordinate.longitude.toFixed(7)}</td>
-        <td>±${placement.averageAccuracyMetres.toFixed(1)}m</td>
-        <td>${escapeHtml(placement.method)}${placement.acceptedPoorAccuracy ? " (poor accuracy accepted)" : ""}</td>
+        <td>±${(placement.estimatedUncertaintyMetres ?? placement.averageAccuracyMetres).toFixed(1)}m${placement.observedSpreadMetres === undefined ? "" : `; spread ${placement.observedSpreadMetres.toFixed(1)}m`}</td>
+        <td>${escapeHtml(placement.method)}${placement.rejectedSamples?.length ? `; ${placement.rejectedSamples.length} rejected sample(s)` : ""}${placement.acceptedPoorAccuracy ? " (poor accuracy accepted)" : ""}</td>
         <td>${escapeHtml(placement.confirmedBy || "Not recorded")}</td>
       </tr>`,
     )
@@ -323,9 +323,9 @@ function buildWordHtml(report: AccidentReportModel): string {
     .map(
       (track) => `<tr>
         <td>${escapeHtml(track.targetLabel)}</td>
-        <td>${track.coordinates.length}</td>
-        <td>${track.distanceMetres.toFixed(2)}m</td>
-        <td>±${track.averageAccuracyMetres.toFixed(1)}m</td>
+        <td>${escapeHtml(track.captureMode ?? "Line")} · ${track.coordinates.length} processed${track.rejectedCoordinates?.length ? ` · ${track.rejectedCoordinates.length} rejected` : ""}</td>
+        <td>${track.distanceMetres.toFixed(2)}m${track.areaSquareMetres === undefined ? "" : `; ${track.areaSquareMetres.toFixed(2)}m²`}</td>
+        <td>±${(track.estimatedUncertaintyMetres ?? track.averageAccuracyMetres).toFixed(1)}m</td>
         <td>${escapeHtml(track.recordedBy || "Not recorded")}</td>
       </tr>`,
     )
@@ -370,8 +370,8 @@ ${report.narrative.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join(""
 ${footage.length > 0 ? `<ul>${footage.map((item) => `<li>${escapeHtml(item.title)} — ${item.durationSeconds.toFixed(2)} seconds; ${escapeHtml(item.fileName)}${item.isPrimary ? " (Primary)" : ""}</li>`).join("")}</ul>` : "<p>No reconstruction footage recorded.</p>"}
 <h2>Field GPS Placement Audit</h2>
 ${fieldPlacementRows ? `<table><thead><tr><th>Target</th><th>Coordinate</th><th>Accuracy</th><th>Method</th><th>Officer</th></tr></thead><tbody>${fieldPlacementRows}</tbody></table>` : "<p>No GPS field positions were recorded.</p>"}
-<h2>Walking Traces</h2>
-${walkingTrackRows ? `<table><thead><tr><th>Target</th><th>Points</th><th>Distance</th><th>Average Accuracy</th><th>Officer</th></tr></thead><tbody>${walkingTrackRows}</tbody></table>` : "<p>No walking traces were recorded.</p>"}
+<h2>Walking Traces and Boundaries</h2>
+${walkingTrackRows ? `<table><thead><tr><th>Target</th><th>Capture</th><th>Distance / Area</th><th>Estimated Uncertainty</th><th>Officer</th></tr></thead><tbody>${walkingTrackRows}</tbody></table>` : "<p>No walking traces were recorded.</p>"}
 <h2>Findings</h2>${list(report.findings)}
 <h2>Safety Recommendations</h2>${list(report.recommendations)}
 <h2>Limitations</h2>${list(report.limitations)}

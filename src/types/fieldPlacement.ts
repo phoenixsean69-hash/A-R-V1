@@ -13,6 +13,16 @@ export interface GeoCoordinate {
   capturedAt: string;
 }
 
+export interface RejectedGeoCoordinate {
+  coordinate: GeoCoordinate;
+  reason:
+    | "Invalid coordinate"
+    | "Poor accuracy"
+    | "Duplicate sample"
+    | "Impossible jump"
+    | "Out-of-order timestamp";
+}
+
 export interface FieldSceneCalibration {
   id: string;
   origin: GeoCoordinate;
@@ -43,10 +53,13 @@ export interface FieldPlacementTarget {
   label: string;
 }
 
+export type FieldCaptureMode = "Point" | "Line" | "Boundary";
+
 export type FieldPlacementMethod =
   | "Single GPS"
   | "Averaged GPS"
   | "Walking Trace"
+  | "Walking Boundary"
   | "Manual";
 
 export interface FieldPlacementRecord {
@@ -57,9 +70,14 @@ export interface FieldPlacementRecord {
   targetLabel: string;
   coordinate: GeoCoordinate;
   scenePosition: FieldScenePosition;
+  rawScenePosition?: FieldScenePosition;
   sampleCount: number;
   averageAccuracyMetres: number;
   bestAccuracyMetres: number;
+  observedSpreadMetres?: number;
+  estimatedUncertaintyMetres?: number;
+  rawSamples?: GeoCoordinate[];
+  rejectedSamples?: RejectedGeoCoordinate[];
   method: FieldPlacementMethod;
   acceptedPoorAccuracy: boolean;
   manuallyAdjusted: boolean;
@@ -74,20 +92,34 @@ export type FieldWalkingTrackTargetType =
   | "SkidMark"
   | "TyreMark"
   | "RoadCrack"
-  | "EvidenceTrail";
+  | "EvidenceTrail"
+  | "SceneObjectLine"
+  | "SceneObjectBoundary";
 
 export interface FieldWalkingTrack {
   id: string;
   targetType: FieldWalkingTrackTargetType;
   targetId: string;
   targetLabel: string;
+  captureMode?: "Line" | "Boundary";
+  /** Processed, authoritative coordinates used by the reconstruction. */
   coordinates: GeoCoordinate[];
+  /** Original device readings preserved for forensic audit. */
+  rawCoordinates?: GeoCoordinate[];
+  /** Samples excluded from the processed geometry, with reasons. */
+  rejectedCoordinates?: RejectedGeoCoordinate[];
   scenePoints: FieldScenePosition[];
+  rawScenePoints?: FieldScenePosition[];
   startedAt: string;
   completedAt: string;
   distanceMetres: number;
+  rawDistanceMetres?: number;
+  areaSquareMetres?: number;
+  closedBoundary?: boolean;
   averageAccuracyMetres: number;
   bestAccuracyMetres: number;
+  estimatedUncertaintyMetres?: number;
+  processingMethod?: string;
   recordedBy: string;
 }
 
@@ -97,6 +129,35 @@ export interface AveragedLocationResult {
   averageAccuracyMetres: number;
   bestAccuracyMetres: number;
   rejectedSampleCount: number;
+  observedSpreadMetres?: number;
+  estimatedUncertaintyMetres?: number;
+  rawSamples?: GeoCoordinate[];
+  rejectedSamples?: RejectedGeoCoordinate[];
+}
+
+export interface ProcessedWalkingTrace {
+  captureMode: "Line" | "Boundary";
+  rawCoordinates: GeoCoordinate[];
+  acceptedCoordinates: GeoCoordinate[];
+  rejectedCoordinates: RejectedGeoCoordinate[];
+  processedCoordinates: GeoCoordinate[];
+  rawDistanceMetres: number;
+  processedDistanceMetres: number;
+  areaSquareMetres?: number;
+  closedBoundary: boolean;
+  averageAccuracyMetres: number;
+  bestAccuracyMetres: number;
+  estimatedUncertaintyMetres: number;
+  processingMethod: string;
+}
+
+export interface SceneBoundsAssessment {
+  rawPosition: FieldScenePosition;
+  insideScene: boolean;
+  outsideEastMetres: number;
+  outsideWestMetres: number;
+  outsideNorthMetres: number;
+  outsideSouthMetres: number;
 }
 
 export type FieldAccuracyQuality =
