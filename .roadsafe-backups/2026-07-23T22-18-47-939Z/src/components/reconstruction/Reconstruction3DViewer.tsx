@@ -68,13 +68,6 @@ type WorkspaceToolMode =
 type CameraMode = "Orbit" | "Overhead" | "Roadside" | "Driver";
 type TerrainLoadStatus = "Disabled" | "Loading" | "Ready" | "Unavailable" | "Error";
 
-interface PersistedOrbitCameraState {
-  position: THREE.Vector3;
-  target: THREE.Vector3;
-  up: THREE.Vector3;
-  zoom: number;
-}
-
 function configureWorkspaceControls(
   controls: OrbitControls,
   element: HTMLCanvasElement,
@@ -1105,7 +1098,6 @@ function Reconstruction3DViewer({
   const mountRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const rendererElementRef = useRef<HTMLCanvasElement | null>(null);
-  const persistedOrbitCameraRef = useRef<PersistedOrbitCameraState | null>(null);
   const workspaceToolRef = useRef<WorkspaceToolMode>(workspaceTool);
   const playingRef = useRef(false);
   const timeRef = useRef(0);
@@ -1297,19 +1289,7 @@ function Reconstruction3DViewer({
     scene.background = new THREE.Color(environmentColour);
     scene.fog = new THREE.FogExp2(environmentColour, nightScene ? 0.014 : 0.007);
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
-    const persistedOrbitCamera = persistedOrbitCameraRef.current;
-    if (persistedOrbitCamera) {
-      camera.position.copy(persistedOrbitCamera.position);
-      camera.up.copy(persistedOrbitCamera.up);
-      camera.zoom = persistedOrbitCamera.zoom;
-      camera.updateProjectionMatrix();
-    } else {
-      camera.position.set(
-        width * 0.65,
-        Math.max(width, height) * 0.7,
-        height * 0.7,
-      );
-    }
+    camera.position.set(width * 0.65, Math.max(width, height) * 0.7, height * 0.7);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.shadowMap.enabled = true;
@@ -1322,29 +1302,13 @@ function Reconstruction3DViewer({
     controlsRef.current = controls;
     rendererElementRef.current = renderer.domElement;
     controls.enableDamping = true;
-    if (persistedOrbitCamera) {
-      controls.target.copy(persistedOrbitCamera.target);
-    } else {
-      controls.target.set(0, 0, 0);
-    }
+    controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2.02;
     controls.minDistance = 5;
     controls.maxDistance = Math.max(width, height, terrainGrid?.areaMetres ?? 0) * 1.35;
     if (workspaceMode) {
       configureWorkspaceControls(controls, renderer.domElement, workspaceToolRef.current);
     }
-
-    const rememberOrbitCamera = () => {
-      if (cameraModeRef.current !== "Orbit") return;
-      persistedOrbitCameraRef.current = {
-        position: camera.position.clone(),
-        target: controls.target.clone(),
-        up: camera.up.clone(),
-        zoom: camera.zoom,
-      };
-    };
-    controls.addEventListener("change", rememberOrbitCamera);
-
     scene.add(new THREE.HemisphereLight(
       nightScene ? 0x60728e : 0xdde8ee,
       nightScene ? 0x07101d : 0x3d443d,
@@ -1699,8 +1663,6 @@ function Reconstruction3DViewer({
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
       if (controlsRef.current === controls) controlsRef.current = null;
       if (rendererElementRef.current === renderer.domElement) rendererElementRef.current = null;
-      rememberOrbitCamera();
-      controls.removeEventListener("change", rememberOrbitCamera);
       controls.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {

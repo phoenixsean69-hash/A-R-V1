@@ -109,8 +109,6 @@ import {
   updateMeasurementDistance,
 } from "../../utils/evidenceGeometry";
 
-import { paintReconstructionPlaybackDomFrame } from "../../utils/reconstructionPlaybackDom";
-
 import "./reconstructionPlaybackFixes.css";
 
 const Reconstruction3DViewer = lazy(() => import("./Reconstruction3DViewer"));
@@ -239,6 +237,7 @@ const HUMAN_TYPES: ReconstructionVehicleType[] = [
 
 const MAX_TRACE_POINTS = 250;
 const MAX_PLAYBACK_FRAME_DELTA_SECONDS = 0.05;
+const THREE_D_REACT_PAINT_INTERVAL_MS = 80;
 
 type SaveMessageType = "success" | "error" | "info";
 
@@ -2379,8 +2378,6 @@ export default function AccidentReconstructionEditor({
 
   const handlePlayPause = useCallback(() => {
     if (isPlaying) {
-      const pausedTime = currentTimeRef.current;
-      setCurrentTime(pausedTime);
       setIsPlaying(false);
       return;
     }
@@ -2473,12 +2470,6 @@ export default function AccidentReconstructionEditor({
         animationFrameRef.current = null;
       }
 
-      const stoppedTime = currentTimeRef.current;
-      setCurrentTime((displayedTime) =>
-        Math.abs(displayedTime - stoppedTime) < 0.0005
-          ? displayedTime
-          : stoppedTime,
-      );
       return;
     }
 
@@ -2496,19 +2487,25 @@ export default function AccidentReconstructionEditor({
         currentTimeRef.current + elapsedSeconds * playbackSpeed,
       );
 
+      // This ref is the authoritative clock shared by 2D and 3D.
       currentTimeRef.current = nextTime;
 
-      // Native-frame DOM playback keeps participant movement at the browser's
-      // refresh rate without rerendering the entire reconstruction editor.
-      paintReconstructionPlaybackDomFrame({
-        sceneRoot: sceneRef.current,
-        editorRoot:
-          sceneRef.current?.closest<HTMLElement>(".reconstruction-editor") ??
-          document.querySelector<HTMLElement>(".reconstruction-editor"),
-        reconstruction,
-        timeSeconds: nextTime,
-        timestamp,
-      });
+      // 2D needs a React paint every animation frame. The Three.js view reads the
+      // shared ref directly, so its surrounding React UI can update less often.
+      const reactPaintInterval =
+        activeReconstructionView === "2D"
+          ? 0
+          : THREE_D_REACT_PAINT_INTERVAL_MS;
+
+      if (
+        reactPaintInterval === 0 ||
+        lastPlaybackPaintRef.current === null ||
+        timestamp - lastPlaybackPaintRef.current >= reactPaintInterval ||
+        nextTime >= reconstruction.durationSeconds
+      ) {
+        lastPlaybackPaintRef.current = timestamp;
+        setCurrentTime(nextTime);
+      }
 
       if (nextTime >= reconstruction.durationSeconds) {
         setCurrentTime(reconstruction.durationSeconds);
@@ -2531,7 +2528,12 @@ export default function AccidentReconstructionEditor({
       lastFrameTimeRef.current = null;
       lastPlaybackPaintRef.current = null;
     };
-  }, [isPlaying, playbackSpeed, reconstruction]);
+  }, [
+    activeReconstructionView,
+    isPlaying,
+    playbackSpeed,
+    reconstruction.durationSeconds,
+  ]);
 
   useEffect(() => {
     if (!dragState && !traceToolObjectId && !routeDrawingParticipantId) {
@@ -3866,7 +3868,6 @@ export default function AccidentReconstructionEditor({
                         aria-hidden="true"
                       >
                         <line
-                          data-playback-vector-line-id={participant.id}
                           x1={state.position.x}
                           y1={state.position.y}
                           x2={vectorEnd.x}
@@ -3877,7 +3878,6 @@ export default function AccidentReconstructionEditor({
                           vectorEffect="non-scaling-stroke"
                         />
                         <circle
-                          data-playback-vector-tip-id={participant.id}
                           cx={vectorEnd.x}
                           cy={vectorEnd.y}
                           r={0.8}
@@ -3891,7 +3891,6 @@ export default function AccidentReconstructionEditor({
 
                     {reconstruction.physicsSettings?.showVelocityVectors && (
                       <span
-                        data-playback-speed-label-id={participant.id}
                         className="pointer-events-none absolute z-[32] -translate-x-1/2 rounded-full bg-slate-950/80 px-2 py-0.5 text-[9px] font-black text-white shadow"
                         style={{
                           left: `${vectorEnd.x}%`,
@@ -3935,27 +3934,19 @@ export default function AccidentReconstructionEditor({
                       </button>
                     ))}
 
-                    <div
-                      data-playback-smoke-id={participant.id}
-                      className="pointer-events-none absolute z-[28] -translate-x-1/2 -translate-y-1/2"
-                      style={{
-                        left: `${state.position.x}%`,
-                        top: `${state.position.y}%`,
-                        display:
-                          (activeAction === "Brake" || activeAction === "Slide") &&
-                          state.speedKmh > 5
-                            ? "block"
-                            : "none",
-                      }}
-                    >
-                      <span className="absolute h-8 w-8 -translate-x-5 -translate-y-2 rounded-full bg-slate-200/35" />
-                      <span className="absolute h-5 w-5 -translate-x-8 translate-y-1 rounded-full bg-white/35" />
-                    </div>
+                    {(activeAction === "Brake" || activeAction === "Slide") && state.speedKmh > 5 && (
+                      <div
+                        className="pointer-events-none absolute z-[28] -translate-x-1/2 -translate-y-1/2"
+                        style={{ left: `${state.position.x}%`, top: `${state.position.y}%` }}
+                      >
+                        <span className="absolute h-8 w-8 -translate-x-5 -translate-y-2 rounded-full bg-slate-200/35" />
+                        <span className="absolute h-5 w-5 -translate-x-8 translate-y-1 rounded-full bg-white/35" />
+                      </div>
+                    )}
 
                     <button
                       type="button"
                       data-scene-interactive="true"
-                      data-playback-participant-id={participant.id}
                       onClick={(event) => {
                         event.stopPropagation();
                         handleSelectParticipant(participant.id, state.activePointId);
@@ -4327,7 +4318,7 @@ export default function AccidentReconstructionEditor({
             </div>
 
             <div className="reconstruction-playback__clock">
-              <strong data-playback-clock>{currentTime.toFixed(2)}s</strong>
+              <strong>{currentTime.toFixed(2)}s</strong>
               <span>/ {reconstruction.durationSeconds.toFixed(1)}s</span>
             </div>
 
