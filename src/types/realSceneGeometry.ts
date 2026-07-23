@@ -93,8 +93,48 @@ export interface RealSceneBarrierGeometry {
   localPoints: RealSceneLocalPoint[];
 }
 
+export type RealSceneLandCoverType =
+  | "Forest"
+  | "Woodland"
+  | "Scrub"
+  | "Grass"
+  | "Meadow"
+  | "Farmland"
+  | "Orchard"
+  | "Park"
+  | "Garden"
+  | "Wetland"
+  | "Bare Ground"
+  | "Water"
+  | "Other";
+
+export interface RealSceneLandCoverGeometry {
+  id: string;
+  osmId: number;
+  name: string;
+  landCoverType: RealSceneLandCoverType;
+  sourceTag: string;
+  points: RealSceneGeoPoint[];
+  localPoints: RealSceneLocalPoint[];
+}
+
+export type RealSceneVegetationType = "Tree" | "Palm" | "Shrub";
+
+export interface RealSceneVegetationGeometry {
+  id: string;
+  osmId?: number;
+  name: string;
+  vegetationType: RealSceneVegetationType;
+  position: RealSceneGeoPoint;
+  localPosition: RealSceneLocalPoint;
+  heightMetres: number;
+  canopyDiameterMetres: number;
+  /** True when the point was sampled deterministically from mapped land cover. */
+  generatedFromLandCover: boolean;
+}
+
 export interface RealSceneGeometry {
-  version: "RoadSafe Real Scene V1";
+  version: "RoadSafe Real Scene V1" | "RoadSafe Real Scene V2";
   status: "ready";
   selection: RealSceneAreaSelection;
   snapshot?: RealSceneSnapshotReference;
@@ -105,6 +145,8 @@ export interface RealSceneGeometry {
   paths: RealScenePathGeometry[];
   buildings: RealSceneBuildingGeometry[];
   barriers: RealSceneBarrierGeometry[];
+  landCover?: RealSceneLandCoverGeometry[];
+  vegetation?: RealSceneVegetationGeometry[];
   confidence: number;
   warnings: string[];
   attribution: string;

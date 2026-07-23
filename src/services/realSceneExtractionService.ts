@@ -5,10 +5,14 @@ import type {
   RealSceneExtractionResult,
   RealSceneGeoPoint,
   RealSceneGeometry,
+  RealSceneLandCoverGeometry,
+  RealSceneLandCoverType,
   RealSceneLocalPoint,
   RealScenePathGeometry,
   RealSceneRoadGeometry,
   RealSceneSnapshotReference,
+  RealSceneVegetationGeometry,
+  RealSceneVegetationType,
 } from "../types/realSceneGeometry";
 
 const OVERPASS_ENDPOINTS = [
@@ -22,6 +26,8 @@ interface OverpassElement {
   id: number;
   tags?: Record<string, string | undefined>;
   geometry?: Array<{ lat: number; lon: number }>;
+  lat?: number;
+  lon?: number;
 }
 
 interface OverpassResponse {
@@ -287,6 +293,276 @@ function clipPolygon(
   return clipped;
 }
 
+
+function polygonArea(points: LocalPoint[]): number {
+  const source =
+    points.length > 1 && almostSame(points[0], points[points.length - 1])
+      ? points.slice(0, -1)
+      : points;
+  if (source.length < 3) return 0;
+  let total = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    const current = source[index];
+    const next = source[(index + 1) % source.length];
+    total += current.x * next.y - next.x * current.y;
+  }
+  return Math.abs(total) / 2;
+}
+
+function pointInsidePolygon(point: LocalPoint, polygon: LocalPoint[]): boolean {
+  const source =
+    polygon.length > 1 && almostSame(polygon[0], polygon[polygon.length - 1])
+      ? polygon.slice(0, -1)
+      : polygon;
+  let inside = false;
+  for (let currentIndex = 0, previousIndex = source.length - 1;
+    currentIndex < source.length;
+    previousIndex = currentIndex, currentIndex += 1) {
+    const current = source[currentIndex];
+    const previous = source[previousIndex];
+    const crosses =
+      current.y > point.y !== previous.y > point.y &&
+      point.x <
+        ((previous.x - current.x) * (point.y - current.y)) /
+          Math.max(0.0000001, previous.y - current.y) +
+        current.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function createSeededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1_664_525 + 1_013_904_223) >>> 0;
+    return state / 4_294_967_296;
+  };
+}
+
+function landCoverTypeFromTags(
+  tags: Record<string, string | undefined>,
+): RealSceneLandCoverType | null {
+  const natural = tags.natural?.toLowerCase();
+  const landuse = tags.landuse?.toLowerCase();
+  const leisure = tags.leisure?.toLowerCase();
+
+  if (natural === "wood") return "Woodland";
+  if (natural === "scrub") return "Scrub";
+  if (natural === "grassland") return "Grass";
+  if (natural === "wetland") return "Wetland";
+  if (natural === "bare_rock" || natural === "sand" || natural === "scree") {
+    return "Bare Ground";
+  }
+  if (natural === "water" || tags.water || tags.waterway === "riverbank") {
+    return "Water";
+  }
+  if (landuse === "forest") return "Forest";
+  if (landuse === "grass" || landuse === "village_green") return "Grass";
+  if (landuse === "meadow") return "Meadow";
+  if (landuse === "farmland" || landuse === "farmyard") return "Farmland";
+  if (landuse === "orchard" || landuse === "vineyard") return "Orchard";
+  if (landuse === "recreation_ground" || leisure === "park") return "Park";
+  if (leisure === "garden") return "Garden";
+  if (leisure === "nature_reserve") return "Woodland";
+  return null;
+}
+
+function vegetationProfile(type: RealSceneLandCoverType): {
+  plantType: RealSceneVegetationType;
+  squareMetresPerPlant: number;
+  minimumHeight: number;
+  maximumHeight: number;
+  canopyRatio: number;
+} | null {
+  switch (type) {
+    case "Forest":
+    case "Woodland":
+      return {
+        plantType: "Tree",
+        squareMetresPerPlant: 95,
+        minimumHeight: 4.5,
+        maximumHeight: 11,
+        canopyRatio: 0.58,
+      };
+    case "Orchard":
+      return {
+        plantType: "Tree",
+        squareMetresPerPlant: 150,
+        minimumHeight: 2.6,
+        maximumHeight: 6.2,
+        canopyRatio: 0.72,
+      };
+    case "Scrub":
+      return {
+        plantType: "Shrub",
+        squareMetresPerPlant: 75,
+        minimumHeight: 0.7,
+        maximumHeight: 2.3,
+        canopyRatio: 1.15,
+      };
+    case "Park":
+    case "Garden":
+      return {
+        plantType: "Tree",
+        squareMetresPerPlant: 260,
+        minimumHeight: 3.2,
+        maximumHeight: 8.5,
+        canopyRatio: 0.62,
+      };
+    default:
+      return null;
+  }
+}
+
+function buildLandCover(
+  element: OverpassElement,
+  projection: ProjectionContext,
+): RealSceneLandCoverGeometry | null {
+  const tags = element.tags ?? {};
+  const landCoverType = landCoverTypeFromTags(tags);
+  if (!landCoverType) return null;
+
+  const points = clipPolygon(
+    toGeoPoints(element).map((point) => toLocal(point, projection)),
+    projection.widthMetres,
+    projection.heightMetres,
+  );
+  if (points.length < 4 || polygonArea(points) < 1) return null;
+
+  const sourceTag = tags.natural
+    ? `natural=${tags.natural}`
+    : tags.landuse
+      ? `landuse=${tags.landuse}`
+      : tags.leisure
+        ? `leisure=${tags.leisure}`
+        : tags.water
+          ? `water=${tags.water}`
+          : "mapped land cover";
+
+  return {
+    id: `osm-land-cover-${element.id}`,
+    osmId: element.id,
+    name: tags.name?.trim() || landCoverType,
+    landCoverType,
+    sourceTag,
+    points: points.map((point) => toGeo(point, projection)),
+    localPoints: points.map((point) => toStoredLocal(point, projection)),
+  };
+}
+
+function buildMappedVegetationPoint(
+  element: OverpassElement,
+  projection: ProjectionContext,
+): RealSceneVegetationGeometry | null {
+  if (!Number.isFinite(element.lat) || !Number.isFinite(element.lon)) return null;
+  const local = toLocal(
+    { latitude: element.lat as number, longitude: element.lon as number },
+    projection,
+  );
+  if (
+    local.x < 0 ||
+    local.y < 0 ||
+    local.x > projection.widthMetres ||
+    local.y > projection.heightMetres
+  ) {
+    return null;
+  }
+
+  const tags = element.tags ?? {};
+  const descriptor = `${tags.species ?? ""} ${tags.genus ?? ""} ${tags.leaf_type ?? ""}`.toLowerCase();
+  const vegetationType: RealSceneVegetationType =
+    tags.natural === "shrub"
+      ? "Shrub"
+      : descriptor.includes("palm")
+        ? "Palm"
+        : "Tree";
+  const defaultHeight = vegetationType === "Shrub" ? 1.5 : vegetationType === "Palm" ? 8 : 6;
+  const heightMetres = clamp(parseNumber(tags.height) ?? defaultHeight, 0.5, 32);
+  const canopyDiameterMetres = clamp(
+    parseNumber(tags.diameter_crown) ??
+      (vegetationType === "Shrub" ? heightMetres * 1.15 : heightMetres * 0.55),
+    0.5,
+    18,
+  );
+  const position = toGeo(local, projection);
+
+  return {
+    id: `osm-vegetation-${element.id}`,
+    osmId: element.id,
+    name: tags.name?.trim() || (vegetationType === "Shrub" ? "Mapped shrub" : "Mapped tree"),
+    vegetationType,
+    position,
+    localPosition: toStoredLocal(local, projection),
+    heightMetres: Number(heightMetres.toFixed(2)),
+    canopyDiameterMetres: Number(canopyDiameterMetres.toFixed(2)),
+    generatedFromLandCover: false,
+  };
+}
+
+function generateVegetationFromLandCover(
+  cover: RealSceneLandCoverGeometry,
+  projection: ProjectionContext,
+  maximumRemaining: number,
+): RealSceneVegetationGeometry[] {
+  const profile = vegetationProfile(cover.landCoverType);
+  if (!profile || maximumRemaining <= 0) return [];
+
+  const polygon = cover.localPoints.map((point) => ({
+    x: point.xMetres,
+    y: point.yMetres,
+  }));
+  const area = polygonArea(polygon);
+  const requested = clamp(
+    Math.round(area / profile.squareMetresPerPlant),
+    area >= 45 ? 1 : 0,
+    Math.min(90, maximumRemaining),
+  );
+  if (requested <= 0) return [];
+
+  const xs = polygon.map((point) => point.x);
+  const ys = polygon.map((point) => point.y);
+  const minimumX = Math.max(0, Math.min(...xs));
+  const maximumX = Math.min(projection.widthMetres, Math.max(...xs));
+  const minimumY = Math.max(0, Math.min(...ys));
+  const maximumY = Math.min(projection.heightMetres, Math.max(...ys));
+  const random = createSeededRandom(cover.osmId * 2_654_435_761);
+  const result: RealSceneVegetationGeometry[] = [];
+  const maximumAttempts = requested * 28 + 80;
+
+  for (let attempt = 0; attempt < maximumAttempts && result.length < requested; attempt += 1) {
+    const local = {
+      x: minimumX + random() * Math.max(0.01, maximumX - minimumX),
+      y: minimumY + random() * Math.max(0.01, maximumY - minimumY),
+    };
+    if (!pointInsidePolygon(local, polygon)) continue;
+
+    const heightMetres =
+      profile.minimumHeight + random() * (profile.maximumHeight - profile.minimumHeight);
+    const vegetationType =
+      profile.plantType === "Tree" && random() > 0.965 ? "Palm" : profile.plantType;
+    const canopyDiameterMetres = clamp(
+      heightMetres * profile.canopyRatio * (0.78 + random() * 0.42),
+      vegetationType === "Shrub" ? 0.7 : 1.2,
+      vegetationType === "Shrub" ? 4.5 : 9,
+    );
+    const position = toGeo(local, projection);
+
+    result.push({
+      id: `${cover.id}-vegetation-${result.length + 1}`,
+      osmId: cover.osmId,
+      name: `${cover.name} vegetation`,
+      vegetationType,
+      position,
+      localPosition: toStoredLocal(local, projection),
+      heightMetres: Number(heightMetres.toFixed(2)),
+      canopyDiameterMetres: Number(canopyDiameterMetres.toFixed(2)),
+      generatedFromLandCover: true,
+    });
+  }
+
+  return result;
+}
+
 function defaultLaneCount(highwayType: string): number {
   if (["motorway", "trunk"].includes(highwayType)) return 4;
   if (["primary", "secondary", "tertiary"].includes(highwayType)) return 2;
@@ -445,6 +721,11 @@ function createOverpassQuery(selection: RealSceneAreaSelection): string {
   way["highway"](${south},${west},${north},${east});
   way["building"](${south},${west},${north},${east});
   way["barrier"](${south},${west},${north},${east});
+  way["landuse"](${south},${west},${north},${east});
+  way["natural"~"wood|scrub|grassland|wetland|bare_rock|sand|scree|water"](${south},${west},${north},${east});
+  way["leisure"~"park|garden|nature_reserve"](${south},${west},${north},${east});
+  way["waterway"="riverbank"](${south},${west},${north},${east});
+  node["natural"~"tree|shrub"](${south},${west},${north},${east});
 );
 out tags geom;`;
 }
@@ -484,13 +765,18 @@ function calculateConfidence(
   roads: RealSceneRoadGeometry[],
   paths: RealScenePathGeometry[],
   buildings: RealSceneBuildingGeometry[],
+  landCover: RealSceneLandCoverGeometry[],
+  vegetation: RealSceneVegetationGeometry[],
 ): number {
   const roadPointCount = roads.reduce(
     (total, road) => total + road.localPoints.length,
     0,
   );
   const coverage = Math.min(1, roadPointCount / 45);
-  const featureScore = Math.min(1, (roads.length + paths.length + buildings.length) / 16);
+  const featureScore = Math.min(
+    1,
+    (roads.length + paths.length + buildings.length + landCover.length + vegetation.length / 8) / 20,
+  );
   return Number(clamp(0.35 + coverage * 0.45 + featureScore * 0.2, 0.35, 0.98).toFixed(2));
 }
 
@@ -524,10 +810,21 @@ export const RealSceneExtractionService = {
     const paths: RealScenePathGeometry[] = [];
     const buildings: RealSceneBuildingGeometry[] = [];
     const barriers: RealSceneBarrierGeometry[] = [];
+    const landCover: RealSceneLandCoverGeometry[] = [];
+    const vegetation: RealSceneVegetationGeometry[] = [];
 
     for (const element of response.elements ?? []) {
-      if (element.type !== "way" || !element.geometry?.length) continue;
       const tags = element.tags ?? {};
+
+      if (element.type === "node") {
+        if (tags.natural === "tree" || tags.natural === "shrub") {
+          const mappedPlant = buildMappedVegetationPoint(element, projection);
+          if (mappedPlant) vegetation.push(mappedPlant);
+        }
+        continue;
+      }
+
+      if (element.type !== "way" || !element.geometry?.length) continue;
 
       if (tags.highway) {
         const parsed = buildRoadsAndPaths(element, projection);
@@ -542,7 +839,20 @@ export const RealSceneExtractionService = {
         continue;
       }
 
-      if (tags.barrier) barriers.push(...buildBarrier(element, projection));
+      if (tags.barrier) {
+        barriers.push(...buildBarrier(element, projection));
+        if (tags.barrier !== "hedge") continue;
+      }
+
+      const cover = buildLandCover(element, projection);
+      if (cover) landCover.push(cover);
+    }
+
+    const maximumVegetation = 360;
+    for (const cover of landCover) {
+      const remaining = maximumVegetation - vegetation.length;
+      if (remaining <= 0) break;
+      vegetation.push(...generateVegetationFromLandCover(cover, projection, remaining));
     }
 
     const warnings: string[] = [];
@@ -556,6 +866,11 @@ export const RealSceneExtractionService = {
         "No mapped building footprints were returned. Buildings visible in imagery may need to be added manually.",
       );
     }
+    if (landCover.length === 0) {
+      warnings.push(
+        "No mapped vegetation or land-cover polygons were returned. The map snapshot remains available for officer review.",
+      );
+    }
     if (!snapshot) {
       warnings.push(
         "The map canvas could not be stored as an image. Geographic bounds and vector geometry were still preserved.",
@@ -563,7 +878,7 @@ export const RealSceneExtractionService = {
     }
 
     const geometry: RealSceneGeometry = {
-      version: "RoadSafe Real Scene V1",
+      version: "RoadSafe Real Scene V2",
       status: "ready",
       selection,
       snapshot,
@@ -577,7 +892,9 @@ export const RealSceneExtractionService = {
       paths,
       buildings,
       barriers,
-      confidence: calculateConfidence(roads, paths, buildings),
+      landCover,
+      vegetation,
+      confidence: calculateConfidence(roads, paths, buildings, landCover, vegetation),
       warnings,
       attribution: "Map geometry © OpenStreetMap contributors",
       extractedAt: new Date().toISOString(),

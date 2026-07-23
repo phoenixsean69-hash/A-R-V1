@@ -1,0 +1,378 @@
+/* RoadSafe case-creation workspace — aligned with the reconstruction UI. */
+body.roadsafe-case-wizard-open {
+  background: #030914;
+}
+
+.roadsafe-case-page-shell {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 82% -18%, rgba(37, 99, 235, 0.10), transparent 34rem),
+    #030914 !important;
+  color: #dbe7f7;
+}
+
+.roadsafe-case-page-shell > :first-child,
+.roadsafe-case-page-shell > header {
+  border-color: #172a46 !important;
+  background: #050d1b !important;
+}
+
+.roadsafe-case-page-shell > :first-child h1,
+.roadsafe-case-page-shell > header h1 {
+  color: #f8fbff !important;
+}
+
+.roadsafe-case-page-shell > :first-child p,
+.roadsafe-case-page-shell > header p {
+  color: #829aba !important;
+}
+
+.roadsafe-case-wizard {
+  --rs-bg: #06101f;
+  --rs-panel: #081426;
+  --rs-panel-raised: #0b1930;
+  --rs-panel-soft: #0a172a;
+  --rs-border: #1c3455;
+  --rs-border-strong: #28538b;
+  --rs-text: #eef5ff;
+  --rs-muted: #8ba1be;
+  --rs-subtle: #627895;
+  --rs-blue: #2563eb;
+  --rs-blue-hover: #3475f5;
+  --rs-blue-soft: rgba(37, 99, 235, 0.13);
+  --rs-success: #39b779;
+  --rs-warning: #e4aa45;
+  --rs-danger: #e0646d;
+
+  width: min(100%, 1480px);
+  margin: 0 auto;
+  padding: 18px 18px 40px;
+  color: var(--rs-text);
+}
+
+.roadsafe-case-wizard * {
+  box-sizing: border-box;
+}
+
+.roadsafe-case-wizard > section,
+.roadsafe-case-wizard > div:first-child {
+  border: 1px solid var(--rs-border) !important;
+  border-radius: 10px !important;
+  background: var(--rs-bg) !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-case-wizard > section {
+  padding: clamp(18px, 2.2vw, 30px) !important;
+}
+
+.roadsafe-case-wizard .roadsafe-wizard-command {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid #28538b;
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(9, 24, 45, 0.88));
+}
+
+.roadsafe-case-wizard .roadsafe-wizard-command__number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid #4f89f8;
+  border-radius: 6px;
+  background: #153e84;
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.roadsafe-case-wizard .roadsafe-wizard-command strong {
+  display: block;
+  color: #f7fbff;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.roadsafe-case-wizard .roadsafe-wizard-command p {
+  margin-top: 3px;
+  color: #9db3cf;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* Progress rail */
+.roadsafe-case-wizard > div:first-child {
+  margin-bottom: 16px !important;
+  padding: 10px !important;
+}
+
+.roadsafe-case-wizard > div:first-child > div {
+  gap: 8px !important;
+}
+
+.roadsafe-case-wizard > div:first-child > div > div {
+  min-height: 54px;
+  border-color: var(--rs-border) !important;
+  border-radius: 8px !important;
+  background: #071224 !important;
+  padding: 10px 12px !important;
+}
+
+.roadsafe-case-wizard > div:first-child > div > div:has(.bg-blue-600) {
+  border-color: #3978df !important;
+  background: rgba(24, 58, 111, 0.72) !important;
+}
+
+.roadsafe-case-wizard > div:first-child > div > div:has(.bg-emerald-600) {
+  border-color: #2d6c59 !important;
+  background: rgba(15, 55, 47, 0.58) !important;
+}
+
+.roadsafe-case-wizard > div:first-child span[class*="rounded-full"] {
+  border-radius: 6px !important;
+}
+
+.roadsafe-case-wizard > div:first-child span[class*="text-slate-800"] {
+  color: #d9e6f8 !important;
+}
+
+/* Headings */
+.roadsafe-case-wizard section > div:first-child > p:first-child {
+  color: #5d8fff !important;
+  font-size: 10px !important;
+  letter-spacing: 0.18em !important;
+}
+
+.roadsafe-case-wizard h2,
+.roadsafe-case-wizard h3,
+.roadsafe-case-wizard .text-slate-950,
+.roadsafe-case-wizard .text-slate-900 {
+  color: var(--rs-text) !important;
+}
+
+.roadsafe-case-wizard h2 {
+  font-size: clamp(20px, 2vw, 28px) !important;
+  line-height: 1.18;
+}
+
+.roadsafe-case-wizard p,
+.roadsafe-case-wizard dt,
+.roadsafe-case-wizard .text-slate-600,
+.roadsafe-case-wizard .text-slate-500,
+.roadsafe-case-wizard .text-slate-700 {
+  color: var(--rs-muted) !important;
+}
+
+/* Fields */
+.roadsafe-case-wizard label > span:first-child,
+.roadsafe-case-wizard dt {
+  color: #a9bdd7 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.025em;
+}
+
+.roadsafe-case-wizard input,
+.roadsafe-case-wizard select,
+.roadsafe-case-wizard textarea {
+  min-height: 42px;
+  border: 1px solid var(--rs-border) !important;
+  border-radius: 7px !important;
+  background: #050f20 !important;
+  color: var(--rs-text) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+}
+
+.roadsafe-case-wizard textarea {
+  min-height: 108px;
+}
+
+.roadsafe-case-wizard input::placeholder,
+.roadsafe-case-wizard textarea::placeholder {
+  color: #5f7592 !important;
+  opacity: 1;
+}
+
+.roadsafe-case-wizard input:focus,
+.roadsafe-case-wizard select:focus,
+.roadsafe-case-wizard textarea:focus {
+  border-color: #4c84e7 !important;
+  outline: 2px solid rgba(37, 99, 235, 0.17) !important;
+  outline-offset: 1px;
+}
+
+.roadsafe-case-wizard input[readonly] {
+  background: #071326 !important;
+  color: #8298b7 !important;
+}
+
+.roadsafe-case-wizard option {
+  background: #081426;
+  color: #eef5ff;
+}
+
+/* Normalize all legacy light cards. */
+.roadsafe-case-wizard [class*="rounded-2xl"],
+.roadsafe-case-wizard [class*="rounded-xl"] {
+  border-radius: 8px !important;
+}
+
+.roadsafe-case-wizard [class*="border-slate-200"],
+.roadsafe-case-wizard [class*="border-slate-300"] {
+  border-color: var(--rs-border) !important;
+}
+
+.roadsafe-case-wizard [class*="bg-white"],
+.roadsafe-case-wizard [class*="bg-slate-50"],
+.roadsafe-case-wizard [class*="bg-slate-100"] {
+  background-color: var(--rs-panel) !important;
+}
+
+.roadsafe-case-wizard [class*="bg-blue-50"],
+.roadsafe-case-wizard [class*="bg-sky-50"] {
+  border-color: #28538b !important;
+  background-color: rgba(17, 43, 80, 0.72) !important;
+}
+
+.roadsafe-case-wizard [class*="bg-emerald-50"],
+.roadsafe-case-wizard [class*="bg-emerald-100"] {
+  border-color: #2a6754 !important;
+  background-color: rgba(14, 54, 45, 0.72) !important;
+}
+
+.roadsafe-case-wizard [class*="bg-amber-50"],
+.roadsafe-case-wizard [class*="bg-amber-100"] {
+  border-color: #775929 !important;
+  background-color: rgba(62, 45, 17, 0.76) !important;
+}
+
+.roadsafe-case-wizard [class*="bg-red-50"],
+.roadsafe-case-wizard [class*="bg-red-100"] {
+  border-color: #743b45 !important;
+  background-color: rgba(64, 25, 34, 0.78) !important;
+}
+
+.roadsafe-case-wizard [class*="text-blue-"],
+.roadsafe-case-wizard [class*="text-sky-"] {
+  color: #a8c8ff !important;
+}
+
+.roadsafe-case-wizard [class*="text-emerald-"] {
+  color: #9ce1c3 !important;
+}
+
+.roadsafe-case-wizard [class*="text-amber-"] {
+  color: #f2ca7f !important;
+}
+
+.roadsafe-case-wizard [class*="text-red-"] {
+  color: #f4a1a7 !important;
+}
+
+/* Choice cards */
+.roadsafe-case-wizard button[class*="text-left"] {
+  border-color: var(--rs-border) !important;
+  background: var(--rs-panel) !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-case-wizard button[class*="text-left"]:hover {
+  border-color: #3e6eaf !important;
+  background: #0c1b31 !important;
+}
+
+.roadsafe-case-wizard button[class*="text-left"][class*="border-blue-500"] {
+  border-color: #4c84e7 !important;
+  background: rgba(24, 58, 111, 0.75) !important;
+}
+
+/* Buttons */
+.roadsafe-case-wizard button {
+  min-height: 38px;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.roadsafe-case-wizard button[class*="bg-blue-600"],
+.roadsafe-case-wizard button[class*="bg-sky-600"],
+.roadsafe-case-wizard button[class*="bg-emerald-600"] {
+  border: 1px solid #3978df !important;
+  background: var(--rs-blue) !important;
+  color: white !important;
+}
+
+.roadsafe-case-wizard button[class*="bg-blue-600"]:hover,
+.roadsafe-case-wizard button[class*="bg-sky-600"]:hover,
+.roadsafe-case-wizard button[class*="bg-emerald-600"]:hover {
+  background: var(--rs-blue-hover) !important;
+}
+
+.roadsafe-case-wizard button[class*="border-slate-"],
+.roadsafe-case-wizard button[class*="bg-white"] {
+  border: 1px solid var(--rs-border) !important;
+  background: #081426 !important;
+  color: #cbdaf0 !important;
+}
+
+.roadsafe-case-wizard button[class*="border-slate-"]:hover,
+.roadsafe-case-wizard button[class*="bg-white"]:hover {
+  border-color: #3d659b !important;
+  background: #0c1b31 !important;
+}
+
+.roadsafe-case-wizard button:disabled {
+  border-color: #1b2a41 !important;
+  background: #101a29 !important;
+  color: #50637d !important;
+  opacity: 0.75;
+}
+
+/* Map */
+.roadsafe-case-wizard .roadsafe-scene-map {
+  overflow: hidden;
+  border: 1px solid var(--rs-border) !important;
+  border-radius: 9px !important;
+  background: #030914 !important;
+}
+
+.roadsafe-case-wizard .maplibregl-ctrl-group {
+  border: 1px solid #244264 !important;
+  background: #071426 !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-case-wizard .maplibregl-ctrl-group button {
+  background-color: #071426 !important;
+}
+
+.roadsafe-case-wizard .maplibregl-ctrl-group button + button {
+  border-top-color: #244264 !important;
+}
+
+/* Footer action rail */
+.roadsafe-case-wizard section > div:last-child[class*="border-t"] {
+  border-color: var(--rs-border) !important;
+}
+
+@media (max-width: 720px) {
+  .roadsafe-case-wizard {
+    padding: 12px 10px 30px;
+  }
+
+  .roadsafe-case-wizard > section {
+    padding: 16px !important;
+  }
+
+  .roadsafe-case-wizard .roadsafe-wizard-command {
+    grid-template-columns: 1fr;
+  }
+}

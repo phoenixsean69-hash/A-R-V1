@@ -68,6 +68,10 @@ const REAL_BUILDING_SOURCE_ID = "roadsafe-real-scene-buildings";
 const REAL_BUILDING_LAYER_ID = "roadsafe-real-scene-building";
 const REAL_BARRIER_SOURCE_ID = "roadsafe-real-scene-barriers";
 const REAL_BARRIER_LAYER_ID = "roadsafe-real-scene-barrier";
+const REAL_LAND_COVER_SOURCE_ID = "roadsafe-real-scene-land-cover";
+const REAL_LAND_COVER_LAYER_ID = "roadsafe-real-scene-land-cover-fill";
+const REAL_VEGETATION_SOURCE_ID = "roadsafe-real-scene-vegetation";
+const REAL_VEGETATION_LAYER_ID = "roadsafe-real-scene-vegetation-circle";
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -360,6 +364,53 @@ function realBarriersToGeoJson(
   };
 }
 
+
+function realLandCoverToGeoJson(
+  geometry: RealSceneGeometry | null | undefined,
+): FeatureCollection<Polygon> {
+  if (!geometry) return createEmptyFeatureCollection<Polygon>();
+  return {
+    type: "FeatureCollection",
+    features: geometry.landCover
+      .filter((cover) => cover.points.length >= 4)
+      .map((cover) => ({
+        type: "Feature",
+        properties: {
+          id: cover.id,
+          type: cover.landCoverType,
+          sourceTag: cover.sourceTag,
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            cover.points.map((point) => [point.longitude, point.latitude]),
+          ],
+        },
+      })),
+  };
+}
+
+function realVegetationToGeoJson(
+  geometry: RealSceneGeometry | null | undefined,
+): FeatureCollection<Point> {
+  if (!geometry) return createEmptyFeatureCollection<Point>();
+  return {
+    type: "FeatureCollection",
+    features: geometry.vegetation.map((plant) => ({
+      type: "Feature",
+      properties: {
+        id: plant.id,
+        type: plant.vegetationType,
+        generated: plant.generatedFromLandCover,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [plant.position.longitude, plant.position.latitude],
+      },
+    })),
+  };
+}
+
 function createSelection(
   first: maplibregl.LngLat,
   second: maplibregl.LngLat,
@@ -622,7 +673,67 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
           REAL_BARRIER_SOURCE_ID,
           realBarriersToGeoJson(realGeometryRef.current),
         );
+        addGeoJsonSource(
+          REAL_LAND_COVER_SOURCE_ID,
+          realLandCoverToGeoJson(realGeometryRef.current),
+        );
+        addGeoJsonSource(
+          REAL_VEGETATION_SOURCE_ID,
+          realVegetationToGeoJson(realGeometryRef.current),
+        );
 
+
+        if (!map.getLayer(REAL_LAND_COVER_LAYER_ID)) {
+          map.addLayer({
+            id: REAL_LAND_COVER_LAYER_ID,
+            type: "fill",
+            source: REAL_LAND_COVER_SOURCE_ID,
+            paint: {
+              "fill-color": [
+                "match",
+                ["get", "type"],
+                "Water", "#3b82a0",
+                "Bare Ground", "#8a7358",
+                "Farmland", "#8a7b4f",
+                "Scrub", "#5f7651",
+                "Forest", "#2f6942",
+                "Woodland", "#38744a",
+                "Orchard", "#4f7d4e",
+                "Park", "#57905c",
+                "Garden", "#679968",
+                "#5c844f",
+              ],
+              "fill-opacity": 0.34,
+              "fill-outline-color": "rgba(210,235,208,.45)",
+            },
+          });
+        }
+        if (!map.getLayer(REAL_VEGETATION_LAYER_ID)) {
+          map.addLayer({
+            id: REAL_VEGETATION_LAYER_ID,
+            type: "circle",
+            source: REAL_VEGETATION_SOURCE_ID,
+            paint: {
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                14, 1.6,
+                20, 4.8,
+              ],
+              "circle-color": [
+                "match",
+                ["get", "type"],
+                "Shrub", "#6b8f59",
+                "Palm", "#4f9158",
+                "#2f7045",
+              ],
+              "circle-opacity": 0.86,
+              "circle-stroke-color": "#173b26",
+              "circle-stroke-width": 0.8,
+            },
+          });
+        }
         if (!map.getLayer(REAL_BUILDING_LAYER_ID)) {
           map.addLayer({
             id: REAL_BUILDING_LAYER_ID,
@@ -952,10 +1063,12 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
         realBuildingsToGeoJson(realSceneGeometry),
       );
       update(REAL_BARRIER_SOURCE_ID, realBarriersToGeoJson(realSceneGeometry));
+      update(REAL_LAND_COVER_SOURCE_ID, realLandCoverToGeoJson(realSceneGeometry));
+      update(REAL_VEGETATION_SOURCE_ID, realVegetationToGeoJson(realSceneGeometry));
     }, [coordinate, roads, features, areaSelection, realSceneGeometry, mapMode]);
 
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+      <div className="roadsafe-scene-map overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
         <div className="relative">
           <div ref={containerRef} className="h-[430px] w-full" />
 
@@ -981,6 +1094,13 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
             )}
           </div>
 
+
+          <div className="roadsafe-scene-map__instruction pointer-events-none absolute left-3 top-[58px] z-10 max-w-[360px] rounded-md border border-blue-300/30 bg-[#07111f]/92 px-3 py-2 text-[11px] font-semibold leading-5 text-slate-200 shadow-xl backdrop-blur">
+            <span className="font-black text-blue-300">1. Mark the accident spot.</span>{" "}
+            Click the map or drag the red marker. Then{" "}
+            <span className="font-black text-blue-300">2. Select the complete scene area.</span>
+          </div>
+
           <div
             className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2"
             onClick={(event) => event.stopPropagation()}
@@ -994,7 +1114,7 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
                   : "border-slate-200 bg-white/95 text-slate-800 hover:bg-slate-100"
               }`}
             >
-              {drawingMode ? "Drag across the map…" : "Select scene area"}
+              {drawingMode ? "Drag to select the area…" : "2 · Select scene area"}
             </button>
             {areaSelection && (
               <button
@@ -1027,15 +1147,15 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
           <span>
             {drawingMode
-              ? "Hold and drag to draw the exact accident-scene boundary."
+              ? "Hold and drag from one corner to the opposite corner of the complete scene."
               : areaSelection
-                ? "The blue boundary is the only area that will be extracted and reconstructed."
-                : "Centre with GPS, then manually select the accident-scene area."}
+                ? "The blue boundary is exact: only what is inside it will be extracted and reconstructed."
+                : "Mark the accident spot, then select the complete accident-scene area."}
           </span>
           <span>
             {captureMessage ||
               (realSceneGeometry
-                ? `${realSceneGeometry.roads.length} roads · ${realSceneGeometry.buildings.length} buildings extracted`
+                ? `${realSceneGeometry.roads.length} roads · ${realSceneGeometry.buildings.length} buildings · ${(realSceneGeometry.vegetation?.length ?? 0)} vegetation extracted`
                 : "Map data © OpenStreetMap contributors · imagery/topography © Esri")}
           </span>
         </div>
