@@ -160,6 +160,32 @@ function getEditableActions(
   );
 }
 
+function getParticipantSpeedLimit(
+  participant: ReconstructionVehicle,
+): number {
+  switch (participant.type) {
+    case "Pedestrian":
+    case "Officer":
+    case "Witness":
+      return 20;
+
+    case "Bicycle":
+      return 80;
+
+    case "Motorcycle":
+      return 220;
+
+    default:
+      return 260;
+  }
+}
+
+function formatSpeedValue(
+  value: number,
+): string {
+  return Number(value.toFixed(1)).toString();
+}
+
 function normaliseDomText(
   value: string | null | undefined,
 ): string {
@@ -294,6 +320,20 @@ export default function ParticipantPathPanel(
   const diamondRefreshTimerRef =
     useRef<number | null>(null);
 
+  const panelRootRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const pointCardRefs = useRef(
+    new Map<string, HTMLDivElement>(),
+  );
+
+  const [speedDraft, setSpeedDraft] =
+    useState(() =>
+      formatSpeedValue(
+        participant.estimatedSpeedKmh,
+      ),
+    );
+
   const allPoints = useMemo(
     () =>
       sanitiseParticipantPathPoints(
@@ -355,6 +395,164 @@ export default function ParticipantPathPanel(
       physicsPoints.length -
         visiblePhysicsPoints.length,
     );
+
+  const speedLimit =
+    getParticipantSpeedLimit(
+      participant,
+    );
+
+  const previousDisplayedPointCountRef =
+    useRef(displayedPoints.length);
+
+  const scrollPointIntoInspector =
+    useCallback(
+      (
+        pointId: string,
+        behavior: ScrollBehavior =
+          "smooth",
+      ) => {
+        window.requestAnimationFrame(
+          () => {
+            const card =
+              pointCardRefs.current.get(
+                pointId,
+              );
+
+            const inspector =
+              panelRootRef.current?.closest<HTMLElement>(
+                ".reconstruction-workspace__properties--2d",
+              );
+
+            if (!card || !inspector) {
+              return;
+            }
+
+            const cardRect =
+              card.getBoundingClientRect();
+
+            const inspectorRect =
+              inspector.getBoundingClientRect();
+
+            const safeTop =
+              inspectorRect.top + 18;
+
+            const safeBottom =
+              inspectorRect.bottom - 72;
+
+            if (cardRect.top < safeTop) {
+              inspector.scrollTo({
+                top:
+                  inspector.scrollTop +
+                  cardRect.top -
+                  safeTop,
+                behavior,
+              });
+            } else if (
+              cardRect.bottom > safeBottom
+            ) {
+              inspector.scrollTo({
+                top:
+                  inspector.scrollTop +
+                  cardRect.bottom -
+                  safeBottom,
+                behavior,
+              });
+            }
+          },
+        );
+      },
+      [],
+    );
+
+  useEffect(() => {
+    setSpeedDraft(
+      formatSpeedValue(
+        participant.estimatedSpeedKmh,
+      ),
+    );
+  }, [
+    participant.estimatedSpeedKmh,
+    participant.id,
+  ]);
+
+  useEffect(() => {
+    const details =
+      panelRootRef.current?.closest<HTMLDetailsElement>(
+        "details.reconstruction-workspace__route-details",
+      );
+
+    if (!details) {
+      return;
+    }
+
+    const keepExpanded = () => {
+      if (!details.open) {
+        details.open = true;
+      }
+    };
+
+    keepExpanded();
+
+    const observer =
+      new MutationObserver(keepExpanded);
+
+    observer.observe(details, {
+      attributes: true,
+      attributeFilter: ["open"],
+    });
+
+    return () => observer.disconnect();
+  }, [participant.id]);
+
+  useEffect(() => {
+    const previousCount =
+      previousDisplayedPointCountRef.current;
+
+    previousDisplayedPointCountRef.current =
+      displayedPoints.length;
+
+    if (
+      displayedPoints.length <=
+      previousCount
+    ) {
+      return;
+    }
+
+    const lastEditablePoint =
+      investigatorPoints[
+        investigatorPoints.length - 1
+      ];
+
+    const target =
+      lastEditablePoint ??
+      displayedPoints[
+        displayedPoints.length - 1
+      ];
+
+    if (target) {
+      scrollPointIntoInspector(
+        target.id,
+      );
+    }
+  }, [
+    displayedPoints,
+    investigatorPoints,
+    scrollPointIntoInspector,
+  ]);
+
+  useEffect(() => {
+    if (!selectedPointId) {
+      return;
+    }
+
+    scrollPointIntoInspector(
+      selectedPointId,
+      "auto",
+    );
+  }, [
+    scrollPointIntoInspector,
+    selectedPointId,
+  ]);
 
   const observedRestPoint =
     useMemo(
@@ -720,6 +918,124 @@ export default function ParticipantPathPanel(
       physicsPoints.length,
     ]);
 
+  const applyParticipantSpeed =
+    useCallback(
+      (requestedSpeed: number) => {
+        if (
+          !Number.isFinite(
+            requestedSpeed,
+          )
+        ) {
+          setSpeedDraft(
+            formatSpeedValue(
+              participant.estimatedSpeedKmh,
+            ),
+          );
+          return;
+        }
+
+        const nextSpeed =
+          clampNumber(
+            requestedSpeed,
+            0.1,
+            speedLimit,
+          );
+
+        const previousSpeed =
+          Math.max(
+            0.1,
+            participant.estimatedSpeedKmh ||
+              investigatorPoints.find(
+                (point) =>
+                  point.speedKmh > 0,
+              )?.speedKmh ||
+              nextSpeed,
+          );
+
+        const timingScale =
+          previousSpeed / nextSpeed;
+
+        const firstTime =
+          investigatorPoints[0]
+            ?.timeSeconds ?? 0;
+
+        const updatedPathPoints =
+          investigatorPoints.map(
+            (point, index) => {
+              const elapsed = Math.max(
+                0,
+                point.timeSeconds -
+                  firstTime,
+              );
+
+              return {
+                ...point,
+                timeSeconds:
+                  index === 0
+                    ? firstTime
+                    : Number(
+                        (
+                          firstTime +
+                          elapsed *
+                            timingScale
+                        ).toFixed(2),
+                      ),
+                speedKmh:
+                  point.action ===
+                  "Stop"
+                    ? 0
+                    : nextSpeed,
+              };
+            },
+          );
+
+        invalidatePhysicsBeforeStructureChange();
+
+        onParticipantChange({
+          estimatedSpeedKmh:
+            nextSpeed,
+          pathPoints:
+            updatedPathPoints,
+        });
+
+        setSpeedDraft(
+          formatSpeedValue(
+            nextSpeed,
+          ),
+        );
+
+        const finalTime =
+          updatedPathPoints[
+            updatedPathPoints.length - 1
+          ]?.timeSeconds ?? 0;
+
+        setRouteMessage(
+          finalTime > durationSeconds
+            ? `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h. The route timing was recalculated to ${finalTime.toFixed(1)}s, so the current ${durationSeconds.toFixed(1)}s timeline will show only the physically reachable part of the route.`
+            : `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h. Every authored movement point and its timing were recalculated for playback.`,
+        );
+      },
+      [
+        durationSeconds,
+        investigatorPoints,
+        invalidatePhysicsBeforeStructureChange,
+        onParticipantChange,
+        participant.estimatedSpeedKmh,
+        participant.name,
+        speedLimit,
+      ],
+    );
+
+  const commitSpeedDraft =
+    useCallback(() => {
+      applyParticipantSpeed(
+        Number(speedDraft),
+      );
+    }, [
+      applyParticipantSpeed,
+      speedDraft,
+    ]);
+
   const handleDeleteInvestigatorPoint =
     useCallback(
       (point: MovementPathPoint) => {
@@ -753,7 +1069,8 @@ export default function ParticipantPathPanel(
 
   return (
     <div
-      className="mt-5 border-t border-gray-200 pt-5"
+      ref={panelRootRef}
+      className="roadsafe-route-inspector mt-0 border-0 pb-24 pt-0"
       data-roadsafe-route-builder="true"
     >
       <style>{`
@@ -790,6 +1107,181 @@ export default function ParticipantPathPanel(
           transform: translate(-50%, -50%) rotate(45deg) scale(1.18) !important;
           filter: brightness(1.12);
           z-index: 70 !important;
+        }
+
+        .reconstruction-workspace__2d-grid {
+          align-items: start !important;
+          min-height: 0 !important;
+        }
+
+        .reconstruction-workspace__2d-grid >
+        .reconstruction-workspace__properties--2d {
+          position: sticky !important;
+          inset: auto !important;
+          top: 0.75rem !important;
+          align-self: start !important;
+          width: 100% !important;
+          height: calc(100vh - 7.25rem) !important;
+          min-height: 0 !important;
+          max-height: calc(100vh - 7.25rem) !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior: contain;
+          scrollbar-gutter: stable;
+          padding: 0.72rem 0.72rem 7rem !important;
+        }
+
+        .reconstruction-workspace__properties--2d
+        .reconstruction-workspace__context-panel {
+          min-height: 0 !important;
+        }
+
+        .reconstruction-workspace__properties--2d
+        .reconstruction-workspace__context-section {
+          margin: 0 0 0.62rem !important;
+          border: 1px solid #182b49 !important;
+          border-radius: 0.45rem !important;
+          background: linear-gradient(180deg, #071120 0%, #050c19 100%) !important;
+          padding: 0.68rem !important;
+          box-shadow: inset 0 1px 0 rgba(124, 164, 220, 0.035) !important;
+        }
+
+        .reconstruction-workspace__properties--2d
+        .reconstruction-workspace__context-title {
+          color: #dce7f7 !important;
+          font-size: 0.61rem !important;
+          font-weight: 800 !important;
+          letter-spacing: 0.075em !important;
+          text-transform: uppercase !important;
+        }
+
+        .reconstruction-workspace__properties--2d
+        .reconstruction-workspace__speed-control {
+          display: none !important;
+        }
+
+        details.reconstruction-workspace__route-details {
+          display: block !important;
+          overflow: visible !important;
+        }
+
+        details.reconstruction-workspace__route-details > summary {
+          display: none !important;
+        }
+
+        details.reconstruction-workspace__route-details >
+        .roadsafe-route-inspector {
+          display: block !important;
+          margin: 0 !important;
+          border: 0 !important;
+          padding-top: 0 !important;
+        }
+
+        .roadsafe-route-inspector {
+          color: #b9c7da;
+        }
+
+        .roadsafe-route-inspector [class*="bg-gradient-to-br"] {
+          border-color: #214066 !important;
+          background: linear-gradient(145deg, #09182c 0%, #071222 56%, #08101d 100%) !important;
+          box-shadow: inset 0 1px 0 rgba(125, 177, 255, 0.04) !important;
+        }
+
+        .roadsafe-route-inspector [class*="bg-white"],
+        .roadsafe-route-inspector [class*="bg-blue-50"],
+        .roadsafe-route-inspector [class*="bg-sky-50"],
+        .roadsafe-route-inspector [class*="bg-cyan-50"],
+        .roadsafe-route-inspector [class*="bg-violet-50"],
+        .roadsafe-route-inspector [class*="bg-emerald-50"],
+        .roadsafe-route-inspector [class*="bg-amber-50"],
+        .roadsafe-route-inspector [class*="bg-red-50"],
+        .roadsafe-route-inspector [class*="bg-gray-50"],
+        .roadsafe-route-inspector [class*="bg-slate-50"] {
+          background-color: #071120 !important;
+        }
+
+        .roadsafe-route-inspector [class*="border-blue-"],
+        .roadsafe-route-inspector [class*="border-sky-"],
+        .roadsafe-route-inspector [class*="border-cyan-"],
+        .roadsafe-route-inspector [class*="border-violet-"],
+        .roadsafe-route-inspector [class*="border-emerald-"],
+        .roadsafe-route-inspector [class*="border-amber-"],
+        .roadsafe-route-inspector [class*="border-red-"],
+        .roadsafe-route-inspector [class*="border-rose-"],
+        .roadsafe-route-inspector [class*="border-gray-"],
+        .roadsafe-route-inspector [class*="border-slate-"] {
+          border-color: #1a3152 !important;
+        }
+
+        .roadsafe-route-inspector button:not([${ROUTE_DIAMOND_ATTRIBUTE}="true"]) {
+          min-height: 31px;
+          border-radius: 0.34rem !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-inspector button[class*="bg-sky-600"],
+        .roadsafe-route-inspector button[class*="bg-blue-600"] {
+          border: 1px solid #3d70b7 !important;
+          background: #163a73 !important;
+          color: #f4f8ff !important;
+        }
+
+        .roadsafe-route-inspector button[class*="bg-sky-600"]:hover,
+        .roadsafe-route-inspector button[class*="bg-blue-600"]:hover {
+          background: #1b4789 !important;
+        }
+
+        .roadsafe-route-inspector button[class*="bg-emerald-600"] {
+          border: 1px solid #2f7168 !important;
+          background: #123c39 !important;
+          color: #b8ebe2 !important;
+        }
+
+        .roadsafe-route-inspector button[class*="bg-emerald-600"]:hover {
+          background: #174b47 !important;
+        }
+
+        .roadsafe-route-inspector input,
+        .roadsafe-route-inspector select,
+        .roadsafe-route-inspector textarea {
+          border: 1px solid #1d3558 !important;
+          border-radius: 0.34rem !important;
+          background: #050d1b !important;
+          color: #dce7f7 !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-inspector input:focus,
+        .roadsafe-route-inspector select:focus,
+        .roadsafe-route-inspector textarea:focus {
+          border-color: #477fc8 !important;
+          box-shadow: 0 0 0 2px rgba(71, 127, 200, 0.16) !important;
+        }
+
+        .roadsafe-route-inspector input[type="range"] {
+          accent-color: #4d8cf5;
+        }
+
+        .roadsafe-route-inspector .roadsafe-route-speed-card {
+          margin-top: 0.65rem;
+          border: 1px solid #214066;
+          border-radius: 0.45rem;
+          background: linear-gradient(145deg, #08172b, #060e1c);
+          padding: 0.72rem;
+        }
+
+        .roadsafe-route-inspector .roadsafe-route-point-card {
+          scroll-margin-block: 4.5rem;
+        }
+
+        @media (max-width: 980px) {
+          .reconstruction-workspace__2d-grid >
+          .reconstruction-workspace__properties--2d {
+            position: relative !important;
+            top: auto !important;
+            height: min(64vh, 760px) !important;
+            max-height: min(64vh, 760px) !important;
+          }
         }
       `}</style>
 
@@ -874,6 +1366,88 @@ export default function ParticipantPathPanel(
           </span>
         </div>
       </div>
+
+      <section className="roadsafe-route-speed-card">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-300">
+              Exact participant speed
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-slate-400">
+              This changes the authored route speed itself, not only the displayed value. Playback timing is scaled so a value such as 1 km/h actually moves this participant slowly.
+            </p>
+          </div>
+
+          <span className="shrink-0 rounded border border-[#2c5688] bg-[#0d2342] px-2 py-1 text-[10px] font-black text-[#9cc5ff]">
+            {formatSpeedValue(participant.estimatedSpeedKmh)} km/h
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
+          <input
+            type="range"
+            min={0.1}
+            max={speedLimit}
+            step={0.1}
+            value={participant.estimatedSpeedKmh}
+            onChange={(event) =>
+              applyParticipantSpeed(
+                Number(event.target.value),
+              )
+            }
+            aria-label="Participant route speed"
+          />
+
+          <div className="relative">
+            <input
+              type="number"
+              min={0.1}
+              max={speedLimit}
+              step={0.1}
+              value={speedDraft}
+              onChange={(event) =>
+                setSpeedDraft(
+                  event.target.value,
+                )
+              }
+              onBlur={commitSpeedDraft}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  commitSpeedDraft();
+                  event.currentTarget.blur();
+                }
+              }}
+              className="w-full pr-7 text-right text-xs font-black"
+              aria-label="Exact speed in kilometres per hour"
+            />
+            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-bold text-slate-500">
+              km/h
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {[1, 5, 10, 20, 40, 60]
+            .filter((speed) =>
+              speed <= speedLimit,
+            )
+            .map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                onClick={() =>
+                  applyParticipantSpeed(
+                    speed,
+                  )
+                }
+                className="border border-[#28466d] bg-[#0a162a] px-2 py-1 text-[9px] font-black text-slate-300 hover:border-[#477fc8] hover:bg-[#102445] hover:text-white"
+              >
+                {speed} km/h
+              </button>
+            ))}
+        </div>
+      </section>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         <div className="rounded-sm border border-blue-200 bg-blue-50 p-3">
@@ -1051,7 +1625,19 @@ export default function ParticipantPathPanel(
             return (
               <div
                 key={point.id}
-                className={`rounded-sm border p-3 transition ${
+                ref={(element) => {
+                  if (element) {
+                    pointCardRefs.current.set(
+                      point.id,
+                      element,
+                    );
+                  } else {
+                    pointCardRefs.current.delete(
+                      point.id,
+                    );
+                  }
+                }}
+                className={`roadsafe-route-point-card rounded-sm border p-3 transition ${
                   physicsGenerated
                     ? selected
                       ? "border-violet-500 bg-violet-50"
@@ -1518,6 +2104,11 @@ export default function ParticipantPathPanel(
           },
         )}
       </div>
+
+      <div
+        aria-hidden="true"
+        className="h-24"
+      />
     </div>
   );
 }
