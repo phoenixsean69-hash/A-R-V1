@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -12,13 +11,8 @@ import { averageGeoCoordinates } from "../../utils/locationAveraging";
 
 import { AccidentCaseService } from "../../services/accidentCaseService";
 import { RoadLayoutDetectionService } from "../../services/roadLayoutDetectionService";
-import { RealSceneExtractionService } from "../../services/realSceneExtractionService";
 
 import type { AccidentCaseFormValues } from "../../types/accidentCase";
-import type {
-  RealSceneAreaSelection,
-  RealSceneGeometry,
-} from "../../types/realSceneGeometry";
 import type {
   RoadDetectionCoordinate,
   RoadDetectionResult,
@@ -37,9 +31,7 @@ import {
 
 import RoadSceneEnvironment from "../reconstruction/RoadSceneEnvironment";
 import RoadDetectionPreview from "./RoadDetectionPreview";
-import RoadLocationMap, {
-  type RoadLocationMapHandle,
-} from "./RoadLocationMap";
+import RoadLocationMap from "./RoadLocationMap";
 
 interface NewCaseRoadWizardProps {
   initialValues: AccidentCaseFormValues;
@@ -146,15 +138,6 @@ export default function NewCaseRoadWizard({
   const [manualLongitude, setManualLongitude] = useState("");
   const [averaging, setAveraging] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
-  const locationMapRef = useRef<RoadLocationMapHandle | null>(null);
-  const previousSceneAnchorRef = useRef<string | null>(null);
-  const [sceneArea, setSceneArea] =
-    useState<RealSceneAreaSelection | null>(null);
-  const [realSceneGeometry, setRealSceneGeometry] =
-    useState<RealSceneGeometry | null>(null);
-  const [extractingScene, setExtractingScene] = useState(false);
-  const [sceneGeometryConfirmed, setSceneGeometryConfirmed] = useState(false);
-  const [sceneExtractionMessage, setSceneExtractionMessage] = useState("");
 
   const [selectedEnvironment, setSelectedEnvironment] =
     useState<SceneEnvironmentType | null>(null);
@@ -183,31 +166,6 @@ export default function NewCaseRoadWizard({
 
     return () => window.clearTimeout(timer);
   }, [liveCoordinate, selectedCoordinate]);
-
-  useEffect(() => {
-    const identity = selectedCoordinate
-      ? `${selectedCoordinate.latitude.toFixed(7)}:${selectedCoordinate.longitude.toFixed(7)}`
-      : null;
-
-    if (
-      previousSceneAnchorRef.current &&
-      identity &&
-      previousSceneAnchorRef.current !== identity
-    ) {
-      // A changed accident anchor invalidates the selected scene area.
-      setSceneArea(null);
-      setRealSceneGeometry(null);
-      setSceneGeometryConfirmed(false);
-      setSelectedEnvironment(null);
-      setDetectionResult(null);
-      setSceneSettings(null);
-      setSceneExtractionMessage(
-        "The accident anchor changed. Select and extract the scene area again.",
-      );
-    }
-
-    previousSceneAnchorRef.current = identity;
-  }, [selectedCoordinate]);
 
   const locationDisplay = useMemo(() => {
     if (!selectedCoordinate) return "No accident position confirmed yet.";
@@ -330,61 +288,18 @@ export default function NewCaseRoadWizard({
     setLocationMessage("Manual coordinate applied. Confirm it on the map.");
   };
 
-  const extractSelectedScene = async () => {
-    if (!sceneArea) {
-      setSceneExtractionMessage(
-        "Select the accident-scene area on the map first.",
-      );
-      return;
-    }
-
-    setExtractingScene(true);
-    setSceneExtractionMessage(
-      "Capturing the selected map area and extracting its real geometry…",
-    );
-
-    try {
-      const snapshot =
-        await locationMapRef.current?.captureSelectedAreaSnapshot();
-      const result = await RealSceneExtractionService.extract(
-        sceneArea,
-        snapshot ?? undefined,
-      );
-      setRealSceneGeometry(result.geometry);
-      setSceneGeometryConfirmed(false);
-      setSelectedEnvironment(null);
-      setDetectionResult(null);
-      setSceneSettings(null);
-      setSceneExtractionMessage(
-        `Scene ready: ${result.geometry.roads.length} road section(s), ${result.geometry.buildings.length} building footprint(s), ${result.geometry.sceneWidthMetres.toFixed(1)} × ${result.geometry.sceneHeightMetres.toFixed(1)} m.`,
-      );
-    } catch (error) {
-      setRealSceneGeometry(null);
-      setSceneGeometryConfirmed(false);
-      setSceneExtractionMessage(
-        error instanceof Error
-          ? error.message
-          : "The selected scene could not be extracted.",
-      );
-    } finally {
-      setExtractingScene(false);
-    }
-  };
-
   const detectRoadLayout = async (
     forceRefresh: boolean,
     environment: SceneEnvironmentType = selectedEnvironment ?? "Road / Junction",
   ) => {
     if (!selectedCoordinate) return;
 
-    const detectionCoordinate = sceneArea?.centre ?? selectedCoordinate;
-
     setDetectingRoad(true);
     setRoadError("");
 
     try {
       const result = await RoadLayoutDetectionService.detectAtCoordinate(
-        detectionCoordinate,
+        selectedCoordinate,
         80,
         forceRefresh,
       );
@@ -393,13 +308,6 @@ export default function NewCaseRoadWizard({
         ...result.detection.suggestedSceneSettings,
         sceneEnvironment: environment,
         groundSurface: "Unclassified Ground",
-        sceneWidthMetres:
-          realSceneGeometry?.sceneWidthMetres ??
-          result.detection.suggestedSceneSettings.sceneWidthMetres,
-        sceneHeightMetres:
-          realSceneGeometry?.sceneHeightMetres ??
-          result.detection.suggestedSceneSettings.sceneHeightMetres,
-        realSceneGeometry: realSceneGeometry ?? undefined,
       });
 
       const detectedLocation = result.detection.address.displayName.trim();
@@ -425,25 +333,13 @@ export default function NewCaseRoadWizard({
     setDetectionResult(null);
     setRoadError("");
 
-    const sharedRealScene = realSceneGeometry
-      ? {
-          sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
-          sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
-          realSceneGeometry,
-        }
-      : {};
-
     if (sceneEnvironment === "Open Ground" || sceneEnvironment === "Custom Site") {
-      setSceneSettings({
-        ...createDefaultGroundSceneSettings(sceneEnvironment),
-        ...sharedRealScene,
-      });
+      setSceneSettings(createDefaultGroundSceneSettings(sceneEnvironment));
       return;
     }
 
     setSceneSettings({
       ...createDefaultRoadSceneSettings(),
-      ...sharedRealScene,
       sceneEnvironment,
       groundSurface: "Unclassified Ground",
     });
@@ -451,7 +347,7 @@ export default function NewCaseRoadWizard({
   };
 
   const createCaseAndScene = () => {
-    if (!selectedCoordinate || !sceneSettings || !realSceneGeometry || !sceneGeometryConfirmed) return;
+    if (!selectedCoordinate || !sceneSettings) return;
 
     setCreating(true);
 
@@ -637,7 +533,7 @@ export default function NewCaseRoadWizard({
           <SectionHeading
             eyebrow="Step 2 of 4"
             title="Confirm the physical accident location"
-            description="Use GPS only to centre the map. The officer must then draw the exact accident-scene area that will be reconstructed."
+            description="Stand near the collision area, allow precise location, then adjust the red map pin when necessary."
           />
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
@@ -761,25 +657,9 @@ export default function NewCaseRoadWizard({
 
             <div>
               <RoadLocationMap
-                ref={locationMapRef}
                 coordinate={selectedCoordinate}
                 currentCoordinate={geolocation.current}
                 editable
-                areaSelection={sceneArea}
-                realSceneGeometry={realSceneGeometry}
-                onAreaSelectionChange={(selection) => {
-                  setSceneArea(selection);
-                  setRealSceneGeometry(null);
-                  setSceneGeometryConfirmed(false);
-                  setSelectedEnvironment(null);
-                  setDetectionResult(null);
-                  setSceneSettings(null);
-                  setSceneExtractionMessage(
-                    selection
-                      ? "Scene boundary selected. Extract it to create the shared 2D/3D geometry."
-                      : "Select the accident-scene area on the map.",
-                  );
-                }}
                 onCoordinateChange={(coordinate) => {
                   setSelectedCoordinate(coordinate);
                   setLocationMessage(
@@ -788,90 +668,14 @@ export default function NewCaseRoadWizard({
                 }}
               />
 
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="font-black text-blue-950">Accident scene anchor</p>
-                  <p className="mt-1 break-all font-mono text-sm text-blue-800">
-                    {locationDisplay}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-blue-700">
-                    The red pin is a reference point. The blue selected boundary—not the pin—defines the reconstruction scene.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black text-sky-950">Selected-area scene engine</p>
-                      <p className="mt-1 text-xs leading-5 text-sky-800">
-                        Capture this exact area and preserve its real road curves, paths and mapped structures.
-                      </p>
-                    </div>
-                    {realSceneGeometry && (
-                      <span
-                        className={sceneGeometryConfirmed
-                          ? "rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800"
-                          : "rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-800"}
-                      >
-                        {sceneGeometryConfirmed ? "Confirmed" : "Review"}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={!sceneArea || extractingScene}
-                    onClick={() => void extractSelectedScene()}
-                    className="mt-4 w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-black text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    {extractingScene
-                      ? "Extracting real scene geometry…"
-                      : realSceneGeometry
-                        ? "Re-extract Selected Scene"
-                        : "Capture and Extract Selected Scene"}
-                  </button>
-
-                  {realSceneGeometry && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSceneGeometryConfirmed(true);
-                        setSceneExtractionMessage(
-                          "The officer confirmed the extracted overlay for scene creation.",
-                        );
-                      }}
-                      className={sceneGeometryConfirmed
-                        ? "mt-2 w-full rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-black text-emerald-800 transition"
-                        : "mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50"}
-                    >
-                      {sceneGeometryConfirmed
-                        ? "Extracted Geometry Confirmed"
-                        : "Confirm Extracted Geometry"}
-                    </button>
-                  )}
-
-                  <p className="mt-3 text-xs font-semibold leading-5 text-sky-800">
-                    {sceneExtractionMessage ||
-                      "Draw a blue scene boundary on the map before continuing."}
-                  </p>
-
-                  {realSceneGeometry && (
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-700">
-                      <div className="rounded-lg bg-white/75 p-2">
-                        <dt className="font-bold text-slate-500">Scene size</dt>
-                        <dd className="mt-1 font-black">
-                          {realSceneGeometry.sceneWidthMetres.toFixed(1)} × {realSceneGeometry.sceneHeightMetres.toFixed(1)} m
-                        </dd>
-                      </div>
-                      <div className="rounded-lg bg-white/75 p-2">
-                        <dt className="font-bold text-slate-500">Geometry</dt>
-                        <dd className="mt-1 font-black">
-                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings
-                        </dd>
-                      </div>
-                    </dl>
-                  )}
-                </div>
+              <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                <p className="font-black text-blue-950">Selected accident position</p>
+                <p className="mt-1 break-all font-mono text-sm text-blue-800">
+                  {locationDisplay}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-blue-700">
+                  The red pin should represent the centre of the accident scene or the junction being reconstructed—not merely where the officer parked.
+                </p>
               </div>
             </div>
           </div>
@@ -886,7 +690,7 @@ export default function NewCaseRoadWizard({
             </button>
             <button
               type="button"
-              disabled={!selectedCoordinate || !realSceneGeometry || !sceneGeometryConfirmed}
+              disabled={!selectedCoordinate}
               onClick={() => {
                 setSelectedEnvironment(null);
                 setDetectionResult(null);
@@ -906,7 +710,7 @@ export default function NewCaseRoadWizard({
           <SectionHeading
             eyebrow="Step 3 of 4"
             title="Choose the real-world scene environment"
-            description="The selected-area geometry remains the source of truth. Environment choices control how that verified geometry is presented—not which junction template is invented."
+            description="The coordinate remains real in every mode. RoadSafe only generates road geometry when the officer explicitly chooses a road-based environment."
           />
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

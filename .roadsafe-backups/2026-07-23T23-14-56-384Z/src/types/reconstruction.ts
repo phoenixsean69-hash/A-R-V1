@@ -1,5 +1,3 @@
-import type { RealSceneGeometry } from "./realSceneGeometry";
-
 import type { RoadLayoutDetection } from "./roadLayoutDetection";
 
 import type {
@@ -189,8 +187,6 @@ export type SceneTrafficVolume =
   | "Heavy";
 
 export interface RoadSceneSettings {
-  /** Officer-selected, metre-based real-world geometry shared by 2D and 3D. */
-  realSceneGeometry?: RealSceneGeometry;
   /** Controls whether RoadSafe generates road geometry or preserves neutral ground. */
   sceneEnvironment: SceneEnvironmentType;
   groundSurface: GroundSurfaceType;

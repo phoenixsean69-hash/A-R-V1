@@ -3,7 +3,6 @@ import {
   usesGeneratedRoad,
   type RoadSceneSettings,
 } from "../../types/reconstruction";
-import RealSceneGeometryLayer from "./RealSceneGeometryLayer";
 
 interface RoadSceneEnvironmentProps {
   settings: RoadSceneSettings;
@@ -245,19 +244,6 @@ function WeatherOverlay({ settings }: { settings: RoadSceneSettings }) {
 }
 
 export default function RoadSceneEnvironment({ settings }: RoadSceneEnvironmentProps) {
-  const realSceneGeometry = settings.realSceneGeometry?.status === "ready"
-    ? settings.realSceneGeometry
-    : null;
-
-  if (realSceneGeometry) {
-    return (
-      <>
-        <RealSceneGeometryLayer geometry={realSceneGeometry} settings={settings} />
-        <WeatherOverlay settings={settings} />
-      </>
-    );
-  }
-
   const roadWidth = clamp(16 + settings.laneCount * 3.5, 20, 38);
   const generatedRoad = usesGeneratedRoad(settings);
   return (

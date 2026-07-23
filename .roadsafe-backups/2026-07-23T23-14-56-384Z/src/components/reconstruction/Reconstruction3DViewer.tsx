@@ -31,7 +31,6 @@ import {
   type ReconstructionVehicle,
 } from "../../types/reconstruction";
 import { getParticipantStateAtTime, sortMovementPathPoints } from "../../utils/reconstructionGeometry";
-import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeometry";
 
 interface Reconstruction3DViewerProps {
   reconstruction: AccidentReconstruction;
@@ -833,22 +832,6 @@ function addRoad(
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
-  }
-
-  const realSceneGeometry = reconstruction.scene.realSceneGeometry?.status === "ready"
-    ? reconstruction.scene.realSceneGeometry
-    : null;
-
-  if (realSceneGeometry) {
-    addRealSceneGeometryToThreeScene({
-      scene,
-      geometry: realSceneGeometry,
-      heightAt: roadHeightAt,
-      showPavements: reconstruction.scene.showPavements,
-      showLaneMarkings: reconstruction.scene.showLaneMarkings,
-      wet,
-    });
-    return;
   }
 
   if (!usesGeneratedRoad(reconstruction.scene)) {
