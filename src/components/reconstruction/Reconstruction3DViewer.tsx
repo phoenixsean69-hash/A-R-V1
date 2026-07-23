@@ -51,10 +51,43 @@ interface Reconstruction3DViewerProps {
     evidence: boolean;
     physics: boolean;
   };
+  workspaceTool?: WorkspaceToolMode;
 }
+
+type WorkspaceToolMode =
+  | "Select"
+  | "Move"
+  | "Rotate"
+  | "Scale"
+  | "Timeline"
+  | "Measure"
+  | "Camera";
 
 type CameraMode = "Orbit" | "Overhead" | "Roadside" | "Driver";
 type TerrainLoadStatus = "Disabled" | "Loading" | "Ready" | "Unavailable" | "Error";
+
+function configureWorkspaceControls(
+  controls: OrbitControls,
+  element: HTMLCanvasElement,
+  tool: WorkspaceToolMode,
+) {
+  controls.enableRotate = true;
+  controls.enablePan = true;
+  controls.enableZoom = true;
+
+  if (tool === "Move") {
+    controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+    element.style.cursor = "grab";
+  } else if (tool === "Scale") {
+    controls.mouseButtons.LEFT = THREE.MOUSE.DOLLY;
+    element.style.cursor = "ns-resize";
+  } else {
+    controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+    element.style.cursor = tool === "Select" ? "crosshair" : "grab";
+  }
+
+  controls.update();
+}
 
 interface AssetLifecycle {
   isDisposed: () => boolean;
@@ -1034,8 +1067,12 @@ function Reconstruction3DViewer({
   workspacePlaybackSpeed,
   workspaceCameraMode,
   workspaceLayers,
+  workspaceTool = "Select",
 }: Reconstruction3DViewerProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const rendererElementRef = useRef<HTMLCanvasElement | null>(null);
+  const workspaceToolRef = useRef<WorkspaceToolMode>(workspaceTool);
   const playingRef = useRef(false);
   const timeRef = useRef(0);
   const speedRef = useRef(1);
@@ -1081,6 +1118,15 @@ function Reconstruction3DViewer({
   useEffect(() => { cameraModeRef.current = effectiveCameraMode; }, [effectiveCameraMode]);
   useEffect(() => { selectedParticipantRef.current = selectedParticipantId; }, [selectedParticipantId]);
   useEffect(() => { onSelectParticipantRef.current = onSelectParticipant; }, [onSelectParticipant]);
+  useEffect(() => {
+    workspaceToolRef.current = workspaceTool;
+    if (!workspaceMode || !controlsRef.current || !rendererElementRef.current) return;
+    configureWorkspaceControls(
+      controlsRef.current,
+      rendererElementRef.current,
+      workspaceTool,
+    );
+  }, [workspaceMode, workspaceTool]);
   useEffect(() => {
     if (!controlledWorkspace || workspaceTimeSeconds === undefined) return;
     workspaceTimeRef.current = workspaceTimeSeconds;
@@ -1224,11 +1270,16 @@ function Reconstruction3DViewer({
     renderer.toneMappingExposure = nightScene ? 0.78 : 1.05;
     mount.appendChild(renderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
+    controlsRef.current = controls;
+    rendererElementRef.current = renderer.domElement;
     controls.enableDamping = true;
     controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2.02;
     controls.minDistance = 5;
     controls.maxDistance = Math.max(width, height, terrainGrid?.areaMetres ?? 0) * 1.35;
+    if (workspaceMode) {
+      configureWorkspaceControls(controls, renderer.domElement, workspaceToolRef.current);
+    }
     scene.add(new THREE.HemisphereLight(
       nightScene ? 0x60728e : 0xdde8ee,
       nightScene ? 0x07101d : 0x3d443d,
@@ -1557,6 +1608,7 @@ function Reconstruction3DViewer({
     const pointer = new THREE.Vector2();
     const handlePointerDown = (event: PointerEvent) => {
       if (!onSelectParticipantRef.current) return;
+      if (workspaceMode && workspaceToolRef.current !== "Select") return;
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1;
@@ -1578,6 +1630,8 @@ function Reconstruction3DViewer({
       cancelAnimationFrame(animationId);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+      if (controlsRef.current === controls) controlsRef.current = null;
+      if (rendererElementRef.current === renderer.domElement) rendererElementRef.current = null;
       controls.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {
@@ -1603,7 +1657,7 @@ function Reconstruction3DViewer({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [controlledWorkspace, reconstruction, effectiveShowEvidence, effectiveShowObjects, effectiveShowPaths, effectiveShowPhysicsEffects, terrainGrid]);
+  }, [controlledWorkspace, reconstruction, effectiveShowEvidence, effectiveShowObjects, effectiveShowPaths, effectiveShowPhysicsEffects, terrainGrid, workspaceMode]);
 
   const setTime = (value: number) => {
     timeRef.current = value;

@@ -9,10 +9,15 @@ import type {
 
 import {
   Activity,
+  Camera,
+  CarFront,
   Eye,
   EyeOff,
+  FileSearch,
+  Flag,
   Plus,
   Trash2,
+  TriangleAlert,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -57,6 +62,22 @@ interface TimelineTrack {
   subtitle: string;
   colour: string;
   events: DisplayTimelineEvent[];
+}
+
+function TimelineTrackIcon({ trackId }: { trackId: string }) {
+  if (trackId === "system:impact") return <TriangleAlert size={10} strokeWidth={3} />;
+  if (trackId === "system:evidence") return <FileSearch size={10} strokeWidth={3} />;
+  if (trackId === "system:scene") return <Camera size={10} strokeWidth={3} />;
+  return <CarFront size={10} strokeWidth={3} />;
+}
+
+function TimelineEventIcon({ type }: { type: TimelineEventType }) {
+  if (type === "Collision") return <TriangleAlert size={9} strokeWidth={3} />;
+  if (type === "Evidence") return <FileSearch size={9} strokeWidth={3} />;
+  if (type === "Environment" || type === "Observation") {
+    return <Camera size={9} strokeWidth={3} />;
+  }
+  return <Flag size={9} strokeWidth={3} />;
 }
 
 const EVENT_TYPES: TimelineEventType[] = [
@@ -360,7 +381,12 @@ export default function AccidentTimeline({
           </div>
           {tracks.map((track) => (
             <div key={track.id} className="reconstruction-timeline__label">
-              <span style={{ backgroundColor: track.colour }} />
+              <span
+                className="reconstruction-timeline__track-icon"
+                style={{ backgroundColor: track.colour }}
+              >
+                <TimelineTrackIcon trackId={track.id} />
+              </span>
               <div>
                 <strong>{track.label}</strong>
                 <small>{track.subtitle}</small>
@@ -420,7 +446,12 @@ export default function AccidentTimeline({
                       onClick={() => handleEventClick(event)}
                       title={`${event.timeSeconds.toFixed(2)}s — ${event.title}`}
                     >
-                      <span style={{ backgroundColor: getEventColour(event.type) }} />
+                      <span
+                        className="reconstruction-timeline__event-icon"
+                        style={{ backgroundColor: getEventColour(event.type) }}
+                      >
+                        <TimelineEventIcon type={event.type} />
+                      </span>
                       <strong>{event.title}</strong>
                       {event.generated && <small>AUTO</small>}
                     </button>
@@ -440,7 +471,12 @@ export default function AccidentTimeline({
         ) : selectedEvent.generated ? (
           <div className="reconstruction-timeline__selected-event">
             <div>
-              <span style={{ backgroundColor: getEventColour(selectedEvent.type) }} />
+              <span
+                className="reconstruction-timeline__event-icon"
+                style={{ backgroundColor: getEventColour(selectedEvent.type) }}
+              >
+                <TimelineEventIcon type={selectedEvent.type} />
+              </span>
               <div>
                 <small>Generated movement event</small>
                 <strong>{selectedEvent.title}</strong>

@@ -341,6 +341,7 @@ export interface CollisionSetup {
   confirmed: boolean;
   locked: boolean;
   toleranceMetres: number;
+  confidence?: "High" | "Medium" | "Low";
   notes: string;
   lastCalculatedAt?: string;
 }
