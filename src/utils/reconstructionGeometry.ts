@@ -1,5 +1,6 @@
 import type {
   AccidentReconstruction,
+  MovementAction,
   MovementPathPoint,
   ReconstructionPosition,
   ReconstructionSceneObject,
@@ -15,11 +16,39 @@ export interface ReconstructionImpactEffectState {
   progress: number;
 }
 
+interface Vector2 {
+  x: number;
+  y: number;
+}
+
+interface ParticipantMotionProfile {
+  curveHandleRatio: number;
+  straightAngleTolerance: number;
+  cornerSpeedLoss: number;
+  maximumWalkingSpeedKmh: number | null;
+  gaitSwayScenePercent: number;
+  gaitRotationDegrees: number;
+}
+
+interface SegmentMotionGeometry {
+  position: ReconstructionPosition;
+  tangent: Vector2;
+  turnSeverityDegrees: number;
+}
+
+const HUMAN_TYPES = new Set<
+  ReconstructionVehicle["type"]
+>([
+  "Pedestrian",
+  "Officer",
+  "Witness",
+]);
+
 const PHYSICS_POINT_PREFIXES = [
-  "physics-point-",
-  "detected-impact-",
-  "physics-transition-",
-  "legacy-impact-",
+  "physics-point",
+  "detected-impact",
+  "physics-transition",
+  "legacy-impact",
 ] as const;
 
 const PHYSICS_NOTE_MARKERS = [
@@ -29,19 +58,33 @@ const PHYSICS_NOTE_MARKERS = [
   "Physics-generated event.",
 ] as const;
 
-const PLACEHOLDER_REST_LABELS = new Set([
-  "final position",
-  "final resting position",
-  "rest position",
-  "natural stop",
-]);
+const PLACEHOLDER_REST_LABELS =
+  new Set([
+    "final position",
+    "final resting position",
+    "rest position",
+    "natural stop",
+  ]);
+
+const POST_IMPACT_ACTIONS =
+  new Set<MovementAction>([
+    "Impact",
+    "Ricochet",
+    "Deflect",
+    "Slide",
+    "Fall",
+    "Stop",
+  ]);
 
 export function clamp(
   value: number,
   minimum: number,
   maximum: number,
 ): number {
-  return Math.min(maximum, Math.max(minimum, value));
+  return Math.min(
+    maximum,
+    Math.max(minimum, value),
+  );
 }
 
 export function interpolate(
@@ -49,7 +92,10 @@ export function interpolate(
   end: number,
   progress: number,
 ): number {
-  return start + (end - start) * progress;
+  return (
+    start +
+    (end - start) * progress
+  );
 }
 
 function interpolateAngle(
@@ -57,8 +103,218 @@ function interpolateAngle(
   end: number,
   progress: number,
 ): number {
-  const difference = ((end - start + 540) % 360) - 180;
-  return start + difference * progress;
+  const difference =
+    ((end - start + 540) % 360) -
+    180;
+
+  return (
+    start +
+    difference * progress
+  );
+}
+
+function degreesToRadians(
+  degrees: number,
+): number {
+  return (
+    degrees *
+    Math.PI /
+    180
+  );
+}
+
+function vectorLength(
+  vector: Vector2,
+): number {
+  return Math.hypot(
+    vector.x,
+    vector.y,
+  );
+}
+
+function subtractPositions(
+  end: ReconstructionPosition,
+  start: ReconstructionPosition,
+): Vector2 {
+  return {
+    x: end.x - start.x,
+    y: end.y - start.y,
+  };
+}
+
+function normaliseVector(
+  vector: Vector2,
+  fallback: Vector2 = {
+    x: 1,
+    y: 0,
+  },
+): Vector2 {
+  const length =
+    vectorLength(vector);
+
+  if (length < 0.000001) {
+    const fallbackLength =
+      vectorLength(fallback) || 1;
+
+    return {
+      x:
+        fallback.x /
+        fallbackLength,
+      y:
+        fallback.y /
+        fallbackLength,
+    };
+  }
+
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+  };
+}
+
+function addVectors(
+  first: Vector2,
+  second: Vector2,
+): Vector2 {
+  return {
+    x: first.x + second.x,
+    y: first.y + second.y,
+  };
+}
+
+function angleFromVector(
+  vector: Vector2,
+): number {
+  return (
+    (
+      Math.atan2(
+        vector.y,
+        vector.x,
+      ) *
+        180 /
+        Math.PI
+    ) +
+    360
+  ) % 360;
+}
+
+function angleDifferenceDegrees(
+  first: Vector2,
+  second: Vector2,
+): number {
+  const firstUnit =
+    normaliseVector(first);
+
+  const secondUnit =
+    normaliseVector(second);
+
+  const dot = clamp(
+    firstUnit.x *
+      secondUnit.x +
+      firstUnit.y *
+        secondUnit.y,
+    -1,
+    1,
+  );
+
+  return (
+    Math.acos(dot) *
+    180 /
+    Math.PI
+  );
+}
+
+function distanceBetween(
+  first: ReconstructionPosition,
+  second: ReconstructionPosition,
+): number {
+  return Math.hypot(
+    second.x - first.x,
+    second.y - first.y,
+  );
+}
+
+function isHumanParticipant(
+  participant: ReconstructionVehicle,
+): boolean {
+  return HUMAN_TYPES.has(
+    participant.type,
+  );
+}
+
+function getMotionProfile(
+  participant: ReconstructionVehicle,
+): ParticipantMotionProfile {
+  switch (participant.type) {
+    case "Bus":
+      return {
+        curveHandleRatio: 0.46,
+        straightAngleTolerance: 5,
+        cornerSpeedLoss: 0.52,
+        maximumWalkingSpeedKmh:
+          null,
+        gaitSwayScenePercent: 0,
+        gaitRotationDegrees: 0,
+      };
+
+    case "Truck":
+      return {
+        curveHandleRatio: 0.43,
+        straightAngleTolerance: 5,
+        cornerSpeedLoss: 0.48,
+        maximumWalkingSpeedKmh:
+          null,
+        gaitSwayScenePercent: 0,
+        gaitRotationDegrees: 0,
+      };
+
+    case "Car":
+      return {
+        curveHandleRatio: 0.34,
+        straightAngleTolerance: 4,
+        cornerSpeedLoss: 0.34,
+        maximumWalkingSpeedKmh:
+          null,
+        gaitSwayScenePercent: 0,
+        gaitRotationDegrees: 0,
+      };
+
+    case "Motorcycle":
+      return {
+        curveHandleRatio: 0.29,
+        straightAngleTolerance: 4,
+        cornerSpeedLoss: 0.24,
+        maximumWalkingSpeedKmh:
+          null,
+        gaitSwayScenePercent: 0,
+        gaitRotationDegrees: 0,
+      };
+
+    case "Bicycle":
+      return {
+        curveHandleRatio: 0.24,
+        straightAngleTolerance: 5,
+        cornerSpeedLoss: 0.28,
+        maximumWalkingSpeedKmh:
+          null,
+        gaitSwayScenePercent: 0,
+        gaitRotationDegrees: 0,
+      };
+
+    case "Pedestrian":
+    case "Officer":
+    case "Witness":
+      return {
+        curveHandleRatio: 0.12,
+        straightAngleTolerance: 8,
+        cornerSpeedLoss: 0.08,
+        maximumWalkingSpeedKmh:
+          6.5,
+        gaitSwayScenePercent:
+          0.12,
+        gaitRotationDegrees: 1.8,
+      };
+  }
 }
 
 function getKinematicPositionProgress(
@@ -67,26 +323,55 @@ function getKinematicPositionProgress(
   timeProgress: number,
 ): number {
   const startSpeed =
-    start.action === "Stop" ? 0 : Math.max(0, start.speedKmh);
+    start.action === "Stop"
+      ? 0
+      : Math.max(
+          0,
+          start.speedKmh,
+        );
 
   const endSpeed =
-    end.action === "Stop" ? 0 : Math.max(0, end.speedKmh);
+    end.action === "Stop"
+      ? 0
+      : Math.max(
+          0,
+          end.speedKmh,
+        );
 
-  const averageSpeed = (startSpeed + endSpeed) / 2;
+  const averageSpeed =
+    (startSpeed + endSpeed) /
+    2;
 
   if (averageSpeed < 0.01) {
-    return timeProgress * timeProgress * (3 - 2 * timeProgress);
+    return (
+      timeProgress *
+      timeProgress *
+      (
+        3 -
+        2 * timeProgress
+      )
+    );
   }
 
   const distanceFraction =
-    (startSpeed * timeProgress +
+    (
+      startSpeed *
+        timeProgress +
       0.5 *
-        (endSpeed - startSpeed) *
+        (
+          endSpeed -
+          startSpeed
+        ) *
         timeProgress *
-        timeProgress) /
+        timeProgress
+    ) /
     averageSpeed;
 
-  return clamp(distanceFraction, 0, 1);
+  return clamp(
+    distanceFraction,
+    0,
+    1,
+  );
 }
 
 export function sortMovementPathPoints(
@@ -94,7 +379,8 @@ export function sortMovementPathPoints(
 ): MovementPathPoint[] {
   return [...points].sort(
     (first, second) =>
-      first.timeSeconds - second.timeSeconds,
+      first.timeSeconds -
+      second.timeSeconds,
   );
 }
 
@@ -102,11 +388,17 @@ export function isPhysicsGeneratedPathPoint(
   point: MovementPathPoint,
 ): boolean {
   return (
-    PHYSICS_POINT_PREFIXES.some((prefix) =>
-      point.id.startsWith(prefix),
+    PHYSICS_POINT_PREFIXES.some(
+      (prefix) =>
+        point.id.startsWith(
+          prefix,
+        ),
     ) ||
-    PHYSICS_NOTE_MARKERS.some((marker) =>
-      point.notes?.includes(marker),
+    PHYSICS_NOTE_MARKERS.some(
+      (marker) =>
+        point.notes?.includes(
+          marker,
+        ),
     )
   );
 }
@@ -116,7 +408,9 @@ export function isPhysicsCalculatedRestPoint(
 ): boolean {
   return (
     point.action === "Stop" &&
-    isPhysicsGeneratedPathPoint(point)
+    isPhysicsGeneratedPathPoint(
+      point,
+    )
   );
 }
 
@@ -127,24 +421,39 @@ export function isUnverifiedAutoRestPoint(
     return false;
   }
 
-  const label = point.label.trim().toLowerCase();
+  const label =
+    point.label
+      .trim()
+      .toLowerCase();
 
   const placeholderId =
-    point.id.startsWith("path-stop-") ||
-    point.id.startsWith("path-final-");
+    point.id.startsWith(
+      "path-stop-",
+    ) ||
+    point.id.startsWith(
+      "path-final-",
+    );
 
   const placeholderLabel =
-    PLACEHOLDER_REST_LABELS.has(label);
+    PLACEHOLDER_REST_LABELS.has(
+      label,
+    );
 
   const hasInvestigatorEvidence =
-    Boolean(point.linkedSceneObjectId) ||
-    Boolean(point.notes?.trim());
+    Boolean(
+      point.linkedSceneObjectId,
+    ) ||
+    Boolean(
+      point.notes?.trim(),
+    );
 
   return (
     placeholderId &&
     placeholderLabel &&
     !hasInvestigatorEvidence &&
-    !isPhysicsGeneratedPathPoint(point)
+    !isPhysicsGeneratedPathPoint(
+      point,
+    )
   );
 }
 
@@ -153,8 +462,12 @@ export function isObservedRestPoint(
 ): boolean {
   return (
     point.action === "Stop" &&
-    !isPhysicsGeneratedPathPoint(point) &&
-    !isUnverifiedAutoRestPoint(point)
+    !isPhysicsGeneratedPathPoint(
+      point,
+    ) &&
+    !isUnverifiedAutoRestPoint(
+      point,
+    )
   );
 }
 
@@ -163,8 +476,12 @@ function samePosition(
   right: ReconstructionPosition,
 ): boolean {
   return (
-    Math.abs(left.x - right.x) <= 0.0001 &&
-    Math.abs(left.y - right.y) <= 0.0001
+    Math.abs(
+      left.x - right.x,
+    ) <= 0.0001 &&
+    Math.abs(
+      left.y - right.y,
+    ) <= 0.0001
   );
 }
 
@@ -174,45 +491,66 @@ function areDuplicatePoints(
 ): boolean {
   return (
     Math.abs(
-      left.timeSeconds - right.timeSeconds,
+      left.timeSeconds -
+        right.timeSeconds,
     ) <= 0.0001 &&
-    left.action === right.action &&
-    samePosition(left.position, right.position) &&
-    Math.abs(left.rotation - right.rotation) <=
-      0.0001
+    left.action ===
+      right.action &&
+    samePosition(
+      left.position,
+      right.position,
+    ) &&
+    Math.abs(
+      left.rotation -
+        right.rotation,
+    ) <= 0.0001
   );
 }
 
 function isUnverifiedRouteContinuationPoint(
   point: MovementPathPoint,
-  impactTimeSeconds: number | null,
+  impactTimeSeconds:
+    | number
+    | null,
 ): boolean {
   if (
     impactTimeSeconds === null ||
-    point.timeSeconds <= impactTimeSeconds
+    point.timeSeconds <=
+      impactTimeSeconds
   ) {
     return false;
   }
 
   if (
-    isPhysicsGeneratedPathPoint(point) ||
+    isPhysicsGeneratedPathPoint(
+      point,
+    ) ||
     isObservedRestPoint(point)
   ) {
     return false;
   }
 
-  const label = point.label.trim().toLowerCase();
+  const label =
+    point.label
+      .trim()
+      .toLowerCase();
 
   const looksLikeAutoRouteSample =
     /^route \d+$/.test(label) ||
     label === "natural stop";
 
   const hasInvestigatorEvidence =
-    Boolean(point.linkedSceneObjectId) ||
-    Boolean(point.notes?.trim());
+    Boolean(
+      point.linkedSceneObjectId,
+    ) ||
+    Boolean(
+      point.notes?.trim(),
+    );
 
   return (
-    point.id.startsWith("path-point-") &&
+    point.id.startsWith(
+      "path-point-",
+    ) &&
     looksLikeAutoRouteSample &&
     !hasInvestigatorEvidence
   );
@@ -222,21 +560,30 @@ export function sanitiseParticipantPathPoints(
   points: MovementPathPoint[],
 ): MovementPathPoint[] {
   const sorted =
-    sortMovementPathPoints(points);
+    sortMovementPathPoints(
+      points,
+    );
 
-  const firstAuthoredImpact = sorted.find(
-    (point) =>
-      point.action === "Impact" &&
-      !isPhysicsGeneratedPathPoint(point),
-  );
+  const firstAuthoredImpact =
+    sorted.find(
+      (point) =>
+        point.action ===
+          "Impact" &&
+        !isPhysicsGeneratedPathPoint(
+          point,
+        ),
+    );
 
   const impactTimeSeconds =
-    firstAuthoredImpact?.timeSeconds ?? null;
+    firstAuthoredImpact
+      ?.timeSeconds ?? null;
 
   const withoutUnverifiedGeneratedRoute =
     sorted.filter(
       (point) =>
-        !isUnverifiedAutoRestPoint(point) &&
+        !isUnverifiedAutoRestPoint(
+          point,
+        ) &&
         !isUnverifiedRouteContinuationPoint(
           point,
           impactTimeSeconds,
@@ -245,7 +592,11 @@ export function sanitiseParticipantPathPoints(
 
   const deduplicated =
     withoutUnverifiedGeneratedRoute.filter(
-      (point, index, list) =>
+      (
+        point,
+        index,
+        list,
+      ) =>
         index === 0 ||
         !areDuplicatePoints(
           list[index - 1],
@@ -253,9 +604,12 @@ export function sanitiseParticipantPathPoints(
         ),
     );
 
-  const hasImpact = deduplicated.some(
-    (point) => point.action === "Impact",
-  );
+  const hasImpact =
+    deduplicated.some(
+      (point) =>
+        point.action ===
+        "Impact",
+    );
 
   if (
     deduplicated.length >= 2 &&
@@ -267,40 +621,256 @@ export function sanitiseParticipantPathPoints(
   return sorted;
 }
 
+function isKnownAutomaticHumanStart(
+  point: MovementPathPoint,
+): boolean {
+  const label =
+    point.label
+      .trim()
+      .toLowerCase();
+
+  const knownLabel =
+    label === "enters scene" ||
+    label === "starts approach";
+
+  const knownPosition =
+    distanceBetween(
+      point.position,
+      {
+        x: 82,
+        y: 52,
+      },
+    ) <= 0.75;
+
+  return (
+    point.id.startsWith(
+      "path-start-",
+    ) &&
+    knownLabel &&
+    knownPosition &&
+    !point.linkedSceneObjectId &&
+    !point.notes?.trim()
+  );
+}
+
+function normaliseDefaultHumanApproach(
+  participant: ReconstructionVehicle,
+  points: MovementPathPoint[],
+): MovementPathPoint[] {
+  if (
+    !isHumanParticipant(
+      participant,
+    ) ||
+    points.length < 2
+  ) {
+    return points;
+  }
+
+  const startIndex =
+    points.findIndex(
+      (point) =>
+        point.action ===
+          "Start" ||
+        point.action ===
+          "Enter Scene",
+    );
+
+  const impactIndex =
+    points.findIndex(
+      (point) =>
+        point.action ===
+        "Impact",
+    );
+
+  if (
+    startIndex < 0 ||
+    impactIndex <= startIndex ||
+    !isKnownAutomaticHumanStart(
+      points[startIndex],
+    )
+  ) {
+    return points;
+  }
+
+  const start =
+    points[startIndex];
+
+  const impact =
+    points[impactIndex];
+
+  const availableSeconds =
+    Math.max(
+      0.5,
+      impact.timeSeconds -
+        start.timeSeconds,
+    );
+
+  const walkingSpeedKmh =
+    clamp(
+      Math.min(
+        start.speedKmh,
+        participant
+          .estimatedSpeedKmh ||
+          5,
+      ),
+      3,
+      6.5,
+    );
+
+  /*
+   * The default scene is 60 m wide.
+   * One scene percentage is therefore
+   * approximately 0.6 m.
+   */
+  const metresPerScenePercent =
+    0.6;
+
+  const realisticDistancePercent =
+    clamp(
+      (
+        walkingSpeedKmh /
+        3.6 *
+        availableSeconds
+      ) /
+        metresPerScenePercent,
+      2.5,
+      12,
+    );
+
+  const fromImpactToStart =
+    subtractPositions(
+      start.position,
+      impact.position,
+    );
+
+  const originalDistance =
+    vectorLength(
+      fromImpactToStart,
+    );
+
+  if (
+    originalDistance <=
+    realisticDistancePercent
+  ) {
+    return points;
+  }
+
+  const direction =
+    normaliseVector(
+      fromImpactToStart,
+    );
+
+  const correctedStartPosition = {
+    x: clamp(
+      impact.position.x +
+        direction.x *
+          realisticDistancePercent,
+      0,
+      100,
+    ),
+    y: clamp(
+      impact.position.y +
+        direction.y *
+          realisticDistancePercent,
+      0,
+      100,
+    ),
+  };
+
+  const approachHeading =
+    angleFromVector(
+      subtractPositions(
+        impact.position,
+        correctedStartPosition,
+      ),
+    );
+
+  return points.map(
+    (point, index) => {
+      if (index === startIndex) {
+        return {
+          ...point,
+          label:
+            "Walking approach",
+          position:
+            correctedStartPosition,
+          speedKmh:
+            walkingSpeedKmh,
+          rotation:
+            approachHeading,
+        };
+      }
+
+      if (index === impactIndex) {
+        return {
+          ...point,
+          speedKmh: Math.min(
+            point.speedKmh,
+            walkingSpeedKmh,
+          ),
+          rotation:
+            approachHeading,
+        };
+      }
+
+      return point;
+    },
+  );
+}
+
+function prepareParticipantPathPoints(
+  participant: ReconstructionVehicle,
+): MovementPathPoint[] {
+  return normaliseDefaultHumanApproach(
+    participant,
+    sanitiseParticipantPathPoints(
+      participant.pathPoints,
+    ),
+  );
+}
+
 export function getInvestigatorPathPoints(
   participant: ReconstructionVehicle,
 ): MovementPathPoint[] {
-  return sanitiseParticipantPathPoints(
-    participant.pathPoints,
+  return prepareParticipantPathPoints(
+    participant,
   ).filter(
     (point) =>
-      !isPhysicsGeneratedPathPoint(point),
+      !isPhysicsGeneratedPathPoint(
+        point,
+      ),
   );
 }
 
 export function getPhysicsPathPoints(
   participant: ReconstructionVehicle,
 ): MovementPathPoint[] {
-  return sanitiseParticipantPathPoints(
-    participant.pathPoints,
-  ).filter(isPhysicsGeneratedPathPoint);
+  return prepareParticipantPathPoints(
+    participant,
+  ).filter(
+    isPhysicsGeneratedPathPoint,
+  );
 }
 
 export function getParticipantRestPoint(
   participant: ReconstructionVehicle,
 ): MovementPathPoint | null {
   const points =
-    sanitiseParticipantPathPoints(
-      participant.pathPoints,
+    prepareParticipantPathPoints(
+      participant,
     );
 
   return (
     [...points]
       .reverse()
-      .find(isObservedRestPoint) ??
+      .find(
+        isObservedRestPoint,
+      ) ??
     [...points]
       .reverse()
-      .find(isPhysicsCalculatedRestPoint) ??
+      .find(
+        isPhysicsCalculatedRestPoint,
+      ) ??
     null
   );
 }
@@ -309,111 +879,548 @@ export function getPointsCentroid(
   points: ReconstructionPosition[],
 ): ReconstructionPosition {
   if (points.length === 0) {
-    return { x: 50, y: 50 };
+    return {
+      x: 50,
+      y: 50,
+    };
   }
 
   const total = points.reduce(
     (result, point) => ({
-      x: result.x + point.x,
-      y: result.y + point.y,
+      x:
+        result.x +
+        point.x,
+      y:
+        result.y +
+        point.y,
     }),
-    { x: 0, y: 0 },
+    {
+      x: 0,
+      y: 0,
+    },
   );
 
   return {
-    x: total.x / points.length,
-    y: total.y / points.length,
+    x:
+      total.x /
+      points.length,
+    y:
+      total.y /
+      points.length,
   };
 }
 
-function catmullRom(
-  p0: number,
-  p1: number,
-  p2: number,
-  p3: number,
+function cubicBezierPoint(
+  start: ReconstructionPosition,
+  controlOne: ReconstructionPosition,
+  controlTwo: ReconstructionPosition,
+  end: ReconstructionPosition,
   progress: number,
-): number {
+): ReconstructionPosition {
+  const inverse =
+    1 - progress;
+
+  const inverseSquared =
+    inverse * inverse;
+
   const progressSquared =
     progress * progress;
 
-  const progressCubed =
-    progressSquared * progress;
+  return {
+    x:
+      inverseSquared *
+        inverse *
+        start.x +
+      3 *
+        inverseSquared *
+        progress *
+        controlOne.x +
+      3 *
+        inverse *
+        progressSquared *
+        controlTwo.x +
+      progressSquared *
+        progress *
+        end.x,
 
-  return (
-    0.5 *
-    (
-      2 * p1 +
-      (-p0 + p2) * progress +
-      (
-        2 * p0 -
-        5 * p1 +
-        4 * p2 -
-        p3
-      ) *
-        progressSquared +
-      (
-        -p0 +
-        3 * p1 -
-        3 * p2 +
-        p3
-      ) *
-        progressCubed
-    )
-  );
+    y:
+      inverseSquared *
+        inverse *
+        start.y +
+      3 *
+        inverseSquared *
+        progress *
+        controlOne.y +
+      3 *
+        inverse *
+        progressSquared *
+        controlTwo.y +
+      progressSquared *
+        progress *
+        end.y,
+  };
 }
 
-function interpolateCurvedPosition(
+function cubicBezierTangent(
+  start: ReconstructionPosition,
+  controlOne: ReconstructionPosition,
+  controlTwo: ReconstructionPosition,
+  end: ReconstructionPosition,
+  progress: number,
+): Vector2 {
+  const inverse =
+    1 - progress;
+
+  return {
+    x:
+      3 *
+        inverse *
+        inverse *
+        (
+          controlOne.x -
+          start.x
+        ) +
+      6 *
+        inverse *
+        progress *
+        (
+          controlTwo.x -
+          controlOne.x
+        ) +
+      3 *
+        progress *
+        progress *
+        (
+          end.x -
+          controlTwo.x
+        ),
+
+    y:
+      3 *
+        inverse *
+        inverse *
+        (
+          controlOne.y -
+          start.y
+        ) +
+      6 *
+        inverse *
+        progress *
+        (
+          controlTwo.y -
+          controlOne.y
+        ) +
+      3 *
+        progress *
+        progress *
+        (
+          end.y -
+          controlTwo.y
+        ),
+  };
+}
+
+function getSegmentMotionGeometry(
+  participant: ReconstructionVehicle,
   points: MovementPathPoint[],
   segmentIndex: number,
   progress: number,
-): ReconstructionPosition {
-  const first =
-    points[
-      Math.max(0, segmentIndex - 1)
-    ].position;
+): SegmentMotionGeometry {
+  const profile =
+    getMotionProfile(
+      participant,
+    );
 
-  const second =
-    points[segmentIndex].position;
+  const startPoint =
+    points[segmentIndex];
 
-  const third =
+  const endPoint =
+    points[segmentIndex + 1];
+
+  const previousPoint =
     points[
-      Math.min(
-        points.length - 1,
-        segmentIndex + 1,
+      Math.max(
+        0,
+        segmentIndex - 1,
       )
-    ].position;
+    ];
 
-  const fourth =
+  const nextPoint =
     points[
       Math.min(
         points.length - 1,
         segmentIndex + 2,
       )
-    ].position;
+    ];
 
-  return {
-    x: clamp(
-      catmullRom(
-        first.x,
-        second.x,
-        third.x,
-        fourth.x,
-        progress,
+  const segmentVector =
+    subtractPositions(
+      endPoint.position,
+      startPoint.position,
+    );
+
+  const segmentLength =
+    vectorLength(
+      segmentVector,
+    );
+
+  const segmentDirection =
+    normaliseVector(
+      segmentVector,
+    );
+
+  const incomingVector =
+    subtractPositions(
+      startPoint.position,
+      previousPoint.position,
+    );
+
+  const outgoingVector =
+    subtractPositions(
+      nextPoint.position,
+      endPoint.position,
+    );
+
+  const incomingDirection =
+    normaliseVector(
+      incomingVector,
+      segmentDirection,
+    );
+
+  const outgoingDirection =
+    normaliseVector(
+      outgoingVector,
+      segmentDirection,
+    );
+
+  const startTurnSeverity =
+    angleDifferenceDegrees(
+      incomingDirection,
+      segmentDirection,
+    );
+
+  const endTurnSeverity =
+    angleDifferenceDegrees(
+      segmentDirection,
+      outgoingDirection,
+    );
+
+  const hasExplicitTurn =
+    startPoint.action ===
+      "Turn Left" ||
+    startPoint.action ===
+      "Turn Right" ||
+    endPoint.action ===
+      "Turn Left" ||
+    endPoint.action ===
+      "Turn Right";
+
+  const turnSeverityDegrees =
+    Math.max(
+      startTurnSeverity,
+      endTurnSeverity,
+      hasExplicitTurn ? 35 : 0,
+    );
+
+  const physicsControlled =
+    isPhysicsGeneratedPathPoint(
+      startPoint,
+    ) ||
+    isPhysicsGeneratedPathPoint(
+      endPoint,
+    ) ||
+    POST_IMPACT_ACTIONS.has(
+      startPoint.action,
+    );
+
+  const effectivelyStraight =
+    turnSeverityDegrees <=
+    profile
+      .straightAngleTolerance;
+
+  if (
+    physicsControlled ||
+    effectivelyStraight ||
+    segmentLength < 0.001
+  ) {
+    return {
+      position: {
+        x: interpolate(
+          startPoint.position.x,
+          endPoint.position.x,
+          progress,
+        ),
+        y: interpolate(
+          startPoint.position.y,
+          endPoint.position.y,
+          progress,
+        ),
+      },
+      tangent:
+        segmentDirection,
+      turnSeverityDegrees,
+    };
+  }
+
+  const previousDistance =
+    Math.max(
+      segmentLength,
+      distanceBetween(
+        previousPoint.position,
+        startPoint.position,
       ),
+    );
+
+  const nextDistance =
+    Math.max(
+      segmentLength,
+      distanceBetween(
+        endPoint.position,
+        nextPoint.position,
+      ),
+    );
+
+  const startTangent =
+    normaliseVector(
+      addVectors(
+        incomingDirection,
+        segmentDirection,
+      ),
+      segmentDirection,
+    );
+
+  const endTangent =
+    normaliseVector(
+      addVectors(
+        segmentDirection,
+        outgoingDirection,
+      ),
+      segmentDirection,
+    );
+
+  const startHandleLength =
+    Math.min(
+      segmentLength *
+        profile.curveHandleRatio,
+      previousDistance * 0.45,
+    );
+
+  const endHandleLength =
+    Math.min(
+      segmentLength *
+        profile.curveHandleRatio,
+      nextDistance * 0.45,
+    );
+
+  const controlOne = {
+    x: clamp(
+      startPoint.position.x +
+        startTangent.x *
+          startHandleLength,
       0,
       100,
     ),
     y: clamp(
-      catmullRom(
-        first.y,
-        second.y,
-        third.y,
-        fourth.y,
-        progress,
-      ),
+      startPoint.position.y +
+        startTangent.y *
+          startHandleLength,
       0,
       100,
     ),
+  };
+
+  const controlTwo = {
+    x: clamp(
+      endPoint.position.x -
+        endTangent.x *
+          endHandleLength,
+      0,
+      100,
+    ),
+    y: clamp(
+      endPoint.position.y -
+        endTangent.y *
+          endHandleLength,
+      0,
+      100,
+    ),
+  };
+
+  return {
+    position:
+      cubicBezierPoint(
+        startPoint.position,
+        controlOne,
+        controlTwo,
+        endPoint.position,
+        progress,
+      ),
+
+    tangent:
+      normaliseVector(
+        cubicBezierTangent(
+          startPoint.position,
+          controlOne,
+          controlTwo,
+          endPoint.position,
+          progress,
+        ),
+        segmentDirection,
+      ),
+
+    turnSeverityDegrees,
+  };
+}
+
+function getCornerAdjustedSpeed(
+  participant: ReconstructionVehicle,
+  requestedSpeedKmh: number,
+  turnSeverityDegrees: number,
+  action: MovementAction,
+): number {
+  const profile =
+    getMotionProfile(
+      participant,
+    );
+
+  let speed =
+    Math.max(
+      0,
+      requestedSpeedKmh,
+    );
+
+  if (
+    profile
+      .maximumWalkingSpeedKmh !==
+      null &&
+    action !== "Accelerate"
+  ) {
+    speed = Math.min(
+      speed,
+      profile
+        .maximumWalkingSpeedKmh,
+    );
+  }
+
+  const turnRatio =
+    clamp(
+      turnSeverityDegrees /
+        120,
+      0,
+      1,
+    );
+
+  const turnFactor =
+    1 -
+    profile.cornerSpeedLoss *
+      turnRatio;
+
+  return Math.max(
+    0,
+    speed * turnFactor,
+  );
+}
+
+function applyHumanWalkingMotion(
+  participant: ReconstructionVehicle,
+  position: ReconstructionPosition,
+  headingDegrees: number,
+  speedKmh: number,
+  currentTime: number,
+  action: MovementAction,
+  physicsControlled: boolean,
+): {
+  position: ReconstructionPosition;
+  rotation: number;
+} {
+  if (
+    !isHumanParticipant(
+      participant,
+    ) ||
+    physicsControlled ||
+    POST_IMPACT_ACTIONS.has(
+      action,
+    ) ||
+    speedKmh < 0.7
+  ) {
+    return {
+      position,
+      rotation:
+        headingDegrees,
+    };
+  }
+
+  const profile =
+    getMotionProfile(
+      participant,
+    );
+
+  const walkingRatio =
+    clamp(
+      speedKmh / 6.5,
+      0.25,
+      1,
+    );
+
+  const cadenceHz =
+    interpolate(
+      1.35,
+      1.85,
+      walkingRatio,
+    );
+
+  const phase =
+    currentTime *
+    cadenceHz *
+    Math.PI *
+    2;
+
+  const lateralSway =
+    Math.sin(phase) *
+    profile
+      .gaitSwayScenePercent *
+    walkingRatio;
+
+  const headingRadians =
+    degreesToRadians(
+      headingDegrees,
+    );
+
+  const perpendicular = {
+    x:
+      -Math.sin(
+        headingRadians,
+      ),
+    y:
+      Math.cos(
+        headingRadians,
+      ),
+  };
+
+  return {
+    position: {
+      x: clamp(
+        position.x +
+          perpendicular.x *
+            lateralSway,
+        0,
+        100,
+      ),
+      y: clamp(
+        position.y +
+          perpendicular.y *
+            lateralSway,
+        0,
+        100,
+      ),
+    },
+
+    rotation:
+      headingDegrees +
+      Math.sin(phase) *
+        profile
+          .gaitRotationDegrees *
+        walkingRatio,
   };
 }
 
@@ -427,53 +1434,177 @@ export function getParticipantStateAtTime(
   activePointId: string;
 } {
   const points =
-    sanitiseParticipantPathPoints(
-      participant.pathPoints,
+    prepareParticipantPathPoints(
+      participant,
     );
 
   if (points.length === 0) {
     return {
-      position: participant.startPosition,
-      rotation: participant.startRotation,
+      position:
+        participant.startPosition,
+      rotation:
+        participant.startRotation,
       speedKmh:
-        participant.estimatedSpeedKmh,
+        participant
+          .estimatedSpeedKmh,
       activePointId: "",
     };
   }
 
   if (
-    currentTime <= points[0].timeSeconds
+    currentTime <=
+    points[0].timeSeconds
   ) {
+    const first = points[0];
+
+    const next =
+      points[1] ?? first;
+
+    const tangent =
+      normaliseVector(
+        subtractPositions(
+          next.position,
+          first.position,
+        ),
+        {
+          x: Math.cos(
+            degreesToRadians(
+              first.rotation,
+            ),
+          ),
+          y: Math.sin(
+            degreesToRadians(
+              first.rotation,
+            ),
+          ),
+        },
+      );
+
+    const heading =
+      angleFromVector(tangent);
+
+    const speedKmh =
+      getCornerAdjustedSpeed(
+        participant,
+        first.speedKmh,
+        0,
+        first.action,
+      );
+
+    const walkingMotion =
+      applyHumanWalkingMotion(
+        participant,
+        first.position,
+        heading,
+        speedKmh,
+        currentTime,
+        first.action,
+        isPhysicsGeneratedPathPoint(
+          first,
+        ),
+      );
+
     return {
-      position: points[0].position,
-      rotation: points[0].rotation,
-      speedKmh: points[0].speedKmh,
-      activePointId: points[0].id,
+      position:
+        walkingMotion.position,
+      rotation:
+        walkingMotion.rotation,
+      speedKmh,
+      activePointId:
+        first.id,
     };
   }
 
   const finalPoint =
-    points[points.length - 1];
+    points[
+      points.length - 1
+    ];
 
   if (
     currentTime >=
     finalPoint.timeSeconds
   ) {
+    const previous =
+      points[
+        Math.max(
+          0,
+          points.length - 2,
+        )
+      ];
+
+    const tangent =
+      normaliseVector(
+        subtractPositions(
+          finalPoint.position,
+          previous.position,
+        ),
+        {
+          x: Math.cos(
+            degreesToRadians(
+              finalPoint.rotation,
+            ),
+          ),
+          y: Math.sin(
+            degreesToRadians(
+              finalPoint.rotation,
+            ),
+          ),
+        },
+      );
+
+    const physicsControlled =
+      isPhysicsGeneratedPathPoint(
+        finalPoint,
+      ) ||
+      POST_IMPACT_ACTIONS.has(
+        finalPoint.action,
+      );
+
+    const heading =
+      physicsControlled
+        ? finalPoint.rotation
+        : angleFromVector(
+            tangent,
+          );
+
+    const speedKmh =
+      finalPoint.action ===
+      "Stop"
+        ? 0
+        : getCornerAdjustedSpeed(
+            participant,
+            finalPoint.speedKmh,
+            0,
+            finalPoint.action,
+          );
+
+    const walkingMotion =
+      applyHumanWalkingMotion(
+        participant,
+        finalPoint.position,
+        heading,
+        speedKmh,
+        currentTime,
+        finalPoint.action,
+        physicsControlled,
+      );
+
     return {
-      position: finalPoint.position,
-      rotation: finalPoint.rotation,
-      speedKmh:
-        finalPoint.action === "Stop"
-          ? 0
-          : finalPoint.speedKmh,
-      activePointId: finalPoint.id,
+      position:
+        walkingMotion.position,
+      rotation:
+        walkingMotion.rotation,
+      speedKmh,
+      activePointId:
+        finalPoint.id,
     };
   }
 
   const segmentIndex =
     points.findIndex(
       (point, index) =>
-        index < points.length - 1 &&
+        index <
+          points.length - 1 &&
         currentTime >=
           point.timeSeconds &&
         currentTime <=
@@ -482,25 +1613,34 @@ export function getParticipantStateAtTime(
     );
 
   const safeIndex =
-    Math.max(0, segmentIndex);
+    Math.max(
+      0,
+      segmentIndex,
+    );
 
-  const start = points[safeIndex];
-  const end = points[safeIndex + 1];
+  const start =
+    points[safeIndex];
 
-  const duration = Math.max(
-    end.timeSeconds -
-      start.timeSeconds,
-    0.001,
-  );
+  const end =
+    points[safeIndex + 1];
 
-  const timeProgress = clamp(
-    (
-      currentTime -
-      start.timeSeconds
-    ) / duration,
-    0,
-    1,
-  );
+  const duration =
+    Math.max(
+      end.timeSeconds -
+        start.timeSeconds,
+      0.001,
+    );
+
+  const timeProgress =
+    clamp(
+      (
+        currentTime -
+        start.timeSeconds
+      ) /
+        duration,
+      0,
+      1,
+    );
 
   const positionProgress =
     getKinematicPositionProgress(
@@ -509,30 +1649,85 @@ export function getParticipantStateAtTime(
       timeProgress,
     );
 
+  const geometry =
+    getSegmentMotionGeometry(
+      participant,
+      points,
+      safeIndex,
+      positionProgress,
+    );
+
+  const physicsControlled =
+    isPhysicsGeneratedPathPoint(
+      start,
+    ) ||
+    isPhysicsGeneratedPathPoint(
+      end,
+    ) ||
+    POST_IMPACT_ACTIONS.has(
+      start.action,
+    );
+
+  const pathHeading =
+    angleFromVector(
+      geometry.tangent,
+    );
+
+  const rotation =
+    physicsControlled
+      ? interpolateAngle(
+          start.rotation,
+          end.rotation,
+          positionProgress,
+        )
+      : pathHeading;
+
   const endSpeed =
     end.action === "Stop"
       ? 0
       : end.speedKmh;
 
-  return {
-    position: interpolateCurvedPosition(
-      points,
-      safeIndex,
-      positionProgress,
-    ),
-    rotation: interpolateAngle(
-      start.rotation,
-      end.rotation,
-      positionProgress,
-    ),
-    speedKmh: Math.max(
+  const interpolatedSpeed =
+    Math.max(
       0,
       interpolate(
         start.speedKmh,
         endSpeed,
         timeProgress,
       ),
-    ),
+    );
+
+  const activeAction =
+    timeProgress < 0.5
+      ? start.action
+      : end.action;
+
+  const speedKmh =
+    getCornerAdjustedSpeed(
+      participant,
+      interpolatedSpeed,
+      geometry
+        .turnSeverityDegrees,
+      activeAction,
+    );
+
+  const walkingMotion =
+    applyHumanWalkingMotion(
+      participant,
+      geometry.position,
+      rotation,
+      speedKmh,
+      currentTime,
+      activeAction,
+      physicsControlled,
+    );
+
+  return {
+    position:
+      walkingMotion.position,
+    rotation:
+      walkingMotion.rotation,
+    speedKmh,
     activePointId:
       timeProgress < 0.5
         ? start.id
@@ -547,11 +1742,12 @@ export function getReconstructionImpactEffectState(
   const impactPoints =
     reconstruction.vehicles
       .map((participant) =>
-        sanitiseParticipantPathPoints(
-          participant.pathPoints,
+        prepareParticipantPathPoints(
+          participant,
         ).find(
           (point) =>
-            point.action === "Impact",
+            point.action ===
+            "Impact",
         ),
       )
       .filter(
@@ -569,118 +1765,147 @@ export function getReconstructionImpactEffectState(
             right.timeSeconds,
         )[
           Math.floor(
-            impactPoints.length / 2,
+            impactPoints.length /
+              2,
           )
         ].timeSeconds
-      : reconstruction.durationSeconds /
+      : reconstruction
+          .durationSeconds /
         2;
 
   const impactTimeSeconds =
-    reconstruction.lastPhysicsSimulation
+    reconstruction
+      .lastPhysicsSimulation
       ?.primaryImpactTimeSeconds ??
     fallbackTime;
 
-  const width = Math.max(
-    1,
-    reconstruction.scene
-      .sceneWidthMetres,
-  );
+  const width =
+    Math.max(
+      1,
+      reconstruction.scene
+        .sceneWidthMetres,
+    );
 
-  const height = Math.max(
-    1,
-    reconstruction.scene
-      .sceneHeightMetres,
-  );
+  const height =
+    Math.max(
+      1,
+      reconstruction.scene
+        .sceneHeightMetres,
+    );
 
   const tolerance =
-    reconstruction.physicsSettings
+    reconstruction
+      .physicsSettings
       ?.collisionToleranceMetres ??
-    reconstruction.collisionSetup
+    reconstruction
+      .collisionSetup
       ?.toleranceMetres ??
     2.2;
 
   const convergingParticipants =
-    impactPoints.filter((point) => {
-      const horizontalDistance =
-        (
+    impactPoints.filter(
+      (point) => {
+        const horizontalDistance =
           (
-            point.position.x -
-            reconstruction
-              .collisionPoint.x
-          ) /
-          100
-        ) *
-        width;
+            (
+              point.position.x -
+              reconstruction
+                .collisionPoint.x
+            ) /
+            100
+          ) *
+          width;
 
-      const verticalDistance =
-        (
+        const verticalDistance =
           (
-            point.position.y -
-            reconstruction
-              .collisionPoint.y
-          ) /
-          100
-        ) *
-        height;
+            (
+              point.position.y -
+              reconstruction
+                .collisionPoint.y
+            ) /
+            100
+          ) *
+          height;
 
-      return (
-        Math.hypot(
-          horizontalDistance,
-          verticalDistance,
-        ) <=
-        tolerance + 0.5
-      );
-    });
+        return (
+          Math.hypot(
+            horizontalDistance,
+            verticalDistance,
+          ) <=
+          tolerance + 0.5
+        );
+      },
+    );
 
   const collisionDetected =
-    reconstruction.lastPhysicsSimulation
+    reconstruction
+      .lastPhysicsSimulation
       ? reconstruction
           .lastPhysicsSimulation
-          .participantCollisions > 0
-      : convergingParticipants.length >=
-        2;
+          .participantCollisions >
+        0
+      : convergingParticipants
+          .length >= 2;
 
   const showImpactEffects =
-    reconstruction.physicsSettings
-      ?.showImpactEffects ?? true;
+    reconstruction
+      .physicsSettings
+      ?.showImpactEffects ??
+    true;
 
   const elapsed =
-    currentTime - impactTimeSeconds;
+    currentTime -
+    impactTimeSeconds;
 
-  const effectDuration = 1.05;
+  const effectDuration =
+    1.05;
 
   const energy =
-    reconstruction.lastPhysicsSimulation
-      ?.estimatedImpactEnergyKj ?? 0;
+    reconstruction
+      .lastPhysicsSimulation
+      ?.estimatedImpactEnergyKj ??
+    0;
 
-  const fallbackSpeed = Math.max(
-    0,
-    ...impactPoints.map(
-      (point) => point.speedKmh,
-    ),
-  );
+  const fallbackSpeed =
+    Math.max(
+      0,
+      ...impactPoints.map(
+        (point) =>
+          point.speedKmh,
+      ),
+    );
 
   return {
     active:
       showImpactEffects &&
       collisionDetected &&
       elapsed >= 0 &&
-      elapsed <= effectDuration,
+      elapsed <=
+        effectDuration,
+
     impactTimeSeconds,
+
     intensity: clamp(
       energy > 0
         ? 0.6 +
-            Math.log10(1 + energy) /
+            Math.log10(
+              1 + energy,
+            ) /
               3
         : 0.55 +
-            fallbackSpeed / 140,
+            fallbackSpeed /
+              140,
       0.55,
       1.35,
     ),
+
     position:
-      reconstruction.collisionPoint,
+      reconstruction
+        .collisionPoint,
+
     progress: clamp(
-      elapsed / effectDuration,
+      elapsed /
+        effectDuration,
       0,
       1,
     ),
@@ -712,7 +1937,11 @@ export function buildSmoothSvgPath(
   }
 
   const tension =
-    clamp(smoothing, 0, 1) / 6;
+    clamp(
+      smoothing,
+      0,
+      1,
+    ) / 6;
 
   let path =
     `M ${positions[0].x} ` +
@@ -720,12 +1949,16 @@ export function buildSmoothSvgPath(
 
   for (
     let index = 0;
-    index < positions.length - 1;
+    index <
+    positions.length - 1;
     index += 1
   ) {
     const previous =
       positions[
-        Math.max(0, index - 1)
+        Math.max(
+          0,
+          index - 1,
+        )
       ];
 
     const current =
@@ -799,7 +2032,10 @@ export function createOffsetTracePoints(
     (point, index) => {
       const previous =
         points[
-          Math.max(0, index - 1)
+          Math.max(
+            0,
+            index - 1,
+          )
         ];
 
       const next =
@@ -811,10 +2047,12 @@ export function createOffsetTracePoints(
         ];
 
       const directionX =
-        next.x - previous.x;
+        next.x -
+        previous.x;
 
       const directionY =
-        next.y - previous.y;
+        next.y -
+        previous.y;
 
       const length =
         Math.hypot(
@@ -880,12 +2118,14 @@ export function shiftSceneObjectTrace(
   return object.tracePoints.map(
     (point) => ({
       x: clamp(
-        point.x + differenceX,
+        point.x +
+          differenceX,
         0,
         100,
       ),
       y: clamp(
-        point.y + differenceY,
+        point.y +
+          differenceY,
         0,
         100,
       ),
@@ -897,8 +2137,8 @@ export function syncLegacyParticipantFields(
   participant: ReconstructionVehicle,
 ): ReconstructionVehicle {
   const points =
-    sanitiseParticipantPathPoints(
-      participant.pathPoints,
+    prepareParticipantPathPoints(
+      participant,
     );
 
   if (points.length === 0) {
@@ -913,16 +2153,21 @@ export function syncLegacyParticipantFields(
   const impact =
     points.find(
       (point) =>
-        point.action === "Impact",
+        point.action ===
+        "Impact",
     ) ??
     points[
-      Math.floor(points.length / 2)
+      Math.floor(
+        points.length / 2,
+      )
     ];
 
   const restPoint =
     [...points]
       .reverse()
-      .find(isObservedRestPoint) ??
+      .find(
+        isObservedRestPoint,
+      ) ??
     [...points]
       .reverse()
       .find(
@@ -936,18 +2181,28 @@ export function syncLegacyParticipantFields(
   return {
     ...participant,
     pathPoints: points,
-    startPosition: start.position,
+
+    startPosition:
+      start.position,
+
     collisionPosition:
       impact.position,
+
     finalPosition:
       legacyFinal.position,
-    startRotation: start.rotation,
+
+    startRotation:
+      start.rotation,
+
     collisionRotation:
       impact.rotation,
+
     finalRotation:
       legacyFinal.rotation,
+
     collisionTimeSeconds:
       impact.timeSeconds,
+
     estimatedSpeedKmh:
       start.speedKmh,
   };
