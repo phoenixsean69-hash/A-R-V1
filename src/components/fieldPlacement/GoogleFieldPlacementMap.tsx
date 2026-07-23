@@ -14,6 +14,7 @@ import {
   latLngLiteral,
   loadGoogleMaps,
   mapCenterLiteral,
+  subscribeGoogleMapsAuthenticationFailure,
 } from "../../services/googleMapsLoader";
 import type {
   GoogleDataLayer,
@@ -325,6 +326,8 @@ export default function GoogleFieldPlacementMap({
   }, []);
 
   useEffect(() => {
+    const unsubscribeAuthenticationFailure =
+      subscribeGoogleMapsAuthenticationFailure((message) => onLoadErrorRef.current?.(message));
     let cancelled = false;
     let searchElement: HTMLElement | null = null;
 
@@ -353,8 +356,10 @@ export default function GoogleFieldPlacementMap({
         map.addListener("dragstart", () => setFollowOfficer(false));
         mapRef.current = map;
         layersRef.current = createLayers(maps, map);
+        setReady(true);
 
-        const placesLibrary = await maps.importLibrary("places");
+        try {
+          const placesLibrary = await maps.importLibrary("places");
         const PlaceAutocompleteElement = placesLibrary.PlaceAutocompleteElement as
           | (new (options?: Record<string, unknown>) => HTMLElement)
           | undefined;
@@ -382,7 +387,9 @@ export default function GoogleFieldPlacementMap({
           searchElement.addEventListener("gmp-select", handlePlace);
           searchHostRef.current.replaceChildren(searchElement);
         }
-        setReady(true);
+        } catch {
+          setSearchLabel("Place search unavailable for this key");
+        }
       })
       .catch((error: unknown) => {
         const message =
@@ -391,6 +398,7 @@ export default function GoogleFieldPlacementMap({
       });
 
     return () => {
+      unsubscribeAuthenticationFailure();
       cancelled = true;
       searchElement?.remove();
       Object.values(layersRef.current ?? {}).forEach((layer) => layer.setMap(null));

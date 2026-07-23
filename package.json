@@ -7,18 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "verify:physics": "node scripts/verifyPhysics.mjs",
-    "verify:maps": "node scripts/verifyGoogleMapsMigration.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
-    "@tabler/core": "1.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "ar.js": "^2.2.2",
     "axios": "^1.18.1",
     "chart.js": "^4.5.1",
     "lucide-react": "^1.25.0",
+    "maplibre-gl": "^5.24.0",
     "react": "^19.2.7",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.7",
@@ -39,7 +37,6 @@
     "globals": "^17.7.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
-    "vite": "^8.1.1",
-    "@types/geojson": "^7946.0.16"
+    "vite": "^8.1.1"
   }
 }

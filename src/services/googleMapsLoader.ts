@@ -168,48 +168,128 @@ interface GoogleGlobal {
   maps: GoogleMapsNamespace;
 }
 
+interface GoogleMapsBootstrapNamespace {
+  importLibrary?: (name: string, ...args: unknown[]) => Promise<Record<string, unknown>>;
+  __ib__?: () => void;
+  [key: string]: unknown;
+}
+
 declare global {
   interface Window {
     google?: GoogleGlobal;
+    gm_authFailure?: () => void;
     __roadsafeGoogleMapsLoader?: Promise<GoogleMapsNamespace>;
-    __roadsafeGoogleMapsReady?: () => void;
   }
 }
 
-function createLoaderPromise(apiKey: string): Promise<GoogleMapsNamespace> {
-  return new Promise((resolve, reject) => {
-    if (window.google?.maps?.importLibrary) {
-      resolve(window.google.maps);
-      return;
+const AUTH_FAILURE_EVENT = "roadsafe:google-maps-auth-failure";
+const SCRIPT_SELECTOR = 'script[data-roadsafe-google-maps="true"]';
+
+export const GOOGLE_MAPS_AUTHENTICATION_MESSAGE =
+  "Google Maps rejected the browser key. Confirm billing is active, Maps JavaScript API is enabled, and the current website origin is allowed by the key restrictions.";
+
+function normaliseGoogleMapsError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes("authentication") ||
+    lower.includes("api key") ||
+    lower.includes("billing") ||
+    lower.includes("referer") ||
+    lower.includes("reading 'keys'") ||
+    lower.includes('reading "keys"')
+  ) {
+    return new Error(GOOGLE_MAPS_AUTHENTICATION_MESSAGE);
+  }
+
+  return error instanceof Error
+    ? error
+    : new Error("Google Maps JavaScript API could not be loaded.");
+}
+
+function installGoogleMapsDynamicLoader(apiKey: string): GoogleMapsNamespace {
+  const googleGlobal = (window.google ??= {} as GoogleGlobal);
+  const bootstrapMaps = (googleGlobal.maps ??= {} as GoogleMapsNamespace) as unknown as GoogleMapsBootstrapNamespace;
+
+  if (typeof bootstrapMaps.importLibrary === "function") {
+    return bootstrapMaps as unknown as GoogleMapsNamespace;
+  }
+
+  let scriptPromise: Promise<void> | null = null;
+  const requestedLibraries = new Set<string>();
+
+  const importLibrary = (
+    libraryName: string,
+    ...args: unknown[]
+  ): Promise<Record<string, unknown>> => {
+    requestedLibraries.add(libraryName);
+
+    if (!scriptPromise) {
+      scriptPromise = new Promise<void>((resolve, reject) => {
+        const existingScript = document.querySelector<HTMLScriptElement>(SCRIPT_SELECTOR);
+        existingScript?.remove();
+
+        const script = document.createElement("script");
+        const params = new URLSearchParams({
+          key: apiKey,
+          v: "weekly",
+          loading: "async",
+          callback: "google.maps.__ib__",
+        });
+        params.set("libraries", [...requestedLibraries].join(","));
+
+        bootstrapMaps.__ib__ = () => resolve();
+        window.gm_authFailure = () => {
+          const authError = new Error(GOOGLE_MAPS_AUTHENTICATION_MESSAGE);
+          window.dispatchEvent(
+            new CustomEvent(AUTH_FAILURE_EVENT, { detail: authError.message }),
+          );
+          reject(authError);
+        };
+
+        script.async = true;
+        script.defer = true;
+        script.dataset.roadsafeGoogleMaps = "true";
+        script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+        script.onerror = () =>
+          reject(new Error("Google Maps JavaScript API could not be downloaded."));
+        script.nonce = document.querySelector<HTMLScriptElement>("script[nonce]")?.nonce ?? "";
+        document.head.append(script);
+      });
     }
 
-    const callbackName = "__roadsafeGoogleMapsReady";
-    const script = document.createElement("script");
-    const params = new URLSearchParams({
-      key: apiKey,
-      v: "weekly",
-      loading: "async",
-      callback: callbackName,
-    });
+    return scriptPromise
+      .then(() => {
+        const realImportLibrary = (
+          window.google?.maps as unknown as GoogleMapsBootstrapNamespace | undefined
+        )?.importLibrary;
+        if (
+          typeof realImportLibrary !== "function" ||
+          realImportLibrary === importLibrary
+        ) {
+          throw new Error("Google Maps loaded without the dynamic library importer.");
+        }
+        return realImportLibrary(libraryName, ...args);
+      })
+      .catch((error: unknown) => {
+        throw normaliseGoogleMapsError(error);
+      });
+  };
 
-    window[callbackName] = () => {
-      delete window[callbackName];
-      if (!window.google?.maps) {
-        reject(new Error("Google Maps loaded without the maps namespace."));
-        return;
-      }
-      resolve(window.google.maps);
-    };
+  bootstrapMaps.importLibrary = importLibrary;
+  return bootstrapMaps as unknown as GoogleMapsNamespace;
+}
 
-    script.async = true;
-    script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-    script.onerror = () => {
-      delete window[callbackName];
-      reject(new Error("Google Maps JavaScript API could not be loaded."));
-    };
-    document.head.append(script);
-  });
+export function subscribeGoogleMapsAuthenticationFailure(
+  handler: (message: string) => void,
+): () => void {
+  const listener = (event: Event) => {
+    const customEvent = event as CustomEvent<string>;
+    handler(customEvent.detail || GOOGLE_MAPS_AUTHENTICATION_MESSAGE);
+  };
+  window.addEventListener(AUTH_FAILURE_EVENT, listener);
+  return () => window.removeEventListener(AUTH_FAILURE_EVENT, listener);
 }
 
 export async function loadGoogleMaps(): Promise<GoogleMapsNamespace> {
@@ -221,18 +301,23 @@ export async function loadGoogleMaps(): Promise<GoogleMapsNamespace> {
   }
 
   if (!window.__roadsafeGoogleMapsLoader) {
-    window.__roadsafeGoogleMapsLoader = createLoaderPromise(apiKey);
+    const maps = installGoogleMapsDynamicLoader(apiKey);
+    window.__roadsafeGoogleMapsLoader = maps
+      .importLibrary("maps")
+      .then(() => {
+        const loadedMaps = window.google?.maps;
+        if (!loadedMaps?.Map) {
+          throw new Error("Google Maps loaded without the Map constructor.");
+        }
+        return loadedMaps;
+      })
+      .catch((error: unknown) => {
+        window.__roadsafeGoogleMapsLoader = undefined;
+        throw normaliseGoogleMapsError(error);
+      });
   }
 
-  const maps = await window.__roadsafeGoogleMapsLoader;
-  await Promise.all([
-    maps.importLibrary("maps"),
-    maps.importLibrary("marker"),
-    maps.importLibrary("places"),
-    maps.importLibrary("streetView"),
-    maps.importLibrary("geocoding"),
-  ]);
-  return maps;
+  return window.__roadsafeGoogleMapsLoader;
 }
 
 export function latLngLiteral(

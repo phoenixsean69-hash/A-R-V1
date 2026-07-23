@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   latLngLiteral,
   loadGoogleMaps,
+  subscribeGoogleMapsAuthenticationFailure,
 } from "../../services/googleMapsLoader";
 import type {
   GoogleMapsMap,
@@ -29,6 +30,8 @@ export default function GoogleReconstructionBasemap({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const unsubscribeAuthenticationFailure =
+      subscribeGoogleMapsAuthenticationFailure((message) => onLoadError?.(message));
     let cancelled = false;
 
     void loadGoogleMaps()
@@ -77,6 +80,7 @@ export default function GoogleReconstructionBasemap({
       });
 
     return () => {
+      unsubscribeAuthenticationFailure();
       cancelled = true;
       if (mapRef.current && mapsRef.current) {
         mapsRef.current.event.clearInstanceListeners(mapRef.current);

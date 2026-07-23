@@ -12,6 +12,7 @@ import {
   latLngLiteral,
   loadGoogleMaps,
   mapCenterLiteral,
+  subscribeGoogleMapsAuthenticationFailure,
 } from "../../services/googleMapsLoader";
 import type {
   GoogleDataLayer,
@@ -230,9 +231,11 @@ export default function GoogleRoadLocationMap({
     onCoordinateChangeRef.current = onCoordinateChange;
     editableRef.current = editable;
     coordinateRef.current = coordinate;
-  }, [coordinate, editable, onCoordinateChange]);
+  }, [coordinate, editable, onCoordinateChange, onLoadError]);
 
   useEffect(() => {
+    const unsubscribeAuthenticationFailure =
+      subscribeGoogleMapsAuthenticationFailure((message) => onLoadErrorRef.current?.(message));
     let cancelled = false;
     let searchElement: HTMLElement | null = null;
     let clickListener: { remove(): void } | null = null;
@@ -272,8 +275,10 @@ export default function GoogleRoadLocationMap({
             capturedAt: new Date().toISOString(),
           });
         });
+        setReady(true);
 
-        const placesLibrary = await maps.importLibrary("places");
+        try {
+          const placesLibrary = await maps.importLibrary("places");
         const PlaceAutocompleteElement = placesLibrary.PlaceAutocompleteElement as
           | (new (options?: Record<string, unknown>) => HTMLElement)
           | undefined;
@@ -308,7 +313,9 @@ export default function GoogleRoadLocationMap({
           searchElement.addEventListener("gmp-select", handlePlace);
           searchHostRef.current.replaceChildren(searchElement);
         }
-        setReady(true);
+        } catch {
+          setSearchLabel("Place search unavailable for this key");
+        }
       })
       .catch((error: unknown) => {
         const message =
@@ -317,6 +324,7 @@ export default function GoogleRoadLocationMap({
       });
 
     return () => {
+      unsubscribeAuthenticationFailure();
       cancelled = true;
       clickListener?.remove();
       searchElement?.remove();

@@ -20,7 +20,7 @@ export interface DetectedRoadPoint {
 
 export interface DetectedRoadSegment {
   id: string;
-  providerId: string;
+  osmId: number;
   name: string;
   highwayType: string;
   laneCount?: number;
@@ -58,7 +58,7 @@ export interface RoadAddressResult {
   country: string;
 }
 
-export type RoadLayoutDetectionSource = "Google Maps" | "Manual";
+export type RoadLayoutDetectionSource = "OpenStreetMap" | "Manual";
 
 export type RoadLayoutConfidenceLabel =
   | "High"

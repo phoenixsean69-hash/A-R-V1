@@ -3558,11 +3558,6 @@ export default function AccidentReconstructionEditor({
                     </button>
                   ))}
                 </div>
-                {basemapMode !== "Diagram" && (
-                  <span className="rounded-md border border-[#28508a] bg-[#0d2d5b] px-2.5 py-1.5 text-[9px] font-bold text-[#d9e9ff]">
-                    Google basemap
-                  </span>
-                )}
                 <button type="button" onClick={handleUndo} disabled={!historyAvailability.canUndo} className="ui-button py-1.5 disabled:opacity-40">Undo</button>
                 <button type="button" onClick={handleRedo} disabled={!historyAvailability.canRedo} className="ui-button py-1.5 disabled:opacity-40">Redo</button>
                 <button

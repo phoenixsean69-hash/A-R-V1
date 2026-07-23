@@ -1,107 +1,287 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import {
-  Crosshair,
-  Focus,
-  Layers3,
-  MapPinned,
-  ScanEye,
-  Search,
-  X,
-  ZoomIn,
-} from "lucide-react";
 
-import {
-  loadGoogleMaps,
-  mapCenterLiteral,
-} from "../../services/googleMapsLoader";
-import type {
-  GoogleInfoWindow,
-  GoogleLatLng,
-  GoogleMapsListener,
-  GoogleMapsMap,
-  GoogleMapsNamespace,
-  GoogleRectangle,
-  GoogleStreetViewPanorama,
-} from "../../services/googleMapsLoader";
-import {
-  getGoogleMapsRuntimeMapId,
-  getPreferredGoogleMapType,
-  isGoogleMapsConfigured,
-  setPreferredGoogleMapType,
-} from "../../services/mapPreferencesService";
-import { AreaAnalysisService } from "../../services/areaAnalysisService";
-import type { AreaAnalysis } from "../../types/areaAnalysis";
-import type { AccidentHeatmapFilters } from "../../types/heatmap";
-import type { MapBounds } from "../../types/map";
-import type { GoogleMapDisplayType } from "../../types/mapping";
-import AreaAnalysisResults from "./AreaAnalysisResults";
 import JunctionAnalysisModal from "./JunctionAnalysisModal";
-import {
-  getAccidentHeatmapPoints,
-} from "./accidentHeatmapLayer";
-import {
-  createJunctionInfoContent,
-  createJunctionMarkerElement,
-  getJunctionMapRecords,
-} from "./junctionMapLayer";
-import type { JunctionMapRecord } from "./junctionMapLayer";
-import {
-  createGoogleHeatmapOverlay,
-} from "./GoogleHeatmapOverlay";
-import type { GoogleHeatmapOverlayHandle } from "./GoogleHeatmapOverlay";
 
-export type VisualizationMode = "markers" | "heatmap";
+import maplibregl from "maplibre-gl";
+
+import type {
+  GeoJSONSource,
+  Map as MapLibreMap,
+  MapMouseEvent,
+  StyleSpecification,
+} from "maplibre-gl";
+
+import "maplibre-gl/dist/maplibre-gl.css";
+
+import AreaAnalysisResults from "./AreaAnalysisResults";
+
+import {
+  addJunctionMarkers,
+} from "./junctionMapLayer";
+
+import {
+  ensureAccidentHeatmapLayers,
+  setAccidentHeatmapVisibility,
+} from "./accidentHeatmapLayer";
+
+import {
+  AreaAnalysisService,
+} from "../../services/areaAnalysisService";
+
+import type {
+  AreaAnalysis,
+} from "../../types/areaAnalysis";
+
+import type {
+  AccidentHeatmapFilters,
+} from "../../types/heatmap";
+
+import type {
+  MapBounds,
+} from "../../types/map";
+
+type MapType =
+  | "street"
+  | "hybrid";
+
+export type VisualizationMode =
+  | "markers"
+  | "heatmap";
 
 interface AccidentMapProps {
-  visualizationMode: VisualizationMode;
-  onVisualizationModeChange: (mode: VisualizationMode) => void;
-  heatmapFilters: AccidentHeatmapFilters;
+  visualizationMode:
+    VisualizationMode;
+
+  onVisualizationModeChange: (
+    mode: VisualizationMode,
+  ) => void;
+
+  heatmapFilters:
+    AccidentHeatmapFilters;
+
   compactSelectionPanel?: boolean;
 }
 
-interface GoogleMapClickEvent {
-  latLng?: GoogleLatLng;
+interface SelectionFeatureCollection {
+  type: "FeatureCollection";
+
+  features: Array<{
+    type: "Feature";
+
+    properties:
+      Record<string, never>;
+
+    geometry: {
+      type: "Polygon";
+
+      coordinates:
+        number[][][];
+    };
+  }>;
 }
 
-interface GoogleAdvancedMarker {
-  map: GoogleMapsMap | null;
-  addListener(
-    eventName: string,
-    handler: (...args: unknown[]) => void,
-  ): GoogleMapsListener;
-}
-
-interface GoogleAdvancedMarkerConstructor {
-  new (options: Record<string, unknown>): GoogleAdvancedMarker;
-}
-
-interface SearchPlace {
-  displayName?: string;
-  formattedAddress?: string;
-  location?: GoogleLatLng;
-  viewport?: unknown;
-  fetchFields?(input: { fields: string[] }): Promise<void>;
-}
-
-interface SearchEventDetail extends Event {
-  place?: SearchPlace;
-  placePrediction?: { toPlace(): SearchPlace };
-}
-
-const INITIAL_CENTER = { lat: -17.311182, lng: 31.336976 };
+const MAX_ALLOWED_ZOOM = 18;
+const MIN_ALLOWED_ZOOM = 5;
 const INITIAL_ZOOM = 15;
-const MAP_TYPE_IDS: Record<GoogleMapDisplayType, string> = {
-  Road: "roadmap",
-  Satellite: "satellite",
-  Hybrid: "hybrid",
-  Terrain: "terrain",
-};
+
+const INITIAL_CENTER: [
+  number,
+  number,
+] = [
+  31.336976,
+  -17.311182,
+];
+
+const STREET_STYLE =
+  "https://tiles.openfreemap.org/styles/liberty";
+
+const SELECTION_SOURCE_ID =
+  "selected-area-source";
+
+const SELECTION_FILL_LAYER_ID =
+  "selected-area-fill";
+
+const SELECTION_OUTLINE_LAYER_ID =
+  "selected-area-outline";
+
+function createHybridStyle():
+  StyleSpecification {
+  return {
+    version: 8,
+
+    sources: {
+      "esri-imagery": {
+        type: "raster",
+
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: 19,
+
+        attribution:
+          "Tiles © Esri",
+      },
+
+      "esri-transportation": {
+        type: "raster",
+
+        tiles: [
+          "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+        ],
+
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: 19,
+
+        attribution:
+          "Transportation © Esri",
+      },
+
+      "esri-places": {
+        type: "raster",
+
+        tiles: [
+          "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        ],
+
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: 19,
+
+        attribution:
+          "Places and boundaries © Esri",
+      },
+    },
+
+    layers: [
+      {
+        id:
+          "esri-imagery-layer",
+
+        type: "raster",
+
+        source:
+          "esri-imagery",
+
+        paint: {
+          "raster-opacity": 1,
+          "raster-fade-duration": 0,
+        },
+      },
+
+      {
+        id:
+          "esri-transportation-layer",
+
+        type: "raster",
+
+        source:
+          "esri-transportation",
+
+        paint: {
+          "raster-opacity": 1,
+          "raster-fade-duration": 0,
+        },
+      },
+
+      {
+        id:
+          "esri-places-layer",
+
+        type: "raster",
+
+        source:
+          "esri-places",
+
+        paint: {
+          "raster-opacity": 1,
+          "raster-fade-duration": 0,
+        },
+      },
+    ],
+  };
+}
+
+function getMapStyle(
+  mapType: MapType,
+): string | StyleSpecification {
+  if (mapType === "hybrid") {
+    return createHybridStyle();
+  }
+
+  return STREET_STYLE;
+}
+
+function createEmptyFeatureCollection():
+  SelectionFeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: [],
+  };
+}
+
+function boundsToGeoJSON(
+  bounds: MapBounds | null,
+): SelectionFeatureCollection {
+  if (!bounds) {
+    return (
+      createEmptyFeatureCollection()
+    );
+  }
+
+  return {
+    type: "FeatureCollection",
+
+    features: [
+      {
+        type: "Feature",
+
+        properties: {},
+
+        geometry: {
+          type: "Polygon",
+
+          coordinates: [
+            [
+              [
+                bounds.west,
+                bounds.south,
+              ],
+
+              [
+                bounds.east,
+                bounds.south,
+              ],
+
+              [
+                bounds.east,
+                bounds.north,
+              ],
+
+              [
+                bounds.west,
+                bounds.north,
+              ],
+
+              [
+                bounds.west,
+                bounds.south,
+              ],
+            ],
+          ],
+        },
+      },
+    ],
+  };
+}
 
 function calculateBounds(
   startLongitude: number,
@@ -110,73 +290,115 @@ function calculateBounds(
   endLatitude: number,
 ): MapBounds {
   return {
-    north: Math.max(startLatitude, endLatitude),
-    south: Math.min(startLatitude, endLatitude),
-    east: Math.max(startLongitude, endLongitude),
-    west: Math.min(startLongitude, endLongitude),
+    north: Math.max(
+      startLatitude,
+      endLatitude,
+    ),
+
+    south: Math.min(
+      startLatitude,
+      endLatitude,
+    ),
+
+    east: Math.max(
+      startLongitude,
+      endLongitude,
+    ),
+
+    west: Math.min(
+      startLongitude,
+      endLongitude,
+    ),
   };
 }
 
-function mapBoundsOptions(bounds: MapBounds): Record<string, number> {
-  return {
-    north: bounds.north,
-    south: bounds.south,
-    east: bounds.east,
-    west: bounds.west,
-  };
-}
-
-function formatCoordinate(value: number): string {
-  return value.toFixed(6);
-}
-
-function clearMarkers(markers: GoogleAdvancedMarker[]): void {
-  markers.forEach((marker) => {
-    marker.map = null;
-  });
-  markers.length = 0;
-}
-
-function fitRecords(
-  maps: GoogleMapsNamespace,
-  map: GoogleMapsMap,
-  records: JunctionMapRecord[],
+function ensureSelectionLayers(
+  map: MapLibreMap,
 ): void {
-  if (records.length === 0) return;
-  const bounds = new maps.LatLngBounds();
-  records.forEach(({ junction }) => {
-    bounds.extend({ lat: junction.latitude, lng: junction.longitude });
-  });
-  map.fitBounds(bounds, 56);
+  if (
+    !map.getSource(
+      SELECTION_SOURCE_ID,
+    )
+  ) {
+    map.addSource(
+      SELECTION_SOURCE_ID,
+      {
+        type: "geojson",
+
+        data:
+          createEmptyFeatureCollection(),
+      },
+    );
+  }
+
+  if (
+    !map.getLayer(
+      SELECTION_FILL_LAYER_ID,
+    )
+  ) {
+    map.addLayer({
+      id:
+        SELECTION_FILL_LAYER_ID,
+
+      type: "fill",
+
+      source:
+        SELECTION_SOURCE_ID,
+
+      paint: {
+        "fill-color":
+          "#2563eb",
+
+        "fill-opacity":
+          0.14,
+      },
+    });
+  }
+
+  if (
+    !map.getLayer(
+      SELECTION_OUTLINE_LAYER_ID,
+    )
+  ) {
+    map.addLayer({
+      id:
+        SELECTION_OUTLINE_LAYER_ID,
+
+      type: "line",
+
+      source:
+        SELECTION_SOURCE_ID,
+
+      paint: {
+        "line-color":
+          "#1d4ed8",
+
+        "line-width": 3,
+      },
+    });
+  }
 }
 
-function createMarkers(
-  markerConstructor: GoogleAdvancedMarkerConstructor,
-  map: GoogleMapsMap,
-  infoWindow: GoogleInfoWindow,
-  records: JunctionMapRecord[],
-  onViewFullAnalysis: (junctionId: string) => void,
-): GoogleAdvancedMarker[] {
-  return records.map((record) => {
-    const marker = new markerConstructor({
-      map,
-      position: {
-        lat: record.junction.latitude,
-        lng: record.junction.longitude,
-      },
-      content: createJunctionMarkerElement(record),
-      title: `${record.junction.name} — ${record.risk.riskLevel} risk`,
-      gmpClickable: true,
-      zIndex: Math.round(record.risk.riskScore * 10),
-    });
-    marker.addListener("click", () => {
-      infoWindow.setContent(
-        createJunctionInfoContent(record, onViewFullAnalysis),
-      );
-      infoWindow.open({ map, anchor: marker });
-    });
-    return marker;
-  });
+function updateSelectionLayer(
+  map: MapLibreMap,
+  bounds: MapBounds | null,
+): void {
+  if (!map.isStyleLoaded()) {
+    return;
+  }
+
+  ensureSelectionLayers(map);
+
+  const source =
+    map.getSource(
+      SELECTION_SOURCE_ID,
+    ) as
+      | GeoJSONSource
+      | undefined;
+
+  source?.setData(
+    boundsToGeoJSON(bounds),
+  );
 }
 
 export default function AccidentMap({
@@ -185,481 +407,753 @@ export default function AccidentMap({
   heatmapFilters,
   compactSelectionPanel = false,
 }: AccidentMapProps) {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const panoramaContainerRef = useRef<HTMLDivElement | null>(null);
-  const searchHostRef = useRef<HTMLDivElement | null>(null);
-  const mapsRef = useRef<GoogleMapsNamespace | null>(null);
-  const mapRef = useRef<GoogleMapsMap | null>(null);
-  const panoramaRef = useRef<GoogleStreetViewPanorama | null>(null);
-  const infoWindowRef = useRef<GoogleInfoWindow | null>(null);
-  const markersRef = useRef<GoogleAdvancedMarker[]>([]);
-  const markerConstructorRef = useRef<GoogleAdvancedMarkerConstructor | null>(null);
-  const heatmapRef = useRef<GoogleHeatmapOverlayHandle | null>(null);
-  const selectionRectangleRef = useRef<GoogleRectangle | null>(null);
-  const configured = isGoogleMapsConfigured();
-  const [ready, setReady] = useState(false);
-  const [loadError, setLoadError] = useState("");
-  const [mapType, setMapType] = useState<GoogleMapDisplayType>(() =>
-    getPreferredGoogleMapType(),
-  );
-  const initialMapTypeRef = useRef(mapType);
-  const initialVisualizationRef = useRef(visualizationMode);
-  const [selectionEnabled, setSelectionEnabled] = useState(false);
-  const [selectedBounds, setSelectedBounds] = useState<MapBounds | null>(null);
-  const [selectedJunctionId, setSelectedJunctionId] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<AreaAnalysis | null>(null);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [streetViewOpen, setStreetViewOpen] = useState(false);
-  const [streetViewPosition, setStreetViewPosition] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [streetViewMessage, setStreetViewMessage] = useState("");
-  const [maxZoomMessage, setMaxZoomMessage] = useState("");
-  const [searchLabel, setSearchLabel] = useState("");
+  const mapContainerRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
 
-  const records = useMemo(() => getJunctionMapRecords(), []);
-  const heatmapPoints = useMemo(
-    () => getAccidentHeatmapPoints(undefined, heatmapFilters),
-    [heatmapFilters],
-  );
-  const initialHeatmapPointsRef = useRef(heatmapPoints);
+  const mapRef =
+    useRef<MapLibreMap | null>(
+      null,
+    );
 
-  const handleOpenJunctionAnalysis = useCallback((junctionId: string) => {
-    setSelectedJunctionId(junctionId);
+  const selectedBoundsRef =
+    useRef<MapBounds | null>(
+      null,
+    );
+
+  const currentMapTypeRef =
+    useRef<MapType>("street");
+
+  const visualizationModeRef =
+    useRef<VisualizationMode>(
+      visualizationMode,
+    );
+
+  const heatmapFiltersRef =
+    useRef<AccidentHeatmapFilters>(
+      heatmapFilters,
+    );
+
+  const junctionMarkersCleanupRef =
+    useRef<(() => void) | null>(
+      null,
+    );
+
+  const [mapType, setMapType] =
+    useState<MapType>("street");
+
+  const [
+    selectionEnabled,
+    setSelectionEnabled,
+  ] = useState(false);
+
+  const [
+  selectedJunctionId,
+  setSelectedJunctionId,
+] = useState<string | null>(null);
+
+const handleOpenJunctionAnalysis =
+  useCallback(
+    (junctionId: string) => {
+      setSelectedJunctionId(
+        junctionId,
+      );
+    },
+    [],
+  );
+
+const handleCloseJunctionAnalysis =
+  useCallback(() => {
+    setSelectedJunctionId(null);
   }, []);
 
-  useEffect(() => {
-    if (!configured) return;
+  const [
+    selectedBounds,
+    setSelectedBounds,
+  ] = useState<MapBounds | null>(
+    null,
+  );
 
-    let cancelled = false;
-    let searchElement: HTMLElement | null = null;
-    let searchHandler: ((event: Event) => void) | null = null;
-    const listeners: GoogleMapsListener[] = [];
+  const [
+    showAnalysis,
+    setShowAnalysis,
+  ] = useState(false);
 
-    void loadGoogleMaps()
-      .then(async (maps) => {
-        if (cancelled || !mapContainerRef.current) return;
-        mapsRef.current = maps;
+  const [
+    analysis,
+    setAnalysis,
+  ] = useState<AreaAnalysis | null>(
+    null,
+  );
 
-        const map = new maps.Map(mapContainerRef.current, {
-          center: INITIAL_CENTER,
-          zoom: INITIAL_ZOOM,
-          minZoom: 3,
-          maxZoom: 22,
-          mapTypeId: MAP_TYPE_IDS[initialMapTypeRef.current],
-          mapId: getGoogleMapsRuntimeMapId(),
-          gestureHandling: "greedy",
-          fullscreenControl: true,
-          mapTypeControl: false,
-          rotateControl: true,
-          scaleControl: true,
-          streetViewControl: false,
-          zoomControl: true,
-          clickableIcons: true,
-        });
-        mapRef.current = map;
-        infoWindowRef.current = new maps.InfoWindow({ maxWidth: 380 });
-
-        const markerLibrary = await maps.importLibrary("marker");
-        markerConstructorRef.current = markerLibrary.AdvancedMarkerElement as
-          | GoogleAdvancedMarkerConstructor
-          | null;
-
-        heatmapRef.current = createGoogleHeatmapOverlay(
-          maps,
-          map,
-          initialHeatmapPointsRef.current,
-        );
-        heatmapRef.current.setVisible(initialVisualizationRef.current === "heatmap");
-
-        listeners.push(
-          map.addListener("contextmenu", (...args: unknown[]) => {
-            const event = args[0] as GoogleMapClickEvent | undefined;
-            if (!event?.latLng || !infoWindowRef.current) return;
-            const latitude = event.latLng.lat();
-            const longitude = event.latLng.lng();
-            const content = document.createElement("div");
-            content.style.padding = "6px";
-            content.innerHTML = `
-              <strong style="color:#0f172a">Selected coordinate</strong>
-              <p style="margin:6px 0 0;color:#475569;font-size:12px;line-height:1.6">
-                Latitude: ${formatCoordinate(latitude)}<br />
-                Longitude: ${formatCoordinate(longitude)}
-              </p>
-            `;
-            infoWindowRef.current.setContent(content);
-            infoWindowRef.current.setPosition({ lat: latitude, lng: longitude });
-            infoWindowRef.current.open({ map });
-          }),
-        );
-
-        const placesLibrary = await maps.importLibrary("places");
-        const PlaceAutocompleteElement = placesLibrary.PlaceAutocompleteElement as
-          | (new (options?: Record<string, unknown>) => HTMLElement)
-          | undefined;
-        if (PlaceAutocompleteElement && searchHostRef.current) {
-          searchElement = new PlaceAutocompleteElement({});
-          searchElement.style.width = "100%";
-          searchElement.setAttribute("aria-label", "Search Google Maps");
-          searchHandler = async (event: Event) => {
-            const detail = event as SearchEventDetail;
-            const place = detail.place ?? detail.placePrediction?.toPlace();
-            if (!place) return;
-            await place.fetchFields?.({
-              fields: ["displayName", "formattedAddress", "location", "viewport"],
-            });
-            setSearchLabel(place.displayName ?? place.formattedAddress ?? "Location");
-            if (place.viewport) {
-              map.fitBounds(place.viewport, 48);
-            } else if (place.location) {
-              map.panTo({ lat: place.location.lat(), lng: place.location.lng() });
-              map.setZoom(18);
-            }
-          };
-          searchElement.addEventListener("gmp-placeselect", searchHandler);
-          searchElement.addEventListener("gmp-select", searchHandler);
-          searchHostRef.current.replaceChildren(searchElement);
-        }
-
-        if (markerConstructorRef.current && initialVisualizationRef.current === "markers") {
-          markersRef.current = createMarkers(
-            markerConstructorRef.current,
-            map,
-            infoWindowRef.current,
-            records,
-            handleOpenJunctionAnalysis,
-          );
-        }
-
-        fitRecords(maps, map, records);
-        setReady(true);
-      })
-      .catch((error: unknown) => {
-        setLoadError(
-          error instanceof Error ? error.message : "Google Maps could not be loaded.",
-        );
-      });
-
-    return () => {
-      cancelled = true;
-      listeners.forEach((listener) => listener.remove());
-      if (searchElement && searchHandler) {
-        searchElement.removeEventListener("gmp-placeselect", searchHandler);
-        searchElement.removeEventListener("gmp-select", searchHandler);
-      }
-      clearMarkers(markersRef.current);
-      heatmapRef.current?.destroy();
-      heatmapRef.current = null;
-      selectionRectangleRef.current?.setMap(null);
-      selectionRectangleRef.current = null;
-      infoWindowRef.current?.close();
-      infoWindowRef.current = null;
-      if (mapRef.current && mapsRef.current) {
-        mapsRef.current.event.clearInstanceListeners(mapRef.current);
-      }
-      mapRef.current = null;
-      mapsRef.current = null;
-      markerConstructorRef.current = null;
-    };
-  }, [configured, handleOpenJunctionAnalysis, records]);
+  const [
+    analysisError,
+    setAnalysisError,
+  ] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
+    selectedBoundsRef.current =
+      selectedBounds;
+
     const map = mapRef.current;
-    const constructor = markerConstructorRef.current;
-    const infoWindow = infoWindowRef.current;
-    heatmapRef.current?.setData(heatmapPoints);
-    heatmapRef.current?.setVisible(visualizationMode === "heatmap");
 
-    clearMarkers(markersRef.current);
-    if (visualizationMode === "markers" && map && constructor && infoWindow) {
-      markersRef.current = createMarkers(
-        constructor,
-        map,
-        infoWindow,
-        records,
-        handleOpenJunctionAnalysis,
-      );
-    }
-  }, [handleOpenJunctionAnalysis, heatmapPoints, records, visualizationMode]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    map.setMapTypeId(MAP_TYPE_IDS[mapType]);
-    setPreferredGoogleMapType(mapType);
-  }, [mapType]);
-
-  useEffect(() => {
-    if (!streetViewOpen || !streetViewPosition || !panoramaContainerRef.current) {
+    if (!map) {
       return;
     }
-    const maps = mapsRef.current;
-    if (!maps) return;
-    panoramaRef.current = new maps.StreetViewPanorama(
-      panoramaContainerRef.current,
-      {
-        position: streetViewPosition,
-        pov: { heading: mapRef.current?.getHeading() ?? 0, pitch: 0 },
-        addressControl: true,
-        fullscreenControl: true,
-        motionTracking: false,
-        zoomControl: true,
-      },
-    );
-  }, [streetViewOpen, streetViewPosition]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    const maps = mapsRef.current;
-    if (!map || !maps || !selectionEnabled) return;
+    if (map.isStyleLoaded()) {
+      updateSelectionLayer(
+        map,
+        selectedBounds,
+      );
 
-    let start: { lat: number; lng: number } | null = null;
-    const listeners: GoogleMapsListener[] = [];
-    map.setOptions({
-      draggable: false,
-      gestureHandling: "none",
-      draggableCursor: "crosshair",
-    });
+      return;
+    }
 
-    listeners.push(
-      map.addListener("mousedown", (...args: unknown[]) => {
-        const event = args[0] as GoogleMapClickEvent | undefined;
-        if (!event?.latLng) return;
-        start = { lat: event.latLng.lat(), lng: event.latLng.lng() };
-        selectionRectangleRef.current?.setMap(null);
-        selectionRectangleRef.current = new maps.Rectangle({
+    const handleStyleLoad =
+      () => {
+        updateSelectionLayer(
           map,
-          bounds: mapBoundsOptions(
-            calculateBounds(start.lng, start.lat, start.lng, start.lat),
-          ),
-          clickable: false,
-          editable: false,
-          draggable: false,
-          fillColor: "#2563eb",
-          fillOpacity: 0.14,
-          strokeColor: "#1d4ed8",
-          strokeOpacity: 1,
-          strokeWeight: 3,
-          zIndex: 50,
-        });
-      }),
-      map.addListener("mousemove", (...args: unknown[]) => {
-        const event = args[0] as GoogleMapClickEvent | undefined;
-        if (!start || !event?.latLng || !selectionRectangleRef.current) return;
-        selectionRectangleRef.current.setBounds(
-          mapBoundsOptions(
-            calculateBounds(
-              start.lng,
-              start.lat,
-              event.latLng.lng(),
-              event.latLng.lat(),
-            ),
-          ),
+          selectedBoundsRef.current,
         );
-      }),
-      map.addListener("mouseup", (...args: unknown[]) => {
-        const event = args[0] as GoogleMapClickEvent | undefined;
-        if (!start || !event?.latLng) return;
-        const finalBounds = calculateBounds(
-          start.lng,
-          start.lat,
-          event.latLng.lng(),
-          event.latLng.lat(),
-        );
-        selectionRectangleRef.current?.setBounds(mapBoundsOptions(finalBounds));
-        setSelectedBounds(finalBounds);
-        setSelectionEnabled(false);
-        setShowAnalysis(false);
-        setAnalysis(null);
-        setAnalysisError(null);
-        start = null;
-      }),
+      };
+
+    map.once(
+      "style.load",
+      handleStyleLoad,
     );
 
     return () => {
-      listeners.forEach((listener) => listener.remove());
-      map.setOptions({
-        draggable: true,
-        gestureHandling: "greedy",
-        draggableCursor: undefined,
+      map.off(
+        "style.load",
+        handleStyleLoad,
+      );
+    };
+  }, [selectedBounds]);
+
+  useEffect(() => {
+    if (
+      !mapContainerRef.current ||
+      mapRef.current
+    ) {
+      return;
+    }
+
+    const map =
+      new maplibregl.Map({
+        container:
+          mapContainerRef.current,
+
+        style:
+          getMapStyle("street"),
+
+        center:
+          INITIAL_CENTER,
+
+        zoom:
+          INITIAL_ZOOM,
+
+        minZoom:
+          MIN_ALLOWED_ZOOM,
+
+        maxZoom:
+          MAX_ALLOWED_ZOOM,
+
+        pitch: 0,
+        bearing: 0,
+
+        attributionControl: {
+          compact: true,
+        },
       });
+
+    const handleCoordinatePick = (
+      event:
+        maplibregl.MapMouseEvent,
+    ) => {
+      const latitude =
+        Number(
+          event.lngLat.lat.toFixed(
+            6,
+          ),
+        );
+
+      const longitude =
+        Number(
+          event.lngLat.lng.toFixed(
+            6,
+          ),
+        );
+
+      console.log(
+        "Selected coordinate:",
+        {
+          latitude,
+          longitude,
+        },
+      );
+
+      new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: true,
+      })
+        .setLngLat([
+          longitude,
+          latitude,
+        ])
+        .setHTML(`
+          <div style="padding: 4px;">
+            <strong>Selected coordinate</strong>
+
+            <p style="margin: 6px 0 0;">
+              Latitude: ${latitude}<br />
+              Longitude: ${longitude}
+            </p>
+          </div>
+        `)
+        .addTo(map);
+    };
+
+    map.on(
+      "contextmenu",
+      handleCoordinatePick,
+    );
+
+    map.addControl(
+      new maplibregl
+        .NavigationControl({
+          showCompass: true,
+          showZoom: true,
+          visualizePitch: true,
+        }),
+      "bottom-right",
+    );
+
+    map.addControl(
+      new maplibregl
+        .ScaleControl({
+          maxWidth: 120,
+          unit: "metric",
+        }),
+      "bottom-left",
+    );
+
+    const handleMapLoad =
+      () => {
+        map.setMaxZoom(
+          MAX_ALLOWED_ZOOM,
+        );
+
+        ensureAccidentHeatmapLayers(
+          map,
+          undefined,
+          heatmapFiltersRef.current,
+        );
+
+        setAccidentHeatmapVisibility(
+          map,
+
+          visualizationModeRef.current ===
+            "heatmap",
+        );
+
+        ensureSelectionLayers(
+          map,
+        );
+
+        updateSelectionLayer(
+          map,
+          selectedBoundsRef.current,
+        );
+
+        if (
+          visualizationModeRef.current ===
+          "markers"
+        ) {
+          junctionMarkersCleanupRef
+            .current?.();
+
+          junctionMarkersCleanupRef.current =
+            addJunctionMarkers(
+  map,
+  undefined,
+  handleOpenJunctionAnalysis,
+);
+        }
+
+        map.resize();
+      };
+
+    map.on(
+      "load",
+      handleMapLoad,
+    );
+
+    mapRef.current = map;
+
+    return () => {
+      junctionMarkersCleanupRef
+        .current?.();
+
+      junctionMarkersCleanupRef.current =
+        null;
+
+      map.off(
+        "contextmenu",
+        handleCoordinatePick,
+      );
+
+      map.off(
+        "load",
+        handleMapLoad,
+      );
+
+      map.remove();
+
+      mapRef.current = null;
+    };
+  }, [handleOpenJunctionAnalysis]);
+
+  useEffect(() => {
+    visualizationModeRef.current =
+      visualizationMode;
+
+    const map = mapRef.current;
+
+    if (
+      !map ||
+      !map.isStyleLoaded()
+    ) {
+      return;
+    }
+
+    ensureAccidentHeatmapLayers(
+      map,
+      undefined,
+      heatmapFiltersRef.current,
+      SELECTION_FILL_LAYER_ID,
+    );
+
+    setAccidentHeatmapVisibility(
+      map,
+
+      visualizationMode ===
+        "heatmap",
+    );
+
+    if (
+      visualizationMode ===
+      "markers"
+    ) {
+      if (
+        !junctionMarkersCleanupRef
+          .current
+      ) {
+        junctionMarkersCleanupRef.current =
+          addJunctionMarkers(
+  map,
+  undefined,
+  handleOpenJunctionAnalysis,
+);
+      }
+
+      return;
+    }
+
+    junctionMarkersCleanupRef
+      .current?.();
+
+    junctionMarkersCleanupRef.current =
+      null;
+  }, [handleOpenJunctionAnalysis, visualizationMode]);
+
+  useEffect(() => {
+    heatmapFiltersRef.current =
+      heatmapFilters;
+
+    const map = mapRef.current;
+
+    if (
+      !map ||
+      !map.isStyleLoaded()
+    ) {
+      return;
+    }
+
+    ensureAccidentHeatmapLayers(
+      map,
+      undefined,
+      heatmapFilters,
+      SELECTION_FILL_LAYER_ID,
+    );
+
+    setAccidentHeatmapVisibility(
+      map,
+
+      visualizationModeRef.current ===
+        "heatmap",
+    );
+  }, [heatmapFilters]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    map.setMaxZoom(
+      MAX_ALLOWED_ZOOM,
+    );
+
+    if (
+      map.getZoom() >
+      MAX_ALLOWED_ZOOM
+    ) {
+      map.jumpTo({
+        zoom:
+          MAX_ALLOWED_ZOOM,
+      });
+    }
+
+    if (
+      currentMapTypeRef.current ===
+      mapType
+    ) {
+      return;
+    }
+
+    currentMapTypeRef.current =
+      mapType;
+
+    const handleStyleLoad =
+      () => {
+        map.setMaxZoom(
+          MAX_ALLOWED_ZOOM,
+        );
+
+        ensureAccidentHeatmapLayers(
+          map,
+          undefined,
+          heatmapFiltersRef.current,
+        );
+
+        setAccidentHeatmapVisibility(
+          map,
+
+          visualizationModeRef.current ===
+            "heatmap",
+        );
+
+        ensureSelectionLayers(
+          map,
+        );
+
+        updateSelectionLayer(
+          map,
+          selectedBoundsRef.current,
+        );
+
+        junctionMarkersCleanupRef
+          .current?.();
+
+        junctionMarkersCleanupRef.current =
+          null;
+
+        if (
+          visualizationModeRef.current ===
+          "markers"
+        ) {
+          junctionMarkersCleanupRef.current =
+            addJunctionMarkers(
+  map,
+  undefined,
+  handleOpenJunctionAnalysis,
+);
+        }
+
+        map.resize();
+      };
+
+    map.once(
+      "style.load",
+      handleStyleLoad,
+    );
+
+    map.setStyle(
+      getMapStyle(mapType),
+    );
+
+    return () => {
+      map.off(
+        "style.load",
+        handleStyleLoad,
+      );
+    };
+  }, [handleOpenJunctionAnalysis, mapType]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (
+      !map ||
+      !selectionEnabled
+    ) {
+      return;
+    }
+
+    let startLongitude:
+      | number
+      | null = null;
+
+    let startLatitude:
+      | number
+      | null = null;
+
+    let drawing = false;
+
+    map.dragPan.disable();
+
+    map.getCanvas().style.cursor =
+      "crosshair";
+
+    const handleMouseDown = (
+      event: MapMouseEvent,
+    ) => {
+      if (
+        event.originalEvent.button !==
+        0
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      startLongitude =
+        event.lngLat.lng;
+
+      startLatitude =
+        event.lngLat.lat;
+
+      drawing = true;
+
+      const initialBounds =
+        calculateBounds(
+          startLongitude,
+          startLatitude,
+          startLongitude,
+          startLatitude,
+        );
+
+      updateSelectionLayer(
+        map,
+        initialBounds,
+      );
+    };
+
+    const handleMouseMove = (
+      event: MapMouseEvent,
+    ) => {
+      if (
+        !drawing ||
+        startLongitude === null ||
+        startLatitude === null
+      ) {
+        return;
+      }
+
+      const previewBounds =
+        calculateBounds(
+          startLongitude,
+          startLatitude,
+          event.lngLat.lng,
+          event.lngLat.lat,
+        );
+
+      updateSelectionLayer(
+        map,
+        previewBounds,
+      );
+    };
+
+    const handleMouseUp = (
+      event: MapMouseEvent,
+    ) => {
+      if (
+        !drawing ||
+        startLongitude === null ||
+        startLatitude === null
+      ) {
+        return;
+      }
+
+      const finalBounds =
+        calculateBounds(
+          startLongitude,
+          startLatitude,
+          event.lngLat.lng,
+          event.lngLat.lat,
+        );
+
+      drawing = false;
+
+      startLongitude = null;
+      startLatitude = null;
+
+      setSelectedBounds(
+        finalBounds,
+      );
+
+      setSelectionEnabled(
+        false,
+      );
+
+      setShowAnalysis(false);
+      setAnalysis(null);
+      setAnalysisError(null);
+    };
+
+    map.on(
+      "mousedown",
+      handleMouseDown,
+    );
+
+    map.on(
+      "mousemove",
+      handleMouseMove,
+    );
+
+    map.on(
+      "mouseup",
+      handleMouseUp,
+    );
+
+    return () => {
+      map.off(
+        "mousedown",
+        handleMouseDown,
+      );
+
+      map.off(
+        "mousemove",
+        handleMouseMove,
+      );
+
+      map.off(
+        "mouseup",
+        handleMouseUp,
+      );
+
+      map.dragPan.enable();
+
+      map.getCanvas().style.cursor =
+        "";
     };
   }, [selectionEnabled]);
 
-  const handleSelectArea = useCallback(() => {
-    selectionRectangleRef.current?.setMap(null);
-    selectionRectangleRef.current = null;
-    setSelectedBounds(null);
-    setShowAnalysis(false);
-    setAnalysis(null);
-    setAnalysisError(null);
-    setSelectionEnabled(true);
-  }, []);
-
-  const handleCloseSelectedArea = useCallback(() => {
-    selectionRectangleRef.current?.setMap(null);
-    selectionRectangleRef.current = null;
-    setSelectedBounds(null);
-    setSelectionEnabled(false);
-    setShowAnalysis(false);
-    setAnalysis(null);
-    setAnalysisError(null);
-  }, []);
-
-  const handleAnalyseArea = useCallback(() => {
-    if (!selectedBounds) return;
-    try {
-      setAnalysis(AreaAnalysisService.analyse(selectedBounds));
-      setAnalysisError(null);
-      setShowAnalysis(true);
-    } catch (error) {
+  const handleSelectArea =
+    useCallback(() => {
+      setSelectedBounds(null);
+      setShowAnalysis(false);
       setAnalysis(null);
-      setShowAnalysis(true);
-      setAnalysisError(
-        error instanceof Error
-          ? error.message
-          : "The selected area could not be analysed.",
+      setAnalysisError(null);
+
+      setSelectionEnabled(
+        true,
       );
-    }
-  }, [selectedBounds]);
+    }, []);
 
-  const handleMaxDetail = useCallback(() => {
-    const map = mapRef.current;
-    const maps = mapsRef.current;
-    if (!map || !maps) return;
-    const center = mapCenterLiteral(map);
-    if (!center) return;
-    setMapType("Satellite");
-    setMaxZoomMessage("Checking available Google satellite detail…");
-    new maps.MaxZoomService().getMaxZoomAtLatLng(center, (result, status) => {
-      if (status === "OK" && typeof result?.zoom === "number") {
-        const zoom = Math.min(result.zoom, 22);
-        map.setZoom(zoom);
-        setMaxZoomMessage(`Maximum available satellite zoom: ${zoom}`);
-      } else {
-        setMaxZoomMessage("Maximum satellite zoom was not available here.");
+  const handleCloseSelectedArea =
+    useCallback(() => {
+      setSelectedBounds(null);
+
+      setSelectionEnabled(
+        false,
+      );
+
+      setShowAnalysis(false);
+      setAnalysis(null);
+      setAnalysisError(null);
+    }, []);
+
+  const handleAnalyseArea =
+    useCallback(() => {
+      if (!selectedBounds) {
+        return;
       }
-    });
-  }, []);
 
-  const handleStreetView = useCallback(() => {
-    const map = mapRef.current;
-    const maps = mapsRef.current;
-    if (!map || !maps) return;
-    const center = mapCenterLiteral(map);
-    if (!center) return;
-    setStreetViewMessage("Searching for the nearest Google Street View panorama…");
-    new maps.StreetViewService().getPanorama(
-      { location: center, radius: 150, preference: "nearest" },
-      (data, status) => {
-        const position = data?.location?.latLng;
-        if (status === "OK" && position) {
-          setStreetViewPosition({ lat: position.lat(), lng: position.lng() });
-          setStreetViewMessage(
-            data?.location?.description || "Nearest Street View panorama",
+      try {
+        const result =
+          AreaAnalysisService.analyse(
+            selectedBounds,
           );
-          setStreetViewOpen(true);
-        } else {
-          setStreetViewMessage("No Street View panorama was found near this location.");
-        }
-      },
-    );
-  }, []);
 
-  const handleFitData = useCallback(() => {
-    const maps = mapsRef.current;
-    const map = mapRef.current;
-    if (!maps || !map) return;
-    fitRecords(maps, map, records);
-  }, [records]);
+        setAnalysis(result);
+        setAnalysisError(null);
+        setShowAnalysis(true);
+      } catch (error) {
+        console.error(
+          "Selected area analysis failed:",
+          error,
+        );
 
-  if (!configured || loadError) {
-    return (
-      <div className="grid h-full min-h-[320px] place-items-center bg-[#07101f] p-6">
-        <div className="max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-100">
-          <strong className="block text-white">Google Maps could not start</strong>
-          <p className="mt-2 leading-6">{loadError || "Add VITE_GOOGLE_MAPS_BROWSER_KEY to .env.local, then restart the app."}</p>
-        </div>
-      </div>
-    );
-  }
+        setAnalysis(null);
+        setShowAnalysis(true);
+
+        setAnalysisError(
+          error instanceof Error
+            ? error.message
+            : "The selected area could not be analysed.",
+        );
+      }
+    }, [selectedBounds]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#07101f]">
-      <div ref={mapContainerRef} className="roadsafe-google-map h-full w-full" />
+    <div className="relative h-full w-full">
+      <div
+        ref={mapContainerRef}
+        className="h-full w-full"
+      />
 
-      {!ready && (
-        <div className="absolute inset-0 z-30 grid place-items-center bg-[#07101f]/90 text-xs font-bold text-slate-300">
-          Loading Google accident intelligence…
-        </div>
-      )}
-
-      <div className="absolute left-3 top-3 z-20 w-[min(360px,calc(100%-24px))] rounded-md border border-[#24426b] bg-[#061125]/95 p-2 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Search size={14} className="shrink-0 text-[#8bb8ff]" />
-          <div ref={searchHostRef} className="min-w-0 flex-1" />
-        </div>
-        {searchLabel && (
-          <p className="mt-1.5 truncate px-5 text-[8px] text-slate-500">
-            {searchLabel}
-          </p>
-        )}
-      </div>
-
+      {/* Compact map controls */}
       <div className="absolute right-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-col items-end gap-2">
-        <div className="flex flex-wrap justify-end overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/95 p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
-          {(["Road", "Satellite", "Hybrid", "Terrain"] as GoogleMapDisplayType[]).map(
-            (type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setMapType(type)}
-                className={`rounded px-2.5 py-1.5 text-[9px] font-semibold transition-colors ${
-                  mapType === type
-                    ? "bg-[#173b72] text-white"
-                    : "text-slate-300 hover:bg-[#0c1c36]"
-                }`}
-              >
-                {type}
-              </button>
-            ),
-          )}
-        </div>
+        <div className="flex overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/95 p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => setMapType("street")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              mapType === "street"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
+          >
+            Street
+          </button>
 
-        <div className="flex flex-wrap justify-end overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/95 p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
           <button
             type="button"
-            onClick={handleMaxDetail}
-            className="inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold text-slate-300 hover:bg-[#0c1c36]"
+            onClick={() => setMapType("hybrid")}
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
+              mapType === "hybrid"
+                ? "bg-[#173b72] text-white"
+                : "text-slate-300 hover:bg-[#0c1c36]"
+            }`}
           >
-            <ZoomIn size={12} /> Max detail
+            Hybrid
           </button>
-          <button
-            type="button"
-            onClick={handleStreetView}
-            className="inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold text-slate-300 hover:bg-[#0c1c36]"
-          >
-            <ScanEye size={12} /> Street View
-          </button>
-          <button
-            type="button"
-            onClick={handleFitData}
-            className="inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold text-slate-300 hover:bg-[#0c1c36]"
-          >
-            <Focus size={12} /> Fit data
-          </button>
+
           <button
             type="button"
             onClick={handleSelectArea}
-            className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold ${
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               selectionEnabled
                 ? "bg-[#254d82] text-white"
                 : "text-slate-300 hover:bg-[#0c1c36]"
             }`}
           >
-            <Crosshair size={12} />
             {selectionEnabled ? "Draw area" : "Select area"}
           </button>
         </div>
@@ -668,52 +1162,68 @@ export default function AccidentMap({
           <button
             type="button"
             onClick={() => onVisualizationModeChange("markers")}
-            className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold ${
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               visualizationMode === "markers"
                 ? "bg-[#173b72] text-white"
                 : "text-slate-300 hover:bg-[#0c1c36]"
             }`}
           >
-            <MapPinned size={12} /> Markers
+            Markers
           </button>
+
           <button
             type="button"
             onClick={() => onVisualizationModeChange("heatmap")}
-            className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-[9px] font-semibold ${
+            className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               visualizationMode === "heatmap"
                 ? "bg-[#173b72] text-white"
                 : "text-slate-300 hover:bg-[#0c1c36]"
             }`}
           >
-            <Layers3 size={12} /> Heatmap
+            Heatmap
           </button>
         </div>
       </div>
 
-      {(maxZoomMessage || streetViewMessage) && (
-        <div className="absolute left-1/2 top-[78px] z-20 max-w-[min(420px,calc(100%-24px))] -translate-x-1/2 rounded-full border border-[#24426b] bg-[#061125]/95 px-4 py-2 text-center text-[9px] font-semibold text-slate-200 shadow-xl backdrop-blur-sm">
-          {streetViewMessage || maxZoomMessage}
-        </div>
-      )}
-
-      {visualizationMode === "markers" ? (
+      {visualizationMode === "markers" && (
         <div className="pointer-events-none absolute bottom-3 left-3 z-10 min-w-[118px] rounded-md border border-[#24426b] bg-[#061125]/95 px-3 py-2 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
           <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-300">
             Junction risk
           </p>
+
           <div className="space-y-1.5 text-[9px] text-slate-400">
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-red-500" />High</div>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Medium</div>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Low</div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+              <span>High</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <span>Low</span>
+            </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {visualizationMode === "heatmap" && (
         <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-40 rounded-md border border-[#24426b] bg-[#061125]/95 px-3 py-2 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
           <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-300">
             Accident concentration
           </p>
-          <div className="h-1.5 w-full rounded-full bg-[linear-gradient(to_right,#244e91,#4e8bd3,#32cdaa,#facc15,#ef6848,#7f1d1d)]" />
-          <div className="mt-1.5 flex justify-between text-[8px] text-slate-500"><span>Lower</span><span>Higher</span></div>
+          <div
+            className="h-1.5 w-full rounded-full"
+            style={{
+              background:
+                "linear-gradient(to right, #244e91, #4e8bd3, #f0b43c, #df654f, #9f263d)",
+            }}
+          />
+          <div className="mt-1.5 flex justify-between text-[8px] text-slate-500">
+            <span>Lower</span>
+            <span>Higher</span>
+          </div>
         </div>
       )}
 
@@ -724,33 +1234,99 @@ export default function AccidentMap({
       )}
 
       {selectedBounds && compactSelectionPanel && (
-        <CompactSelectionPanel
-          analysis={analysis}
-          analysisError={analysisError}
-          onAnalyse={handleAnalyseArea}
-          onClose={handleCloseSelectedArea}
-          onReselect={handleSelectArea}
-          onToggleAnalysis={() => setShowAnalysis((current) => !current)}
-          showAnalysis={showAnalysis}
-        />
+        <div className="absolute bottom-3 right-3 z-20 w-[min(270px,calc(100%-24px))] overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/98 shadow-[0_14px_34px_rgba(0,0,0,.45)] backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3 border-b border-[#19345a] px-3 py-2.5">
+            <div className="min-w-0">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-100">
+                Selected area
+              </h3>
+              <p className="mt-0.5 truncate text-[8px] text-slate-500">
+                Focused road-safety analysis zone
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseSelectedArea}
+              className="rounded border border-[#24426b] px-2 py-1 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="space-y-2.5 px-3 py-3">
+            {showAnalysis && analysis ? (
+              <>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    ["Junctions", analysis.totalJunctions],
+                    ["Crashes", analysis.totalAccidents],
+                    ["Fatal", analysis.totalFatalities],
+                    ["Injured", analysis.totalInjuries],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded border border-[#1b3559] bg-[#08162b] px-1.5 py-2 text-center">
+                      <p className="text-[12px] font-bold text-slate-100">{value}</p>
+                      <p className="mt-0.5 text-[7px] uppercase tracking-[0.06em] text-slate-500">{label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between rounded border border-[#1b3559] bg-[#08162b] px-2.5 py-2">
+                  <span className="text-[8px] uppercase tracking-[0.08em] text-slate-500">Overall risk</span>
+                  <span className="text-[9px] font-bold text-[#78adfa]">{analysis.overallRiskLevel}</span>
+                </div>
+              </>
+            ) : analysisError ? (
+              <p className="rounded border border-[#623044] bg-[#2a101b] px-2.5 py-2 text-[8px] text-[#ff9db0]">
+                {analysisError}
+              </p>
+            ) : (
+              <p className="text-[8px] leading-4 text-slate-400">
+                Analyse this selection for junctions, recorded crashes, casualties and overall risk.
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSelectArea}
+                className="flex-1 rounded border border-[#24426b] bg-[#08162b] px-2 py-1.5 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]"
+              >
+                Select again
+              </button>
+              <button
+                type="button"
+                onClick={showAnalysis && analysis ? () => setShowAnalysis(false) : handleAnalyseArea}
+                className="flex-1 rounded border border-[#315f9c] bg-[#12396f] px-2 py-1.5 text-[8px] font-semibold text-[#d8e9ff] hover:bg-[#174783]"
+              >
+                {showAnalysis && analysis ? "Hide analysis" : "Analyse area"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedBounds && !compactSelectionPanel && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
           <div className="flex max-h-[95%] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="flex items-center justify-between gap-4 border-b border-gray-200 p-5">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">Selected area</h3>
-                <p className="text-sm text-gray-500">Google Maps road-safety analysis zone</p>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Selected Area
+                </h3>
+
+                <p className="text-sm text-gray-500">
+                  Focused road-safety analysis zone
+                </p>
               </div>
+
               <button
                 type="button"
                 onClick={handleCloseSelectedArea}
-                className="rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-red-700"
+                className="rounded-xl bg-red-600 px-8 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-red-700 active:scale-95"
               >
                 Close
               </button>
             </div>
+
             <div className="overflow-y-auto p-5">
               <SelectedAreaPreview
                 bounds={selectedBounds}
@@ -759,40 +1335,44 @@ export default function AccidentMap({
                 heatmapFilters={heatmapFilters}
                 onViewFullAnalysis={handleOpenJunctionAnalysis}
               />
+
               {showAnalysis && analysis && (
                 <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
                   <AreaAnalysisResults analysis={analysis} />
                 </div>
               )}
+
               {showAnalysis && analysisError && (
                 <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-5">
                   <h4 className="font-semibold text-red-800">Analysis failed</h4>
                   <p className="mt-1 text-sm text-red-700">{analysisError}</p>
                 </div>
               )}
+
               <div className="mt-4 flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
                   onClick={handleSelectArea}
-                  className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                 >
-                  Select again
+                  Select Again
                 </button>
+
                 {showAnalysis && analysis ? (
                   <button
                     type="button"
                     onClick={() => setShowAnalysis(false)}
-                    className="rounded-lg border border-blue-600 px-5 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                    className="rounded-lg border border-blue-600 px-5 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                   >
-                    Hide analysis
+                    Hide Analysis
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleAnalyseArea}
-                    className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
                   >
-                    Analyse selected area
+                    Analyse Selected Area
                   </button>
                 )}
               </div>
@@ -801,111 +1381,29 @@ export default function AccidentMap({
         </div>
       )}
 
-      {streetViewOpen && streetViewPosition && (
-        <div className="absolute inset-3 z-40 overflow-hidden rounded-xl border border-[#24426b] bg-[#061125] shadow-2xl">
-          <div className="flex items-center justify-between border-b border-[#24426b] px-4 py-3 text-white">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8bb8ff]">Google Street View</p>
-              <p className="mt-1 text-xs text-slate-300">{streetViewMessage}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setStreetViewOpen(false)}
-              className="rounded border border-[#24426b] p-2 text-slate-300 hover:bg-[#0d1b33]"
-              aria-label="Close Street View"
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <div ref={panoramaContainerRef} className="roadsafe-google-map h-[calc(100%-65px)] w-full" />
-        </div>
-      )}
-
       {selectedJunctionId && (
         <JunctionAnalysisModal
-          junctionId={selectedJunctionId}
-          onClose={() => setSelectedJunctionId(null)}
+          junctionId={
+            selectedJunctionId
+          }
+          onClose={
+            handleCloseJunctionAnalysis
+          }
         />
       )}
     </div>
   );
 }
 
-interface CompactSelectionPanelProps {
-  analysis: AreaAnalysis | null;
-  analysisError: string | null;
-  onAnalyse(): void;
-  onClose(): void;
-  onReselect(): void;
-  onToggleAnalysis(): void;
-  showAnalysis: boolean;
-}
-
-function CompactSelectionPanel({
-  analysis,
-  analysisError,
-  onAnalyse,
-  onClose,
-  onReselect,
-  onToggleAnalysis,
-  showAnalysis,
-}: CompactSelectionPanelProps) {
-  return (
-    <div className="absolute bottom-3 right-3 z-20 w-[min(270px,calc(100%-24px))] overflow-hidden rounded-md border border-[#24426b] bg-[#061125]/98 shadow-[0_14px_34px_rgba(0,0,0,.45)] backdrop-blur-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-[#19345a] px-3 py-2.5">
-        <div className="min-w-0">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-100">Selected area</h3>
-          <p className="mt-0.5 truncate text-[8px] text-slate-500">Focused Google Maps analysis zone</p>
-        </div>
-        <button type="button" onClick={onClose} className="rounded border border-[#24426b] px-2 py-1 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]">Close</button>
-      </div>
-      <div className="space-y-2.5 px-3 py-3">
-        {showAnalysis && analysis ? (
-          <>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[
-                ["Junctions", analysis.totalJunctions],
-                ["Crashes", analysis.totalAccidents],
-                ["Fatal", analysis.totalFatalities],
-                ["Injured", analysis.totalInjuries],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded border border-[#1b3559] bg-[#08162b] px-1.5 py-2 text-center">
-                  <p className="text-[12px] font-bold text-slate-100">{value}</p>
-                  <p className="mt-0.5 text-[7px] uppercase tracking-[0.06em] text-slate-500">{label}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between rounded border border-[#1b3559] bg-[#08162b] px-2.5 py-2">
-              <span className="text-[8px] uppercase tracking-[0.08em] text-slate-500">Overall risk</span>
-              <span className="text-[9px] font-bold text-[#78adfa]">{analysis.overallRiskLevel}</span>
-            </div>
-          </>
-        ) : analysisError ? (
-          <p className="rounded border border-[#623044] bg-[#2a101b] px-2.5 py-2 text-[8px] text-[#ff9db0]">{analysisError}</p>
-        ) : (
-          <p className="text-[8px] leading-4 text-slate-400">Analyse this selection for junctions, recorded crashes, casualties and overall risk.</p>
-        )}
-        <div className="flex gap-2">
-          <button type="button" onClick={onReselect} className="flex-1 rounded border border-[#24426b] bg-[#08162b] px-2 py-1.5 text-[8px] font-semibold text-slate-300 hover:bg-[#0d1b33]">Select again</button>
-          <button
-            type="button"
-            onClick={showAnalysis && analysis ? onToggleAnalysis : onAnalyse}
-            className="flex-1 rounded border border-[#315f9c] bg-[#12396f] px-2 py-1.5 text-[8px] font-semibold text-[#d8e9ff] hover:bg-[#174783]"
-          >
-            {showAnalysis && analysis ? "Hide analysis" : "Analyse area"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface SelectedAreaPreviewProps {
   bounds: MapBounds;
-  mapType: GoogleMapDisplayType;
+  mapType: MapType;
   visualizationMode: VisualizationMode;
   heatmapFilters: AccidentHeatmapFilters;
-  onViewFullAnalysis(junctionId: string): void;
+
+  onViewFullAnalysis: (
+    junctionId: string,
+  ) => void;
 }
 
 function SelectedAreaPreview({
@@ -915,94 +1413,146 @@ function SelectedAreaPreview({
   heatmapFilters,
   onViewFullAnalysis,
 }: SelectedAreaPreviewProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
 
   useEffect(() => {
-    let cancelled = false;
-    let map: GoogleMapsMap | null = null;
-    let mapsNamespace: GoogleMapsNamespace | null = null;
-    let heatmap: GoogleHeatmapOverlayHandle | null = null;
-    let markers: GoogleAdvancedMarker[] = [];
-    let infoWindow: GoogleInfoWindow | null = null;
-    let rectangle: GoogleRectangle | null = null;
+    if (!containerRef.current) {
+      return;
+    }
 
-    void loadGoogleMaps().then(async (maps) => {
-      if (cancelled || !containerRef.current) return;
-      mapsNamespace = maps;
-      map = new maps.Map(containerRef.current, {
-        center: {
-          lat: (bounds.north + bounds.south) / 2,
-          lng: (bounds.east + bounds.west) / 2,
+    let cleanupJunctionMarkers:
+      | (() => void)
+      | null = null;
+
+    const previewMap =
+      new maplibregl.Map({
+        container:
+          containerRef.current,
+
+        style:
+          getMapStyle(mapType),
+
+        center: [
+          (
+            bounds.west +
+            bounds.east
+          ) / 2,
+
+          (
+            bounds.south +
+            bounds.north
+          ) / 2,
+        ],
+
+        zoom:
+          INITIAL_ZOOM,
+
+        minZoom:
+          MIN_ALLOWED_ZOOM,
+
+        maxZoom:
+          MAX_ALLOWED_ZOOM,
+
+        pitch: 0,
+
+        bearing: 0,
+
+        attributionControl: {
+          compact: true,
         },
-        zoom: INITIAL_ZOOM,
-        minZoom: 3,
-        maxZoom: 22,
-        mapTypeId: MAP_TYPE_IDS[mapType],
-        mapId: getGoogleMapsRuntimeMapId(),
-        fullscreenControl: false,
-        mapTypeControl: false,
-        streetViewControl: false,
-        rotateControl: false,
-        scaleControl: true,
-        zoomControl: true,
-        gestureHandling: "greedy",
-      });
-      const googleBounds = new maps.LatLngBounds();
-      googleBounds.extend({ lat: bounds.south, lng: bounds.west });
-      googleBounds.extend({ lat: bounds.north, lng: bounds.east });
-      map.fitBounds(googleBounds, 32);
-
-      rectangle = new maps.Rectangle({
-        map,
-        bounds: mapBoundsOptions(bounds),
-        clickable: false,
-        fillColor: "#2563eb",
-        fillOpacity: 0.08,
-        strokeColor: "#1d4ed8",
-        strokeOpacity: 1,
-        strokeWeight: 2,
       });
 
-      if (visualizationMode === "heatmap") {
-        heatmap = createGoogleHeatmapOverlay(
-          maps,
-          map,
-          getAccidentHeatmapPoints(bounds, heatmapFilters),
+    previewMap.addControl(
+      new maplibregl
+        .NavigationControl({
+          showCompass: false,
+          showZoom: true,
+        }),
+      "bottom-right",
+    );
+
+    const handlePreviewLoad =
+      () => {
+        previewMap.setMaxZoom(
+          MAX_ALLOWED_ZOOM,
         );
-      } else {
-        const markerLibrary = await maps.importLibrary("marker");
-        const markerConstructor = markerLibrary.AdvancedMarkerElement as
-          | GoogleAdvancedMarkerConstructor
-          | undefined;
-        if (markerConstructor) {
-          infoWindow = new maps.InfoWindow({ maxWidth: 380 });
-          markers = createMarkers(
-            markerConstructor,
-            map,
-            infoWindow,
-            getJunctionMapRecords(bounds),
-            onViewFullAnalysis,
-          );
+
+        ensureAccidentHeatmapLayers(
+          previewMap,
+          bounds,
+          heatmapFilters,
+        );
+
+        setAccidentHeatmapVisibility(
+          previewMap,
+          visualizationMode ===
+            "heatmap",
+        );
+
+        ensureSelectionLayers(
+          previewMap,
+        );
+
+        updateSelectionLayer(
+          previewMap,
+          bounds,
+        );
+
+        if (
+          visualizationMode ===
+          "markers"
+        ) {
+          cleanupJunctionMarkers =
+            addJunctionMarkers(
+              previewMap,
+              bounds,
+              onViewFullAnalysis,
+            );
         }
-      }
-    });
+
+        previewMap.resize();
+      };
+
+    previewMap.on(
+      "load",
+      handlePreviewLoad,
+    );
 
     return () => {
-      cancelled = true;
-      clearMarkers(markers);
-      heatmap?.destroy();
-      infoWindow?.close();
-      rectangle?.setMap(null);
-      if (map && mapsNamespace) {
-        mapsNamespace.event.clearInstanceListeners(map);
-      }
+      cleanupJunctionMarkers?.();
+
+      cleanupJunctionMarkers =
+        null;
+
+      previewMap.off(
+        "load",
+        handlePreviewLoad,
+      );
+
+      previewMap.remove();
     };
-  }, [bounds, heatmapFilters, mapType, onViewFullAnalysis, visualizationMode]);
+  }, [
+    bounds,
+    mapType,
+    visualizationMode,
+    heatmapFilters,
+    onViewFullAnalysis,
+  ]);
+
+  
 
   return (
     <div className="h-[340px] overflow-hidden rounded-xl border border-gray-200">
-      <div ref={containerRef} className="roadsafe-google-map h-full w-full" />
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+      />
+
     </div>
   );
-}
 
+  
+}
