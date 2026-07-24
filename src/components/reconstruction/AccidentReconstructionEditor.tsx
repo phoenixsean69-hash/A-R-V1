@@ -3729,7 +3729,7 @@ export default function AccidentReconstructionEditor({
                   Reconstruction Scene
                 </h2>
                 <p className="mt-1 text-[9px] text-slate-600">
-                  Full calibrated area: {reconstruction.scene.sceneWidthMetres}m × {reconstruction.scene.sceneHeightMetres}m. Drag movement points or expand for detailed placement.
+                  Full calibrated area: {reconstruction.scene.sceneWidthMetres}m × {reconstruction.scene.sceneHeightMetres}m. Drag movement points for detailed placement.
                 </p>
               </div>
 
@@ -3768,15 +3768,6 @@ export default function AccidentReconstructionEditor({
                 <span className="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
                   Impact
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setSceneExpanded((current) => !current)}
-                  className="ui-button-primary ml-1 py-1.5"
-                  aria-pressed={sceneExpanded}
-                  title={sceneExpanded ? "Return to the editor layout" : "Use the largest available scene viewport"}
-                >
-                  {sceneExpanded ? "Exit Expanded View" : "Expand Map View"}
-                </button>
               </div>
             </div>
 
@@ -3797,6 +3788,22 @@ export default function AccidentReconstructionEditor({
             >
               {renderWorkspaceTools()}
               {renderWorkspaceToolHint()}
+
+              <button
+                type="button"
+                data-scene-interactive="true"
+                className="reconstruction-workspace__map-expand-button"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSceneExpanded((current) => !current);
+                }}
+                aria-label={sceneExpanded ? "Exit expanded map view" : "Expand map view"}
+                aria-pressed={sceneExpanded}
+                title={sceneExpanded ? "Exit expanded map view" : "Expand map view"}
+              >
+                {sceneExpanded ? <X size={17} /> : <Expand size={17} />}
+              </button>
 
               {pendingParticipantPlacement && (
                 <ParticipantPlacementOverlay
@@ -4547,6 +4554,30 @@ export default function AccidentReconstructionEditor({
           </div>
         </section>
 
+        <div id="reconstruction-timeline-workspace" className="reconstruction-workspace__timeline-wrap">
+          <AccidentTimeline
+            durationSeconds={reconstruction.durationSeconds}
+            currentTime={currentTime}
+            participants={reconstruction.vehicles}
+            sceneObjects={reconstruction.sceneObjects}
+            events={reconstruction.timelineEvents}
+            onEventsChange={(timelineEvents) =>
+              setReconstruction((current) => ({
+                ...current,
+                timelineEvents,
+              }))
+            }
+            onSeek={(time) => {
+              setIsPlaying(false);
+              setCurrentTime(time);
+            }}
+            onSelectParticipantPathPoint={(participantId, pointId) =>
+              handleSelectParticipant(participantId, pointId)
+            }
+            onSelectSceneObject={handleSelectSceneObject}
+          />
+        </div>
+
         <section
           className={`reconstruction-workspace__workspace-panels ${
             workspaceSettingsOpen ? "is-open" : ""
@@ -4728,30 +4759,6 @@ export default function AccidentReconstructionEditor({
             </div>
           )}
         </section>
-
-        <div id="reconstruction-timeline-workspace" className="reconstruction-workspace__timeline-wrap">
-          <AccidentTimeline
-            durationSeconds={reconstruction.durationSeconds}
-            currentTime={currentTime}
-            participants={reconstruction.vehicles}
-            sceneObjects={reconstruction.sceneObjects}
-            events={reconstruction.timelineEvents}
-            onEventsChange={(timelineEvents) =>
-              setReconstruction((current) => ({
-                ...current,
-                timelineEvents,
-              }))
-            }
-            onSeek={(time) => {
-              setIsPlaying(false);
-              setCurrentTime(time);
-            }}
-            onSelectParticipantPathPoint={(participantId, pointId) =>
-              handleSelectParticipant(participantId, pointId)
-            }
-            onSelectSceneObject={handleSelectSceneObject}
-          />
-        </div>
 
         <div className="reconstruction-workspace__modules">
           <details className="premium-investigation-card premium-investigation-card--impact" open>
