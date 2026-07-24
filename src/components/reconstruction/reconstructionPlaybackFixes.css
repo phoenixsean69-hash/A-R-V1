@@ -62,3 +62,425 @@
   border-radius: 999px;
   background: #243a5c;
 }
+
+/* The scene now uses the complete row. Workspace controls live above the timeline. */
+.reconstruction-workspace__2d-grid--scene-only {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.reconstruction-workspace__2d-grid--scene-only
+  .reconstruction-workspace__canvas {
+  grid-column: 1 / -1 !important;
+}
+
+/* Full-width Workspace Panels section. */
+.reconstruction-workspace__workspace-panels {
+  margin: 0.75rem 0.75rem 0;
+  overflow: hidden;
+  border: 1px solid #1a3154;
+  border-radius: 0.55rem;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(38, 91, 163, 0.13), transparent 28%),
+    linear-gradient(180deg, #081326 0%, #050b17 100%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+}
+
+.reconstruction-workspace__workspace-panels-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 0;
+  background: transparent;
+  padding: 0.75rem 0.9rem;
+  color: #dce8f8;
+  text-align: left;
+}
+
+.reconstruction-workspace__workspace-panels-toggle:hover {
+  background: rgba(21, 45, 79, 0.36);
+}
+
+.reconstruction-workspace__workspace-panels-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.reconstruction-workspace__workspace-panels-icon,
+.reconstruction-workspace__workspace-card-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #376ba8;
+  background: linear-gradient(180deg, #1d4c8d 0%, #173867 100%);
+  color: #dcecff;
+  box-shadow: 0 8px 22px rgba(21, 65, 126, 0.24);
+}
+
+.reconstruction-workspace__workspace-panels-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 0.45rem;
+}
+
+.reconstruction-workspace__workspace-panels-heading strong {
+  display: block;
+  overflow: hidden;
+  color: #eff6ff;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.reconstruction-workspace__workspace-panels-heading small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #7f91aa;
+  font-size: 0.56rem;
+  font-weight: 600;
+}
+
+.reconstruction-workspace__workspace-panels-summary {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  color: #8ea0b8;
+}
+
+.reconstruction-workspace__workspace-panels-summary > span {
+  border: 1px solid #203a60;
+  border-radius: 999px;
+  background: #0a172c;
+  padding: 0.3rem 0.55rem;
+  color: #9eb6d7;
+  font-size: 0.5rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.reconstruction-workspace__workspace-panels-summary svg {
+  margin-left: 0.2rem;
+  color: #7fa9e2;
+  transition: transform 160ms ease;
+}
+
+.reconstruction-workspace__workspace-panels-summary svg.is-collapsed {
+  transform: rotate(180deg);
+}
+
+.reconstruction-workspace__workspace-panels-content {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(300px, 1.1fr) minmax(330px, 1.35fr);
+  gap: 0.75rem;
+  border-top: 1px solid #172b49;
+  padding: 0.75rem;
+}
+
+.reconstruction-workspace__workspace-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #172c4a;
+  border-radius: 0.48rem;
+  background: linear-gradient(180deg, rgba(9, 20, 38, 0.97), rgba(5, 12, 25, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.reconstruction-workspace__workspace-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border-bottom: 1px solid #142641;
+  background: rgba(8, 18, 34, 0.88);
+  padding: 0.72rem 0.78rem;
+}
+
+.reconstruction-workspace__workspace-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 0.38rem;
+}
+
+.reconstruction-workspace__workspace-card-header h3 {
+  margin: 0;
+  color: #e8f0fb;
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reconstruction-workspace__workspace-card-header p {
+  margin: 0.23rem 0 0;
+  color: #71839c;
+  font-size: 0.52rem;
+  line-height: 1.45;
+}
+
+.reconstruction-workspace__workspace-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+  padding: 0.78rem;
+}
+
+.reconstruction-workspace__workspace-field {
+  display: block;
+  min-width: 0;
+}
+
+.reconstruction-workspace__workspace-field--wide {
+  grid-column: 1 / -1;
+}
+
+.reconstruction-workspace__workspace-field > span,
+.reconstruction-workspace__workspace-field--range > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+  color: #95a6bd;
+  font-size: 0.54rem;
+  font-weight: 750;
+}
+
+.reconstruction-workspace__workspace-field--range > span strong {
+  color: #80aff0;
+  font-size: 0.56rem;
+}
+
+.reconstruction-workspace__workspace-field input:not([type="range"]),
+.reconstruction-workspace__workspace-field textarea {
+  width: 100%;
+  border: 1px solid #1d3558 !important;
+  border-radius: 0.38rem !important;
+  background: #060d1a !important;
+  padding: 0.62rem 0.68rem !important;
+  color: #dce7f5 !important;
+  font-size: 0.62rem !important;
+  line-height: 1.45;
+}
+
+.reconstruction-workspace__workspace-field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.reconstruction-workspace__workspace-field input:disabled {
+  cursor: not-allowed;
+  background: #09111f !important;
+  color: #64748b !important;
+}
+
+.reconstruction-workspace__workspace-field small {
+  display: block;
+  margin-top: 0.3rem;
+  color: #61728a;
+  font-size: 0.48rem;
+  line-height: 1.4;
+}
+
+.reconstruction-workspace__workspace-field input[type="range"] {
+  width: 100%;
+  accent-color: #4d8de8;
+}
+
+.reconstruction-workspace__workspace-card-scroll {
+  max-height: 36rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.78rem;
+  scrollbar-gutter: stable;
+}
+
+.reconstruction-workspace__workspace-card-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.reconstruction-workspace__workspace-card-scroll::-webkit-scrollbar-track {
+  background: #050b16;
+}
+
+.reconstruction-workspace__workspace-card-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #244064;
+}
+
+/* Remove the old sidebar spacing from the embedded scene/object panels. */
+.reconstruction-workspace__embedded-panel > div {
+  margin-top: 0 !important;
+  border-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.reconstruction-workspace__embedded-panel :is(h3, h4) {
+  color: #e4edf8 !important;
+}
+
+.reconstruction-workspace__embedded-panel p,
+.reconstruction-workspace__embedded-panel [class*="text-gray-5"],
+.reconstruction-workspace__embedded-panel [class*="text-gray-6"] {
+  color: #7789a2 !important;
+}
+
+.reconstruction-workspace__embedded-panel label,
+.reconstruction-workspace__embedded-panel summary {
+  color: #a7b7cc !important;
+}
+
+.reconstruction-workspace__embedded-panel details {
+  overflow: hidden;
+  border: 1px solid #172d4c;
+  border-radius: 0.42rem;
+  background: #071121;
+}
+
+.reconstruction-workspace__embedded-panel details + details {
+  margin-top: 0.45rem;
+}
+
+.reconstruction-workspace__embedded-panel details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.58rem 0.65rem;
+  background: #0a172b;
+  color: #bdcbe0 !important;
+  font-size: 0.56rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.025em;
+  list-style: none;
+}
+
+.reconstruction-workspace__embedded-panel details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reconstruction-workspace__embedded-panel details > summary::after {
+  content: "+";
+  color: #6f97cd;
+  font-size: 0.8rem;
+}
+
+.reconstruction-workspace__embedded-panel details[open] > summary::after {
+  content: "−";
+}
+
+.reconstruction-workspace__embedded-panel details > div {
+  padding: 0.55rem;
+}
+
+.reconstruction-workspace__workspace-card--objects
+  .reconstruction-workspace__embedded-panel
+  details button {
+  border-color: #1a3355 !important;
+  background: #081426 !important;
+  color: #b9c8dc !important;
+}
+
+.reconstruction-workspace__workspace-card--objects
+  .reconstruction-workspace__embedded-panel
+  details button:hover {
+  border-color: #315d96 !important;
+  background: #0d203b !important;
+}
+
+.reconstruction-workspace__workspace-card--objects
+  .reconstruction-workspace__embedded-panel
+  details button[class*="border-blue-500"] {
+  border-color: #4b89d7 !important;
+  background: #102d55 !important;
+  box-shadow: 0 0 0 1px rgba(91, 154, 235, 0.3) !important;
+}
+
+.reconstruction-workspace__workspace-card--objects
+  .reconstruction-workspace__embedded-panel
+  [class*="border-dashed"] {
+  border-color: #27415f !important;
+  background: #07111f !important;
+}
+
+.reconstruction-workspace__workspace-card--scene
+  .reconstruction-workspace__embedded-panel
+  [class*="border-gray-200"],
+.reconstruction-workspace__workspace-card--scene
+  .reconstruction-workspace__embedded-panel
+  [class*="border-blue-200"] {
+  border-color: #1b3455 !important;
+  background: #081425 !important;
+}
+
+.reconstruction-workspace__workspace-panels +
+  .reconstruction-workspace__timeline-wrap {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 1180px) {
+  .reconstruction-workspace__workspace-panels-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reconstruction-workspace__workspace-card--case {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .reconstruction-workspace__workspace-panels-toggle {
+    align-items: flex-start;
+  }
+
+  .reconstruction-workspace__workspace-panels-summary {
+    flex-wrap: wrap;
+  }
+
+  .reconstruction-workspace__workspace-panels-summary > span:nth-child(-n + 2) {
+    display: none;
+  }
+
+  .reconstruction-workspace__workspace-panels-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reconstruction-workspace__workspace-card--case {
+    grid-column: auto;
+  }
+
+  .reconstruction-workspace__workspace-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reconstruction-workspace__workspace-field--wide {
+    grid-column: auto;
+  }
+
+  .reconstruction-workspace__workspace-card-scroll {
+    max-height: none;
+  }
+}
+
+/* Card headers above already provide these titles; avoid duplicate headings inside. */
+.reconstruction-workspace__workspace-card--scene
+  .reconstruction-workspace__embedded-panel
+  > div
+  > div:first-child {
+  display: none;
+}
+
+.reconstruction-workspace__workspace-card--objects
+  .reconstruction-workspace__embedded-panel
+  > div
+  > div:first-child
+  > div:first-child {
+  display: none;
+}

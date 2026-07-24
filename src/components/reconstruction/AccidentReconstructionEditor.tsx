@@ -3715,139 +3715,7 @@ export default function AccidentReconstructionEditor({
           </div>
         )}
 
-        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} reconstruction-workspace__2d-grid`}>
-          <aside className={`ui-panel reconstruction-workspace__settings ${workspaceSettingsOpen ? "is-open" : ""}`}>
-            <div className="reconstruction-workspace__panel-header">
-              <div>
-                <p>Workspace panels</p>
-                <span>Case and scene controls</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setWorkspaceSettingsOpen(false)}
-                aria-label="Close workspace panels"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Reconstruction title
-                </span>
-                <input
-                  value={reconstruction.title}
-                  onChange={(event) =>
-                    setReconstruction((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className="text-xs font-medium text-gray-700">
-                    Accident ID
-                  </span>
-                  <input
-                    value={caseContext?.caseNumber ?? reconstruction.accidentId}
-                    disabled={Boolean(caseContext)}
-                    onChange={(event) =>
-                      setReconstruction((current) => ({
-                        ...current,
-                        accidentId: event.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-                  />
-                  {caseContext && (
-                    <span className="mt-1 block text-[10px] text-gray-500">
-                      Locked to the current accident case.
-                    </span>
-                  )}
-                </label>
-
-                <label>
-                  <span className="text-xs font-medium text-gray-700">
-                    Junction ID
-                  </span>
-                  <input
-                    value={reconstruction.junctionId}
-                    onChange={(event) =>
-                      setReconstruction((current) => ({
-                        ...current,
-                        junctionId: event.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm"
-                  />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Description
-                </span>
-                <textarea
-                  value={reconstruction.description}
-                  onChange={(event) =>
-                    setReconstruction((current) => ({
-                      ...current,
-                      description: event.target.value,
-                    }))
-                  }
-                  rows={4}
-                  className="mt-1.5 w-full resize-none rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Duration: {reconstruction.durationSeconds}s
-                </span>
-                <input
-                  type="range"
-                  min={2}
-                  max={30}
-                  step={1}
-                  value={reconstruction.durationSeconds}
-                  onChange={(event) =>
-                    handleDurationChange(Number(event.target.value))
-                  }
-                  className="mt-2 w-full"
-                />
-              </label>
-            </div>
-
-            <SceneSettingsPanel
-              settings={reconstruction.scene}
-              onChange={updateSceneSettings}
-            />
-
-            <div ref={sceneObjectPaletteRef}>
-              <SceneObjectPalette
-                activeType={activeSceneObjectType}
-                objects={reconstruction.sceneObjects}
-                selectedObjectId={selectedSceneObjectId}
-                onToolSelect={(type) => {
-                  setActiveSceneObjectType(type);
-                  setTraceToolObjectId(null);
-                  setCollisionPlacementActive(false);
-                  setSelectedParticipantId(null);
-                }}
-                onPlaceActiveWithGps={handlePlaceActiveSceneObjectWithGps}
-                onCancelPlacement={() => setActiveSceneObjectType(null)}
-                onSelectObject={handleSelectSceneObject}
-                onClearObjects={handleClearSceneObjects}
-              />
-            </div>
-
-          </aside>
-
+        <div className={`${activeReconstructionView === "3D" ? "hidden" : "grid"} reconstruction-workspace__2d-grid reconstruction-workspace__2d-grid--scene-only`}>
           <main
             className={`ui-panel reconstruction-workspace__canvas min-w-0 overflow-hidden ${
               sceneExpanded
@@ -4677,6 +4545,188 @@ export default function AccidentReconstructionEditor({
               </select>
             </label>
           </div>
+        </section>
+
+        <section
+          className={`reconstruction-workspace__workspace-panels ${
+            workspaceSettingsOpen ? "is-open" : ""
+          }`}
+          aria-label="Workspace panels"
+        >
+          <button
+            type="button"
+            className="reconstruction-workspace__workspace-panels-toggle"
+            onClick={() => setWorkspaceSettingsOpen((current) => !current)}
+            aria-expanded={workspaceSettingsOpen}
+            aria-controls="reconstruction-workspace-panels-content"
+          >
+            <span className="reconstruction-workspace__workspace-panels-heading">
+              <span className="reconstruction-workspace__workspace-panels-icon">
+                <Layers3 size={17} />
+              </span>
+              <span>
+                <strong>Workspace Panels</strong>
+                <small>Case, scene and object controls</small>
+              </span>
+            </span>
+
+            <span className="reconstruction-workspace__workspace-panels-summary">
+              <span>{reconstruction.scene.sceneEnvironment}</span>
+              <span>{reconstruction.sceneObjects.length} object(s)</span>
+              <span>{reconstruction.durationSeconds.toFixed(0)}s scene</span>
+              <ChevronUp
+                size={17}
+                className={workspaceSettingsOpen ? "" : "is-collapsed"}
+              />
+            </span>
+          </button>
+
+          {workspaceSettingsOpen && (
+            <div
+              id="reconstruction-workspace-panels-content"
+              className="reconstruction-workspace__workspace-panels-content"
+            >
+              <section className="reconstruction-workspace__workspace-card reconstruction-workspace__workspace-card--case">
+                <div className="reconstruction-workspace__workspace-card-header">
+                  <span className="reconstruction-workspace__workspace-card-icon">
+                    <ClipboardList size={15} />
+                  </span>
+                  <div>
+                    <h3>Case Setup</h3>
+                    <p>Core reconstruction identity and playback duration.</p>
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__workspace-form">
+                  <label className="reconstruction-workspace__workspace-field reconstruction-workspace__workspace-field--wide">
+                    <span>Reconstruction title</span>
+                    <input
+                      value={reconstruction.title}
+                      onChange={(event) =>
+                        setReconstruction((current) => ({
+                          ...current,
+                          title: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="reconstruction-workspace__workspace-field">
+                    <span>Accident ID</span>
+                    <input
+                      value={caseContext?.caseNumber ?? reconstruction.accidentId}
+                      disabled={Boolean(caseContext)}
+                      onChange={(event) =>
+                        setReconstruction((current) => ({
+                          ...current,
+                          accidentId: event.target.value,
+                        }))
+                      }
+                    />
+                    {caseContext && (
+                      <small>Locked to the current accident case.</small>
+                    )}
+                  </label>
+
+                  <label className="reconstruction-workspace__workspace-field">
+                    <span>Junction ID</span>
+                    <input
+                      value={reconstruction.junctionId}
+                      onChange={(event) =>
+                        setReconstruction((current) => ({
+                          ...current,
+                          junctionId: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="reconstruction-workspace__workspace-field reconstruction-workspace__workspace-field--wide">
+                    <span>Description</span>
+                    <textarea
+                      value={reconstruction.description}
+                      onChange={(event) =>
+                        setReconstruction((current) => ({
+                          ...current,
+                          description: event.target.value,
+                        }))
+                      }
+                      rows={4}
+                    />
+                  </label>
+
+                  <label className="reconstruction-workspace__workspace-field reconstruction-workspace__workspace-field--wide reconstruction-workspace__workspace-field--range">
+                    <span>
+                      <span>Reconstruction duration</span>
+                      <strong>{reconstruction.durationSeconds}s</strong>
+                    </span>
+                    <input
+                      type="range"
+                      min={2}
+                      max={30}
+                      step={1}
+                      value={reconstruction.durationSeconds}
+                      onChange={(event) =>
+                        handleDurationChange(Number(event.target.value))
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <section className="reconstruction-workspace__workspace-card reconstruction-workspace__workspace-card--scene">
+                <div className="reconstruction-workspace__workspace-card-header">
+                  <span className="reconstruction-workspace__workspace-card-icon">
+                    <Ruler size={15} />
+                  </span>
+                  <div>
+                    <h3>Scene Environment</h3>
+                    <p>Road geometry, ground, visibility and site conditions.</p>
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__workspace-card-scroll reconstruction-workspace__embedded-panel">
+                  <SceneSettingsPanel
+                    settings={reconstruction.scene}
+                    onChange={updateSceneSettings}
+                  />
+                </div>
+              </section>
+
+              <section
+                ref={sceneObjectPaletteRef}
+                className="reconstruction-workspace__workspace-card reconstruction-workspace__workspace-card--objects"
+              >
+                <div className="reconstruction-workspace__workspace-card-header">
+                  <span className="reconstruction-workspace__workspace-card-icon">
+                    <Layers3 size={15} />
+                  </span>
+                  <div>
+                    <h3>Objects, Hazards & Evidence</h3>
+                    <p>Place props manually or capture their real GPS positions.</p>
+                  </div>
+                </div>
+
+                <div className="reconstruction-workspace__workspace-card-scroll reconstruction-workspace__embedded-panel">
+                  <SceneObjectPalette
+                    activeType={activeSceneObjectType}
+                    objects={reconstruction.sceneObjects}
+                    selectedObjectId={selectedSceneObjectId}
+                    onToolSelect={(type) => {
+                      setActiveSceneObjectType(type);
+                      setTraceToolObjectId(null);
+                      setCollisionPlacementActive(false);
+                      setSelectedParticipantId(null);
+                    }}
+                    onPlaceActiveWithGps={handlePlaceActiveSceneObjectWithGps}
+                    onCancelPlacement={() => setActiveSceneObjectType(null)}
+                    onSelectObject={handleSelectSceneObject}
+                    onClearObjects={handleClearSceneObjects}
+                  />
+                </div>
+              </section>
+            </div>
+          )}
         </section>
 
         <div id="reconstruction-timeline-workspace" className="reconstruction-workspace__timeline-wrap">
