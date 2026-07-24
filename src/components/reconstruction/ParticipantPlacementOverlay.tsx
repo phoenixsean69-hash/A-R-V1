@@ -26,7 +26,7 @@ export default function ParticipantPlacementOverlay({
         </span>
         <div>
           <strong>Place {participantType}</strong>
-          <p>The participant is not created until its starting position is confirmed.</p>
+          <p>The participant is created only after its starting position is confirmed.</p>
         </div>
         <button type="button" onClick={onCancel} title="Cancel placement">
           <X size={14} />
@@ -45,7 +45,7 @@ export default function ParticipantPlacementOverlay({
       <button
         type="button"
         className="participant-placement__gps"
-        disabled={gpsBusy || !gpsAvailable}
+        disabled={gpsBusy}
         onClick={onUseGps}
       >
         <Satellite size={15} />
@@ -54,7 +54,9 @@ export default function ParticipantPlacementOverlay({
 
       {!gpsAvailable && (
         <p className="participant-placement__notice">
-          GPS scene placement requires Field Mode calibration. Scene-click placement remains available.
+          No field calibration exists yet. RoadSafe will create a provisional
+          north-up GPS frame centred on this live reading. You can refine the
+          calibration later in Field Mode.
         </p>
       )}
 

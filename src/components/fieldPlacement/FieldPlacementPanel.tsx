@@ -44,6 +44,7 @@ import {
   calculateTrackDistanceMetres,
   coordinateToScenePosition,
   getDistanceAndBearing,
+  localOffsetToCoordinate,
   haversineDistanceMetres,
 } from "../../utils/geographicCoordinates";
 import { averageGeoCoordinates } from "../../utils/locationAveraging";
@@ -59,6 +60,7 @@ interface FieldPlacementPanelProps {
   officerName?: string;
   currentTimeSeconds?: number;
   initialTarget?: FieldPlacementTarget | null;
+  initialCaptureMode?: FieldCaptureMode;
   onClose: () => void;
   onPlacementConfirmed?: (target: FieldPlacementTarget) => void;
   onUpdate: (
@@ -251,6 +253,7 @@ export default function FieldPlacementPanel({
   officerName = "",
   currentTimeSeconds = 0,
   initialTarget = null,
+  initialCaptureMode = "Point",
   onClose,
   onPlacementConfirmed,
   onUpdate,
@@ -272,7 +275,8 @@ export default function FieldPlacementPanel({
   const [tab, setTab] = useState<FieldTab>(() =>
     reconstruction.fieldCalibration ? "Capture" : "Calibration",
   );
-  const [captureMode, setCaptureMode] = useState<FieldCaptureMode>("Point");
+  const [captureMode, setCaptureMode] =
+    useState<FieldCaptureMode>(initialCaptureMode);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isAveraging, setIsAveraging] = useState(false);
@@ -348,7 +352,7 @@ export default function FieldPlacementPanel({
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
-      setCaptureMode("Point");
+      setCaptureMode(initialCaptureMode);
       setTargetKey(initialTargetKey);
       setTab(reconstruction.fieldCalibration ? "Capture" : "Calibration");
     });
@@ -356,7 +360,12 @@ export default function FieldPlacementPanel({
     return () => {
       active = false;
     };
-  }, [initialTargetKey, open, reconstruction.fieldCalibration]);
+  }, [
+    initialCaptureMode,
+    initialTargetKey,
+    open,
+    reconstruction.fieldCalibration,
+  ]);
 
   const liveScenePosition = useMemo(() => {
     if (!currentCoordinate || !reconstruction.fieldCalibration) return null;
@@ -453,6 +462,62 @@ export default function FieldPlacementPanel({
       });
     });
   }, [currentCoordinate, isTracing, tracePaused]);
+
+  const saveQuickNorthUpCalibration = () => {
+    if (!currentCoordinate) {
+      setError("Wait for a live GPS reading before creating the quick calibration.");
+      return;
+    }
+
+    const sceneWidthMetres = Math.max(10, reconstruction.scene.sceneWidthMetres);
+    const sceneHeightMetres = Math.max(10, reconstruction.scene.sceneHeightMetres);
+    const origin = localOffsetToCoordinate(
+      currentCoordinate,
+      -sceneWidthMetres / 2,
+      -sceneHeightMetres / 2,
+    );
+    const directionReference = localOffsetToCoordinate(
+      origin,
+      Math.max(5, Math.min(20, sceneWidthMetres / 3)),
+      0,
+    );
+    const widthReference = localOffsetToCoordinate(
+      origin,
+      0,
+      Math.max(5, Math.min(20, sceneHeightMetres / 3)),
+    );
+
+    const calibration = FieldPlacementService.createCalibration({
+      origin: {
+        ...origin,
+        accuracyMetres: currentCoordinate.accuracyMetres,
+      },
+      directionReference: {
+        ...directionReference,
+        accuracyMetres: currentCoordinate.accuracyMetres,
+      },
+      widthReference: {
+        ...widthReference,
+        accuracyMetres: currentCoordinate.accuracyMetres,
+      },
+      sceneWidthMetres,
+      sceneHeightMetres,
+      createdBy: officerName || "RoadSafe field user",
+    });
+
+    onUpdate((current) => ({
+      ...current,
+      fieldCalibration: calibration,
+    }));
+    setCalibrationOrigin(calibration.origin);
+    setCalibrationDirection(calibration.directionReference);
+    setCalibrationWidth(calibration.widthReference ?? null);
+    setError("");
+    setMessage(
+      "Provisional north-up calibration created from the live GPS reading. Capture can begin now; refine the calibration later for survey work.",
+    );
+    setTab("Capture");
+  };
 
   const captureAverage = async (): Promise<AveragedLocationResult> => {
     if (!geolocationSupported) {
@@ -898,14 +963,25 @@ export default function FieldPlacementPanel({
                       <AlertTriangle size={15} />
                       <div>
                         <span>Calibrate the scene before placing field items.</span>
-                        <button
-                          type="button"
-                          onClick={() => setTab("Calibration")}
-                          className="field-mode-button field-mode-button--full"
-                          style={{ marginTop: "0.5rem" }}
-                        >
-                          Open calibration
-                        </button>
+                        <div className="field-mode-button-row" style={{ marginTop: "0.5rem" }}>
+                          <button
+                            type="button"
+                            onClick={saveQuickNorthUpCalibration}
+                            disabled={!currentCoordinate}
+                            className="field-mode-button field-mode-button--primary"
+                            style={{ flex: 1 }}
+                          >
+                            Quick GPS setup
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTab("Calibration")}
+                            className="field-mode-button"
+                            style={{ flex: 1 }}
+                          >
+                            Full calibration
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

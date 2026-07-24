@@ -30,7 +30,11 @@ import {
   type ReconstructionSceneObject,
   type ReconstructionVehicle,
 } from "../../types/reconstruction";
-import { getParticipantStateAtTime, sortMovementPathPoints } from "../../utils/reconstructionGeometry";
+import {
+  getParticipantStateAtTime,
+  isPhysicsGeneratedPathPoint,
+  sortMovementPathPoints,
+} from "../../utils/reconstructionGeometry";
 import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeometry";
 
 interface Reconstruction3DViewerProps {
@@ -1430,7 +1434,10 @@ function Reconstruction3DViewer({
     const impactDynamics = new Map<string, { time: number | undefined; speedKmh: number }>();
     reconstruction.vehicles.forEach((participant) => {
       const sortedPoints = sortMovementPathPoints(participant.pathPoints);
-      const impactPoint = sortedPoints.find((point) => point.action === "Impact");
+      const authoredPoints = sortedPoints.filter(
+        (point) => !isPhysicsGeneratedPathPoint(point),
+      );
+      const impactPoint = authoredPoints.find((point) => point.action === "Impact");
       const participantCollision = collisionEvents
         .filter((event) =>
           event.participantIds.includes(participant.id),
@@ -1503,7 +1510,7 @@ function Reconstruction3DViewer({
         smokeEffects.set(participant.id, smoke);
       }
       if (effectiveShowPaths) {
-        const positions = sortedPoints.map((point) => worldPosition(point.position, width, height, 0.28, sceneHeightAt));
+        const positions = authoredPoints.map((point) => worldPosition(point.position, width, height, 0.28, sceneHeightAt));
         if (positions.length > 1) {
           const curve = new THREE.CatmullRomCurve3(positions, false, "catmullrom", 0.45);
           const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(Math.max(24, positions.length * 10)));
@@ -1511,11 +1518,11 @@ function Reconstruction3DViewer({
           scene.add(line);
         }
         if (effectiveShowPhysicsEffects) {
-          for (let index = 1; index < sortedPoints.length; index += 1) {
-            const point = sortedPoints[index];
+          for (let index = 1; index < authoredPoints.length; index += 1) {
+            const point = authoredPoints[index];
             if (!["Brake", "Slide", "Ricochet", "Deflect", "Swerve"].includes(point.action)) continue;
             const geometry = new THREE.BufferGeometry().setFromPoints([
-              worldPosition(sortedPoints[index - 1].position, width, height, 0.31, sceneHeightAt),
+              worldPosition(authoredPoints[index - 1].position, width, height, 0.31, sceneHeightAt),
               worldPosition(point.position, width, height, 0.31, sceneHeightAt),
             ]);
             scene.add(new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x111827, transparent: true, opacity: point.action === "Brake" ? 0.7 : 0.52 })));

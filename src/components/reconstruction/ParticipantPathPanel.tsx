@@ -35,7 +35,6 @@ import {
   isPhysicsCalculatedRestPoint,
   isPhysicsGeneratedPathPoint,
   sanitiseParticipantPathPoints,
-  sortMovementPathPoints,
 } from "../../utils/reconstructionGeometry";
 
 import {
@@ -88,15 +87,6 @@ interface ParticipantPathPanelProps {
     degrees: number,
   ) => void;
 }
-
-const IMPORTANT_PHYSICS_ACTIONS =
-  new Set<MovementAction>([
-    "Impact",
-    "Ricochet",
-    "Deflect",
-    "Fall",
-    "Stop",
-  ]);
 
 const HEADING_OPTIONS = [
   { label: "North", degrees: 270 },
@@ -314,11 +304,6 @@ export default function ParticipantPathPanel(
   } = props;
 
   const [
-    showPhysicsSamples,
-    setShowPhysicsSamples,
-  ] = useState(false);
-
-  const [
     routeMessage,
     setRouteMessage,
   ] = useState(
@@ -376,42 +361,9 @@ export default function ParticipantPathPanel(
     [participant],
   );
 
-  const importantPhysicsPoints =
-    useMemo(
-      () =>
-        physicsPoints.filter(
-          (point) =>
-            IMPORTANT_PHYSICS_ACTIONS.has(
-              point.action,
-            ) ||
-            point.linkedSceneObjectId,
-        ),
-      [physicsPoints],
-    );
-
-  const visiblePhysicsPoints =
-    showPhysicsSamples
-      ? physicsPoints
-      : importantPhysicsPoints;
-
-  const displayedPoints = useMemo(
-    () =>
-      sortMovementPathPoints([
-        ...investigatorPoints,
-        ...visiblePhysicsPoints,
-      ]),
-    [
-      investigatorPoints,
-      visiblePhysicsPoints,
-    ],
-  );
-
-  const hiddenPhysicsSamples =
-    Math.max(
-      0,
-      physicsPoints.length -
-        visiblePhysicsPoints.length,
-    );
+  // Physics samples remain internal playback data. They must never appear as
+  // editable route diamonds or investigator-created points.
+  const displayedPoints = investigatorPoints;
 
   const speedLimit =
     getParticipantSpeedLimit(
@@ -2267,8 +2219,8 @@ export default function ParticipantPathPanel(
 
           <div className="roadsafe-route-inspector__metric">
             <span>Physics output</span>
-            <strong>{physicsPoints.length} samples</strong>
-            <small>Solver-owned post-impact movement</small>
+            <strong>{physicsPoints.length > 0 ? "Available" : "Not simulated"}</strong>
+            <small>Internal playback data; no extra route points are shown</small>
           </div>
 
           <div className={`roadsafe-route-inspector__metric ${restStatusClasses}`}>
@@ -2339,40 +2291,6 @@ export default function ParticipantPathPanel(
       </section>
 
       <div className="mt-4 space-y-3">
-        {hiddenPhysicsSamples > 0 && (
-          <div className="roadsafe-route-inspector__notice">
-            <p>
-              <strong>
-                {hiddenPhysicsSamples} detailed physics samples hidden.
-              </strong>{" "}
-              Important contact, deflection and rest results remain visible.
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowPhysicsSamples(true)
-              }
-              className="ui-button"
-            >
-              Show all
-            </button>
-          </div>
-        )}
-
-        {showPhysicsSamples &&
-          physicsPoints.length > 0 && (
-            <button
-              type="button"
-              onClick={() =>
-                setShowPhysicsSamples(false)
-              }
-              className="ui-button w-full"
-            >
-              Hide detailed physics samples
-            </button>
-          )}
-
         {displayedPoints.map(
           (point) => {
             const selected =

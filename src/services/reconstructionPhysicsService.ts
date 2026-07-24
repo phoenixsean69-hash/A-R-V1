@@ -16,6 +16,7 @@ import {
 import {
   clamp,
   getParticipantStateAtTime,
+  isPhysicsGeneratedPathPoint,
   sortMovementPathPoints,
   syncLegacyParticipantFields,
 } from "../utils/reconstructionGeometry";
@@ -352,7 +353,7 @@ function detectEarliestSceneObjectContact(
       profile: resolveSceneObjectPhysicsProfile(object),
       pose: sceneObjectPose(object, width, height),
     }))
-    .filter(({ profile }) => profile.enabled && profile.collidable);
+    .filter(({ profile }) => profile.enabled);
 
   if (collidableObjects.length === 0) return null;
 
@@ -376,7 +377,7 @@ function detectEarliestSceneObjectContact(
           pose,
           pose,
           objectDimensions(profile),
-          tolerance,
+          profile.collidable ? tolerance : 0,
         );
         if (!contact) continue;
 
@@ -433,6 +434,11 @@ const SOLID_OBJECT_TYPES = new Set([
   "Stop Sign",
   "Give Way Sign",
   "Speed Limit Sign",
+  "Fallen Branch",
+  "Debris",
+  "Vehicle Part",
+  "Traffic Cone",
+  "Bush",
 ]);
 
 const LOW_GRIP_OBJECT_TYPES = new Set([
@@ -705,7 +711,10 @@ export function getDefaultSceneObjectPhysics(
       object.severity === "Critical" ? 0.55 :
       object.severity === "High" ? 0.66 :
       object.severity === "Medium" ? 0.76 : 0.86;
-    const diameter = Math.max(1.2, object.scale * 1.8);
+    const diameter = Math.max(
+      0.25,
+      Number(object.widthMetres ?? object.scale * 1.8),
+    );
     return {
       enabled: true,
       collidable: false,
@@ -722,7 +731,10 @@ export function getDefaultSceneObjectPhysics(
   }
 
   if (LOW_GRIP_OBJECT_TYPES.has(object.type)) {
-    const diameter = Math.max(1.6, object.scale * 2.6);
+    const diameter = Math.max(
+      0.4,
+      Number(object.widthMetres ?? object.scale * 2.6),
+    );
     return {
       enabled: true,
       collidable: false,
@@ -776,10 +788,20 @@ export function getDefaultSceneObjectPhysics(
     collidable: solid,
     collisionRadiusMetres: radius,
     restitution:
-      object.type === "Road Barrier" || object.type === "Guardrail" ? 0.2 : 0.08,
+      object.type === "Road Barrier" || object.type === "Guardrail"
+        ? 0.2
+        : object.type === "Traffic Cone" || object.type === "Bush"
+          ? 0.02
+          : 0.08,
     surfaceFrictionMultiplier: 1,
     speedLossFactor:
-      object.type === "Tree" || object.type === "Street Light" ? 0.28 : 0.55,
+      object.type === "Tree" || object.type === "Street Light"
+        ? 0.28
+        : object.type === "Traffic Cone" || object.type === "Bush"
+          ? 0.82
+          : object.type === "Fallen Branch" || object.type === "Debris"
+            ? 0.62
+            : 0.55,
     deflectionDegrees: 0,
     collisionShape: circular ? "Circle" : "Oriented Box",
     lengthMetres: circular ? radius * 2 : length,
@@ -1328,14 +1350,20 @@ export function applyPhysicsSimulation(
       `Continuous contact detection found the first participant collision at ${primaryImpactTime.toFixed(2)}s, before or at the authored primary marker.`,
     );
   } else if (activeObjectContact) {
-    const objectLabel = source.sceneObjects.find(
+    const activeObject = source.sceneObjects.find(
       (object) => object.id === activeObjectContact.objectId,
-    )?.label ?? "a solid scene object";
+    );
+    const objectLabel = activeObject?.label ?? "a scene object";
     const participantName = participants.find(
       (participant) => participant.id === activeObjectContact.participantId,
     )?.name ?? "A participant";
+    const interactionKind = activeObject?.type === "Pothole"
+      ? "pothole interaction"
+      : activeObject && LOW_GRIP_OBJECT_TYPES.has(activeObject.type)
+        ? "low-grip surface interaction"
+        : "solid-object impact";
     warnings.push(
-      `Continuous contact detection found ${participantName}'s first solid-object impact with ${objectLabel} at ${primaryImpactTime.toFixed(2)}s, before the authored primary marker.`,
+      `Continuous contact detection found ${participantName}'s first ${interactionKind} with ${objectLabel} at ${primaryImpactTime.toFixed(2)}s, before the authored primary marker.`,
     );
   } else if (participants.length > 1) {
     warnings.push(
@@ -1665,25 +1693,9 @@ export function applyPhysicsSimulation(
             result.angularVelocityChangesDegPerSecond,
         });
 
-        left.points.push(
-          makePhysicsPoint(
-            left,
-            contactTime,
-            scenePosition(left.position, width, height),
-            "Impact",
-            `Contact with ${right.participant.name}`,
-          ),
-        );
-        right.points.push(
-          makePhysicsPoint(
-            right,
-            contactTime,
-            scenePosition(right.position, width, height),
-            "Impact",
-            `Contact with ${left.participant.name}`,
-          ),
-        );
-        generatedPathPoints += 2;
+        // The collision event is the authoritative impact record. Do not
+        // manufacture route diamonds at the contact point; post-impact motion
+        // samples begin on the next simulation step and remain internal.
         simulatedDurationSeconds = Math.max(simulatedDurationSeconds, contactTime);
       }
     }
@@ -1692,47 +1704,42 @@ export function applyPhysicsSimulation(
   }
 
   const updatedVehicles = source.vehicles.map((participant) => {
-    const body = bodies.find((candidate) => candidate.participant.id === participant.id);
+    const body = bodies.find(
+      (candidate) =>
+        candidate.participant.id === participant.id,
+    );
+
+    const authoredPoints = sortMovementPathPoints(
+      participant.pathPoints,
+    ).filter(
+      (point) => !isPhysicsGeneratedPathPoint(point),
+    );
+
     if (!body || body.points.length === 0) {
-      return {
+      return syncLegacyParticipantFields({
         ...participant,
         physics: resolveParticipantPhysicsProfile(participant),
-      };
+        pathPoints: authoredPoints,
+      });
     }
 
-    const beforeImpact = sortMovementPathPoints(participant.pathPoints).filter(
-      (point) => point.timeSeconds < impactTime - 0.001,
+    const internalPhysicsPoints = body.points.filter(
+      (point) =>
+        point.timeSeconds > impactTime + 0.0001,
     );
-    const collidedAtSimulationStart = Boolean(body.primaryResponseAction);
-    const transitionPoint: MovementPathPoint = {
-      ...body.impactPoint,
-      id: createId(collidedAtSimulationStart ? "detected-impact" : "physics-transition"),
-      label: collidedAtSimulationStart
-        ? "Detected participant contact"
-        : "Physics continuation",
-      position: { ...body.impactPoint.position },
-      timeSeconds: impactTime,
-      speedKmh: Number(mpsToKmh(magnitude(body.incomingVelocity)).toFixed(1)),
-      rotation: Number(
-        rotationFromVelocity(body.incomingVelocity, body.impactPoint.rotation).toFixed(1),
-      ),
-      action: collidedAtSimulationStart ? "Impact" : "Cruise",
-      notes: collidedAtSimulationStart
-        ? "Generated at the first swept body contact found along the participant routes."
-        : "Physics takes over from the participant's guided route at the first detected scene collision.",
-    };
-    const generated = [transitionPoint, ...body.points];
-    const pathPoints = settings.replacePostImpactPath
-      ? [...beforeImpact, ...generated]
-      : sortMovementPathPoints([
-          ...participant.pathPoints.filter((point) => point.timeSeconds < impactTime - 0.001),
-          ...generated,
-        ]);
+
+    // Preserve every investigator-created point at its original position.
+    // Physics samples are appended only as hidden playback data; they never
+    // replace, relocate or duplicate Point 1, intermediate points or Point Z.
+    const pathPoints = sortMovementPathPoints([
+      ...authoredPoints,
+      ...internalPhysicsPoints,
+    ]);
 
     return syncLegacyParticipantFields({
       ...participant,
       physics: body.profile,
-      pathPoints: sortMovementPathPoints(pathPoints),
+      pathPoints,
     });
   });
 
@@ -1807,19 +1814,55 @@ export function applyPhysicsSimulation(
     warnings,
   };
 
-  const generatedTimelineEvents = updatedVehicles.flatMap((participant) =>
+  const collisionTimelineEvents = collisionEvents.map((event) => {
+    const participantNames = event.participantIds.map(
+      (participantId) =>
+        source.vehicles.find((participant) => participant.id === participantId)?.name ??
+        "Participant",
+    );
+    const objectLabel = event.sceneObjectId
+      ? source.sceneObjects.find((object) => object.id === event.sceneObjectId)?.label
+      : undefined;
+
+    return {
+      id: createId("physics-event"),
+      timeSeconds: event.timeSeconds,
+      title:
+        event.type === "Participant-Participant"
+          ? `${participantNames.join(" ↔ ")}: physical contact`
+          : `${participantNames[0]}: contact with ${objectLabel ?? "scene object"}`,
+      description: `${event.relativeSpeedKmh.toFixed(1)} km/h relative speed · ${event.estimatedEnergyKj.toFixed(1)} kJ estimated energy.`,
+      type: "Collision" as const,
+      participantId: event.participantIds[0],
+      sceneObjectId: event.sceneObjectId,
+    };
+  });
+
+  const generatedMotionTimelineEvents = updatedVehicles.flatMap((participant) =>
     participant.pathPoints
-      .filter((point) => ["Impact", "Ricochet", "Deflect", "Stop"].includes(point.action))
+      .filter(
+        (point) =>
+          isPhysicsGeneratedPathPoint(point) &&
+          ["Ricochet", "Deflect", "Stop"].includes(point.action),
+      )
       .map((point) => ({
         id: createId("physics-event"),
         timeSeconds: point.timeSeconds,
         title: `${participant.name}: ${point.label}`,
-        description: point.notes ?? "Physics-generated event.",
-        type: point.action === "Impact" || point.action === "Ricochet" ? ("Collision" as const) : ("Participant Action" as const),
+        description: point.notes ?? "Physics-generated movement result.",
+        type:
+          point.action === "Ricochet"
+            ? ("Collision" as const)
+            : ("Participant Action" as const),
         participantId: participant.id,
         sceneObjectId: point.linkedSceneObjectId,
       })),
   );
+
+  const generatedTimelineEvents = [
+    ...collisionTimelineEvents,
+    ...generatedMotionTimelineEvents,
+  ];
 
   const preservedTimeline = source.timelineEvents.filter(
     (event) => !event.id.startsWith("physics-event"),

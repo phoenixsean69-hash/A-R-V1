@@ -500,6 +500,49 @@ export function getPhysicsPathPoints(
   ).filter(isPhysicsGeneratedPathPoint);
 }
 
+/**
+ * Returns the path used only for animation playback.
+ * Investigator-authored points remain preserved in participant.pathPoints,
+ * but once an internal physics sample begins, later authored anchors are not
+ * allowed to pull the moving body back to the collision marker.
+ */
+export function getParticipantPlaybackPathPoints(
+  participant: ReconstructionVehicle,
+): MovementPathPoint[] {
+  const points = sanitiseParticipantPathPoints(
+    participant.pathPoints,
+  );
+
+  const firstPhysicsPoint = points.find(
+    isPhysicsGeneratedPathPoint,
+  );
+
+  if (!firstPhysicsPoint) {
+    return points;
+  }
+
+  const authoredBeforePhysics = points.filter(
+    (point) =>
+      !isPhysicsGeneratedPathPoint(point) &&
+      point.timeSeconds <
+        firstPhysicsPoint.timeSeconds - 0.0001,
+  );
+
+  const physicsPath = points.filter(
+    (point) =>
+      isPhysicsGeneratedPathPoint(point) &&
+      point.timeSeconds >=
+        firstPhysicsPoint.timeSeconds - 0.0001,
+  );
+
+  const playback = sortMovementPathPoints([
+    ...authoredBeforePhysics,
+    ...physicsPath,
+  ]);
+
+  return playback.length >= 2 ? playback : points;
+}
+
 export function getParticipantRestPoint(
   participant: ReconstructionVehicle,
 ): MovementPathPoint | null {
@@ -948,8 +991,8 @@ export function getParticipantStateAtTime(
   speedKmh: number;
   activePointId: string;
 } {
-  const points = sanitiseParticipantPathPoints(
-    participant.pathPoints,
+  const points = getParticipantPlaybackPathPoints(
+    participant,
   );
 
   if (points.length === 0) {

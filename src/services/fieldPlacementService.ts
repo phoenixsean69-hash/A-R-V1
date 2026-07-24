@@ -24,11 +24,16 @@ import {
 } from "../utils/geographicCoordinates";
 import {
   getPointsCentroid,
+  isPhysicsGeneratedPathPoint,
   shiftSceneObjectTrace,
   sortMovementPathPoints,
   syncLegacyParticipantFields,
 } from "../utils/reconstructionGeometry";
 import { updateMeasurementDistance } from "../utils/evidenceGeometry";
+import {
+  isPointZ,
+  normalisePointZRoute,
+} from "../utils/participantRouteAuthoring";
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -213,6 +218,14 @@ export function applyFieldPlacement(input: {
         vehicles: reconstruction.vehicles.map((participant) => {
           if (participant.id !== input.target.targetId) return participant;
 
+          const targetPoint = participant.pathPoints.find(
+            (point) => point.id === input.target.subTargetId,
+          );
+
+          if (targetPoint && isPointZ(targetPoint)) {
+            return participant;
+          }
+
           const pathPoints = sortMovementPathPoints(
             participant.pathPoints.map((point) =>
               point.id === input.target.subTargetId
@@ -371,20 +384,44 @@ export function applyWalkingTrack(input: {
       vehicles: reconstruction.vehicles.map((participant) => {
         if (participant.id !== input.targetId) return participant;
 
+        const authoredPoints = sortMovementPathPoints(
+          participant.pathPoints,
+        ).filter(
+          (point) => !isPhysicsGeneratedPathPoint(point),
+        );
+        const movablePoints = authoredPoints.filter(
+          (point) => !isPointZ(point),
+        );
         const sampled = sampleSceneTrack(
           scenePoints,
-          Math.max(2, participant.pathPoints.length),
+          Math.max(1, movablePoints.length),
         );
-        const pathPoints: MovementPathPoint[] = participant.pathPoints.map(
-          (point, index) => ({
-            ...point,
-            position: sampled[index] ?? point.position,
-          }),
+        let sampledIndex = 0;
+        const updatedAuthoredPoints: MovementPathPoint[] = authoredPoints.map(
+          (point) => {
+            if (isPointZ(point)) {
+              return point;
+            }
+
+            const position = sampled[sampledIndex] ?? point.position;
+            sampledIndex += 1;
+            return {
+              ...point,
+              position,
+            };
+          },
         );
+        const pathPoints = normalisePointZRoute({
+          pathPoints: updatedAuthoredPoints,
+          collisionPosition: reconstruction.collisionPoint,
+          durationSeconds: reconstruction.durationSeconds,
+          speedKmh: participant.estimatedSpeedKmh,
+          participantType: participant.type,
+        });
 
         return syncLegacyParticipantFields({
           ...participant,
-          pathPoints: sortMovementPathPoints(pathPoints),
+          pathPoints,
         });
       }),
     };
@@ -401,7 +438,30 @@ export function applyWalkingTrack(input: {
               ...object,
               tracePoints: scenePoints,
               position: getPointsCentroid(centroidPoints),
+              rotation:
+                !track.closedBoundary && scenePoints.length > 1
+                  ? Number(
+                      (
+                        (Math.atan2(
+                          scenePoints[scenePoints.length - 1].y - scenePoints[0].y,
+                          scenePoints[scenePoints.length - 1].x - scenePoints[0].x,
+                        ) * 180) /
+                        Math.PI
+                      ).toFixed(2),
+                    )
+                  : object.rotation,
               lengthMetres: track.distanceMetres,
+              widthMetres:
+                track.closedBoundary && track.areaSquareMetres
+                  ? Number(
+                      (
+                        2 *
+                        Math.sqrt(
+                          track.areaSquareMetres / Math.PI,
+                        )
+                      ).toFixed(2),
+                    )
+                  : object.widthMetres,
             }
           : object,
       ),

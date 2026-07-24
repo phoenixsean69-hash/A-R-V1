@@ -7,6 +7,7 @@ import type {
 import {
   isTraceableSceneObjectType,
 } from "../../utils/reconstructionGeometry";
+import { getDefaultSceneObjectPhysics } from "../../services/reconstructionPhysicsService";
 
 interface SceneObjectSettingsPanelProps {
   object: ReconstructionSceneObject;
@@ -29,6 +30,16 @@ const SEVERITY_OPTIONS: SceneObjectSeverity[] = [
   "Critical",
 ];
 
+const GPS_BOUNDARY_TYPES = new Set<ReconstructionSceneObject["type"]>([
+  "Pothole",
+  "Puddle",
+  "Oil Spill",
+  "Loose Gravel",
+  "Debris",
+  "Broken Glass",
+  "Bush",
+]);
+
 export default function SceneObjectSettingsPanel({
   object,
   tracing,
@@ -41,6 +52,23 @@ export default function SceneObjectSettingsPanel({
   onClearTrace,
 }: SceneObjectSettingsPanelProps) {
   const traceable = isTraceableSceneObjectType(object.type);
+  const boundaryTrack = GPS_BOUNDARY_TYPES.has(object.type);
+  const resolvedPhysics = {
+    ...getDefaultSceneObjectPhysics(object),
+    ...(object.physics ?? {}),
+  };
+  const gpsButtonLabel = traceable
+    ? "Walk and Track with Live GPS"
+    : boundaryTrack
+      ? "Walk Boundary with Live GPS"
+      : "Place Using Device GPS";
+  const interactionDescription = object.type === "Pothole"
+    ? "Vehicles crossing the measured pothole lose speed and may deflect."
+    : ["Oil Spill", "Loose Gravel", "Puddle"].includes(object.type)
+      ? "The region reduces grip while a participant is physically inside it."
+      : resolvedPhysics.collidable
+        ? "This object uses a physical collision shape and can be struck by participants."
+        : "This item is evidence or context only and does not alter movement.";
 
   return (
     <div>
@@ -309,6 +337,42 @@ export default function SceneObjectSettingsPanel({
           </label>
         </div>
 
+        <div className="rounded-sm border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-black text-blue-950">
+                Participant interaction
+              </p>
+              <p className="mt-1 text-xs leading-5 text-blue-800">
+                {interactionDescription}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={resolvedPhysics.enabled}
+              onChange={(event) =>
+                onChange({
+                  physics: {
+                    ...resolvedPhysics,
+                    enabled: event.target.checked,
+                  },
+                })
+              }
+              className="mt-1 h-5 w-5"
+              aria-label="Enable participant interaction"
+            />
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-blue-900">
+            <span>
+              Mode: <strong>{resolvedPhysics.collidable ? "Solid contact" : resolvedPhysics.enabled ? "Surface / hazard" : "Reference only"}</strong>
+            </span>
+            <span>
+              Radius: <strong>{resolvedPhysics.collisionRadiusMetres.toFixed(2)} m</strong>
+            </span>
+          </div>
+        </div>
+
         <label className="block">
           <span className="text-sm font-medium text-gray-700">Notes</span>
           <textarea
@@ -390,7 +454,7 @@ export default function SceneObjectSettingsPanel({
             onClick={onPlaceWithGps}
             className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-black text-white hover:bg-emerald-700"
           >
-            Place Using Device GPS
+            {gpsButtonLabel}
           </button>
         </div>
 
