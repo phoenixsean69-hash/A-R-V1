@@ -892,7 +892,7 @@ export default function NewCaseRoadWizard({
                       <div className="rounded-lg bg-white/75 p-2">
                         <dt className="font-bold text-slate-500">Geometry</dt>
                         <dd className="mt-1 font-black">
-                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover
+                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover
                         </dd>
                       </div>
                     </dl>
