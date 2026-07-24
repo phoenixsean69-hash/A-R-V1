@@ -7,7 +7,6 @@ import {
   Camera,
   CheckCircle2,
   Clock3,
-  Download,
   FileJson,
   FileSearch,
   FileText,

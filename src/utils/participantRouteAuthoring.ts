@@ -1056,7 +1056,7 @@ export function setParticipantImpactPoint({
         point.timeSeconds <= pointZ.timeSeconds ||
         point.id === pointZ.id,
     )
-    .map((point, index, list) => {
+    .map((point, index) => {
       if (point.id === pointZ.id) {
         return {
           ...point,

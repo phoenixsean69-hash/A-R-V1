@@ -38,6 +38,18 @@ import {
   sortMovementPathPoints,
 } from "../../utils/reconstructionGeometry";
 
+import {
+  canDeleteRoutePoint,
+  canEditRoutePointIdentity,
+  canEditRoutePointPosition,
+  canPlaceRoutePointWithGps,
+  getEditablePointActions,
+  getRouteDiamondText,
+  getRoutePointStatus,
+  getRoutePointSubtitle,
+  isPointZLocked,
+} from "../../utils/pointZRouteUi";
+
 interface ParticipantPathPanelProps {
   participant: ReconstructionVehicle;
   durationSeconds: number;
@@ -76,20 +88,6 @@ interface ParticipantPathPanelProps {
     degrees: number,
   ) => void;
 }
-
-const INVESTIGATOR_ACTIONS: MovementAction[] = [
-  "Start",
-  "Enter Scene",
-  "Accelerate",
-  "Cruise",
-  "Brake",
-  "Turn Left",
-  "Turn Right",
-  "Swerve",
-  "Impact",
-  "Stop",
-  "Exit Scene",
-];
 
 const IMPORTANT_PHYSICS_ACTIONS =
   new Set<MovementAction>([
@@ -170,17 +168,6 @@ function clampNumber(
   return Math.min(
     maximum,
     Math.max(minimum, value),
-  );
-}
-
-function getEditableActions(
-  point: MovementPathPoint,
-): MovementAction[] {
-  return Array.from(
-    new Set([
-      point.action,
-      ...INVESTIGATOR_ACTIONS,
-    ]),
   );
 }
 
@@ -335,7 +322,7 @@ export default function ParticipantPathPanel(
     routeMessage,
     setRouteMessage,
   ] = useState(
-    "Add numbered diamonds, drag them on the 2D scene, or record the route by walking it with GPS.",
+    "Every participant begins at Point 1 and reaches the permanent Point Z collision anchor. Added diamonds subdivide only the route between those two anchors.",
   );
 
   const gpsSetupTimerRef =
@@ -1041,20 +1028,12 @@ export default function ParticipantPathPanel(
 
   const handleClearIntermediatePoints =
     useCallback(() => {
-      const preservedStart =
-        investigatorPoints[0]?.id;
-
-      const preservedImpact =
-        investigatorPoints.find(
-          (point) =>
-            point.action === "Impact",
-        )?.id;
-
       const removable =
-        investigatorPoints.filter(
-          (point) =>
-            point.id !== preservedStart &&
-            point.id !== preservedImpact,
+        investigatorPoints.filter((point) =>
+          canDeleteRoutePoint(
+            point,
+            investigatorPoints,
+          ),
         );
 
       if (removable.length === 0) {
@@ -1071,7 +1050,7 @@ export default function ParticipantPathPanel(
         });
 
       setRouteMessage(
-        "Intermediate route diamonds were cleared. The start and impact controls were preserved.",
+        "Intermediate route diamonds were cleared. Point 1 and the locked Point Z collision anchor were preserved.",
       );
 
       scheduleDiamondRefresh();
@@ -1341,13 +1320,7 @@ export default function ParticipantPathPanel(
         point: MovementPathPoint,
         updates: Partial<MovementPathPoint>,
       ) => {
-        onPointChange(point.id, {
-          ...updates,
-          position:
-            updates.position ?? {
-              ...point.position,
-            },
-        });
+        onPointChange(point.id, updates);
       },
       [onPointChange],
     );
@@ -2401,7 +2374,7 @@ export default function ParticipantPathPanel(
           )}
 
         {displayedPoints.map(
-          (point, index) => {
+          (point) => {
             const selected =
               selectedPointId === point.id;
 
@@ -2414,12 +2387,21 @@ export default function ParticipantPathPanel(
               isObservedRestPoint(point);
 
             const actionOptions =
-              getEditableActions(point);
+              getEditablePointActions(point);
 
             const investigatorOrder =
               investigatorPoints.findIndex(
                 (item) =>
                   item.id === point.id,
+              );
+
+            const lockedPointZ =
+              isPointZLocked(point);
+
+            const deletable =
+              canDeleteRoutePoint(
+                point,
+                investigatorPoints,
               );
 
             return (
@@ -2454,9 +2436,10 @@ export default function ParticipantPathPanel(
                         className="roadsafe-route-point-card__diamond"
                       >
                         <span className="-rotate-45">
-                          {physicsGenerated
-                            ? "P"
-                            : investigatorOrder + 1}
+                          {getRouteDiamondText({
+                            point,
+                            investigatorOrder,
+                          })}
                         </span>
                       </span>
 
@@ -2467,7 +2450,10 @@ export default function ParticipantPathPanel(
 
                         {!physicsGenerated && (
                           <span className="roadsafe-route-point-card__subtitle">
-                            Route diamond {investigatorOrder + 1}
+                            {getRoutePointSubtitle({
+                              point,
+                              investigatorOrder,
+                            })}
                           </span>
                         )}
                       </span>
@@ -2487,7 +2473,7 @@ export default function ParticipantPathPanel(
                           ? "Physics · read only"
                           : observedRest
                             ? "Observed evidence"
-                            : "Editable route point"}
+                            : getRoutePointStatus(point)}
                       </span>
                     </span>
                   </button>
@@ -2513,9 +2499,7 @@ export default function ParticipantPathPanel(
                             point,
                           )
                         }
-                        disabled={
-                          investigatorPoints.length <= 2
-                        }
+                        disabled={!deletable}
                         className="is-delete disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Delete
@@ -2584,11 +2568,24 @@ export default function ParticipantPathPanel(
                 {selected &&
                   !physicsGenerated && (
                     <div className="roadsafe-route-point-card__details">
+                      {lockedPointZ && (
+                        <div className="roadsafe-route-inspector__read-only-box mb-2">
+                          <strong>
+                            Point Z is the permanent collision anchor
+                          </strong>
+
+                          <p>
+                            Point Z is permanently linked to the primary collision marker. Move the scene collision marker to reposition it.
+                          </p>
+                        </div>
+                      )}
+
                       <div className="roadsafe-route-inspector__edit-actions">
                         <button
                           type="button"
                           onClick={activateMoveTool}
-                          className="ui-button"
+                          disabled={lockedPointZ}
+                          className="ui-button disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Drag diamond on scene
                         </button>
@@ -2600,7 +2597,12 @@ export default function ParticipantPathPanel(
                               point.id,
                             )
                           }
-                          className="ui-button"
+                          disabled={
+                            !canPlaceRoutePointWithGps(
+                              point,
+                            )
+                          }
+                          className="ui-button disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Place this point with GPS
                         </button>
@@ -2614,6 +2616,11 @@ export default function ParticipantPathPanel(
 
                         <input
                           value={point.label}
+                          disabled={
+                            !canEditRoutePointIdentity(
+                              point,
+                            )
+                          }
                           onChange={(event) =>
                             handleInvestigatorPointChange(
                               point,
@@ -2634,6 +2641,7 @@ export default function ParticipantPathPanel(
 
                         <select
                           value={point.action}
+                          disabled={lockedPointZ}
                           onChange={(event) =>
                             handleInvestigatorPointChange(
                               point,
@@ -2730,6 +2738,11 @@ export default function ParticipantPathPanel(
 
                           <input
                             type="number"
+                            disabled={
+                              !canEditRoutePointPosition(
+                                point,
+                              )
+                            }
                             value={Number(
                               point.rotation.toFixed(1),
                             )}
@@ -2760,6 +2773,11 @@ export default function ParticipantPathPanel(
                             min={0}
                             max={100}
                             step={0.1}
+                            disabled={
+                              !canEditRoutePointPosition(
+                                point,
+                              )
+                            }
                             value={Number(
                               point.position.x.toFixed(1),
                             )}
@@ -2794,6 +2812,11 @@ export default function ParticipantPathPanel(
                             min={0}
                             max={100}
                             step={0.1}
+                            disabled={
+                              !canEditRoutePointPosition(
+                                point,
+                              )
+                            }
                             value={Number(
                               point.position.y.toFixed(1),
                             )}

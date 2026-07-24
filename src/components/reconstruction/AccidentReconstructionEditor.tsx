@@ -63,6 +63,7 @@ import EvidenceMarkerLayer from "./EvidenceMarkerLayer";
 import { EvidenceWorkspacePanel } from "./EvidenceWorkspace";
 import MeasurementOverlay from "./MeasurementLayer";
 import ParticipantPathPanel from "./ParticipantPathPanel";
+import ParticipantPlacementOverlay from "./ParticipantPlacementOverlay";
 import RoadSceneEnvironment from "./RoadSceneEnvironment";
 import ReconstructionBasemap from "./ReconstructionBasemap";
 import type { ReconstructionBasemapMode } from "./ReconstructionBasemap";
@@ -106,12 +107,32 @@ import {
 } from "../../utils/reconstructionGeometry";
 
 import {
+  geoCoordinateToScenePosition,
+  isPointZ,
+  normalisePointZRoute,
+} from "../../utils/participantRouteAuthoring";
+
+import {
+  canBeginRoutePointDrag,
+  changeParticipantApproachHeading,
+  createParticipantAtConfirmedPosition,
+  deleteParticipantIntermediatePoint,
+  insertParticipantIntermediatePoint,
+  normaliseAllPointZRoutes,
+  replaceParticipantRouteFromDrawing,
+  updateParticipantAuthoredPoint,
+  updateReconstructionCollisionPoint,
+  type PendingParticipantPlacement,
+} from "../../utils/reconstructionPointZIntegration";
+
+import {
   updateMeasurementDistance,
 } from "../../utils/evidenceGeometry";
 
 import { paintReconstructionPlaybackDomFrame } from "../../utils/reconstructionPlaybackDom";
 
 import "./reconstructionPlaybackFixes.css";
+import "./participantPlacement.css";
 
 const Reconstruction3DViewer = lazy(() => import("./Reconstruction3DViewer"));
 
@@ -496,59 +517,6 @@ function createSceneObject(
   return object;
 }
 
-function createDefaultPathPoints(
-  type: ReconstructionVehicleType,
-  durationSeconds: number,
-  collisionPoint: ReconstructionPosition,
-  index: number,
-): MovementPathPoint[] {
-  const human = isHumanParticipant(type);
-  const vehicleApproaches = [
-    { start: { x: 8, y: 46 }, final: { x: 78, y: 56 }, rotation: 0 },
-    { start: { x: 54, y: 8 }, final: { x: 44, y: 78 }, rotation: 90 },
-    { start: { x: 92, y: 54 }, final: { x: 22, y: 44 }, rotation: 180 },
-    { start: { x: 46, y: 92 }, final: { x: 56, y: 22 }, rotation: 270 },
-  ];
-  const approach = vehicleApproaches[(index - 1) % vehicleApproaches.length];
-  const start = human ? { x: 82, y: 52 } : approach.start;
-  const final = human ? { x: 60, y: 66 } : approach.final;
-  const approachRotation = human ? 180 : approach.rotation;
-  const speed = getDefaultSpeed(type);
-
-  return [
-    {
-      id: createId("path-start"),
-      label: human ? "Enters scene" : "Starts approach",
-      position: start,
-      timeSeconds: 0,
-      speedKmh: speed,
-      rotation: approachRotation,
-      action: "Start",
-      notes: "",
-    },
-    {
-      id: createId("path-impact"),
-      label: "Impact point",
-      position: collisionPoint,
-      timeSeconds: durationSeconds / 2,
-      speedKmh: Math.max(0, speed * 0.65),
-      rotation: approachRotation,
-      action: "Impact",
-      notes: "",
-    },
-    {
-      id: createId("path-stop"),
-      label: "Final position",
-      position: final,
-      timeSeconds: durationSeconds,
-      speedKmh: 0,
-      rotation: human ? 205 : approachRotation + 12,
-      action: "Stop",
-      notes: "",
-    },
-  ];
-}
-
 function createDefaultReconstruction(): AccidentReconstruction {
   const now = new Date().toISOString();
 
@@ -777,27 +745,6 @@ function getEditableTracePointIndices(pointCount: number): number[] {
   return indices;
 }
 
-function orientPathPointsToRoute(
-  pathPoints: MovementPathPoint[],
-): MovementPathPoint[] {
-  const points = sortMovementPathPoints(pathPoints);
-
-  return points.map((point, index) => {
-    const start = index < points.length - 1 ? point : points[index - 1];
-    const end = index < points.length - 1 ? points[index + 1] : point;
-    if (!start || !end) return point;
-
-    const deltaX = end.position.x - start.position.x;
-    const deltaY = end.position.y - start.position.y;
-    if (Math.hypot(deltaX, deltaY) < 0.001) return point;
-
-    return {
-      ...point,
-      rotation: (Math.atan2(deltaY, deltaX) * 180) / Math.PI,
-    };
-  });
-}
-
 const participantPathGeometryCache = new WeakMap<
   MovementPathPoint[],
   { path: string; skidPath: string }
@@ -887,6 +834,11 @@ export default function AccidentReconstructionEditor({
   );
   const [newParticipantType, setNewParticipantType] =
     useState<ReconstructionVehicleType>("Car");
+  const [pendingParticipantPlacement, setPendingParticipantPlacement] =
+    useState<PendingParticipantPlacement | null>(null);
+  const [participantPlacementMessage, setParticipantPlacementMessage] =
+    useState("");
+  const [participantGpsBusy, setParticipantGpsBusy] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -1026,12 +978,30 @@ export default function AccidentReconstructionEditor({
         ? ReconstructionService.getById(reconstructionId)
         : null;
       const created = loaded ?? createDefaultReconstruction();
-      const next = caseNumber
+      const nextCandidate = caseNumber
         ? {
             ...created,
             accidentId: caseNumber,
           }
         : created;
+
+      const next: AccidentReconstruction = {
+        ...nextCandidate,
+        lastPhysicsSimulation: undefined,
+        vehicles: nextCandidate.vehicles.map((participant) =>
+          syncLegacyParticipantFields({
+            ...participant,
+            pathPoints: normalisePointZRoute({
+              pathPoints: participant.pathPoints,
+              collisionPosition: nextCandidate.collisionPoint,
+              durationSeconds: nextCandidate.durationSeconds,
+              speedKmh: participant.estimatedSpeedKmh,
+              participantType: participant.type,
+              createId,
+            }),
+          }),
+        ),
+      };
 
       setReconstruction(next);
       setSelectedParticipantId(next.vehicles[0]?.id ?? null);
@@ -1053,6 +1023,9 @@ export default function AccidentReconstructionEditor({
       setFieldPlacementOpen(false);
       setFieldPlacementInitialTarget(null);
       setPendingGpsSceneObjectId(null);
+      setPendingParticipantPlacement(null);
+      setParticipantPlacementMessage("");
+      setParticipantGpsBusy(false);
 
       undoStackRef.current = [];
       redoStackRef.current = [];
@@ -1343,6 +1316,15 @@ export default function AccidentReconstructionEditor({
       );
       if (!point) return;
 
+      if (isPointZ(point)) {
+        showSaveMessage(
+          "Point Z is locked to the primary collision marker. Move the collision marker instead.",
+          "info",
+          3200,
+        );
+        return;
+      }
+
       setSelectedPathPointId(point.id);
       openFieldPlacementForTarget({
         type: "ParticipantPathPoint",
@@ -1351,7 +1333,7 @@ export default function AccidentReconstructionEditor({
         label: `${selectedParticipant.name} — ${point.label} (${point.action})`,
       });
     },
-    [openFieldPlacementForTarget, selectedParticipant],
+    [openFieldPlacementForTarget, selectedParticipant, showSaveMessage],
   );
 
   const handleCloseFieldPlacement = useCallback(() => {
@@ -1397,6 +1379,45 @@ export default function AccidentReconstructionEditor({
     [pendingGpsSceneObjectId],
   );
 
+  const handleFieldPlacementUpdate = useCallback(
+    (
+      updater: (
+        current: AccidentReconstruction,
+      ) => AccidentReconstruction,
+    ) => {
+      setReconstruction((current) => {
+        const next = updater(current);
+
+        const collisionChanged =
+          next.collisionPoint.x !== current.collisionPoint.x ||
+          next.collisionPoint.y !== current.collisionPoint.y;
+
+        if (collisionChanged) {
+          return updateReconstructionCollisionPoint({
+            reconstruction: next,
+            collisionPosition: next.collisionPoint,
+            source: next.collisionSetup?.source ?? "Manual",
+            confirmed: next.collisionSetup?.confirmed ?? false,
+            locked: next.collisionSetup?.locked ?? false,
+          });
+        }
+
+        const participantRoutesChanged = next.vehicles.some(
+          (participant) =>
+            participant.pathPoints !==
+            current.vehicles.find(
+              (item) => item.id === participant.id,
+            )?.pathPoints,
+        );
+
+        return participantRoutesChanged
+          ? normaliseAllPointZRoutes(next, createId)
+          : next;
+      });
+    },
+    [],
+  );
+
   const updateSceneSettings = useCallback(
     (updates: Partial<RoadSceneSettings>) => {
       setReconstruction((current) => {
@@ -1419,21 +1440,51 @@ export default function AccidentReconstructionEditor({
 
   const updateParticipant = useCallback(
     (participantId: string, updates: Partial<ReconstructionVehicle>) => {
-      setReconstruction((current) => ({
-        ...current,
-        vehicles: current.vehicles.map((participant) => {
-          if (participant.id !== participantId) return participant;
+      setReconstruction((current) => {
+        const affectsPhysics = Boolean(
+          updates.pathPoints ||
+          updates.estimatedSpeedKmh !== undefined ||
+          updates.type !== undefined ||
+          updates.physics !== undefined,
+        );
 
-          const updated = {
-            ...participant,
-            ...updates,
-          };
+        return {
+          ...current,
+          lastPhysicsSimulation: affectsPhysics
+            ? undefined
+            : current.lastPhysicsSimulation,
+          vehicles: current.vehicles.map((participant) => {
+            if (participant.id !== participantId) return participant;
 
-          return updates.pathPoints
-            ? syncLegacyParticipantFields(updated)
-            : updated;
-        }),
-      }));
+            const updated = {
+              ...participant,
+              ...updates,
+            };
+
+            if (
+              updates.pathPoints ||
+              updates.estimatedSpeedKmh !== undefined ||
+              updates.type !== undefined
+            ) {
+              const pathPoints = normalisePointZRoute({
+                pathPoints: updates.pathPoints ?? participant.pathPoints,
+                collisionPosition: current.collisionPoint,
+                durationSeconds: current.durationSeconds,
+                speedKmh: updated.estimatedSpeedKmh,
+                participantType: updated.type,
+                createId,
+              });
+
+              return syncLegacyParticipantFields({
+                ...updated,
+                pathPoints,
+              });
+            }
+
+            return updated;
+          }),
+        };
+      });
     },
     [],
   );
@@ -1445,35 +1496,16 @@ export default function AccidentReconstructionEditor({
       updates: Partial<MovementPathPoint>,
     ) => {
       setReconstruction((current) => {
-        const updated: AccidentReconstruction = {
-          ...current,
-          vehicles: current.vehicles.map((participant) => {
-            if (participant.id !== participantId) return participant;
-
-            const pathPoints = orientPathPointsToRoute(
-              participant.pathPoints.map((point) =>
-                point.id === pointId
-                  ? {
-                      ...point,
-                      ...updates,
-                    }
-                  : point,
-              ),
-            );
-
-            return syncLegacyParticipantFields({
-              ...participant,
-              pathPoints,
-            });
-          }),
-        };
+        const updated = updateParticipantAuthoredPoint({
+          reconstruction: current,
+          participantId,
+          pointId,
+          updates,
+        });
 
         return updates.position
           ? FieldPlacementService.markManuallyAdjusted({
-              reconstruction: {
-                ...updated,
-                lastPhysicsSimulation: undefined,
-              },
+              reconstruction: updated,
               targetType: "ParticipantPathPoint",
               targetId: participantId,
               subTargetId: pointId,
@@ -1486,26 +1518,18 @@ export default function AccidentReconstructionEditor({
 
   const handleParticipantHeadingChange = useCallback(
     (heading: string, degrees: number) => {
-      if (!selectedParticipant) return;
-      const points = sortMovementPathPoints(selectedParticipant.pathPoints);
-      if (points.length === 0) return;
-      const finalPoint = points[points.length - 1];
-      const impactPoint = [...points].reverse().find((point) => point.action === "Impact");
-      const anchor = impactPoint?.position ?? points[Math.max(0, points.length - 2)].position;
-      const radians = (degrees * Math.PI) / 180;
-      const destination = {
-        x: clamp(anchor.x + Math.cos(radians) * 34, 3, 97),
-        y: clamp(anchor.y + Math.sin(radians) * 34, 3, 97),
-      };
-      updateParticipant(selectedParticipant.id, {
-        destinationLocation: `${heading}bound`,
-        pathPoints: orientPathPointsToRoute(points.map((point) =>
-          point.id === finalPoint.id ? { ...point, position: destination } : point,
-        )),
-      });
-      setSelectedPathPointId(finalPoint.id);
+      if (!selectedParticipantId) return;
+
+      setReconstruction((current) =>
+        changeParticipantApproachHeading({
+          reconstruction: current,
+          participantId: selectedParticipantId,
+          headingLabel: heading,
+          degrees,
+        }),
+      );
     },
-    [selectedParticipant, updateParticipant],
+    [selectedParticipantId],
   );
 
   const updateSceneObject = useCallback(
@@ -1659,48 +1683,116 @@ export default function AccidentReconstructionEditor({
     setActiveSceneObjectType(null);
   }, []);
 
-  const handleAddParticipant = useCallback(() => {
-    const index = reconstruction.vehicles.length + 1;
-    const human = isHumanParticipant(newParticipantType);
-    const pathPoints = createDefaultPathPoints(
-      newParticipantType,
-      reconstruction.durationSeconds,
+  const confirmPendingParticipantAt = useCallback(
+    (startPosition: ReconstructionPosition) => {
+      if (!pendingParticipantPlacement) return;
+
+      const participant = createParticipantAtConfirmedPosition({
+        type: pendingParticipantPlacement.type,
+        index: pendingParticipantPlacement.index,
+        startPosition,
+        collisionPosition: reconstruction.collisionPoint,
+        durationSeconds: reconstruction.durationSeconds,
+        createId,
+        getDefaultSpeed,
+        getDefaultRole,
+        isHumanParticipant,
+      });
+
+      setReconstruction((current) => ({
+        ...current,
+        lastPhysicsSimulation: undefined,
+        vehicles: [...current.vehicles, participant],
+      }));
+
+      setSelectedParticipantId(participant.id);
+      setSelectedPathPointId(participant.pathPoints[0]?.id ?? null);
+      setSelectedSceneObjectId(null);
+      setPendingParticipantPlacement(null);
+      setParticipantPlacementMessage("");
+      setParticipantGpsBusy(false);
+      setActiveWorkspaceTool("Select");
+    },
+    [
+      pendingParticipantPlacement,
       reconstruction.collisionPoint,
-      index,
+      reconstruction.durationSeconds,
+    ],
+  );
+
+  const handleUseParticipantGps = useCallback(() => {
+    if (!pendingParticipantPlacement) return;
+
+    if (!reconstruction.fieldCalibration) {
+      setParticipantPlacementMessage(
+        "GPS scene placement requires Field Mode calibration. Calibrate the scene first or click the starting position manually.",
+      );
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setParticipantPlacementMessage(
+        "This browser does not provide geolocation.",
+      );
+      return;
+    }
+
+    setParticipantGpsBusy(true);
+    setParticipantPlacementMessage("Reading a high-accuracy live GPS position…");
+
+    navigator.geolocation.getCurrentPosition(
+      (result) => {
+        const scenePosition = geoCoordinateToScenePosition(
+          reconstruction.fieldCalibration!,
+          {
+            latitude: result.coords.latitude,
+            longitude: result.coords.longitude,
+            accuracyMetres: result.coords.accuracy,
+            capturedAt: new Date().toISOString(),
+          },
+        );
+
+        confirmPendingParticipantAt(scenePosition);
+      },
+      (error) => {
+        setParticipantGpsBusy(false);
+        setParticipantPlacementMessage(
+          error.message || "The live GPS position could not be read.",
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15_000,
+        maximumAge: 0,
+      },
     );
+  }, [
+    confirmPendingParticipantAt,
+    pendingParticipantPlacement,
+    reconstruction.fieldCalibration,
+  ]);
 
-    const participant = syncLegacyParticipantFields({
-      id: createId("participant"),
-      name: `${newParticipantType} ${index}`,
+  const handleAddParticipant = useCallback(() => {
+    setIsPlaying(false);
+    setActiveReconstructionView("2D");
+    setActiveWorkspaceTool("Select");
+    setPendingParticipantPlacement({
       type: newParticipantType,
-      colour: human ? "Yellow" : index % 2 === 0 ? "Red" : "Blue",
-      estimatedSpeedKmh: getDefaultSpeed(newParticipantType),
-      originLocation: "",
-      destinationLocation: "",
-      pathPoints,
-      startPosition: pathPoints[0].position,
-      collisionPosition: pathPoints[1].position,
-      finalPosition: pathPoints[pathPoints.length - 1].position,
-      startRotation: pathPoints[0].rotation,
-      collisionRotation: pathPoints[1].rotation,
-      finalRotation: pathPoints[pathPoints.length - 1].rotation,
-      collisionTimeSeconds: pathPoints[1].timeSeconds,
-      role: getDefaultRole(newParticipantType),
-      injured: false,
+      index: reconstruction.vehicles.length + 1,
     });
-
-    setReconstruction((current) => ({
-      ...current,
-      vehicles: [...current.vehicles, participant],
-    }));
-
-    setSelectedParticipantId(participant.id);
-    setSelectedPathPointId(pathPoints[0].id);
-    setSelectedSceneObjectId(null);
+    setParticipantPlacementMessage(
+      `Click the exact starting position for ${newParticipantType}. Point Z will stay attached to the primary collision marker.`,
+    );
+    setParticipantGpsBusy(false);
+    setActiveSceneObjectType(null);
+    setTraceToolObjectId(null);
+    setRouteDrawingParticipantId(null);
+    setMeasurementToolActive(false);
+    setMeasurementDraftStart(null);
+    setCollisionPlacementActive(false);
+    setActiveEvidencePlacementId(null);
   }, [
     newParticipantType,
-    reconstruction.collisionPoint,
-    reconstruction.durationSeconds,
     reconstruction.vehicles.length,
   ]);
 
@@ -1753,55 +1845,44 @@ export default function AccidentReconstructionEditor({
   );
 
   const handleAddPathPoint = useCallback(() => {
-    if (!selectedParticipant) return;
+    if (!selectedParticipantId) return;
 
-    const state = getParticipantStateAtTime(selectedParticipant, currentTime);
-    const timeSeconds = clamp(
-      currentTime || reconstruction.durationSeconds / 2,
-      0.1,
-      Math.max(0.1, reconstruction.durationSeconds - 0.1),
-    );
+    let insertedPointId: string | null = null;
 
-    const point: MovementPathPoint = {
-      id: createId("path-point"),
-      label: `Path point ${selectedParticipant.pathPoints.length + 1}`,
-      position: state.position,
-      timeSeconds,
-      speedKmh: state.speedKmh,
-      rotation: state.rotation,
-      action: "Cruise",
-      notes: "",
-    };
+    setReconstruction((current) => {
+      const result = insertParticipantIntermediatePoint({
+        reconstruction: current,
+        participantId: selectedParticipantId,
+        selectedPointId: selectedPathPointId,
+        createId,
+      });
 
-    updateParticipant(selectedParticipant.id, {
-      pathPoints: sortMovementPathPoints([
-        ...selectedParticipant.pathPoints,
-        point,
-      ]),
+      insertedPointId = result.insertedPointId;
+      return result.reconstruction;
     });
 
-    setSelectedPathPointId(point.id);
-  }, [
-    currentTime,
-    reconstruction.durationSeconds,
-    selectedParticipant,
-    updateParticipant,
-  ]);
+    window.requestAnimationFrame(() => {
+      if (insertedPointId) {
+        setSelectedPathPointId(insertedPointId);
+      }
+    });
+  }, [selectedParticipantId, selectedPathPointId]);
 
   const handleDeletePathPoint = useCallback(
     (pointId: string) => {
-      if (!selectedParticipant || selectedParticipant.pathPoints.length <= 2) {
-        return;
-      }
+      if (!selectedParticipantId) return;
 
-      const points = selectedParticipant.pathPoints.filter(
-        (point) => point.id !== pointId,
+      setReconstruction((current) =>
+        deleteParticipantIntermediatePoint({
+          reconstruction: current,
+          participantId: selectedParticipantId,
+          pointId,
+        }),
       );
 
-      updateParticipant(selectedParticipant.id, { pathPoints: points });
-      setSelectedPathPointId(points[0]?.id ?? null);
+      setSelectedPathPointId(null);
     },
-    [selectedParticipant, updateParticipant],
+    [selectedParticipantId],
   );
 
   const handleSceneGesturePointerMove = useCallback(
@@ -1891,6 +1972,19 @@ export default function AccidentReconstructionEditor({
           return;
         }
 
+        const activePoint = selectedParticipant.pathPoints.find(
+          (point) => point.id === selectedParticipantState.activePointId,
+        );
+
+        if (!activePoint || !canBeginRoutePointDrag(activePoint)) {
+          showSaveMessage(
+            "Point Z and physics-generated points cannot be rotated independently.",
+            "info",
+            3000,
+          );
+          return;
+        }
+
         event.preventDefault();
         event.stopPropagation();
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -1923,6 +2017,14 @@ export default function AccidentReconstructionEditor({
       const position = clientToScenePosition(event.clientX, event.clientY);
       if (!position) return;
 
+      if (pendingParticipantPlacement) {
+        if (target.closest('[data-scene-interactive="true"]')) return;
+        event.preventDefault();
+        event.stopPropagation();
+        confirmPendingParticipantAt(position);
+        return;
+      }
+
       if (routeDrawingParticipantId) {
         if (target.closest('[data-scene-interactive="true"]')) return;
         routeDrawingParticipantIdRef.current = routeDrawingParticipantId;
@@ -1935,18 +2037,13 @@ export default function AccidentReconstructionEditor({
 
         setReconstruction((current) =>
           FieldPlacementService.markManuallyAdjusted({
-            reconstruction: {
-              ...current,
-              collisionPoint: position,
-              collisionSetup: {
-                source: "Manual",
-                confirmed: true,
-                locked: false,
-                toleranceMetres: current.collisionSetup?.toleranceMetres ?? 2,
-                notes: current.collisionSetup?.notes ?? "",
-                lastCalculatedAt: new Date().toISOString(),
-              },
-            },
+            reconstruction: updateReconstructionCollisionPoint({
+              reconstruction: current,
+              collisionPosition: position,
+              source: "Manual",
+              confirmed: true,
+              locked: false,
+            }),
             targetType: "CollisionPoint",
             targetId: current.id,
           }),
@@ -2046,12 +2143,14 @@ export default function AccidentReconstructionEditor({
       activeWorkspaceTool,
       clientToScenePosition,
       collisionPlacementActive,
+      confirmPendingParticipantAt,
       measurementDraftStart,
       measurementToolActive,
       reconstruction.measurements.length,
       reconstruction.scene,
       reconstruction.sceneObjects.length,
       routeDrawingParticipantId,
+      pendingParticipantPlacement,
       sceneView.panX,
       sceneView.panY,
       sceneView.zoom,
@@ -2297,24 +2396,22 @@ export default function AccidentReconstructionEditor({
         const sceneSize = axis === "x"
           ? current.scene.sceneWidthMetres
           : current.scene.sceneHeightMetres;
-        const nextPercent = clamp((metres / Math.max(0.1, sceneSize)) * 100, 0, 100);
-        return {
-          ...current,
-          collisionPoint: {
+        const nextPercent = clamp(
+          (metres / Math.max(0.1, sceneSize)) * 100,
+          0,
+          100,
+        );
+
+        return updateReconstructionCollisionPoint({
+          reconstruction: current,
+          collisionPosition: {
             ...current.collisionPoint,
             [axis]: nextPercent,
           },
-          collisionSetup: {
-            confirmed: false,
-            locked: false,
-            toleranceMetres: 2,
-            notes: "",
-            confidence: "Medium",
-            ...(current.collisionSetup ?? {}),
-            source: "Manual",
-            lastCalculatedAt: new Date().toISOString(),
-          },
-        };
+          source: "Manual",
+          confirmed: false,
+          locked: false,
+        });
       });
     },
     [],
@@ -2332,15 +2429,20 @@ export default function AccidentReconstructionEditor({
     }
 
     setReconstruction((current) => ({
-      ...current,
-      collisionPoint: derived,
-      collisionSetup: {
+      ...updateReconstructionCollisionPoint({
+        reconstruction: current,
+        collisionPosition: derived,
+        source: "Derived",
         confirmed: false,
         locked: false,
-        toleranceMetres: 2,
-        notes: "",
+      }),
+      collisionSetup: {
         ...(current.collisionSetup ?? {}),
         source: "Derived",
+        confirmed: false,
+        locked: false,
+        toleranceMetres: current.collisionSetup?.toleranceMetres ?? 2,
+        notes: current.collisionSetup?.notes ?? "",
         confidence: "High",
         lastCalculatedAt: new Date().toISOString(),
       },
@@ -2609,18 +2711,13 @@ export default function AccidentReconstructionEditor({
       } else if (dragState.kind === "collision-point") {
         setReconstruction((current) =>
           FieldPlacementService.markManuallyAdjusted({
-            reconstruction: {
-              ...current,
-              collisionPoint: position,
-              collisionSetup: {
-                source: "Manual",
-                confirmed: current.collisionSetup?.confirmed ?? false,
-                locked: current.collisionSetup?.locked ?? false,
-                toleranceMetres: current.collisionSetup?.toleranceMetres ?? 2,
-                notes: current.collisionSetup?.notes ?? "",
-                lastCalculatedAt: new Date().toISOString(),
-              },
-            },
+            reconstruction: updateReconstructionCollisionPoint({
+              reconstruction: current,
+              collisionPosition: position,
+              source: "Manual",
+              confirmed: current.collisionSetup?.confirmed ?? false,
+              locked: current.collisionSetup?.locked ?? false,
+            }),
             targetType: "CollisionPoint",
             targetId: current.id,
           }),
@@ -2678,32 +2775,14 @@ export default function AccidentReconstructionEditor({
       }
 
       if (routeParticipantId && routePoints.length >= 2) {
-        setReconstruction((current) => ({
-          ...current,
-          lastPhysicsSimulation: undefined,
-          vehicles: current.vehicles.map((participant) => {
-            if (participant.id !== routeParticipantId) return participant;
-            const sampleStep = Math.max(1, Math.ceil(routePoints.length / 16));
-            const sampled = routePoints.filter((_, index) => index % sampleStep === 0);
-            if (sampled[sampled.length - 1] !== routePoints[routePoints.length - 1]) sampled.push(routePoints[routePoints.length - 1]);
-            const impactIndex = sampled.reduce((best, point, index) =>
-              Math.hypot(point.x - current.collisionPoint.x, point.y - current.collisionPoint.y) <
-              Math.hypot(sampled[best].x - current.collisionPoint.x, sampled[best].y - current.collisionPoint.y) ? index : best, 0);
-            const points: MovementPathPoint[] = sampled.map((position, index) => ({
-              id: createId("path-point"),
-              label: index === 0 ? "Route start" : index === impactIndex ? "Primary impact" : index === sampled.length - 1 ? "Natural stop" : `Route ${index + 1}`,
-              position: index === impactIndex ? current.collisionPoint : position,
-              timeSeconds: (index / Math.max(1, sampled.length - 1)) * current.durationSeconds,
-              speedKmh: index === sampled.length - 1 ? 0 : (participant.pathPoints[0]?.speedKmh ?? 40),
-              rotation: participant.pathPoints[0]?.rotation ?? 0,
-              action: index === 0 ? "Start" : index === impactIndex ? "Impact" : index === sampled.length - 1 ? "Stop" : "Cruise",
-            }));
-            return syncLegacyParticipantFields({
-              ...participant,
-              pathPoints: orientPathPointsToRoute(points),
-            });
+        setReconstruction((current) =>
+          replaceParticipantRouteFromDrawing({
+            reconstruction: current,
+            participantId: routeParticipantId,
+            routePoints,
+            createId,
           }),
-        }));
+        );
         setRouteDrawingParticipantId(null);
       }
     };
@@ -2823,19 +2902,24 @@ export default function AccidentReconstructionEditor({
   }, [handleRedo, handleUndo]);
 
   const handleDurationChange = (durationSeconds: number) => {
-    const previousDuration = reconstruction.durationSeconds;
-
     setReconstruction((current) => ({
       ...current,
+      lastPhysicsSimulation: undefined,
       durationSeconds,
       vehicles: current.vehicles.map((participant) => {
-        const pathPoints = participant.pathPoints.map((point, index, points) => ({
+        const adjustedPoints = participant.pathPoints.map((point) => ({
           ...point,
-          timeSeconds:
-            index === points.length - 1 && point.timeSeconds === previousDuration
-              ? durationSeconds
-              : clamp(point.timeSeconds, 0, durationSeconds),
+          timeSeconds: clamp(point.timeSeconds, 0, durationSeconds),
         }));
+
+        const pathPoints = normalisePointZRoute({
+          pathPoints: adjustedPoints,
+          collisionPosition: current.collisionPoint,
+          durationSeconds,
+          speedKmh: participant.estimatedSpeedKmh,
+          participantType: participant.type,
+          createId,
+        });
 
         return syncLegacyParticipantFields({ ...participant, pathPoints });
       }),
@@ -2849,6 +2933,7 @@ export default function AccidentReconstructionEditor({
   };
 
   const sceneCursorClass =
+    pendingParticipantPlacement ||
     activeSceneObjectType ||
     traceToolObjectId ||
     collisionPlacementActive ||
@@ -3632,6 +3717,22 @@ export default function AccidentReconstructionEditor({
             >
               {renderWorkspaceTools()}
               {renderWorkspaceToolHint()}
+
+              {pendingParticipantPlacement && (
+                <ParticipantPlacementOverlay
+                  participantType={pendingParticipantPlacement.type}
+                  gpsBusy={participantGpsBusy}
+                  gpsAvailable={Boolean(reconstruction.fieldCalibration)}
+                  message={participantPlacementMessage}
+                  onUseGps={handleUseParticipantGps}
+                  onCancel={() => {
+                    setPendingParticipantPlacement(null);
+                    setParticipantGpsBusy(false);
+                    setParticipantPlacementMessage("");
+                  }}
+                />
+              )}
+
               <div data-scene-interactive="true" className="reconstruction-workspace__map-controls absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-xl bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur" aria-label="2D map navigation controls">
                 <span />
                 <button type="button" title="Pan map north" aria-label="Pan map north" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY + 40 }))} className="rounded bg-white/15 p-2 font-black">↑</button>
@@ -3911,7 +4012,10 @@ export default function AccidentReconstructionEditor({
                           event.preventDefault();
                           event.stopPropagation();
                           handleSelectParticipant(participant.id, point.id);
-                          if (activeWorkspaceTool === "Move") {
+                          if (
+                            activeWorkspaceTool === "Move" &&
+                            canBeginRoutePointDrag(point)
+                          ) {
                             setDragState({
                               kind: "participant-path-point",
                               participantId: participant.id,
@@ -3929,9 +4033,13 @@ export default function AccidentReconstructionEditor({
                           top: `${point.position.y}%`,
                           backgroundColor: getPathPointColour(point),
                         }}
-                        title={`${participant.name}: ${point.label} at ${point.timeSeconds.toFixed(1)}s — use Move to reposition`}
+                        title={
+                          isPointZ(point)
+                            ? `${participant.name}: Point Z is locked to the primary collision marker`
+                            : `${participant.name}: ${point.label} at ${point.timeSeconds.toFixed(1)}s — use Move to reposition`
+                        }
                       >
-                        {index + 1}
+                        {isPointZ(point) ? "Z" : index + 1}
                       </button>
                     ))}
 
@@ -4763,7 +4871,7 @@ export default function AccidentReconstructionEditor({
             initialTarget={fieldPlacementInitialTarget}
             onClose={handleCloseFieldPlacement}
             onPlacementConfirmed={handleFieldPlacementConfirmed}
-            onUpdate={(updater) => setReconstruction(updater)}
+            onUpdate={handleFieldPlacementUpdate}
           />
         )}
       </div>

@@ -625,7 +625,6 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
         minZoom: 4,
         maxZoom: 20,
         attributionControl: { compact: true },
-        preserveDrawingBuffer: true,
       });
 
       map.addControl(new maplibregl.NavigationControl(), "top-right");

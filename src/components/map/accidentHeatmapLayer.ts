@@ -42,6 +42,12 @@ const ACCIDENT_HEATMAP_SOURCE_ID =
 const ACCIDENT_HEATMAP_LAYER_ID =
   "accident-heatmap-layer";
 
+export interface AccidentHeatmapPoint {
+  latitude: number;
+  longitude: number;
+  weight: number;
+}
+
 interface AccidentHeatmapProperties {
   accidentId: string;
   junctionId: string;
