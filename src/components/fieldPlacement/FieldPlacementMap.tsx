@@ -363,7 +363,7 @@ export default function FieldPlacementMap({
       if (!currentMarkerRef.current) {
         const element = document.createElement("div");
         element.className =
-          "h-5 w-5 rounded-full border-[3px] border-white bg-sky-600 shadow-lg";
+          "h-5 w-5 rounded-full border-[3px] border-white bg-blue-800 shadow-lg";
         currentMarkerRef.current = new maplibregl.Marker({ element })
           .setLngLat([current.longitude, current.latitude])
           .addTo(map);

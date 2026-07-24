@@ -215,7 +215,7 @@ export default function FieldSceneLivePreview({
               top: `${liveScenePosition.y}%`,
             }}
           >
-            <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-sky-600 text-[8px] font-black text-white shadow-xl">
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-blue-800 text-[8px] font-black text-white shadow-xl">
               GPS
             </span>
           </div>

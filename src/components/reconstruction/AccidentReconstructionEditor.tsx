@@ -3700,7 +3700,7 @@ export default function AccidentReconstructionEditor({
               <ImpactEffectOverlay effect={impactEffect} />
 
               {measurementToolActive && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-sky-700 px-4 py-2 text-xs font-bold text-white shadow-lg">
+                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-blue-800 px-4 py-2 text-xs font-bold text-white shadow-lg">
                   {measurementDraftStart
                     ? "Click the measurement end point"
                     : "Click the measurement start point"}

@@ -1110,7 +1110,7 @@ const RoadLocationMap = forwardRef<RoadLocationMapHandle, RoadLocationMapProps>(
               onClick={() => setDrawingMode((current) => !current)}
               className={`rounded-md border px-3 py-2 text-xs font-black shadow-lg transition ${
                 drawingMode
-                  ? "border-sky-300 bg-sky-600 text-white"
+                  ? "border-sky-300 bg-blue-800 text-white"
                   : "border-slate-200 bg-white/95 text-slate-800 hover:bg-slate-100"
               }`}
             >

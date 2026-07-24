@@ -525,7 +525,7 @@ export function EvidenceWorkspacePanel({
                 <button
                   type="button"
                   onClick={onBeginMeasurement}
-                  className="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white hover:bg-sky-700"
+                  className="rounded-lg bg-blue-800 px-3 py-2 text-xs font-bold text-white hover:bg-blue-800"
                 >
                   {measurementToolActive
                     ? measurementDraftStarted
@@ -609,7 +609,7 @@ export function EvidenceWorkspacePanel({
               </label>
 
               <div className="rounded-xl bg-sky-50 p-3">
-                <p className="text-xs font-semibold text-sky-700">Calculated length</p>
+                <p className="text-xs font-semibold text-blue-800">Calculated length</p>
                 <p className="mt-1 text-2xl font-black text-sky-950">
                   {selectedMeasurement.distanceMetres.toFixed(2)} m
                 </p>

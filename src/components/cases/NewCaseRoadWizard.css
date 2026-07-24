@@ -13,8 +13,9 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-case-page-shell > :first-child,
 .roadsafe-case-page-shell > header {
-  border-color: #172a46 !important;
-  background: #050d1b !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .roadsafe-case-page-shell > :first-child h1,
@@ -303,7 +304,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-case-wizard button[class*="bg-blue-600"],
-.roadsafe-case-wizard button[class*="bg-sky-600"],
+.roadsafe-case-wizard button[class*="bg-blue-800"],
 .roadsafe-case-wizard button[class*="bg-emerald-600"] {
   border: 1px solid #3978df !important;
   background: var(--rs-blue) !important;
@@ -311,7 +312,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-case-wizard button[class*="bg-blue-600"]:hover,
-.roadsafe-case-wizard button[class*="bg-sky-600"]:hover,
+.roadsafe-case-wizard button[class*="bg-blue-800"]:hover,
 .roadsafe-case-wizard button[class*="bg-emerald-600"]:hover {
   background: var(--rs-blue-hover) !important;
 }

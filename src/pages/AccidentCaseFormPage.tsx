@@ -42,7 +42,7 @@ export default function AccidentCaseFormPage() {
     : getDefaultValues();
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 lg:p-8">
+    <div className="min-h-screen p-4 lg:p-8">
       <div className={existing ? "mx-auto max-w-4xl" : "mx-auto max-w-7xl"}>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>

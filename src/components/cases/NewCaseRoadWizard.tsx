@@ -652,7 +652,7 @@ export default function NewCaseRoadWizard({
               }}
               className={primaryButtonClass}
             >
-              Continue to Location Detection →
+              Continue to Location Detection
             </button>
           </WizardActions>
         </section>
@@ -848,7 +848,7 @@ export default function NewCaseRoadWizard({
                     type="button"
                     disabled={!sceneArea || extractingScene}
                     onClick={() => void extractSelectedScene()}
-                    className="mt-4 w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-black text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
+                    className="mt-4 w-full rounded-xl bg-blue-800 px-4 py-3 text-sm font-black text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {extractingScene
                       ? "Extracting real scene geometry…"
@@ -1571,7 +1571,7 @@ function inputClass(hasError: boolean): string {
 }
 
 const primaryButtonClass =
-  "rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400";
+  "rounded-sm bg-blue-800 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400";
 
 const secondaryButtonClass =
   "rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";

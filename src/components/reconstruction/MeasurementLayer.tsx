@@ -101,7 +101,7 @@ export default function MeasurementLayer({
                     onPointerDown={(event) =>
                       onEndpointPointerDown(event, measurement.id, "start")
                     }
-                    className="absolute z-[38] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-600 shadow"
+                    className="absolute z-[38] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-800 shadow"
                     style={{
                       left: `${measurement.start.x}%`,
                       top: `${measurement.start.y}%`,
