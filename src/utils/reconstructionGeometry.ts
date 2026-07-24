@@ -1168,6 +1168,18 @@ export function getReconstructionImpactEffectState(
   reconstruction: AccidentReconstruction,
   currentTime: number,
 ): ReconstructionImpactEffectState {
+  const participantCollisionEvent =
+    reconstruction.lastPhysicsSimulation
+      ?.collisionEvents
+      .filter(
+        (event) =>
+          event.type === "Participant-Participant",
+      )
+      .sort(
+        (left, right) =>
+          left.timeSeconds - right.timeSeconds,
+      )[0];
+
   const impactPoints =
     reconstruction.vehicles
       .map((participant) =>
@@ -1196,55 +1208,8 @@ export function getReconstructionImpactEffectState(
     : reconstruction.durationSeconds / 2;
 
   const impactTimeSeconds =
-    reconstruction.lastPhysicsSimulation
-      ?.primaryImpactTimeSeconds ??
+    participantCollisionEvent?.timeSeconds ??
     fallbackTime;
-
-  const width = Math.max(
-    1,
-    reconstruction.scene.sceneWidthMetres,
-  );
-
-  const height = Math.max(
-    1,
-    reconstruction.scene.sceneHeightMetres,
-  );
-
-  const tolerance =
-    reconstruction.physicsSettings
-      ?.collisionToleranceMetres ??
-    reconstruction.collisionSetup
-      ?.toleranceMetres ??
-    2.2;
-
-  const convergingParticipants =
-    impactPoints.filter((point) => {
-      const horizontalDistance =
-        ((point.position.x -
-          reconstruction.collisionPoint.x) /
-          100) *
-        width;
-
-      const verticalDistance =
-        ((point.position.y -
-          reconstruction.collisionPoint.y) /
-          100) *
-        height;
-
-      return (
-        Math.hypot(
-          horizontalDistance,
-          verticalDistance,
-        ) <=
-        tolerance + 0.5
-      );
-    });
-
-  const collisionDetected =
-    reconstruction.lastPhysicsSimulation
-      ? reconstruction.lastPhysicsSimulation
-          .participantCollisions > 0
-      : convergingParticipants.length >= 2;
 
   const showImpactEffects =
     reconstruction.physicsSettings
@@ -1256,8 +1221,11 @@ export function getReconstructionImpactEffectState(
   const effectDuration = 1.05;
 
   const energy =
+    participantCollisionEvent
+      ?.estimatedEnergyKj ??
     reconstruction.lastPhysicsSimulation
-      ?.estimatedImpactEnergyKj ?? 0;
+      ?.estimatedImpactEnergyKj ??
+    0;
 
   const fallbackSpeed = Math.max(
     0,
@@ -1269,7 +1237,7 @@ export function getReconstructionImpactEffectState(
   return {
     active:
       showImpactEffects &&
-      collisionDetected &&
+      Boolean(participantCollisionEvent) &&
       elapsed >= 0 &&
       elapsed <= effectDuration,
     impactTimeSeconds,
@@ -1281,7 +1249,10 @@ export function getReconstructionImpactEffectState(
       0.55,
       1.35,
     ),
-    position: reconstruction.collisionPoint,
+    position:
+      participantCollisionEvent
+        ?.contactPoint ??
+      reconstruction.collisionPoint,
     progress: clamp(
       elapsed / effectDuration,
       0,

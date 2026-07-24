@@ -1216,12 +1216,6 @@ export function applyPhysicsSimulation(
     primaryEvent.kind === "participant" ? detectedParticipantContact : null;
   const activeObjectContact =
     primaryEvent.kind === "object" ? detectedObjectContact : null;
-  const detectedCollisionPoint = activeParticipantContact
-    ? scenePosition(activeParticipantContact.contactPosition, width, height)
-    : activeObjectContact
-      ? scenePosition(activeObjectContact.contactPosition, width, height)
-      : { ...source.collisionPoint };
-
   const bodies: SimulationBody[] = participants.map((participant) => {
     const profile = resolveParticipantPhysicsProfile(participant);
     const authoredImpact = getImpactPoint(participant);
@@ -1759,11 +1753,50 @@ export function applyPhysicsSimulation(
     "This is a deterministic planning simulation, not a certified forensic or crash-dynamics calculation.",
   );
 
+  const firstCollisionEvent = [...collisionEvents].sort(
+    (left, right) =>
+      left.timeSeconds - right.timeSeconds,
+  )[0];
+  const firstParticipantCollisionEvent = collisionEvents
+    .filter(
+      (event) =>
+        event.type === "Participant-Participant",
+    )
+    .sort(
+      (left, right) =>
+        left.timeSeconds - right.timeSeconds,
+    )[0];
+
+  if (firstParticipantCollisionEvent) {
+    const horizontalOffsetMetres =
+      ((firstParticipantCollisionEvent.contactPoint.x -
+        source.collisionPoint.x) /
+        100) *
+      width;
+    const verticalOffsetMetres =
+      ((firstParticipantCollisionEvent.contactPoint.y -
+        source.collisionPoint.y) /
+        100) *
+      height;
+    const markerOffsetMetres = Math.hypot(
+      horizontalOffsetMetres,
+      verticalOffsetMetres,
+    );
+
+    if (markerOffsetMetres > Math.max(0.35, collisionTolerance * 2)) {
+      warnings.push(
+        `The first participant contact occurred ${markerOffsetMetres.toFixed(2)} m from the centre of the primary collision marker. The marker is visual only; adjust the routes or marker if the intended contact should occur at its centre.`,
+      );
+    }
+  }
+
   const summary: PhysicsSimulationSummary = {
     solverVersion: "RoadSafe Physics V2",
     ranAt: new Date().toISOString(),
     participantCollisions,
-    primaryImpactTimeSeconds: primaryImpactTime,
+    primaryImpactTimeSeconds:
+      firstCollisionEvent?.timeSeconds ??
+      primaryImpactTime,
     estimatedImpactEnergyKj: Number(estimatedImpactEnergyKj.toFixed(1)),
     solidObjectImpacts,
     potholeInteractions,
@@ -1794,7 +1827,7 @@ export function applyPhysicsSimulation(
 
   return {
     ...source,
-    collisionPoint: detectedCollisionPoint,
+    collisionPoint: { ...source.collisionPoint },
     durationSeconds: Number(
       Math.max(source.durationSeconds, simulatedDurationSeconds).toFixed(2),
     ),

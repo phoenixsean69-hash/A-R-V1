@@ -1414,13 +1414,43 @@ function Reconstruction3DViewer({
     const participantMeshes = new Map<string, THREE.Group>();
     const velocityArrows = new Map<string, THREE.ArrowHelper>();
     const smokeEffects = new Map<string, THREE.Group>();
+    const collisionEvents =
+      reconstruction.lastPhysicsSimulation?.collisionEvents ?? [];
+    const participantCollisionEvents = collisionEvents
+      .filter(
+        (event) =>
+          event.type === "Participant-Participant",
+      )
+      .sort(
+        (left, right) =>
+          left.timeSeconds - right.timeSeconds,
+      );
+    const primaryParticipantCollision =
+      participantCollisionEvents[0];
     const impactDynamics = new Map<string, { time: number | undefined; speedKmh: number }>();
     reconstruction.vehicles.forEach((participant) => {
       const sortedPoints = sortMovementPathPoints(participant.pathPoints);
       const impactPoint = sortedPoints.find((point) => point.action === "Impact");
+      const participantCollision = collisionEvents
+        .filter((event) =>
+          event.participantIds.includes(participant.id),
+        )
+        .sort(
+          (left, right) =>
+            left.timeSeconds - right.timeSeconds,
+        )[0];
+      const collisionState = participantCollision
+        ? getParticipantStateAtTime(
+            participant,
+            participantCollision.timeSeconds,
+          )
+        : null;
       impactDynamics.set(participant.id, {
-        time: impactPoint?.timeSeconds,
-        speedKmh: impactPoint?.speedKmh ?? participant.estimatedSpeedKmh,
+        time: participantCollision?.timeSeconds,
+        speedKmh:
+          collisionState?.speedKmh ??
+          impactPoint?.speedKmh ??
+          participant.estimatedSpeedKmh,
       });
       const mesh = createProceduralParticipantMesh(participant);
       mesh.userData.participantId = participant.id;
@@ -1548,18 +1578,25 @@ function Reconstruction3DViewer({
     }
 
     const collisionPosition = worldPosition(reconstruction.collisionPoint, width, height, 0.42, sceneHeightAt);
+    const impactEffectPosition = worldPosition(
+      primaryParticipantCollision?.contactPoint ?? reconstruction.collisionPoint,
+      width,
+      height,
+      0.42,
+      sceneHeightAt,
+    );
     const collisionMarker = new THREE.Mesh(new THREE.TorusGeometry(1.35, 0.18, 12, 36), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
     collisionMarker.rotation.x = Math.PI / 2;
     collisionMarker.position.copy(collisionPosition);
     scene.add(collisionMarker);
     const impactLight = new THREE.PointLight(0xff3b20, 0, 18);
-    impactLight.position.copy(collisionPosition).add(new THREE.Vector3(0, 2, 0));
+    impactLight.position.copy(impactEffectPosition).add(new THREE.Vector3(0, 2, 0));
     scene.add(impactLight);
     const shockwaveMaterial = new THREE.MeshBasicMaterial({ color: 0xffb020, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
     const shockwave = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.05, 40), shockwaveMaterial);
     shockwave.rotation.x = -Math.PI / 2;
-    shockwave.position.copy(collisionPosition).add(new THREE.Vector3(0, 0.08, 0));
-    shockwave.visible = effectiveShowPhysicsEffects;
+    shockwave.position.copy(impactEffectPosition).add(new THREE.Vector3(0, 0.08, 0));
+    shockwave.visible = false;
     scene.add(shockwave);
 
     const debris = new THREE.Group();
@@ -1572,7 +1609,7 @@ function Reconstruction3DViewer({
       fragment.userData.velocity = new THREE.Vector3(Math.cos(angle) * (3.2 + index % 4), 1.8 + index % 5 * 0.42, Math.sin(angle) * (3.2 + index % 4));
       debris.add(fragment);
     }
-    debris.position.copy(collisionPosition);
+    debris.position.copy(impactEffectPosition);
     debris.visible = false;
     scene.add(debris);
 
@@ -1625,29 +1662,53 @@ function Reconstruction3DViewer({
           });
         }
       });
-      const impactTime = reconstruction.lastPhysicsSimulation?.primaryImpactTimeSeconds ?? reconstruction.vehicles.map((participant) => participant.pathPoints.find((point) => point.action === "Impact")?.timeSeconds).find((value): value is number => value !== undefined) ?? reconstruction.durationSeconds / 2;
-      const impactDelta = Math.abs(timeRef.current - impactTime);
-      impactLight.intensity = impactDelta < 0.35 ? (1 - impactDelta / 0.35) * 20 : 0;
-      collisionMarker.scale.setScalar(impactDelta < 0.55 ? 1 + (0.55 - impactDelta) * 1.8 : 1);
-      const sinceImpact = timeRef.current - impactTime;
-      if (effectiveShowPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.1) {
+      const impactTime = primaryParticipantCollision?.timeSeconds;
+      const hasParticipantImpact = impactTime !== undefined;
+      const impactDelta = hasParticipantImpact
+        ? Math.abs(timeRef.current - impactTime)
+        : Number.POSITIVE_INFINITY;
+      impactLight.intensity =
+        effectiveShowPhysicsEffects &&
+        hasParticipantImpact &&
+        impactDelta < 0.35
+          ? (1 - impactDelta / 0.35) * 20
+          : 0;
+      collisionMarker.scale.setScalar(1);
+      const sinceImpact = hasParticipantImpact
+        ? timeRef.current - impactTime
+        : Number.NEGATIVE_INFINITY;
+      if (
+        effectiveShowPhysicsEffects &&
+        hasParticipantImpact &&
+        sinceImpact >= 0 &&
+        sinceImpact < 1.1
+      ) {
         const progress = sinceImpact / 1.1;
         shockwave.visible = true;
         shockwave.scale.setScalar(1 + progress * 7);
         shockwaveMaterial.opacity = (1 - progress) * 0.82;
       } else {
+        shockwave.visible = false;
         shockwaveMaterial.opacity = 0;
       }
-      debris.visible = effectiveShowPhysicsEffects && sinceImpact >= 0 && sinceImpact < 1.4;
+      debris.visible =
+        effectiveShowPhysicsEffects &&
+        hasParticipantImpact &&
+        sinceImpact >= 0 &&
+        sinceImpact < 1.4;
       if (debris.visible) debris.children.forEach((fragment, index) => {
         const velocity = fragment.userData.velocity as THREE.Vector3;
         fragment.position.set(velocity.x * sinceImpact, Math.max(0, velocity.y * sinceImpact - 4.9 * sinceImpact * sinceImpact), velocity.z * sinceImpact);
         fragment.rotation.set(sinceImpact * (5 + index % 3), sinceImpact * (7 + index % 4), sinceImpact * 4);
       });
-      if (effectiveShowPhysicsEffects && Math.abs(sinceImpact) < 0.28) {
+      if (
+        effectiveShowPhysicsEffects &&
+        hasParticipantImpact &&
+        Math.abs(sinceImpact) < 0.28
+      ) {
         const strength = (1 - Math.abs(sinceImpact) / 0.28) * 0.18;
         participantMeshes.forEach((mesh) => {
-          if (mesh.position.distanceTo(collisionPosition) < 12) {
+          if (mesh.position.distanceTo(impactEffectPosition) < 12) {
             mesh.position.x += Math.sin(now * 0.08) * strength;
             mesh.rotation.z = Math.sin(now * 0.06) * strength * 0.45;
           }
