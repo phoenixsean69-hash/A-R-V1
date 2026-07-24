@@ -49,7 +49,7 @@ export default function ReconstructionGuide() {
         <section>
           <h3 className="font-black text-gray-950">5. Run physics assistance</h3>
           <p className="mt-1">
-            Confirm participant masses and collision parameters, then press <strong>Run Physics &amp; Bake Movement Paths</strong>. RoadSafe preserves the pre-impact officer-authored route and generates editable post-impact Slide, Deflect, Ricochet and Stop points. Review every generated point before relying on it.
+            Confirm participant masses, collision parameters and the assumed contact-duration range, then run physics. RoadSafe preserves the officer-authored route, keeps post-impact solver samples internal, and calculates impulse, kinetic-energy change, estimated average force, delta-v and post-impact travel distance.
           </p>
         </section>
 
@@ -63,7 +63,7 @@ export default function ReconstructionGuide() {
         <section>
           <h3 className="font-black text-gray-950">7. Save before recording</h3>
           <p className="mt-1">
-            Press <strong>Save Reconstruction</strong>. Confirm that the case contains participants, evidence, measurements, timeline events and field GPS records. Physics-generated paths are saved as ordinary movement points, so the footage recorder can replay them.
+            Press <strong>Save Reconstruction</strong>. Confirm that the case contains participants, evidence, measurements, timeline events, field GPS records and reviewed kinematics. Internal physics samples remain hidden from the investigator route-point list while still driving 2D, 3D and footage playback.
           </p>
         </section>
 

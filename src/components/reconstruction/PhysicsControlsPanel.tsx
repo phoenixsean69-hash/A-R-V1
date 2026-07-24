@@ -10,6 +10,8 @@ import {
   getDefaultParticipantPhysics,
 } from "../../services/reconstructionPhysicsService";
 
+import KinematicsSummaryPanel from "./KinematicsSummaryPanel";
+
 interface PhysicsControlsPanelProps {
   reconstruction: AccidentReconstruction;
   onChange: (updates: Partial<AccidentReconstruction>) => void;
@@ -54,9 +56,9 @@ export default function PhysicsControlsPanel({
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">
               Premium deterministic simulation
             </p>
-            <h2 className="mt-1 text-xl font-black">2D Physics Assistance</h2>
+            <h2 className="mt-1 text-xl font-black">Physics & Kinematics</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-violet-100">
-              Use participant mass, approach speed, restitution, road friction and nearby hazards to generate post-impact movement, deflection, sliding and ricochet paths. The generated points remain fully editable and are used by saved footage.
+              Use participant mass, approach speed, restitution, road friction and nearby hazards to calculate post-impact movement, impulse, energy, force estimates and rebound distance. Internal physics samples drive playback but never appear as investigator-created route points.
             </p>
           </div>
 
@@ -66,7 +68,7 @@ export default function PhysicsControlsPanel({
             disabled={!settings.enabled || reconstruction.vehicles.length === 0}
             className="rounded-sm bg-white px-5 py-3 text-sm font-black text-blue-900 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
           >
-            Run Physics & Bake Movement Paths
+            Run Physics & Calculate Kinematics
           </button>
         </div>
       </div>
@@ -155,6 +157,48 @@ export default function PhysicsControlsPanel({
                 value={settings.collisionToleranceMetres}
                 onChange={(event) =>
                   updateSettings({ collisionToleranceMetres: Number(event.target.value) })
+                }
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label>
+              <span className="text-xs font-bold text-gray-600">Contact duration min (ms)</span>
+              <input
+                type="number"
+                min={10}
+                max={1000}
+                step={5}
+                value={settings.contactDurationMinimumMs}
+                onChange={(event) => {
+                  const minimum = Number(event.target.value);
+                  updateSettings({
+                    contactDurationMinimumMs: minimum,
+                    contactDurationMaximumMs: Math.max(
+                      minimum,
+                      settings.contactDurationMaximumMs,
+                    ),
+                  });
+                }}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label>
+              <span className="text-xs font-bold text-gray-600">Contact duration max (ms)</span>
+              <input
+                type="number"
+                min={settings.contactDurationMinimumMs}
+                max={1500}
+                step={5}
+                value={settings.contactDurationMaximumMs}
+                onChange={(event) =>
+                  updateSettings({
+                    contactDurationMaximumMs: Math.max(
+                      settings.contactDurationMinimumMs,
+                      Number(event.target.value),
+                    ),
+                  })
                 }
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
@@ -324,14 +368,27 @@ export default function PhysicsControlsPanel({
               <h3 className="font-black text-violet-950">Last simulation</h3>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-violet-900 sm:grid-cols-4">
                 <p><strong>Participant collisions:</strong><br />{summary.participantCollisions}</p>
-                <p><strong>Impact energy:</strong><br />{Number(summary.estimatedImpactEnergyKj ?? 0).toFixed(1)} kJ</p>
+                <p><strong>Solver energy loss:</strong><br />{Number(summary.estimatedImpactEnergyKj ?? 0).toFixed(1)} kJ</p>
                 <p><strong>Impact time:</strong><br />{Number(summary.primaryImpactTimeSeconds ?? reconstruction.durationSeconds / 2).toFixed(2)}s</p>
                 <p><strong>Settled by:</strong><br />{Number(summary.simulatedDurationSeconds ?? reconstruction.durationSeconds).toFixed(2)}s</p>
                 <p><strong>Solid impacts:</strong><br />{summary.solidObjectImpacts}</p>
                 <p><strong>Potholes:</strong><br />{summary.potholeInteractions}</p>
                 <p><strong>Low-grip areas:</strong><br />{summary.surfaceInteractions}</p>
-                <p><strong>Generated points:</strong><br />{summary.generatedPathPoints}</p>
+                <p><strong>Internal samples:</strong><br />{summary.generatedPathPoints}</p>
+                <p><strong>KE before:</strong><br />{Number(summary.totalIncomingKineticEnergyKj ?? 0).toFixed(1)} kJ</p>
+                <p><strong>KE after:</strong><br />{Number(summary.totalOutgoingKineticEnergyKj ?? 0).toFixed(1)} kJ</p>
+                <p><strong>Dissipated KE:</strong><br />{Number(summary.totalDissipatedKineticEnergyKj ?? 0).toFixed(1)} kJ</p>
+                <p><strong>Post-impact travel:</strong><br />{Number(summary.totalPostImpactTravelDistanceMetres ?? 0).toFixed(2)} m</p>
               </div>
+              {summary.primaryCollisionKinematics && (
+                <div className="mt-4">
+                  <KinematicsSummaryPanel
+                    kinematics={summary.primaryCollisionKinematics}
+                    participants={reconstruction.vehicles}
+                  />
+                </div>
+              )}
+
               {summary.warnings.length > 0 && (
                 <ul className="mt-3 space-y-1 text-xs leading-5 text-amber-900">
                   {summary.warnings.map((warning) => (

@@ -1138,6 +1138,32 @@ function normalisePhysicsSettings(
             .stopSpeedKmh,
       ),
     ),
+    contactDurationMinimumMs: Math.min(
+      1000,
+      Math.max(
+        10,
+        Number(
+          settings?.contactDurationMinimumMs ??
+            DEFAULT_PHYSICS_SETTINGS
+              .contactDurationMinimumMs,
+        ),
+      ),
+    ),
+    contactDurationMaximumMs: Math.min(
+      1500,
+      Math.max(
+        Number(
+          settings?.contactDurationMinimumMs ??
+            DEFAULT_PHYSICS_SETTINGS
+              .contactDurationMinimumMs,
+        ),
+        Number(
+          settings?.contactDurationMaximumMs ??
+            DEFAULT_PHYSICS_SETTINGS
+              .contactDurationMaximumMs,
+        ),
+      ),
+    ),
   };
 }
 

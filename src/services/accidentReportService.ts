@@ -8,6 +8,7 @@ import {
   type MovementPathPoint,
   type ReconstructionVehicle,
 } from "../types/reconstruction";
+import { isPhysicsGeneratedPathPoint } from "../utils/reconstructionGeometry";
 
 export interface ReportTimelineEntry {
   id: string;
@@ -74,6 +75,7 @@ function buildNarrative(reconstruction: AccidentReconstruction | null): string[]
     );
 
     [...participant.pathPoints]
+      .filter((point) => !isPhysicsGeneratedPathPoint(point))
       .sort((left, right) => left.timeSeconds - right.timeSeconds)
       .forEach((point) => paragraphs.push(describeMovementPoint(participant, point)));
   });
@@ -94,7 +96,9 @@ function getTimeline(
 
   const movementEntries: ReportTimelineEntry[] = reconstruction.vehicles.flatMap(
     (participant) =>
-      participant.pathPoints.map((point) => ({
+      participant.pathPoints
+        .filter((point) => !isPhysicsGeneratedPathPoint(point))
+        .map((point) => ({
         id: `movement-${participant.id}-${point.id}`,
         timeSeconds: point.timeSeconds,
         title: `${participant.name}: ${point.action}`,
@@ -175,6 +179,53 @@ function getFindings(reconstruction: AccidentReconstruction | null): string[] {
         .map((object) => object.label)
         .join(", ")}.`,
     );
+  }
+
+  const kinematics =
+    reconstruction.lastPhysicsSimulation?.primaryCollisionKinematics;
+
+  if (kinematics) {
+    findings.push(
+      `The primary physical contact occurred at ${formatSeconds(
+        kinematics.timeSeconds,
+      )} with a relative impact speed of ${kinematics.relativeImpactSpeedKmh.toFixed(
+        1,
+      )} km/h and a calculated impulse of ${kinematics.totalImpulseNs.toFixed(
+        0,
+      )} N·s.`,
+    );
+    findings.push(
+      `The primary collision carried approximately ${kinematics.totalIncomingKineticEnergyKj.toFixed(
+        1,
+      )} kJ before contact and ${kinematics.totalOutgoingKineticEnergyKj.toFixed(
+        1,
+      )} kJ immediately afterwards, giving ${kinematics.dissipatedKineticEnergyKj.toFixed(
+        1,
+      )} kJ of estimated dissipated motion energy.`,
+    );
+    findings.push(
+      `The estimated average collision-force range was ${kinematics.estimatedAverageForceRangeKn.minimum.toFixed(
+        1,
+      )}–${kinematics.estimatedAverageForceRangeKn.maximum.toFixed(
+        1,
+      )} kN using an assumed contact duration of ${kinematics.assumedContactDurationRangeMs.minimum.toFixed(
+        0,
+      )}–${kinematics.assumedContactDurationRangeMs.maximum.toFixed(0)} ms.`,
+    );
+    kinematics.participants.forEach((participantKinematics) => {
+      const participantName =
+        reconstruction.vehicles.find(
+          (participant) =>
+            participant.id === participantKinematics.participantId,
+        )?.name ?? "Participant";
+      findings.push(
+        `${participantName} travelled ${participantKinematics.postImpactTravelDistanceMetres.toFixed(
+          2,
+        )} m after contact, with a delta-v magnitude of ${participantKinematics.deltaVMetresPerSecond.toFixed(
+          2,
+        )} m/s and an outcome classified as ${participantKinematics.outcome}.`,
+      );
+    });
   }
 
   const aboveLimit = reconstruction.vehicles.filter((participant) =>

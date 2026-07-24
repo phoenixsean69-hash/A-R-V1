@@ -1269,6 +1269,20 @@ export default function AccidentReconstructionEditor({
     return events[events.length - 1] ?? null;
   }, [reconstruction.lastPhysicsSimulation, selectedParticipantId]);
 
+  const selectedParticipantKinematics = useMemo(() => {
+    const participants = selectedPhysicsEvent?.kinematics?.participants ?? [];
+
+    if (selectedParticipantId) {
+      return (
+        participants.find(
+          (participant) => participant.participantId === selectedParticipantId,
+        ) ?? null
+      );
+    }
+
+    return participants[0] ?? null;
+  }, [selectedParticipantId, selectedPhysicsEvent]);
+
   const compactCollisionSetup = useMemo(
     () => ({
       source: "Manual" as const,
@@ -2628,7 +2642,7 @@ export default function AccidentReconstructionEditor({
     const simulated = applyPhysicsSimulation(reconstruction);
     setReconstruction(simulated);
     showSaveMessage(
-      "Physics paths generated. Both 2D and 3D now use this shared collision timeline.",
+      "Physics and kinematics calculated. Both 2D and 3D now use the same hidden post-impact trajectory and collision timeline.",
       "info",
       4000,
     );
@@ -3655,16 +3669,24 @@ export default function AccidentReconstructionEditor({
                       <strong>{selectedPhysicsEvent?.relativeSpeedKmh.toFixed(1) ?? "—"} km/h</strong>
                     </div>
                     <div>
-                      <span>Normal impulse</span>
-                      <strong>{selectedPhysicsEvent ? `${selectedPhysicsEvent.normalImpulseNs.toFixed(0)} N·s` : "—"}</strong>
+                      <span>Total impulse</span>
+                      <strong>{selectedPhysicsEvent ? `${selectedPhysicsEvent.totalImpulseNs.toFixed(0)} N·s` : "—"}</strong>
                     </div>
                     <div>
-                      <span>Energy</span>
-                      <strong>{selectedPhysicsEvent ? `${selectedPhysicsEvent.estimatedEnergyKj.toFixed(1)} kJ` : "—"}</strong>
+                      <span>Average force</span>
+                      <strong>
+                        {selectedPhysicsEvent
+                          ? `${selectedPhysicsEvent.estimatedAverageForceRangeKn.minimum.toFixed(1)}–${selectedPhysicsEvent.estimatedAverageForceRangeKn.maximum.toFixed(1)} kN`
+                          : "—"}
+                      </strong>
                     </div>
                     <div>
-                      <span>Collisions</span>
-                      <strong>{reconstruction.lastPhysicsSimulation?.participantCollisions ?? 0}</strong>
+                      <span>Post-impact travel</span>
+                      <strong>
+                        {selectedParticipantKinematics
+                          ? `${selectedParticipantKinematics.postImpactTravelDistanceMetres.toFixed(2)} m`
+                          : "—"}
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -4636,7 +4658,7 @@ export default function AccidentReconstructionEditor({
               </span>
               <span>
                 {reconstruction.lastPhysicsSimulation
-                  ? `${reconstruction.lastPhysicsSimulation.estimatedImpactEnergyKj.toFixed(1)} kJ`
+                  ? `${reconstruction.lastPhysicsSimulation.totalDissipatedKineticEnergyKj.toFixed(1)} kJ dissipated`
                   : "Physics not baked"}
               </span>
             </div>

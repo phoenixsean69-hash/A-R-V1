@@ -392,6 +392,10 @@ export interface ReconstructionPhysicsSettings {
   showVelocityVectors: boolean;
   showImpactEffects: boolean;
   replacePostImpactPath: boolean;
+
+  /** Assumed contact-duration range used only for transparent average-force estimates. */
+  contactDurationMinimumMs: number;
+  contactDurationMaximumMs: number;
 }
 
 export interface CollisionSetup {
@@ -404,6 +408,81 @@ export interface CollisionSetup {
   lastCalculatedAt?: string;
 }
 
+export interface PhysicsVector2D {
+  x: number;
+  y: number;
+}
+
+export interface PhysicsForceRange {
+  minimum: number;
+  maximum: number;
+}
+
+export type CollisionKinematicOutcome =
+  | "Stick"
+  | "SlideTogether"
+  | "Deflect"
+  | "Ricochet"
+  | "Stop";
+
+export interface ParticipantCollisionKinematics {
+  participantId: string;
+  massKg: number;
+  impactPosition: ReconstructionPosition;
+  finalPosition: ReconstructionPosition;
+
+  incomingVelocityMps: PhysicsVector2D;
+  outgoingVelocityMps: PhysicsVector2D;
+  incomingSpeedKmh: number;
+  outgoingSpeedKmh: number;
+  deltaVelocityMps: PhysicsVector2D;
+  deltaVMetresPerSecond: number;
+
+  momentumBeforeNs: PhysicsVector2D;
+  momentumAfterNs: PhysicsVector2D;
+  impulseNs: PhysicsVector2D;
+  impulseMagnitudeNs: number;
+
+  incomingTranslationalKineticEnergyKj: number;
+  outgoingTranslationalKineticEnergyKj: number;
+  incomingRotationalKineticEnergyKj: number;
+  outgoingRotationalKineticEnergyKj: number;
+  totalIncomingKineticEnergyKj: number;
+  totalOutgoingKineticEnergyKj: number;
+
+  postImpactTravelDistanceMetres: number;
+  postImpactDisplacementMetres: number;
+  timeToRestSeconds?: number;
+  outcome: CollisionKinematicOutcome;
+}
+
+export interface CollisionKinematicsSummary {
+  collisionEventId: string;
+  timeSeconds: number;
+  contactPoint: ReconstructionPosition;
+  participantIds: string[];
+  relativeImpactSpeedKmh: number;
+  impactAngleDegrees: number;
+
+  normalImpulseNs: number;
+  frictionImpulseNs: number;
+  totalImpulseNs: number;
+  assumedContactDurationRangeMs: PhysicsForceRange;
+  estimatedAverageForceRangeKn: PhysicsForceRange;
+
+  totalIncomingTranslationalKineticEnergyKj: number;
+  totalOutgoingTranslationalKineticEnergyKj: number;
+  totalIncomingRotationalKineticEnergyKj: number;
+  totalOutgoingRotationalKineticEnergyKj: number;
+  totalIncomingKineticEnergyKj: number;
+  totalOutgoingKineticEnergyKj: number;
+  dissipatedKineticEnergyKj: number;
+  solverEstimatedDissipatedEnergyKj: number;
+
+  outcome: CollisionKinematicOutcome;
+  participants: ParticipantCollisionKinematics[];
+}
+
 export interface PhysicsCollisionEvent {
   id: string;
   timeSeconds: number;
@@ -413,10 +492,14 @@ export interface PhysicsCollisionEvent {
   contactPoint: ReconstructionPosition;
   normal: ReconstructionPosition;
   relativeSpeedKmh: number;
+  impactAngleDegrees: number;
   normalImpulseNs: number;
   frictionImpulseNs: number;
+  totalImpulseNs: number;
   estimatedEnergyKj: number;
+  estimatedAverageForceRangeKn: PhysicsForceRange;
   angularVelocityChangesDegPerSecond: Record<string, number>;
+  kinematics?: CollisionKinematicsSummary;
 }
 
 export interface PhysicsSimulationSummary {
@@ -431,6 +514,13 @@ export interface PhysicsSimulationSummary {
   generatedPathPoints: number;
   simulatedDurationSeconds: number;
   collisionEvents: PhysicsCollisionEvent[];
+  primaryCollisionKinematics?: CollisionKinematicsSummary;
+  participantKinematics: ParticipantCollisionKinematics[];
+  totalIncomingKineticEnergyKj: number;
+  totalOutgoingKineticEnergyKj: number;
+  totalDissipatedKineticEnergyKj: number;
+  totalPostImpactTravelDistanceMetres: number;
+  estimatedAverageForceRangeKn?: PhysicsForceRange;
   warnings: string[];
 }
 
