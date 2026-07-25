@@ -778,6 +778,24 @@ export default function NewCaseRoadWizard({
           ...linkedReconstruction,
           siteCoordinate: selectedCoordinate,
           collisionPoint: exactCollisionPoint,
+          collisionSetup: {
+            source: "Manual",
+            confirmed: true,
+            locked: false,
+            toleranceMetres: Math.max(
+              0.5,
+              Math.min(10, selectedCoordinate.accuracyMetres || 2),
+            ),
+            confidence:
+              selectedCoordinate.accuracyMetres <= 5
+                ? "High"
+                : selectedCoordinate.accuracyMetres <= 10
+                  ? "Medium"
+                  : "Low",
+            notes:
+              "Confirmed by the investigating officer during precise new-scene construction.",
+            lastCalculatedAt: new Date().toISOString(),
+          },
           scene: finalSceneSettings,
           roadLayoutDetection: confirmedDetection,
         });
