@@ -1,0 +1,208 @@
+/*
+ * RoadSafe AR global typography scale
+ *
+ * This file is imported after index.css so it can enlarge the many fixed
+ * pixel-based Tailwind text utilities used throughout the interface.
+ *
+ * The increase is deliberately controlled rather than applying browser zoom.
+ * That keeps maps, canvases, cards and fixed workspaces at their intended size.
+ */
+
+:root {
+  --roadsafe-font-micro: 8.5px;
+  --roadsafe-font-7: 9px;
+  --roadsafe-font-8: 10px;
+  --roadsafe-font-9: 11px;
+  --roadsafe-font-10: 12px;
+  --roadsafe-font-11: 13px;
+  --roadsafe-font-12: 14px;
+  --roadsafe-font-13: 15px;
+  --roadsafe-font-14: 16px;
+  --roadsafe-font-15: 17px;
+}
+
+/* Preserve the existing layout scale while improving baseline readability. */
+.roadsafe-shell {
+  font-size: 16px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Arbitrary Tailwind sizes are common across the operational UI.
+ * Exact class-token selectors let us increase them project-wide without
+ * changing hundreds of components.
+ */
+.roadsafe-shell [class~="text-[6px]"] {
+  font-size: var(--roadsafe-font-micro) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-shell [class~="text-[7px]"] {
+  font-size: var(--roadsafe-font-7) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-shell [class~="text-[8px]"] {
+  font-size: var(--roadsafe-font-8) !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-shell [class~="text-[9px]"] {
+  font-size: var(--roadsafe-font-9) !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-shell [class~="text-[10px]"] {
+  font-size: var(--roadsafe-font-10) !important;
+  line-height: 1.42 !important;
+}
+
+.roadsafe-shell [class~="text-[11px]"] {
+  font-size: var(--roadsafe-font-11) !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-shell [class~="text-[12px]"] {
+  font-size: var(--roadsafe-font-12) !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-shell [class~="text-[13px]"] {
+  font-size: var(--roadsafe-font-13) !important;
+}
+
+.roadsafe-shell [class~="text-[14px]"] {
+  font-size: var(--roadsafe-font-14) !important;
+}
+
+.roadsafe-shell [class~="text-[15px]"] {
+  font-size: var(--roadsafe-font-15) !important;
+}
+
+/* Increase standard Tailwind typography utilities by a modest, safe amount. */
+.roadsafe-shell .text-xs {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-shell .text-sm {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+.roadsafe-shell .text-base {
+  font-size: 17px !important;
+  line-height: 1.5 !important;
+}
+
+.roadsafe-shell .text-lg {
+  font-size: 19px !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-shell .text-xl {
+  font-size: 22px !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-shell .text-2xl {
+  font-size: 26px !important;
+  line-height: 1.25 !important;
+}
+
+.roadsafe-shell .text-3xl {
+  font-size: 32px !important;
+  line-height: 1.2 !important;
+}
+
+/* Shared operational primitives. */
+.roadsafe-shell .ui-panel-title {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-shell .ui-button,
+.roadsafe-shell .ui-button-primary {
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+}
+
+.roadsafe-shell .ui-badge {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
+.roadsafe-shell .ui-input,
+.roadsafe-shell input,
+.roadsafe-shell select,
+.roadsafe-shell textarea {
+  font-size: 13px;
+}
+
+/* Native select menu options do not always inherit the select's utility class. */
+.roadsafe-shell option {
+  font-size: 13px;
+}
+
+/* Improve map controls and popup readability without enlarging the map itself. */
+.roadsafe-shell .maplibregl-map,
+.roadsafe-shell .maplibregl-ctrl,
+.roadsafe-shell .maplibregl-popup-content,
+.roadsafe-shell .maplibregl-ctrl-attrib {
+  font-size: 11px !important;
+}
+
+/*
+ * Fixed-width operational areas already use truncation and scrolling.
+ * These safeguards prevent larger labels from forcing horizontal overflow.
+ */
+.roadsafe-shell button,
+.roadsafe-shell a,
+.roadsafe-shell label,
+.roadsafe-shell td,
+.roadsafe-shell th,
+.roadsafe-shell dt,
+.roadsafe-shell dd {
+  min-width: 0;
+}
+
+/* Keep compact mobile layouts readable without making them excessively tall. */
+@media (max-width: 640px) {
+  :root {
+    --roadsafe-font-10: 11.5px;
+    --roadsafe-font-11: 12.5px;
+    --roadsafe-font-12: 13.5px;
+  }
+
+  .roadsafe-shell .text-sm {
+    font-size: 14px !important;
+  }
+
+  .roadsafe-shell .text-base {
+    font-size: 16px !important;
+  }
+
+  .roadsafe-shell .ui-button,
+  .roadsafe-shell .ui-button-primary,
+  .roadsafe-shell .ui-input,
+  .roadsafe-shell input,
+  .roadsafe-shell select,
+  .roadsafe-shell textarea {
+    font-size: 12.5px !important;
+  }
+}
+
+/* Printing should remain compact and document-oriented. */
+@media print {
+  .roadsafe-shell {
+    font-size: 12px;
+  }
+
+  .roadsafe-shell .text-xs,
+  .roadsafe-shell .text-sm,
+  .roadsafe-shell .text-base {
+    font-size: inherit !important;
+  }
+}

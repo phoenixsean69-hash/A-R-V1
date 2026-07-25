@@ -1,16 +1,21 @@
 import {
   Component,
+  useEffect,
   useMemo,
   type ErrorInfo,
   type ReactNode,
 } from "react";
 import { Link, useParams } from "react-router-dom";
+import { AlertTriangle, Orbit, RefreshCw } from "lucide-react";
 
 import AccidentReconstructionEditor from "../components/reconstruction/AccidentReconstructionEditor";
 import { AccidentCaseService } from "../services/accidentCaseService";
 
 import type { AccidentCase } from "../types/accidentCase";
 import type { AccidentReconstruction } from "../types/reconstruction";
+
+const LAST_RECONSTRUCTION_CASE_KEY =
+  "roadsafe-ar-last-reconstruction-case-id";
 
 interface ReconstructionLoadResult {
   accidentCase: AccidentCase | null;
@@ -42,7 +47,11 @@ class ReconstructionErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("The reconstruction editor failed to render:", error, info);
+    console.error(
+      "The reconstruction editor failed to render:",
+      error,
+      info,
+    );
   }
 
   render() {
@@ -51,43 +60,54 @@ class ReconstructionErrorBoundary extends Component<
     }
 
     return (
-      <div className="min-h-screen bg-slate-100 p-4 lg:p-8">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-white p-8 shadow-sm">
-          <p className="text-sm font-black uppercase tracking-wide text-red-600">
-            Reconstruction editor error
-          </p>
-          <h1 className="mt-2 text-2xl font-black text-slate-950">
-            The editor could not be displayed
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Your case has not been deleted. Reload the editor after replacing
-            the affected files. The technical message is shown below instead of
-            leaving a blank white screen.
-          </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#030714] p-4">
+        <div className="ui-panel w-full max-w-3xl overflow-hidden">
+          <div className="border-b border-[#18243f] p-5 text-center">
+            <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
+              <AlertTriangle size={20} strokeWidth={1.8} />
+            </div>
+            <p className="mt-4 text-[9px] font-bold uppercase tracking-[0.1em] text-[#e28b9d]">
+              Reconstruction editor error
+            </p>
+            <h1 className="mt-2 text-xl font-bold text-slate-100">
+              The editor could not be displayed
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-[10px] leading-5 text-slate-500">
+              The accident case has not been deleted. Reload the editor or
+              return to the case workspace.
+            </p>
+          </div>
 
-          <pre className="mt-5 max-h-48 overflow-auto whitespace-pre-wrap rounded-sm bg-slate-950 p-4 text-xs leading-5 text-red-200">
-            {this.state.error.message || "Unknown reconstruction editor error"}
+          <pre className="m-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-[#713646] bg-[#180b12] p-4 text-[10px] leading-5 text-[#e28b9d]">
+            {this.state.error.message ||
+              "Unknown reconstruction editor error"}
           </pre>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="flex flex-wrap justify-center gap-3 border-t border-[#18243f] p-4">
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-sm bg-blue-600 px-5 py-3 text-sm font-bold text-white"
+              className="ui-button-primary"
             >
-              Reload Reconstruction
+              <RefreshCw size={14} />
+              Reload reconstruction
             </button>
 
-            <Link
-              to={this.props.casePath}
-              className="rounded-sm border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700"
-            >
-              Return to Case
+            <Link to={this.props.casePath} className="ui-button">
+              Return to case
             </Link>
           </div>
         </div>
       </div>
     );
+  }
+}
+
+function rememberReconstructionCase(caseId: string): void {
+  try {
+    localStorage.setItem(LAST_RECONSTRUCTION_CASE_KEY, caseId);
+  } catch (error) {
+    console.warn("Unable to remember the reconstruction case.", error);
   }
 }
 
@@ -111,8 +131,6 @@ function loadReconstruction(caseId?: string): ReconstructionLoadResult {
       };
     }
 
-    // Reading an existing reconstruction avoids the old render-time save.
-    // ensureReconstruction is used only when the case genuinely has no record.
     const reconstruction =
       AccidentCaseService.getLinkedReconstruction(accidentCase) ??
       AccidentCaseService.ensureReconstruction(caseId);
@@ -147,27 +165,45 @@ function loadReconstruction(caseId?: string): ReconstructionLoadResult {
 
 export default function CaseReconstructionPage() {
   const { caseId } = useParams<{ caseId: string }>();
-  const loadResult = useMemo(() => loadReconstruction(caseId), [caseId]);
+  const loadResult = useMemo(
+    () => loadReconstruction(caseId),
+    [caseId],
+  );
   const { accidentCase, reconstruction, error } = loadResult;
+
+  useEffect(() => {
+    if (caseId && accidentCase && reconstruction) {
+      rememberReconstructionCase(caseId);
+    }
+  }, [accidentCase, caseId, reconstruction]);
 
   if (!accidentCase || !reconstruction || !caseId) {
     return (
-      <div className="min-h-screen bg-slate-100 p-4 lg:p-8">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-10 text-center shadow-sm">
-          <h1 className="text-2xl font-black text-slate-900">
-            Unable to open reconstruction
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            {error ||
-              "The accident case or its linked reconstruction could not be loaded."}
-          </p>
-          <Link
-            to={caseId ? `/cases/${caseId}` : "/cases"}
-            className="mt-5 inline-block font-bold text-blue-700"
-          >
-            {caseId ? "Return to case" : "Return to cases"}
-          </Link>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#030714] p-4">
+        <section className="ui-panel w-full max-w-2xl overflow-hidden text-center">
+          <div className="border-b border-[#18243f] p-6">
+            <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
+              <AlertTriangle size={20} strokeWidth={1.8} />
+            </div>
+            <h1 className="mt-4 text-xl font-bold text-slate-100">
+              Unable to open reconstruction
+            </h1>
+            <p className="mt-3 text-[10px] leading-5 text-slate-500">
+              {error ||
+                "The accident case or its linked reconstruction could not be loaded."}
+            </p>
+          </div>
+
+          <div className="p-4">
+            <Link
+              to={caseId ? `/cases/${caseId}` : "/reconstruction"}
+              className="ui-button inline-flex"
+            >
+              <Orbit size={14} />
+              {caseId ? "Return to case" : "Pick another scene"}
+            </Link>
+          </div>
+        </section>
       </div>
     );
   }
@@ -191,6 +227,7 @@ export default function CaseReconstructionPage() {
             caseId,
             savedReconstruction,
           );
+          rememberReconstructionCase(caseId);
         }}
         onFootageSaved={(footage) => {
           AccidentCaseService.registerFootage(
