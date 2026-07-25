@@ -64,12 +64,20 @@ export function RequireAuth() {
     return <LoadingScreen />;
   }
 
-  if (auth.status === "configuration-error") {
-    return <ConfigurationScreen message={auth.error} />;
+  if (
+    auth.status ===
+    "configuration-error"
+  ) {
+    return (
+      <ConfigurationScreen
+        message={auth.error}
+      />
+    );
   }
 
   if (
-    auth.status !== "authenticated" ||
+    auth.status !==
+      "authenticated" ||
     !auth.identity
   ) {
     return (
@@ -79,6 +87,23 @@ export function RequireAuth() {
         state={{
           from: `${location.pathname}${location.search}`,
         }}
+      />
+    );
+  }
+
+  const mustChangePassword =
+    auth.identity.user.prefs
+      ?.mustChangePassword === true;
+
+  if (
+    mustChangePassword &&
+    location.pathname !==
+      "/change-password"
+  ) {
+    return (
+      <Navigate
+        to="/change-password"
+        replace
       />
     );
   }
@@ -97,12 +122,20 @@ export function PublicOnlyRoute({
     return <LoadingScreen />;
   }
 
-  if (auth.status === "configuration-error") {
-    return <ConfigurationScreen message={auth.error} />;
+  if (
+    auth.status ===
+    "configuration-error"
+  ) {
+    return (
+      <ConfigurationScreen
+        message={auth.error}
+      />
+    );
   }
 
   if (
-    auth.status === "authenticated" &&
+    auth.status ===
+      "authenticated" &&
     auth.identity
   ) {
     return <Navigate to="/" replace />;
@@ -119,15 +152,37 @@ export function RequireRole({
   const auth = useAuth();
 
   if (!auth.identity) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
-  if (auth.identity.role === "unassigned") {
-    return <Navigate to="/access-pending" replace />;
+  if (
+    auth.identity.role ===
+    "unassigned"
+  ) {
+    return (
+      <Navigate
+        to="/access-pending"
+        replace
+      />
+    );
   }
 
-  if (!roles.includes(auth.identity.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  if (
+    !roles.includes(
+      auth.identity.role,
+    )
+  ) {
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+      />
+    );
   }
 
   return <Outlet />;
@@ -137,16 +192,36 @@ export function ClientHomeRedirect() {
   const auth = useAuth();
 
   if (!auth.identity) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
   switch (auth.identity.role) {
     case "field_officer":
-      return <Navigate to="/field" replace />;
+      return (
+        <Navigate
+          to="/field"
+          replace
+        />
+      );
     case "supervisor":
     case "station_admin":
-      return <Navigate to="/station" replace />;
+      return (
+        <Navigate
+          to="/station"
+          replace
+        />
+      );
     case "unassigned":
-      return <Navigate to="/access-pending" replace />;
+      return (
+        <Navigate
+          to="/access-pending"
+          replace
+        />
+      );
   }
 }

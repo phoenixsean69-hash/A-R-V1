@@ -15,11 +15,13 @@ import { AuthProvider } from "./context/AuthContext";
 import AccidentReconstructionPage from "./pages/AccidentReconstructionPage";
 import AccessPendingPage from "./pages/AccessPendingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import Dashboard from "./pages/Dashboard";
 import EvidencePage from "./pages/EvidencePage";
 import FieldDashboardPage from "./pages/FieldDashboardPage";
 import FootagePage from "./pages/FootagePage";
 import LoginPage from "./pages/LoginPage";
+import OfficerManagementPage from "./pages/OfficerManagementPage";
 import ReportsPage from "./pages/ReportsPage";
 import SceneMapPage from "./pages/SceneMapPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -53,6 +55,11 @@ export default function App() {
 
           <Route element={<RequireAuth />}>
             <Route
+              path="/change-password"
+              element={<ChangePasswordPage />}
+            />
+
+            <Route
               path="/access-pending"
               element={<AccessPendingPage />}
             />
@@ -66,7 +73,9 @@ export default function App() {
               <Route
                 element={
                   <RequireRole
-                    roles={[...ALL_ASSIGNED_ROLES]}
+                    roles={[
+                      ...ALL_ASSIGNED_ROLES,
+                    ]}
                   />
                 }
               >
@@ -101,7 +110,9 @@ export default function App() {
               <Route
                 element={
                   <RequireRole
-                    roles={["field_officer"]}
+                    roles={[
+                      "field_officer",
+                    ]}
                   />
                 }
               >
@@ -114,7 +125,9 @@ export default function App() {
               <Route
                 element={
                   <RequireRole
-                    roles={[...STATION_ROLES]}
+                    roles={[
+                      ...STATION_ROLES,
+                    ]}
                   />
                 }
               >
@@ -129,6 +142,21 @@ export default function App() {
                 <Route
                   path="settings"
                   element={<SettingsPage />}
+                />
+              </Route>
+
+              <Route
+                element={
+                  <RequireRole
+                    roles={[
+                      "station_admin",
+                    ]}
+                  />
+                }
+              >
+                <Route
+                  path="officers"
+                  element={<OfficerManagementPage />}
                 />
               </Route>
 

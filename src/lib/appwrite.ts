@@ -1,6 +1,7 @@
 import {
   Account,
   Client,
+  Functions,
   Storage,
   TablesDB,
   Teams,
@@ -14,12 +15,15 @@ const projectId =
 export const appwriteConfig = {
   endpoint,
   projectId,
+  officerAdminFunctionId:
+    import.meta.env.VITE_APPWRITE_OFFICER_ADMIN_FUNCTION_ID?.trim() ??
+    "roadsafe-officer-admin",
   configured: Boolean(endpoint && projectId),
 } as const;
 
 /**
- * RoadSafe must use one shared browser Client instance.
- * Appwrite persists the web session for this client automatically.
+ * RoadSafe uses one shared browser Client instance.
+ * Appwrite persists the authenticated web session for this client.
  */
 export const appwriteClient = new Client();
 
@@ -33,5 +37,6 @@ if (projectId) {
 
 export const account = new Account(appwriteClient);
 export const teams = new Teams(appwriteClient);
+export const functions = new Functions(appwriteClient);
 export const tablesDB = new TablesDB(appwriteClient);
 export const storage = new Storage(appwriteClient);
