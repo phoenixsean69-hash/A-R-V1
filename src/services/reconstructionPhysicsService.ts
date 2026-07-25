@@ -24,6 +24,7 @@ import {
   sortMovementPathPoints,
   syncLegacyParticipantFields,
 } from "../utils/reconstructionGeometry";
+import { getReconstructionWorldDimensions } from "../utils/reconstructionWorldScale";
 
 import {
   angleBetweenDegrees,
@@ -397,7 +398,7 @@ function detectEarliestSceneObjectContact(
       profile: resolveSceneObjectPhysicsProfile(object),
       pose: sceneObjectPose(object, width, height),
     }))
-    .filter(({ profile }) => profile.enabled);
+    .filter(({ profile }) => profile.enabled && profile.collidable);
 
   if (collidableObjects.length === 0) return null;
 
@@ -480,6 +481,9 @@ const SOLID_OBJECT_TYPES = new Set([
   "Stop Sign",
   "Give Way Sign",
   "Speed Limit Sign",
+]);
+
+const SOFT_OBJECT_TYPES = new Set([
   "Fallen Branch",
   "Debris",
   "Vehicle Part",
@@ -754,9 +758,9 @@ export function getDefaultSceneObjectPhysics(
 ): SceneObjectPhysicsProfile {
   if (object.type === "Pothole") {
     const severityFactor =
-      object.severity === "Critical" ? 0.55 :
-      object.severity === "High" ? 0.66 :
-      object.severity === "Medium" ? 0.76 : 0.86;
+      object.severity === "Critical" ? 0.82 :
+      object.severity === "High" ? 0.88 :
+      object.severity === "Medium" ? 0.93 : 0.97;
     const diameter = Math.max(
       0.25,
       Number(object.widthMetres ?? object.scale * 1.8),
@@ -766,9 +770,12 @@ export function getDefaultSceneObjectPhysics(
       collidable: false,
       collisionRadiusMetres: diameter / 2,
       restitution: 0,
-      surfaceFrictionMultiplier: 1.25,
+      surfaceFrictionMultiplier: 1,
       speedLossFactor: severityFactor,
-      deflectionDegrees: object.severity === "Critical" ? 18 : object.severity === "High" ? 12 : 7,
+      deflectionDegrees:
+        object.severity === "Critical" ? 5 :
+        object.severity === "High" ? 3 :
+        object.severity === "Medium" ? 1.5 : 0.6,
       collisionShape: "Circle",
       lengthMetres: diameter,
       widthMetres: diameter,
@@ -793,6 +800,34 @@ export function getDefaultSceneObjectPhysics(
       lengthMetres: diameter,
       widthMetres: diameter,
       collisionFriction: 0.2,
+    };
+  }
+
+  if (SOFT_OBJECT_TYPES.has(object.type)) {
+    const length = Math.max(
+      0.45,
+      Number(object.lengthMetres ?? object.scale * 1.3),
+    );
+    const width = Math.max(
+      0.35,
+      Number(object.widthMetres ?? object.scale * 0.9),
+    );
+    const speedLossFactor =
+      object.type === "Fallen Branch" ? 0.82 :
+      object.type === "Debris" || object.type === "Vehicle Part" ? 0.88 :
+      object.type === "Bush" ? 0.91 : 0.96;
+    return {
+      enabled: true,
+      collidable: false,
+      collisionRadiusMetres: Math.max(0.2, Math.min(length, width) / 2),
+      restitution: 0.03,
+      surfaceFrictionMultiplier: 1,
+      speedLossFactor,
+      deflectionDegrees: object.type === "Fallen Branch" ? 4 : 1.5,
+      collisionShape: "Oriented Box",
+      lengthMetres: length,
+      widthMetres: width,
+      collisionFriction: 0.28,
     };
   }
 
@@ -1692,6 +1727,59 @@ function makePhysicsPoint(
   };
 }
 
+const playbackPhysicsSignatureCache = new Map<string, string>();
+
+function createPlaybackPhysicsSignature(
+  source: AccidentReconstruction,
+): string {
+  const dimensions = getReconstructionWorldDimensions(source);
+  return JSON.stringify({
+    durationSeconds: source.durationSeconds,
+    collisionPoint: source.collisionPoint,
+    dimensions,
+    scene: {
+      environment: source.scene.sceneEnvironment,
+      roadSurface: source.scene.roadSurface,
+      groundSurface: source.scene.groundSurface,
+      weather: source.scene.weather,
+      roadLayout: source.scene.roadLayout,
+      laneCount: source.scene.laneCount,
+      extractedAt: source.scene.realSceneGeometry?.extractedAt,
+    },
+    physicsSettings: source.physicsSettings,
+    vehicles: source.vehicles.map((participant) => ({
+      id: participant.id,
+      type: participant.type,
+      estimatedSpeedKmh: participant.estimatedSpeedKmh,
+      physics: participant.physics,
+      pathPoints: participant.pathPoints
+        .filter((point) => !isPhysicsGeneratedPathPoint(point))
+        .map((point) => ({
+          id: point.id,
+          position: point.position,
+          timeSeconds: point.timeSeconds,
+          speedKmh: point.speedKmh,
+          rotation: point.rotation,
+          action: point.action,
+          linkedSceneObjectId: point.linkedSceneObjectId,
+        })),
+    })),
+    sceneObjects: source.sceneObjects.map((object) => ({
+      id: object.id,
+      type: object.type,
+      position: object.position,
+      rotation: object.rotation,
+      scale: object.scale,
+      severity: object.severity,
+      visible: object.visible,
+      widthMetres: object.widthMetres,
+      lengthMetres: object.lengthMetres,
+      depthCentimetres: object.depthCentimetres,
+      physics: object.physics,
+    })),
+  });
+}
+
 export function preparePhysicsForPlayback(
   source: AccidentReconstruction,
 ): AccidentReconstruction {
@@ -1706,7 +1794,20 @@ export function preparePhysicsForPlayback(
     return source.physicsSettings ? source : { ...source, physicsSettings: settings };
   }
 
-  return applyPhysicsSimulation(source);
+  const signature = createPlaybackPhysicsSignature(source);
+  if (
+    source.lastPhysicsSimulation &&
+    playbackPhysicsSignatureCache.get(source.id) === signature
+  ) {
+    return source;
+  }
+
+  const simulated = applyPhysicsSimulation(source);
+  playbackPhysicsSignatureCache.set(
+    simulated.id,
+    createPlaybackPhysicsSignature(simulated),
+  );
+  return simulated;
 }
 
 export function applyPhysicsSimulation(
@@ -1739,8 +1840,10 @@ export function applyPhysicsSimulation(
     };
   }
 
-  const width = Math.max(1, source.scene.sceneWidthMetres);
-  const height = Math.max(1, source.scene.sceneHeightMetres);
+  const {
+    widthMetres: width,
+    heightMetres: height,
+  } = getReconstructionWorldDimensions(source);
   const participants = source.vehicles.filter((participant) => participant.physics?.enabled ?? true);
   const warnings: string[] = [];
   const collisionEvents: PhysicsCollisionEvent[] = [];
@@ -2107,6 +2210,30 @@ export function applyPhysicsSimulation(
           }
           action = "Deflect";
           label = `Reduced grip on ${object.label}`;
+          linkedSceneObjectId = object.id;
+          continue;
+        }
+
+        if (SOFT_OBJECT_TYPES.has(object.type)) {
+          if (!body.collidedWithObjects.has(object.id)) {
+            body.velocity = rotate(
+              {
+                x: body.velocity.x * profile.speedLossFactor,
+                y: body.velocity.y * profile.speedLossFactor,
+              },
+              profile.deflectionDegrees *
+                deterministicSign(`${object.id}:${body.participant.id}`),
+            );
+            body.collidedWithObjects.add(object.id);
+            body.angularVelocityDegreesPerSecond +=
+              profile.deflectionDegrees *
+              deterministicSign(`${object.id}:${body.participant.id}`) *
+              1.2;
+            interactedObjects.add(object.id);
+            surfaceInteractions += 1;
+          }
+          action = "Deflect";
+          label = `Contact with ${object.label}`;
           linkedSceneObjectId = object.id;
           continue;
         }
@@ -2551,7 +2678,7 @@ export function applyPhysicsSimulation(
     (event) => !event.id.startsWith("physics-event"),
   );
 
-  return {
+  const result: AccidentReconstruction = {
     ...source,
     collisionPoint: { ...source.collisionPoint },
     durationSeconds: Number(
@@ -2566,4 +2693,10 @@ export function applyPhysicsSimulation(
     lastPhysicsSimulation: summary,
     timelineEvents: [...preservedTimeline, ...generatedTimelineEvents],
   };
+
+  playbackPhysicsSignatureCache.set(
+    result.id,
+    createPlaybackPhysicsSignature(result),
+  );
+  return result;
 }

@@ -9,6 +9,7 @@ import type {
   RealSceneVegetationGeometry,
 } from "../../types/realSceneGeometry";
 import type { RoadSceneSettings } from "../../types/reconstruction";
+import { getEffectiveRealRoadWidthMetres } from "../../utils/reconstructionWorldScale";
 
 interface RealSceneGeometryLayerProps {
   geometry: RealSceneGeometry;
@@ -124,7 +125,8 @@ function createRoadRibbon(
     road.isRoundabout,
   );
   if (samples.length < 2) return [];
-  const halfWidth = road.widthMetres / 2 + extraWidthMetres;
+  const halfWidth =
+    getEffectiveRealRoadWidthMetres(road) / 2 + extraWidthMetres;
   const left: Point2[] = [];
   const right: Point2[] = [];
 

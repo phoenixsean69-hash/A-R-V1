@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { getEffectiveRealRoadWidthMetres } from "./reconstructionWorldScale";
+
 import type {
   RealSceneGeometry,
   RealSceneLandCoverType,
@@ -480,11 +482,12 @@ export function addRealSceneGeometryToThreeScene({
     const points = road.localPoints.map((point) =>
       worldPoint(point, geometry, heightAt, 0.085),
     );
+    const renderedRoadWidth = getEffectiveRealRoadWidthMetres(road);
     if (showPavements) {
       addRibbon(
         group,
         points.map((point) => point.clone().setY(point.y - 0.025)),
-        road.widthMetres + 2.6,
+        renderedRoadWidth + 2.6,
         road.isRoundabout,
         pavementMaterial,
         1,
@@ -493,7 +496,7 @@ export function addRealSceneGeometryToThreeScene({
     addRibbon(
       group,
       points,
-      road.widthMetres,
+      renderedRoadWidth,
       road.isRoundabout,
       roadMaterial,
       2,

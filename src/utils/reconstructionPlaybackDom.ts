@@ -1,8 +1,12 @@
-import type { AccidentReconstruction } from "../types/reconstruction";
+import type {
+  AccidentReconstruction,
+  ReconstructionVehicle,
+} from "../types/reconstruction";
 import {
   getParticipantStateAtTime,
   getReconstructionImpactEffectState,
 } from "./reconstructionGeometry";
+import { getParticipantPotholeEffect } from "./reconstructionSurfaceEffects";
 
 interface PlaybackDomFrameOptions {
   sceneRoot: HTMLElement | null;
@@ -20,7 +24,26 @@ interface ImpactOverlayElements {
   sparks: HTMLSpanElement[];
 }
 
+interface ParticipantDomNodes {
+  participant: HTMLElement | null;
+  vectorLine: SVGLineElement | null;
+  vectorTip: SVGCircleElement | null;
+  speedLabel: HTMLElement | null;
+  smoke: HTMLElement | null;
+}
+
+interface PlaybackControlNodes {
+  scrubber: HTMLInputElement | null;
+  progress: HTMLElement | null;
+  clock: HTMLElement | null;
+}
+
 const impactOverlayCache = new WeakMap<HTMLElement, ImpactOverlayElements>();
+const participantNodeCache = new WeakMap<
+  HTMLElement,
+  Map<string, ParticipantDomNodes>
+>();
+const playbackControlCache = new WeakMap<HTMLElement, PlaybackControlNodes>();
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
@@ -31,8 +54,90 @@ function selectByPlaybackId<T extends Element>(
   attribute: string,
   id: string,
 ): T | null {
-  const safeId = id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const backslash = String.fromCharCode(92);
+  const safeId = id
+    .split(backslash)
+    .join(backslash + backslash)
+    .split('"')
+    .join(backslash + '"');
   return root.querySelector<T>(`[${attribute}="${safeId}"]`);
+}
+
+function participantNodes(
+  root: HTMLElement,
+  participantId: string,
+): ParticipantDomNodes {
+  let rootCache = participantNodeCache.get(root);
+  if (!rootCache) {
+    rootCache = new Map();
+    participantNodeCache.set(root, rootCache);
+  }
+
+  const cached = rootCache.get(participantId);
+  if (
+    cached &&
+    (!cached.participant || cached.participant.isConnected) &&
+    (!cached.vectorLine || cached.vectorLine.isConnected) &&
+    (!cached.vectorTip || cached.vectorTip.isConnected) &&
+    (!cached.speedLabel || cached.speedLabel.isConnected) &&
+    (!cached.smoke || cached.smoke.isConnected)
+  ) {
+    return cached;
+  }
+
+  const result: ParticipantDomNodes = {
+    participant: selectByPlaybackId<HTMLElement>(
+      root,
+      "data-playback-participant-id",
+      participantId,
+    ),
+    vectorLine: selectByPlaybackId<SVGLineElement>(
+      root,
+      "data-playback-vector-line-id",
+      participantId,
+    ),
+    vectorTip: selectByPlaybackId<SVGCircleElement>(
+      root,
+      "data-playback-vector-tip-id",
+      participantId,
+    ),
+    speedLabel: selectByPlaybackId<HTMLElement>(
+      root,
+      "data-playback-speed-label-id",
+      participantId,
+    ),
+    smoke: selectByPlaybackId<HTMLElement>(
+      root,
+      "data-playback-smoke-id",
+      participantId,
+    ),
+  };
+  rootCache.set(participantId, result);
+  return result;
+}
+
+function controls(editorRoot: HTMLElement): PlaybackControlNodes {
+  const cached = playbackControlCache.get(editorRoot);
+  if (
+    cached &&
+    (!cached.scrubber || cached.scrubber.isConnected) &&
+    (!cached.progress || cached.progress.isConnected) &&
+    (!cached.clock || cached.clock.isConnected)
+  ) {
+    return cached;
+  }
+
+  const result: PlaybackControlNodes = {
+    scrubber: editorRoot.querySelector<HTMLInputElement>(
+      '.reconstruction-playback__scrubber input[type="range"]',
+    ),
+    progress: editorRoot.querySelector<HTMLElement>(
+      ".reconstruction-playback__progress",
+    ),
+    clock: editorRoot.querySelector<HTMLElement>("[data-playback-clock]"),
+  };
+  playbackControlCache.set(editorRoot, result);
+  return result;
 }
 
 function ensureImpactOverlay(sceneRoot: HTMLElement): ImpactOverlayElements {
@@ -123,10 +228,8 @@ function ensureImpactOverlay(sceneRoot: HTMLElement): ImpactOverlayElements {
 
 function paintImpactOverlay(
   sceneRoot: HTMLElement,
-  reconstruction: AccidentReconstruction,
-  timeSeconds: number,
+  effect: ReturnType<typeof getReconstructionImpactEffectState>,
 ): void {
-  const effect = getReconstructionImpactEffectState(reconstruction, timeSeconds);
   const overlay = ensureImpactOverlay(sceneRoot);
 
   if (!effect.active) {
@@ -141,47 +244,46 @@ function paintImpactOverlay(
   overlay.root.style.display = "block";
   overlay.root.style.left = `${effect.position.x}%`;
   overlay.root.style.top = `${effect.position.y}%`;
-
   overlay.ring.style.width = `${ringSize}px`;
   overlay.ring.style.height = `${ringSize}px`;
-  overlay.ring.style.opacity = `${fade * 0.9}`;
+  overlay.ring.style.opacity = String(fade * 0.9);
 
   const flashSize = 34 * effect.intensity;
   overlay.flash.style.width = `${flashSize}px`;
   overlay.flash.style.height = `${flashSize}px`;
-  overlay.flash.style.opacity = `${Math.max(0, 1 - effect.progress * 4)}`;
+  overlay.flash.style.opacity = String(Math.max(0, 1 - effect.progress * 4));
   overlay.flash.style.transform =
     `translate(-50%, -50%) scale(${1 + effect.progress * 2})`;
-
-  overlay.label.style.opacity = `${Math.max(0, 1 - effect.progress * 2.2)}`;
+  overlay.label.style.opacity = String(Math.max(0, 1 - effect.progress * 2.2));
   overlay.label.style.transform =
     `translate(-50%, ${-54 - effect.progress * 18}px) scale(${1 + (1 - fade) * 0.15})`;
 
   overlay.sparks.forEach((spark, index) => {
     const angle = index * (360 / overlay.sparks.length) + (index % 2) * 7;
     spark.style.width = `${9 + (index % 4) * 5 + effect.progress * 22}px`;
-    spark.style.opacity = `${fade}`;
-    spark.style.transform =
-      `rotate(${angle}deg) translateX(${burstDistance}px)`;
+    spark.style.opacity = String(fade);
+    spark.style.transform = `rotate(${angle}deg) translateX(${burstDistance}px)`;
   });
 }
 
 function paintParticipant(
   sceneRoot: HTMLElement,
   reconstruction: AccidentReconstruction,
+  participant: ReconstructionVehicle,
   participantIndex: number,
   timeSeconds: number,
+  impactEffect: ReturnType<typeof getReconstructionImpactEffectState>,
 ): void {
-  const participant = reconstruction.vehicles[participantIndex];
-  if (!participant) return;
-
   const state = getParticipantStateAtTime(participant, timeSeconds);
   const activePoint = participant.pathPoints.find(
     (point) => point.id === state.activePointId,
   );
   const activeAction = activePoint?.action ?? "Cruise";
-  const impactEffect = getReconstructionImpactEffectState(
+  const pothole = getParticipantPotholeEffect(
     reconstruction,
+    participant,
+    state.position,
+    state.speedKmh,
     timeSeconds,
   );
 
@@ -190,28 +292,30 @@ function paintParticipant(
       state.position.x - impactEffect.position.x,
       state.position.y - impactEffect.position.y,
     ) <= 12;
-  const shakeStrength =
+  const impactShake =
     impactEffect.active && nearImpact
       ? (1 - impactEffect.progress) * 5 * impactEffect.intensity
       : 0;
-  const shakePhase = impactEffect.progress * 72 + participantIndex * 2.4;
-  const shakeX = Math.sin(shakePhase) * shakeStrength;
-  const shakeY = Math.cos(shakePhase * 1.31) * shakeStrength * 0.65;
+  const impactPhase = impactEffect.progress * 72 + participantIndex * 2.4;
+  const potholePhase = timeSeconds * 25 + participantIndex * 1.9;
+  const shakeX =
+    Math.sin(impactPhase) * impactShake +
+    Math.sin(potholePhase) * pothole.screenShakePixels;
+  const shakeY =
+    Math.cos(impactPhase * 1.31) * impactShake * 0.65 +
+    Math.abs(Math.sin(potholePhase * 1.7)) * pothole.screenShakePixels * 0.7;
   const rotationShake =
-    Math.sin(shakePhase * 0.83) * shakeStrength * 0.8;
+    Math.sin(impactPhase * 0.83) * impactShake * 0.8 +
+    pothole.rollDegrees;
 
-  const participantNode = selectByPlaybackId<HTMLElement>(
-    sceneRoot,
-    "data-playback-participant-id",
-    participant.id,
-  );
-  if (participantNode) {
-    participantNode.style.left = `${state.position.x}%`;
-    participantNode.style.top = `${state.position.y}%`;
-    participantNode.style.transform =
+  const nodes = participantNodes(sceneRoot, participant.id);
+  if (nodes.participant) {
+    nodes.participant.style.left = `${state.position.x}%`;
+    nodes.participant.style.top = `${state.position.y}%`;
+    nodes.participant.style.transform =
       `translate(-50%, -50%) translate(${shakeX}px, ${shakeY}px) rotate(${state.rotation + rotationShake}deg)`;
-    participantNode.style.willChange = "left, top, transform";
-    participantNode.title =
+    nodes.participant.style.willChange = "left, top, transform";
+    nodes.participant.title =
       `${participant.name} — ${state.speedKmh.toFixed(0)} km/h`;
   }
 
@@ -228,51 +332,28 @@ function paintParticipant(
     100,
   );
 
-  const vectorLine = selectByPlaybackId<SVGLineElement>(
-    sceneRoot,
-    "data-playback-vector-line-id",
-    participant.id,
-  );
-  if (vectorLine) {
-    vectorLine.setAttribute("x1", String(state.position.x));
-    vectorLine.setAttribute("y1", String(state.position.y));
-    vectorLine.setAttribute("x2", String(vectorEndX));
-    vectorLine.setAttribute("y2", String(vectorEndY));
+  if (nodes.vectorLine) {
+    nodes.vectorLine.setAttribute("x1", String(state.position.x));
+    nodes.vectorLine.setAttribute("y1", String(state.position.y));
+    nodes.vectorLine.setAttribute("x2", String(vectorEndX));
+    nodes.vectorLine.setAttribute("y2", String(vectorEndY));
   }
-
-  const vectorTip = selectByPlaybackId<SVGCircleElement>(
-    sceneRoot,
-    "data-playback-vector-tip-id",
-    participant.id,
-  );
-  if (vectorTip) {
-    vectorTip.setAttribute("cx", String(vectorEndX));
-    vectorTip.setAttribute("cy", String(vectorEndY));
+  if (nodes.vectorTip) {
+    nodes.vectorTip.setAttribute("cx", String(vectorEndX));
+    nodes.vectorTip.setAttribute("cy", String(vectorEndY));
   }
-
-  const speedLabel = selectByPlaybackId<HTMLElement>(
-    sceneRoot,
-    "data-playback-speed-label-id",
-    participant.id,
-  );
-  if (speedLabel) {
-    speedLabel.style.left = `${vectorEndX}%`;
-    speedLabel.style.top = `${vectorEndY}%`;
-    speedLabel.textContent = `${state.speedKmh.toFixed(0)} km/h`;
+  if (nodes.speedLabel) {
+    nodes.speedLabel.style.left = `${vectorEndX}%`;
+    nodes.speedLabel.style.top = `${vectorEndY}%`;
+    nodes.speedLabel.textContent = `${state.speedKmh.toFixed(0)} km/h`;
   }
-
-  const smoke = selectByPlaybackId<HTMLElement>(
-    sceneRoot,
-    "data-playback-smoke-id",
-    participant.id,
-  );
-  if (smoke) {
+  if (nodes.smoke) {
     const visible =
       (activeAction === "Brake" || activeAction === "Slide") &&
       state.speedKmh > 5;
-    smoke.style.display = visible ? "block" : "none";
-    smoke.style.left = `${state.position.x}%`;
-    smoke.style.top = `${state.position.y}%`;
+    nodes.smoke.style.display = visible ? "block" : "none";
+    nodes.smoke.style.left = `${state.position.x}%`;
+    nodes.smoke.style.top = `${state.position.y}%`;
   }
 }
 
@@ -281,21 +362,13 @@ function paintPlaybackControls(
   timeSeconds: number,
   durationSeconds: number,
 ): void {
-  const scrubber = editorRoot.querySelector<HTMLInputElement>(
-    '.reconstruction-playback__scrubber input[type="range"]',
-  );
-  if (scrubber) scrubber.value = String(timeSeconds);
-
-  const progress = editorRoot.querySelector<HTMLElement>(
-    ".reconstruction-playback__progress",
-  );
-  if (progress) {
-    progress.style.width =
+  const nodes = controls(editorRoot);
+  if (nodes.scrubber) nodes.scrubber.value = String(timeSeconds);
+  if (nodes.progress) {
+    nodes.progress.style.width =
       `${(timeSeconds / Math.max(0.1, durationSeconds)) * 100}%`;
   }
-
-  const clock = editorRoot.querySelector<HTMLElement>("[data-playback-clock]");
-  if (clock) clock.textContent = `${timeSeconds.toFixed(2)}s`;
+  if (nodes.clock) nodes.clock.textContent = `${timeSeconds.toFixed(2)}s`;
 }
 
 export function paintReconstructionPlaybackDomFrame({
@@ -305,15 +378,21 @@ export function paintReconstructionPlaybackDomFrame({
   timeSeconds,
 }: PlaybackDomFrameOptions): void {
   if (sceneRoot) {
-    reconstruction.vehicles.forEach((_, participantIndex) => {
+    const impactEffect = getReconstructionImpactEffectState(
+      reconstruction,
+      timeSeconds,
+    );
+    reconstruction.vehicles.forEach((participant, participantIndex) => {
       paintParticipant(
         sceneRoot,
         reconstruction,
+        participant,
         participantIndex,
         timeSeconds,
+        impactEffect,
       );
     });
-    paintImpactOverlay(sceneRoot, reconstruction, timeSeconds);
+    paintImpactOverlay(sceneRoot, impactEffect);
   }
 
   if (editorRoot) {

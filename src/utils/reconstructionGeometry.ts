@@ -433,9 +433,22 @@ function isUnverifiedRouteContinuationPoint(
   );
 }
 
+const sanitisedParticipantPathCache = new WeakMap<
+  MovementPathPoint[],
+  MovementPathPoint[]
+>();
+
+const participantPlaybackPathCache = new WeakMap<
+  MovementPathPoint[],
+  MovementPathPoint[]
+>();
+
 export function sanitiseParticipantPathPoints(
   points: MovementPathPoint[],
 ): MovementPathPoint[] {
+  const cached = sanitisedParticipantPathCache.get(points);
+  if (cached) return cached;
+
   const sorted = sortMovementPathPoints(points);
 
   const firstAuthoredImpact = sorted.find(
@@ -471,14 +484,13 @@ export function sanitiseParticipantPathPoints(
     (point) => point.action === "Impact",
   );
 
-  if (
-    deduplicated.length >= 2 &&
-    hasImpact
-  ) {
-    return deduplicated;
-  }
+  const result =
+    deduplicated.length >= 2 && hasImpact
+      ? deduplicated
+      : sorted;
 
-  return sorted;
+  sanitisedParticipantPathCache.set(points, result);
+  return result;
 }
 
 export function getInvestigatorPathPoints(
@@ -509,6 +521,11 @@ export function getPhysicsPathPoints(
 export function getParticipantPlaybackPathPoints(
   participant: ReconstructionVehicle,
 ): MovementPathPoint[] {
+  const cached = participantPlaybackPathCache.get(
+    participant.pathPoints,
+  );
+  if (cached) return cached;
+
   const points = sanitiseParticipantPathPoints(
     participant.pathPoints,
   );
@@ -518,6 +535,7 @@ export function getParticipantPlaybackPathPoints(
   );
 
   if (!firstPhysicsPoint) {
+    participantPlaybackPathCache.set(participant.pathPoints, points);
     return points;
   }
 
@@ -540,7 +558,9 @@ export function getParticipantPlaybackPathPoints(
     ...physicsPath,
   ]);
 
-  return playback.length >= 2 ? playback : points;
+  const result = playback.length >= 2 ? playback : points;
+  participantPlaybackPathCache.set(participant.pathPoints, result);
+  return result;
 }
 
 export function getParticipantRestPoint(
