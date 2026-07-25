@@ -640,8 +640,8 @@ function Reconstruction3DViewer({
           const curve = new THREE.CatmullRomCurve3(
             positions,
             false,
-            "catmullrom",
-            0.45,
+            "centripetal",
+            0.5,
           );
           const path = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints(
@@ -679,7 +679,7 @@ function Reconstruction3DViewer({
           const fallback = createFallbackSceneObject(object);
           holder.add(fallback);
           holder.position.copy(worldPosition(object.position, width, height));
-          holder.rotation.y = THREE.MathUtils.degToRad(object.rotation);
+          holder.rotation.y = -THREE.MathUtils.degToRad(object.rotation);
           scene.add(holder);
           void loadRealisticSceneObjectModel(object)
             .then((model) => {
@@ -744,8 +744,11 @@ function Reconstruction3DViewer({
       });
     });
 
+    // Point Z and the visible primary marker are authoritative in both views.
+    // A physics contact can be reported a few centimetres away because bodies
+    // have dimensions, but it must not move the investigator's crash marker.
     const collisionPoint = worldPosition(
-      participantImpact?.contactPoint ?? reconstruction.collisionPoint,
+      reconstruction.collisionPoint,
       width,
       height,
       0.2,
@@ -822,7 +825,7 @@ function Reconstruction3DViewer({
       participantEntries.forEach((entry) => {
         const state = getParticipantStateAtTime(entry.participant, timeRef.current);
         entry.holder.position.copy(worldPosition(state.position, width, height));
-        entry.holder.rotation.set(0, THREE.MathUtils.degToRad(state.rotation), 0);
+        entry.holder.rotation.set(0, -THREE.MathUtils.degToRad(state.rotation), 0);
         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
 
         const impact = impactByParticipant.get(entry.participant.id);

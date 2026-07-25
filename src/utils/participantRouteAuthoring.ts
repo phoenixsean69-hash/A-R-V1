@@ -4,11 +4,15 @@ import type {
   ReconstructionPosition,
   ReconstructionVehicleType,
 } from "../types/reconstruction";
-
 import type {
   FieldSceneCalibration,
   GeoCoordinate,
 } from "../types/fieldPlacement";
+import {
+  AUTO_ROAD_CURVE_NOTE_MARKER,
+  createRoadAlignedIntermediatePoints,
+  isAutoRoadCurvePoint,
+} from "./reconstructionRoadRouting";
 
 const EARTH_RADIUS_METRES = 6_371_008.8;
 
@@ -79,11 +83,7 @@ function defaultCreateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function clamp(
-  value: number,
-  minimum: number,
-  maximum: number,
-): number {
+function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
@@ -101,10 +101,7 @@ function distance(
   first: ReconstructionPosition,
   second: ReconstructionPosition,
 ): number {
-  return Math.hypot(
-    second.x - first.x,
-    second.y - first.y,
-  );
+  return Math.hypot(second.x - first.x, second.y - first.y);
 }
 
 function headingDegrees(
@@ -114,26 +111,15 @@ function headingDegrees(
 ): number {
   const x = to.x - from.x;
   const y = to.y - from.y;
-
-  if (Math.hypot(x, y) < 0.000001) {
-    return fallback;
-  }
-
-  return (
-    ((Math.atan2(y, x) * 180) / Math.PI + 360) %
-    360
-  );
+  if (Math.hypot(x, y) < 0.000001) return fallback;
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-function normaliseNotes(
-  notes: string | undefined,
-  marker: string,
-): string {
+function normaliseNotes(notes: string | undefined, marker: string): string {
   const cleaned = (notes ?? "")
     .replace(POINT_Z_NOTE_MARKER, "")
     .replace(POINT_ONE_NOTE_MARKER, "")
     .trim();
-
   return cleaned ? `${marker}\n${cleaned}` : marker;
 }
 
@@ -141,18 +127,12 @@ export function isPhysicsGeneratedRoutePoint(
   point: MovementPathPoint,
 ): boolean {
   return (
-    PHYSICS_POINT_PREFIXES.some((prefix) =>
-      point.id.startsWith(prefix),
-    ) ||
-    PHYSICS_NOTE_MARKERS.some((marker) =>
-      point.notes?.includes(marker),
-    )
+    PHYSICS_POINT_PREFIXES.some((prefix) => point.id.startsWith(prefix)) ||
+    PHYSICS_NOTE_MARKERS.some((marker) => point.notes?.includes(marker))
   );
 }
 
-export function isPointZ(
-  point: MovementPathPoint,
-): boolean {
+export function isPointZ(point: MovementPathPoint): boolean {
   return (
     point.id.startsWith(POINT_Z_ID_PREFIX) ||
     point.notes?.includes(POINT_Z_NOTE_MARKER) === true ||
@@ -160,9 +140,7 @@ export function isPointZ(
   );
 }
 
-export function isPointOne(
-  point: MovementPathPoint,
-): boolean {
+export function isPointOne(point: MovementPathPoint): boolean {
   return (
     point.notes?.includes(POINT_ONE_NOTE_MARKER) === true ||
     /^point\s*1\b/i.test(point.label.trim())
@@ -173,21 +151,11 @@ export function getAuthoredRoutePointRole(
   point: MovementPathPoint,
   authoredPoints?: MovementPathPoint[],
 ): AuthoredRoutePointRole {
-  if (isPhysicsGeneratedRoutePoint(point)) {
-    return "Physics";
-  }
-
-  if (isPointZ(point)) {
-    return "PointZ";
-  }
-
-  if (
-    isPointOne(point) ||
-    authoredPoints?.[0]?.id === point.id
-  ) {
+  if (isPhysicsGeneratedRoutePoint(point)) return "Physics";
+  if (isPointZ(point)) return "PointZ";
+  if (isPointOne(point) || authoredPoints?.[0]?.id === point.id) {
     return "PointOne";
   }
-
   return "Intermediate";
 }
 
@@ -195,15 +163,10 @@ export function canDeleteAuthoredRoutePoint(
   point: MovementPathPoint,
   authoredPoints?: MovementPathPoint[],
 ): boolean {
-  return (
-    getAuthoredRoutePointRole(point, authoredPoints) ===
-    "Intermediate"
-  );
+  return getAuthoredRoutePointRole(point, authoredPoints) === "Intermediate";
 }
 
-export function canMoveAuthoredRoutePoint(
-  point: MovementPathPoint,
-): boolean {
+export function canMoveAuthoredRoutePoint(point: MovementPathPoint): boolean {
   return !isPointZ(point) && !isPhysicsGeneratedRoutePoint(point);
 }
 
@@ -216,22 +179,13 @@ function catmullRomMidpoint(
   const t = 0.5;
   const t2 = t * t;
   const t3 = t2 * t;
-
   return {
     x: clamp(
       0.5 *
         (2 * start.x +
           (-previous.x + end.x) * t +
-          (2 * previous.x -
-            5 * start.x +
-            4 * end.x -
-            following.x) *
-            t2 +
-          (-previous.x +
-            3 * start.x -
-            3 * end.x +
-            following.x) *
-            t3),
+          (2 * previous.x - 5 * start.x + 4 * end.x - following.x) * t2 +
+          (-previous.x + 3 * start.x - 3 * end.x + following.x) * t3),
       0,
       100,
     ),
@@ -239,53 +193,26 @@ function catmullRomMidpoint(
       0.5 *
         (2 * start.y +
           (-previous.y + end.y) * t +
-          (2 * previous.y -
-            5 * start.y +
-            4 * end.y -
-            following.y) *
-            t2 +
-          (-previous.y +
-            3 * start.y -
-            3 * end.y +
-            following.y) *
-            t3),
+          (2 * previous.y - 5 * start.y + 4 * end.y - following.y) * t2 +
+          (-previous.y + 3 * start.y - 3 * end.y + following.y) * t3),
       0,
       100,
     ),
   };
 }
 
-function findLegacyImpactIndex(
-  authored: MovementPathPoint[],
-): number {
+function findLegacyImpactIndex(authored: MovementPathPoint[]): number {
   const explicitPointZIndex = authored.findIndex(isPointZ);
-
-  if (explicitPointZIndex >= 0) {
-    return explicitPointZIndex;
-  }
-
-  const authoredImpactIndex = authored.findIndex(
-    (point) => point.action === "Impact",
-  );
-
-  if (authoredImpactIndex >= 0) {
-    return authoredImpactIndex;
-  }
-
-  return Math.max(1, authored.length - 1);
+  if (explicitPointZIndex >= 0) return explicitPointZIndex;
+  const impactIndex = authored.findIndex((point) => point.action === "Impact");
+  return impactIndex >= 0 ? impactIndex : Math.max(1, authored.length - 1);
 }
 
-function getStartAction(
-  participantType: ReconstructionVehicleType,
-): MovementAction {
-  return HUMAN_TYPES.has(participantType)
-    ? "Enter Scene"
-    : "Start";
+function getStartAction(type: ReconstructionVehicleType): MovementAction {
+  return HUMAN_TYPES.has(type) ? "Enter Scene" : "Start";
 }
 
-function sanitiseIntermediateAction(
-  action: MovementAction,
-): MovementAction {
+function sanitiseIntermediateAction(action: MovementAction): MovementAction {
   if (
     action === "Impact" ||
     action === "Start" ||
@@ -294,42 +221,28 @@ function sanitiseIntermediateAction(
   ) {
     return "Cruise";
   }
-
   return action;
 }
 
 function relabelPointZRoute(
   authored: MovementPathPoint[],
 ): MovementPathPoint[] {
-  if (authored.length === 0) {
-    return authored;
-  }
-
+  if (authored.length === 0) return authored;
   return authored.map((point, index) => {
-    const finalPoint = index === authored.length - 1;
-
     if (index === 0) {
       return {
         ...point,
         label: "Point 1 · Start",
-        notes: normaliseNotes(
-          point.notes,
-          POINT_ONE_NOTE_MARKER,
-        ),
+        notes: normaliseNotes(point.notes, POINT_ONE_NOTE_MARKER),
       };
     }
-
-    if (finalPoint) {
+    if (index === authored.length - 1) {
       return {
         ...point,
         label: "Point Z · Primary collision",
-        notes: normaliseNotes(
-          point.notes,
-          POINT_Z_NOTE_MARKER,
-        ),
+        notes: normaliseNotes(point.notes, POINT_Z_NOTE_MARKER),
       };
     }
-
     return {
       ...point,
       label: `Point ${index + 1}`,
@@ -345,41 +258,20 @@ function alignAuthoredOnlyToTangents(
   authored: MovementPathPoint[],
 ): MovementPathPoint[] {
   return authored.map((point, index) => {
-    const previous =
-      authored[Math.max(0, index - 1)] ?? point;
-    const next =
-      authored[
-        Math.min(authored.length - 1, index + 1)
-      ] ?? point;
-
+    const previous = authored[Math.max(0, index - 1)] ?? point;
+    const next = authored[Math.min(authored.length - 1, index + 1)] ?? point;
     let rotation = point.rotation;
 
     if (authored.length > 1) {
-      if (index === 0) {
-        rotation = headingDegrees(
-          point.position,
-          next.position,
-          rotation,
-        );
-      } else if (index === authored.length - 1) {
-        rotation = headingDegrees(
-          previous.position,
-          point.position,
-          rotation,
-        );
-      } else {
-        rotation = headingDegrees(
-          previous.position,
-          next.position,
-          rotation,
-        );
-      }
+      rotation =
+        index === 0
+          ? headingDegrees(point.position, next.position, rotation)
+          : index === authored.length - 1
+            ? headingDegrees(previous.position, point.position, rotation)
+            : headingDegrees(previous.position, next.position, rotation);
     }
 
-    return {
-      ...point,
-      rotation,
-    };
+    return { ...point, rotation };
   });
 }
 
@@ -387,14 +279,9 @@ function redistributeAuthoredTimes(
   authored: MovementPathPoint[],
   durationSeconds: number,
 ): MovementPathPoint[] {
-  if (authored.length <= 1) {
-    return authored;
-  }
-
+  if (authored.length <= 1) return authored;
   const finalIndex = authored.length - 1;
-  const existingImpactTime =
-    authored[finalIndex].timeSeconds;
-
+  const existingImpactTime = authored[finalIndex].timeSeconds;
   const impactTimeSeconds = clamp(
     Number.isFinite(existingImpactTime)
       ? existingImpactTime
@@ -402,50 +289,20 @@ function redistributeAuthoredTimes(
     0.1,
     Math.max(0.1, durationSeconds - 0.05),
   );
-
   const segmentLengths = authored
     .slice(0, -1)
-    .map((point, index) =>
-      distance(
-        point.position,
-        authored[index + 1].position,
-      ),
-    );
-
-  const totalLength = segmentLengths.reduce(
-    (sum, segmentLength) => sum + segmentLength,
-    0,
-  );
-
+    .map((point, index) => distance(point.position, authored[index + 1].position));
+  const totalLength = segmentLengths.reduce((sum, value) => sum + value, 0);
   let travelled = 0;
 
   return authored.map((point, index) => {
-    if (index === 0) {
-      return {
-        ...point,
-        timeSeconds: 0,
-      };
-    }
-
-    if (index === finalIndex) {
-      return {
-        ...point,
-        timeSeconds: impactTimeSeconds,
-      };
-    }
-
+    if (index === 0) return { ...point, timeSeconds: 0 };
+    if (index === finalIndex) return { ...point, timeSeconds: impactTimeSeconds };
     travelled += segmentLengths[index - 1] ?? 0;
-
-    const progress =
-      totalLength > 0.000001
-        ? travelled / totalLength
-        : index / finalIndex;
-
+    const progress = totalLength > 0.000001 ? travelled / totalLength : index / finalIndex;
     return {
       ...point,
-      timeSeconds: Number(
-        (impactTimeSeconds * progress).toFixed(3),
-      ),
+      timeSeconds: Number((impactTimeSeconds * progress).toFixed(3)),
     };
   });
 }
@@ -454,14 +311,42 @@ function ensureDifferentStartAndImpact(
   startPosition: ReconstructionPosition,
   impactPosition: ReconstructionPosition,
 ): ReconstructionPosition {
-  if (!samePosition(startPosition, impactPosition)) {
-    return startPosition;
-  }
-
+  if (!samePosition(startPosition, impactPosition)) return startPosition;
   return {
     x: clamp(startPosition.x - 12, 0, 100),
     y: startPosition.y,
   };
+}
+
+function generateRoadCurveIfNeeded(input: {
+  authored: MovementPathPoint[];
+  participantType: ReconstructionVehicleType;
+  durationSeconds: number;
+  createId: (prefix: string) => string;
+}): MovementPathPoint[] {
+  const { authored, participantType, durationSeconds, createId } = input;
+  if (authored.length < 2) return authored;
+
+  const pointOne = authored[0];
+  const pointZ = authored[authored.length - 1];
+  const intermediates = authored.slice(1, -1);
+  const mayRegenerate =
+    intermediates.length === 0 ||
+    intermediates.every(isAutoRoadCurvePoint);
+
+  if (!mayRegenerate) return authored;
+
+  const generated = createRoadAlignedIntermediatePoints({
+    startPoint: pointOne,
+    impactPoint: pointZ,
+    participantType,
+    durationSeconds,
+    createId,
+  });
+
+  return generated.length > 0
+    ? [pointOne, ...generated, pointZ]
+    : authored;
 }
 
 export function createLockedParticipantRoute({
@@ -473,18 +358,8 @@ export function createLockedParticipantRoute({
   createId,
   impactTimeSeconds,
 }: CreateLockedParticipantRouteOptions): MovementPathPoint[] {
-  const safeStart = ensureDifferentStartAndImpact(
-    startPosition,
-    collisionPosition,
-  );
-
-  const startAction = getStartAction(participantType);
-  const heading = headingDegrees(
-    safeStart,
-    collisionPosition,
-    0,
-  );
-
+  const safeStart = ensureDifferentStartAndImpact(startPosition, collisionPosition);
+  const heading = headingDegrees(safeStart, collisionPosition, 0);
   const pointOne: MovementPathPoint = {
     id: createId("path-start"),
     label: "Point 1 · Start",
@@ -492,10 +367,9 @@ export function createLockedParticipantRoute({
     timeSeconds: 0,
     speedKmh: Math.max(0, speedKmh),
     rotation: heading,
-    action: startAction,
+    action: getStartAction(participantType),
     notes: POINT_ONE_NOTE_MARKER,
   };
-
   const pointZ: MovementPathPoint = {
     id: createId(POINT_Z_ID_PREFIX.slice(0, -1)),
     label: "Point Z · Primary collision",
@@ -511,7 +385,19 @@ export function createLockedParticipantRoute({
     notes: POINT_Z_NOTE_MARKER,
   };
 
-  return [pointOne, pointZ];
+  return alignAuthoredOnlyToTangents(
+    redistributeAuthoredTimes(
+      relabelPointZRoute(
+        generateRoadCurveIfNeeded({
+          authored: [pointOne, pointZ],
+          participantType,
+          durationSeconds,
+          createId,
+        }),
+      ),
+      durationSeconds,
+    ),
+  );
 }
 
 export function normalisePointZRoute({
@@ -525,162 +411,94 @@ export function normalisePointZRoute({
   const physicsPoints = pathPoints
     .filter(isPhysicsGeneratedRoutePoint)
     .slice()
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
-
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
   const originalAuthored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
     .slice()
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
 
   if (originalAuthored.length < 2) {
-    const fallbackStart =
-      originalAuthored[0]?.position ?? {
-        x: clamp((collisionPosition?.x ?? 50) - 25, 0, 100),
-        y: collisionPosition?.y ?? 50,
-      };
-
+    const fallbackStart = originalAuthored[0]?.position ?? {
+      x: clamp((collisionPosition?.x ?? 50) - 25, 0, 100),
+      y: collisionPosition?.y ?? 50,
+    };
     return [
       ...createLockedParticipantRoute({
         startPosition: fallbackStart,
         collisionPosition:
-          collisionPosition ??
-          originalAuthored[0]?.position ?? {
-            x: 50,
-            y: 50,
-          },
+          collisionPosition ?? originalAuthored[0]?.position ?? { x: 50, y: 50 },
         durationSeconds,
-        speedKmh:
-          originalAuthored[0]?.speedKmh ?? speedKmh,
+        speedKmh: originalAuthored[0]?.speedKmh ?? speedKmh,
         participantType,
         createId,
       }),
       ...physicsPoints,
-    ].sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
+    ].sort((a, b) => a.timeSeconds - b.timeSeconds);
   }
 
-  const impactIndex =
-    findLegacyImpactIndex(originalAuthored);
-
+  const impactIndex = findLegacyImpactIndex(originalAuthored);
   const startSource = originalAuthored[0];
-
   const pointZSource =
     originalAuthored[
-      clamp(
-        impactIndex,
-        1,
-        originalAuthored.length - 1,
-      )
+      clamp(impactIndex, 1, originalAuthored.length - 1)
     ];
-
   const intermediateSources = originalAuthored
     .slice(1, Math.max(1, impactIndex))
-    .filter(
-      (point) =>
-        point.id !== pointZSource.id &&
-        !isPointZ(point),
-    );
+    .filter((point) => point.id !== pointZSource.id && !isPointZ(point));
 
   const pointOne: MovementPathPoint = {
     ...startSource,
     action: getStartAction(participantType),
-    notes: normaliseNotes(
-      startSource.notes,
-      POINT_ONE_NOTE_MARKER,
-    ),
+    notes: normaliseNotes(startSource.notes, POINT_ONE_NOTE_MARKER),
   };
-
-  const intermediates: MovementPathPoint[] =
-    intermediateSources.map((point) => ({
-      ...point,
-      action: sanitiseIntermediateAction(point.action),
-      notes: (point.notes ?? "")
-        .replace(POINT_Z_NOTE_MARKER, "")
-        .replace(POINT_ONE_NOTE_MARKER, "")
-        .trim(),
-    }));
-
-  const pointZPosition =
-    collisionPosition ?? pointZSource.position;
-
+  const intermediates = intermediateSources.map((point) => ({
+    ...point,
+    action: sanitiseIntermediateAction(point.action),
+    notes: (point.notes ?? "")
+      .replace(POINT_Z_NOTE_MARKER, "")
+      .replace(POINT_ONE_NOTE_MARKER, "")
+      .trim(),
+  }));
+  const pointZPosition = collisionPosition ?? pointZSource.position;
   const pointZ: MovementPathPoint = {
     ...pointZSource,
-    id: pointZSource.id.startsWith(
-      POINT_Z_ID_PREFIX,
-    )
+    id: pointZSource.id.startsWith(POINT_Z_ID_PREFIX)
       ? pointZSource.id
       : createId(POINT_Z_ID_PREFIX.slice(0, -1)),
     position: { ...pointZPosition },
     action: "Impact",
-    notes: normaliseNotes(
-      pointZSource.notes,
-      POINT_Z_NOTE_MARKER,
-    ),
+    notes: normaliseNotes(pointZSource.notes, POINT_Z_NOTE_MARKER),
   };
 
+  const roadAligned = generateRoadCurveIfNeeded({
+    authored: [pointOne, ...intermediates, pointZ],
+    participantType,
+    durationSeconds,
+    createId,
+  });
   const authored = alignAuthoredOnlyToTangents(
-    redistributeAuthoredTimes(
-      relabelPointZRoute([
-        pointOne,
-        ...intermediates,
-        pointZ,
-      ]),
-      durationSeconds,
-    ),
+    redistributeAuthoredTimes(relabelPointZRoute(roadAligned), durationSeconds),
   );
-
   return [...authored, ...physicsPoints].sort(
-    (first, second) =>
-      first.timeSeconds - second.timeSeconds,
+    (a, b) => a.timeSeconds - b.timeSeconds,
   );
 }
 
 export function alignAuthoredRouteToTangents(
   pathPoints: MovementPathPoint[],
 ): MovementPathPoint[] {
-  const physics = pathPoints
-    .filter(isPhysicsGeneratedRoutePoint)
-    .slice();
-
+  const physics = pathPoints.filter(isPhysicsGeneratedRoutePoint).slice();
   const authored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
     .slice()
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
-
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
   if (authored.length === 0) {
-    return physics.sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
+    return physics.sort((a, b) => a.timeSeconds - b.timeSeconds);
   }
-
   const impactIndex = findLegacyImpactIndex(authored);
-
-  const beforeAndIncludingImpact = authored.slice(
-    0,
-    Math.max(2, impactIndex + 1),
-  );
-
-  const lastIndex =
-    beforeAndIncludingImpact.length - 1;
-
-  const protectedActions =
-    beforeAndIncludingImpact.map((point, index) => {
+  const protectedPoints = authored
+    .slice(0, Math.max(2, impactIndex + 1))
+    .map((point, index, list) => {
       if (index === 0) {
         return {
           ...point,
@@ -690,37 +508,17 @@ export function alignAuthoredRouteToTangents(
               : ("Start" as const),
         };
       }
-
-      if (index === lastIndex) {
-        return {
-          ...point,
-          action: "Impact" as const,
-        };
+      if (index === list.length - 1) {
+        return { ...point, action: "Impact" as const };
       }
-
-      return {
-        ...point,
-        action: sanitiseIntermediateAction(
-          point.action,
-        ),
-      };
+      return { ...point, action: sanitiseIntermediateAction(point.action) };
     });
-
   return [
-    ...alignAuthoredOnlyToTangents(
-      relabelPointZRoute(protectedActions),
-    ),
+    ...alignAuthoredOnlyToTangents(relabelPointZRoute(protectedPoints)),
     ...physics,
-  ].sort(
-    (first, second) =>
-      first.timeSeconds - second.timeSeconds,
-  );
+  ].sort((a, b) => a.timeSeconds - b.timeSeconds);
 }
 
-/**
- * Backward-compatible name retained for the current editor.
- * The new route deliberately creates only Point 1 and Point Z.
- */
 export function createProgressiveParticipantRoute({
   startPosition,
   impactPosition,
@@ -756,51 +554,28 @@ export function insertProgressiveRoutePoint({
   pathPoints: MovementPathPoint[];
   insertedPointId: string;
 } {
-  const physics = pathPoints
-    .filter(isPhysicsGeneratedRoutePoint)
-    .slice();
-
-  const authored = alignAuthoredRouteToTangents(
-    pathPoints,
-  ).filter(
+  const physics = pathPoints.filter(isPhysicsGeneratedRoutePoint).slice();
+  const authored = alignAuthoredRouteToTangents(pathPoints).filter(
     (point) => !isPhysicsGeneratedRoutePoint(point),
   );
-
   if (authored.length < 2) {
-    throw new Error(
-      "Point 1 and Point Z are required before adding an intermediate point.",
-    );
+    throw new Error("Point 1 and Point Z are required before adding an intermediate point.");
   }
 
   let segmentIndex = selectedPointId
-    ? authored.findIndex(
-        (point) => point.id === selectedPointId,
-      )
+    ? authored.findIndex((point) => point.id === selectedPointId)
     : -1;
-
-  if (segmentIndex === authored.length - 1) {
-    segmentIndex = authored.length - 2;
-  }
-
-  if (
-    segmentIndex < 0 ||
-    segmentIndex >= authored.length - 1
-  ) {
+  if (segmentIndex === authored.length - 1) segmentIndex = authored.length - 2;
+  if (segmentIndex < 0 || segmentIndex >= authored.length - 1) {
     let largestDistance = -1;
     segmentIndex = 0;
-
-    for (
-      let index = 0;
-      index < authored.length - 1;
-      index += 1
-    ) {
-      const segmentDistance = distance(
+    for (let index = 0; index < authored.length - 1; index += 1) {
+      const currentDistance = distance(
         authored[index].position,
         authored[index + 1].position,
       );
-
-      if (segmentDistance > largestDistance) {
-        largestDistance = segmentDistance;
+      if (currentDistance > largestDistance) {
+        largestDistance = currentDistance;
         segmentIndex = index;
       }
     }
@@ -808,64 +583,41 @@ export function insertProgressiveRoutePoint({
 
   const start = authored[segmentIndex];
   const end = authored[segmentIndex + 1];
-  const previous =
-    authored[Math.max(0, segmentIndex - 1)] ??
-    start;
+  const previous = authored[Math.max(0, segmentIndex - 1)] ?? start;
   const following =
-    authored[
-      Math.min(
-        authored.length - 1,
-        segmentIndex + 2,
-      )
-    ] ?? end;
-
-  const position = catmullRomMidpoint(
-    previous.position,
-    start.position,
-    end.position,
-    following.position,
-  );
-
+    authored[Math.min(authored.length - 1, segmentIndex + 2)] ?? end;
   const insertedPointId = createId("path-point");
-
   const inserted: MovementPathPoint = {
     id: insertedPointId,
     label: "New route point",
-    position,
+    position: catmullRomMidpoint(
+      previous.position,
+      start.position,
+      end.position,
+      following.position,
+    ),
     timeSeconds: clamp(
       (start.timeSeconds + end.timeSeconds) / 2,
       0.01,
       Math.max(0.01, durationSeconds - 0.01),
     ),
-    speedKmh:
-      (start.speedKmh + end.speedKmh) / 2,
-    rotation: headingDegrees(
-      start.position,
-      end.position,
-      start.rotation,
-    ),
+    speedKmh: (start.speedKmh + end.speedKmh) / 2,
+    rotation: headingDegrees(start.position, end.position, start.rotation),
     action: "Cruise",
     notes: "",
   };
-
   const nextAuthored = [
     ...authored.slice(0, segmentIndex + 1),
     inserted,
     ...authored.slice(segmentIndex + 1),
   ];
-
   const aligned = alignAuthoredOnlyToTangents(
-    redistributeAuthoredTimes(
-      relabelPointZRoute(nextAuthored),
-      durationSeconds,
-    ),
+    redistributeAuthoredTimes(relabelPointZRoute(nextAuthored), durationSeconds),
   );
-
   return {
     insertedPointId,
     pathPoints: [...aligned, ...physics].sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
+      (a, b) => a.timeSeconds - b.timeSeconds,
     ),
   };
 }
@@ -878,29 +630,14 @@ export function removeIntermediateRoutePoint({
   pointId: string;
 }): MovementPathPoint[] {
   const authored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
-
-  const target = authored.find(
-    (point) => point.id === pointId,
-  );
-
-  if (
-    !target ||
-    !canDeleteAuthoredRoutePoint(target, authored)
-  ) {
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
+  const target = authored.find((point) => point.id === pointId);
+  if (!target || !canDeleteAuthoredRoutePoint(target, authored)) {
     return pathPoints;
   }
-
   return alignAuthoredRouteToTangents(
-    pathPoints.filter(
-      (point) => point.id !== pointId,
-    ),
+    pathPoints.filter((point) => point.id !== pointId),
   );
 }
 
@@ -923,48 +660,29 @@ export function applySafeAuthoredPointUpdate({
   participantType: ReconstructionVehicleType;
   createId?: (prefix: string) => string;
 }): MovementPathPoint[] {
-  const authored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
+  // Work from the current authored IDs so an editable auto-curve point is not
+  // regenerated before the requested drag/update is applied. The final
+  // normalisation below will build a curve only when the route still has just
+  // Point 1 and Point Z, or when every intermediate remains untouched.
+  const materialised = pathPoints;
+  const authored = materialised
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
+  const target = authored.find((point) => point.id === pointId);
+  if (!target) return materialised;
 
-  const target = authored.find(
-    (point) => point.id === pointId,
-  );
-
-  if (!target) {
-    return pathPoints;
-  }
-
-  const role = getAuthoredRoutePointRole(
-    target,
-    authored,
-  );
-
-  const safeUpdates: Partial<MovementPathPoint> = {
-    ...updates,
-  };
-
+  const role = getAuthoredRoutePointRole(target, authored);
+  const safeUpdates: Partial<MovementPathPoint> = { ...updates };
   delete safeUpdates.id;
-
   if (role === "PointZ") {
     delete safeUpdates.position;
     delete safeUpdates.label;
     delete safeUpdates.action;
-
     safeUpdates.notes = updates.notes
-      ? normaliseNotes(
-          updates.notes,
-          POINT_Z_NOTE_MARKER,
-        )
+      ? normaliseNotes(updates.notes, POINT_Z_NOTE_MARKER)
       : target.notes;
   } else if (role === "PointOne") {
     delete safeUpdates.label;
-
     if (
       updates.action !== undefined &&
       updates.action !== "Start" &&
@@ -976,15 +694,19 @@ export function applySafeAuthoredPointUpdate({
     safeUpdates.action = "Cruise";
   }
 
-  const updated = pathPoints.map((point) =>
-    point.id === pointId
-      ? {
-          ...point,
-          ...safeUpdates,
-        }
-      : point,
-  );
+  if (
+    role === "Intermediate" &&
+    isAutoRoadCurvePoint(target) &&
+    (updates.position !== undefined || updates.rotation !== undefined)
+  ) {
+    safeUpdates.notes = (updates.notes ?? target.notes ?? "")
+      .replace(AUTO_ROAD_CURVE_NOTE_MARKER, "")
+      .trim();
+  }
 
+  const updated = materialised.map((point) =>
+    point.id === pointId ? { ...point, ...safeUpdates } : point,
+  );
   return normalisePointZRoute({
     pathPoints: updated,
     collisionPosition,
@@ -1002,10 +724,7 @@ export function updatePointZPosition({
   speedKmh,
   participantType,
   createId = defaultCreateId,
-}: Omit<
-  NormalisePointZRouteOptions,
-  "collisionPosition"
-> & {
+}: Omit<NormalisePointZRouteOptions, "collisionPosition"> & {
   collisionPosition: ReconstructionPosition;
 }): MovementPathPoint[] {
   return normalisePointZRoute({
@@ -1018,10 +737,6 @@ export function updatePointZPosition({
   });
 }
 
-/**
- * Impact reassignment is intentionally disabled.
- * Point Z is the only authored impact point.
- */
 export function setParticipantImpactPoint({
   pathPoints,
   durationSeconds,
@@ -1031,30 +746,16 @@ export function setParticipantImpactPoint({
   durationSeconds: number;
 }): MovementPathPoint[] {
   const authored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
-
-  if (authored.length < 2) {
-    return pathPoints;
-  }
-
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
+  if (authored.length < 2) return pathPoints;
   const pointZ =
     authored.find(isPointZ) ??
-    authored.find(
-      (point) => point.action === "Impact",
-    ) ??
+    authored.find((point) => point.action === "Impact") ??
     authored[authored.length - 1];
-
   const protectedAuthored = authored
     .filter(
-      (point) =>
-        point.timeSeconds <= pointZ.timeSeconds ||
-        point.id === pointZ.id,
+      (point) => point.timeSeconds <= pointZ.timeSeconds || point.id === pointZ.id,
     )
     .map((point, index) => {
       if (point.id === pointZ.id) {
@@ -1062,13 +763,9 @@ export function setParticipantImpactPoint({
           ...point,
           action: "Impact" as const,
           label: "Point Z · Primary collision",
-          notes: normaliseNotes(
-            point.notes,
-            POINT_Z_NOTE_MARKER,
-          ),
+          notes: normaliseNotes(point.notes, POINT_Z_NOTE_MARKER),
         };
       }
-
       if (index === 0) {
         return {
           ...point,
@@ -1078,19 +775,9 @@ export function setParticipantImpactPoint({
               : ("Start" as const),
         };
       }
-
-      return {
-        ...point,
-        action: sanitiseIntermediateAction(
-          point.action,
-        ),
-      };
+      return { ...point, action: sanitiseIntermediateAction(point.action) };
     });
-
-  const physics = pathPoints.filter(
-    isPhysicsGeneratedRoutePoint,
-  );
-
+  const physics = pathPoints.filter(isPhysicsGeneratedRoutePoint);
   return [
     ...alignAuthoredOnlyToTangents(
       redistributeAuthoredTimes(
@@ -1099,29 +786,18 @@ export function setParticipantImpactPoint({
       ),
     ),
     ...physics,
-  ].sort(
-    (first, second) =>
-      first.timeSeconds - second.timeSeconds,
-  );
+  ].sort((a, b) => a.timeSeconds - b.timeSeconds);
 }
 
 export function getAuthoredImpactPoint(
   pathPoints: MovementPathPoint[],
 ): MovementPathPoint | null {
   const authored = pathPoints
-    .filter(
-      (point) => !isPhysicsGeneratedRoutePoint(point),
-    )
-    .sort(
-      (first, second) =>
-        first.timeSeconds - second.timeSeconds,
-    );
-
+    .filter((point) => !isPhysicsGeneratedRoutePoint(point))
+    .sort((a, b) => a.timeSeconds - b.timeSeconds);
   return (
     authored.find(isPointZ) ??
-    authored.find(
-      (point) => point.action === "Impact",
-    ) ??
+    authored.find((point) => point.action === "Impact") ??
     authored[authored.length - 1] ??
     null
   );
@@ -1131,80 +807,39 @@ export function geoCoordinateToScenePosition(
   calibration: FieldSceneCalibration,
   coordinate: GeoCoordinate,
 ): ReconstructionPosition {
-  const originLatitudeRadians =
-    (calibration.origin.latitude * Math.PI) / 180;
-
-  const coordinateLatitudeRadians =
-    (coordinate.latitude * Math.PI) / 180;
-
+  const originLatitudeRadians = (calibration.origin.latitude * Math.PI) / 180;
+  const coordinateLatitudeRadians = (coordinate.latitude * Math.PI) / 180;
   const deltaLatitudeRadians =
-    ((coordinate.latitude -
-      calibration.origin.latitude) *
-      Math.PI) /
-    180;
-
+    ((coordinate.latitude - calibration.origin.latitude) * Math.PI) / 180;
   const deltaLongitudeRadians =
-    ((coordinate.longitude -
-      calibration.origin.longitude) *
-      Math.PI) /
-    180;
-
+    ((coordinate.longitude - calibration.origin.longitude) * Math.PI) / 180;
   const averageLatitude =
-    (originLatitudeRadians +
-      coordinateLatitudeRadians) /
-    2;
-
+    (originLatitudeRadians + coordinateLatitudeRadians) / 2;
   const eastMetres =
-    deltaLongitudeRadians *
-    EARTH_RADIUS_METRES *
-    Math.cos(averageLatitude);
-
-  const northMetres =
-    deltaLatitudeRadians * EARTH_RADIUS_METRES;
-
-  const rotationRadians =
-    (calibration.rotationDegrees * Math.PI) / 180;
-
+    deltaLongitudeRadians * EARTH_RADIUS_METRES * Math.cos(averageLatitude);
+  const northMetres = deltaLatitudeRadians * EARTH_RADIUS_METRES;
+  const rotationRadians = (calibration.rotationDegrees * Math.PI) / 180;
   const xAxis = {
     east: Math.sin(rotationRadians),
     north: Math.cos(rotationRadians),
   };
-
   const rightAxis = {
     east: Math.cos(rotationRadians),
     north: -Math.sin(rotationRadians),
   };
-
-  const ySign =
-    calibration.yAxisSide === "Left" ? -1 : 1;
-
-  const xMetres =
-    eastMetres * xAxis.east +
-    northMetres * xAxis.north;
-
+  const ySign = calibration.yAxisSide === "Left" ? -1 : 1;
+  const xMetres = eastMetres * xAxis.east + northMetres * xAxis.north;
   const yMetres =
-    (eastMetres * rightAxis.east +
-      northMetres * rightAxis.north) *
-    ySign;
+    (eastMetres * rightAxis.east + northMetres * rightAxis.north) * ySign;
 
   return {
     x: clamp(
-      (xMetres /
-        Math.max(
-          0.01,
-          calibration.sceneWidthMetres,
-        )) *
-        100,
+      (xMetres / Math.max(0.01, calibration.sceneWidthMetres)) * 100,
       0,
       100,
     ),
     y: clamp(
-      (yMetres /
-        Math.max(
-          0.01,
-          calibration.sceneHeightMetres,
-        )) *
-        100,
+      (yMetres / Math.max(0.01, calibration.sceneHeightMetres)) * 100,
       0,
       100,
     ),

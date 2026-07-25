@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-
-import { SceneSnapshotService } from "../../services/sceneSnapshotService";
+import { useLayoutEffect, useMemo } from "react";
 import type {
   RealSceneGeometry,
   RealSceneLandCoverType,
@@ -9,6 +7,10 @@ import type {
   RealSceneVegetationGeometry,
 } from "../../types/realSceneGeometry";
 import type { RoadSceneSettings } from "../../types/reconstruction";
+import {
+  clearActiveReconstructionRoadGeometry,
+  setActiveReconstructionRoadGeometry,
+} from "../../utils/reconstructionRoadRouting";
 import { getEffectiveRealRoadWidthMetres } from "../../utils/reconstructionWorldScale";
 
 interface RealSceneGeometryLayerProps {
@@ -255,36 +257,13 @@ export default function RealSceneGeometryLayer({
   geometry,
   settings,
 }: RealSceneGeometryLayerProps) {
-  const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let disposed = false;
-    let objectUrl: string | null = null;
-
-    if (!geometry.snapshot?.id) {
-      setSnapshotUrl(null);
-      return undefined;
-    }
-
-    void SceneSnapshotService.createObjectUrl(geometry.snapshot.id)
-      .then((url) => {
-        if (disposed) {
-          if (url) URL.revokeObjectURL(url);
-          return;
-        }
-        objectUrl = url;
-        setSnapshotUrl(url);
-      })
-      .catch((error) => {
-        console.warn("Real-scene snapshot could not be displayed:", error);
-        setSnapshotUrl(null);
-      });
+  useLayoutEffect(() => {
+    setActiveReconstructionRoadGeometry(geometry);
 
     return () => {
-      disposed = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      clearActiveReconstructionRoadGeometry(geometry);
     };
-  }, [geometry.snapshot?.id]);
+  }, [geometry]);
 
   const landCover = geometry.landCover ?? [];
   const vegetation = geometry.vegetation ?? [];
@@ -305,16 +284,13 @@ export default function RealSceneGeometryLayer({
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-      style={{ background: groundColour }}
+      data-roadsafe-view="orthographic-top-down"
+      style={{
+        background: groundColour,
+        perspective: "none",
+        transformStyle: "flat",
+      }}
     >
-      {snapshotUrl && (
-        <img
-          src={snapshotUrl}
-          alt=""
-          className="absolute inset-0 h-full w-full object-fill opacity-35 saturate-[0.76] contrast-[0.92]"
-        />
-      )}
-
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox="0 0 100 100"
