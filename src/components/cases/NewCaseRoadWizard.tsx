@@ -4,16 +4,41 @@ import {
   useRef,
   useState,
 } from "react";
-
 import { useNavigate } from "react-router-dom";
+import {
+  Check,
+  ChevronRight,
+  Crosshair,
+  Database,
+  FileText,
+  Gauge,
+  LocateFixed,
+  Map,
+  MapPinned,
+  Mic,
+  MicOff,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Square,
+  Waypoints,
+} from "lucide-react";
 
+import {
+  getOfficerDisplayName,
+  getPoliceStationByName,
+  ZIMBABWE_POLICE_STATIONS,
+} from "../../data/stations";
 import { useLiveGeolocation } from "../../hooks/useLiveGeolocation";
-import { averageGeoCoordinates } from "../../utils/locationAveraging";
-
+import { useSpeechDictation } from "../../hooks/useSpeechDictation";
 import { AccidentCaseService } from "../../services/accidentCaseService";
-import { RoadLayoutDetectionService } from "../../services/roadLayoutDetectionService";
 import { RealSceneExtractionService } from "../../services/realSceneExtractionService";
-
+import {
+  preciseCoordinateToScenePosition,
+  RealSceneRoadDetectionService,
+} from "../../services/realSceneRoadDetectionService";
+import { ReconstructionService } from "../../services/reconstructionService";
+import { RoadLayoutDetectionService } from "../../services/roadLayoutDetectionService";
 import type { AccidentCaseFormValues } from "../../types/accidentCase";
 import type {
   RealSceneAreaSelection,
@@ -34,6 +59,7 @@ import {
   type SceneEnvironmentType,
   type TrafficControlType,
 } from "../../types/reconstruction";
+import { averageGeoCoordinates } from "../../utils/locationAveraging";
 
 import RoadSceneEnvironment from "../reconstruction/RoadSceneEnvironment";
 import RoadDetectionPreview from "./RoadDetectionPreview";
@@ -54,6 +80,8 @@ interface BasicCaseErrors {
   title?: string;
   accidentDate?: string;
   accidentTime?: string;
+  policeStation?: string;
+  investigatingOfficer?: string;
 }
 
 const ROAD_LAYOUTS: RoadLayoutType[] = [
@@ -72,33 +100,6 @@ const TRAFFIC_CONTROLS: TrafficControlType[] = [
   "Give Way Signs",
 ];
 
-const SCENE_ENVIRONMENTS: Array<{
-  value: SceneEnvironmentType;
-  title: string;
-  description: string;
-}> = [
-  {
-    value: "Road / Junction",
-    title: "Road / Junction",
-    description: "Detect and generate road, lane, kerb and traffic-control geometry.",
-  },
-  {
-    value: "Open Ground",
-    title: "Open Ground",
-    description: "Keep the real location and terrain, but generate no road or junction.",
-  },
-  {
-    value: "Mixed Site",
-    title: "Mixed Site",
-    description: "Use a road plus surrounding field, verge, yard or other open ground.",
-  },
-  {
-    value: "Custom Site",
-    title: "Custom Site",
-    description: "Start with real-location ground and add every structure manually or by GPS.",
-  },
-];
-
 const GROUND_SURFACES: GroundSurfaceType[] = [
   "Unclassified Ground",
   "Firm Soil",
@@ -112,24 +113,135 @@ const GROUND_SURFACES: GroundSurfaceType[] = [
   "Mixed Surface",
 ];
 
+const SCENE_ENVIRONMENTS: Array<{
+  value: SceneEnvironmentType;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "Road / Junction",
+    title: "Road / Junction",
+    description:
+      "Use the exact extracted roads, lanes, structures and selected accident anchor.",
+  },
+  {
+    value: "Mixed Site",
+    title: "Mixed Site",
+    description:
+      "Keep the mapped road while preserving surrounding verge, yard or open ground.",
+  },
+  {
+    value: "Open Ground",
+    title: "Open Ground",
+    description:
+      "Preserve the selected location and terrain without generating a road.",
+  },
+  {
+    value: "Custom Site",
+    title: "Custom Site",
+    description:
+      "Use the verified boundary as a blank measured scene for manual placement.",
+  },
+];
+
+const SUMMARY_TEMPLATE = `INITIAL INCIDENT ACCOUNT
+Reported collision type:
+Vehicles / road users involved:
+Direction of travel:
+Approximate impact position:
+Observed final positions:
+
+SCENE AND ROAD CONDITIONS
+Road layout:
+Surface condition:
+Weather and visibility:
+Traffic controls:
+Lighting:
+Known hazards or obstructions:
+
+CASUALTIES AND DAMAGE
+Reported injuries:
+Fatalities:
+Visible vehicle damage:
+Property or infrastructure damage:
+
+INITIAL EVIDENCE
+Witnesses:
+CCTV / dashcam:
+Tyre marks / debris:
+Measurements already taken:
+Photographs available:
+
+OFFICER'S PRELIMINARY OBSERVATIONS
+`;
+
 function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+  return new Promise((resolve) =>
+    window.setTimeout(resolve, milliseconds),
+  );
 }
 
-function coordinateLabel(coordinate: RoadDetectionCoordinate): string {
-  return `${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`;
+function coordinateLabel(
+  coordinate: RoadDetectionCoordinate,
+): string {
+  return `${coordinate.latitude.toFixed(7)}, ${coordinate.longitude.toFixed(7)}`;
 }
 
-function getAccuracyTone(accuracyMetres: number): string {
-  if (accuracyMetres <= 5) return "bg-emerald-100 text-emerald-800";
-  if (accuracyMetres <= 10) return "bg-amber-100 text-amber-800";
-  return "bg-red-100 text-red-800";
+function coordinateInsideArea(
+  coordinate: RoadDetectionCoordinate | null,
+  area: RealSceneAreaSelection | null,
+): boolean {
+  if (!coordinate || !area) return false;
+
+  return (
+    coordinate.latitude <= area.bounds.north &&
+    coordinate.latitude >= area.bounds.south &&
+    coordinate.longitude <= area.bounds.east &&
+    coordinate.longitude >= area.bounds.west
+  );
 }
 
-function getConfidenceTone(confidence: number): string {
-  if (confidence >= 0.8) return "bg-emerald-100 text-emerald-800";
-  if (confidence >= 0.6) return "bg-amber-100 text-amber-800";
-  return "bg-red-100 text-red-800";
+function selectionDimensions(
+  area: RealSceneAreaSelection | null,
+): {
+  widthMetres: number;
+  heightMetres: number;
+} {
+  if (!area) {
+    return {
+      widthMetres: 0,
+      heightMetres: 0,
+    };
+  }
+
+  const latitude =
+    (area.bounds.north + area.bounds.south) / 2;
+
+  return {
+    widthMetres:
+      (area.bounds.east - area.bounds.west) *
+      111_320 *
+      Math.cos((latitude * Math.PI) / 180),
+    heightMetres:
+      (area.bounds.north - area.bounds.south) *
+      110_540,
+  };
+}
+
+function getAccuracyClass(
+  accuracyMetres: number,
+): string {
+  if (accuracyMetres <= 5) return "is-good";
+  if (accuracyMetres <= 10) return "is-warning";
+  return "is-danger";
+}
+
+function getConfidenceClass(
+  confidence: number,
+): string {
+  if (confidence >= 0.8) return "is-good";
+  if (confidence >= 0.6) return "is-warning";
+  return "is-danger";
 }
 
 export default function NewCaseRoadWizard({
@@ -139,8 +251,10 @@ export default function NewCaseRoadWizard({
   const geolocation = useLiveGeolocation();
 
   const [step, setStep] = useState<WizardStep>(1);
-  const [values, setValues] = useState<AccidentCaseFormValues>(initialValues);
-  const [errors, setErrors] = useState<BasicCaseErrors>({});
+  const [values, setValues] =
+    useState<AccidentCaseFormValues>(initialValues);
+  const [errors, setErrors] =
+    useState<BasicCaseErrors>({});
 
   const [selectedCoordinate, setSelectedCoordinate] =
     useState<RoadDetectionCoordinate | null>(null);
@@ -148,16 +262,16 @@ export default function NewCaseRoadWizard({
   const [manualLongitude, setManualLongitude] = useState("");
   const [averaging, setAveraging] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
-  const locationMapRef = useRef<RoadLocationMapHandle | null>(null);
-  const wizardRootRef = useRef<HTMLDivElement | null>(null);
-  const previousSceneAnchorRef = useRef<string | null>(null);
+
   const [sceneArea, setSceneArea] =
     useState<RealSceneAreaSelection | null>(null);
   const [realSceneGeometry, setRealSceneGeometry] =
     useState<RealSceneGeometry | null>(null);
   const [extractingScene, setExtractingScene] = useState(false);
-  const [sceneGeometryConfirmed, setSceneGeometryConfirmed] = useState(false);
-  const [sceneExtractionMessage, setSceneExtractionMessage] = useState("");
+  const [sceneGeometryConfirmed, setSceneGeometryConfirmed] =
+    useState(false);
+  const [sceneExtractionMessage, setSceneExtractionMessage] =
+    useState("");
 
   const [selectedEnvironment, setSelectedEnvironment] =
     useState<SceneEnvironmentType | null>(null);
@@ -165,21 +279,44 @@ export default function NewCaseRoadWizard({
     useState<RoadDetectionResult | null>(null);
   const [sceneSettings, setSceneSettings] =
     useState<RoadSceneSettings | null>(null);
-  const [detectingRoad, setDetectingRoad] = useState(false);
-  const [roadError, setRoadError] = useState("");
   const [creating, setCreating] = useState(false);
 
+  const locationMapRef =
+    useRef<RoadLocationMapHandle | null>(null);
+  const wizardRootRef = useRef<HTMLDivElement | null>(null);
+  const previousSceneAnchorRef = useRef<string | null>(null);
+
+  const station =
+    getPoliceStationByName(values.policeStation);
+
   const liveCoordinate = geolocation.current;
+
+  const appendSummaryText = (text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+
+    setValues((current) => ({
+      ...current,
+      summary: current.summary.trim()
+        ? `${current.summary.trim()} ${clean}`
+        : clean,
+    }));
+  };
+
+  const dictation = useSpeechDictation({
+    onFinalText: appendSummaryText,
+  });
 
   useEffect(() => {
     if (selectedCoordinate || !liveCoordinate) return;
 
-    const nextCoordinate = {
+    const nextCoordinate: RoadDetectionCoordinate = {
       latitude: liveCoordinate.latitude,
       longitude: liveCoordinate.longitude,
       accuracyMetres: liveCoordinate.accuracyMetres,
       capturedAt: liveCoordinate.capturedAt,
     };
+
     const timer = window.setTimeout(() => {
       setSelectedCoordinate((current) => current ?? nextCoordinate);
     }, 0);
@@ -197,7 +334,6 @@ export default function NewCaseRoadWizard({
       identity &&
       previousSceneAnchorRef.current !== identity
     ) {
-      // A changed accident anchor invalidates the selected scene area.
       setSceneArea(null);
       setRealSceneGeometry(null);
       setSceneGeometryConfirmed(false);
@@ -205,7 +341,7 @@ export default function NewCaseRoadWizard({
       setDetectionResult(null);
       setSceneSettings(null);
       setSceneExtractionMessage(
-        "The accident anchor changed. Select and extract the scene area again.",
+        "The exact accident marker changed. Select and extract the scene boundary again.",
       );
     }
 
@@ -213,26 +349,53 @@ export default function NewCaseRoadWizard({
   }, [selectedCoordinate]);
 
   useEffect(() => {
-    // RoadSafe case-wizard page shell: theme the route container as one workspace.
     const rootElement = wizardRootRef.current;
     const pageElement = rootElement?.parentElement ?? null;
+
     document.body.classList.add("roadsafe-case-wizard-open");
     pageElement?.classList.add("roadsafe-case-page-shell");
 
     return () => {
       document.body.classList.remove("roadsafe-case-wizard-open");
       pageElement?.classList.remove("roadsafe-case-page-shell");
+      dictation.stop();
     };
   }, []);
 
   const locationDisplay = useMemo(() => {
-    if (!selectedCoordinate) return "No accident position confirmed yet.";
-    return `${coordinateLabel(selectedCoordinate)} · ±${selectedCoordinate.accuracyMetres.toFixed(
+    if (!selectedCoordinate) {
+      return "No exact accident marker has been confirmed.";
+    }
+
+    return `${coordinateLabel(selectedCoordinate)} · reported ±${selectedCoordinate.accuracyMetres.toFixed(
       1,
     )} m`;
   }, [selectedCoordinate]);
 
-  const updateValue = <Key extends keyof AccidentCaseFormValues>(
+  const areaContainsAnchor = coordinateInsideArea(
+    selectedCoordinate,
+    sceneArea,
+  );
+
+  const areaDimensions = useMemo(
+    () => selectionDimensions(sceneArea),
+    [sceneArea],
+  );
+
+  const preciseAnchorPosition = useMemo(() => {
+    if (!selectedCoordinate || !realSceneGeometry) {
+      return null;
+    }
+
+    return preciseCoordinateToScenePosition(
+      selectedCoordinate,
+      realSceneGeometry,
+    );
+  }, [selectedCoordinate, realSceneGeometry]);
+
+  const updateValue = <
+    Key extends keyof AccidentCaseFormValues,
+  >(
     field: Key,
     value: AccidentCaseFormValues[Key],
   ) => {
@@ -262,22 +425,50 @@ export default function NewCaseRoadWizard({
     if (!values.accidentTime) {
       nextErrors.accidentTime = "Accident time is required.";
     }
+    if (!values.policeStation.trim()) {
+      nextErrors.policeStation = "Select the responsible police station.";
+    }
+    if (!values.investigatingOfficer.trim()) {
+      nextErrors.investigatingOfficer =
+        "Select an investigating officer from the station.";
+    }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  };
+
+  const changeStation = (stationName: string) => {
+    const selected = getPoliceStationByName(stationName);
+    const firstOfficer = selected?.officers[0];
+
+    setValues((current) => ({
+      ...current,
+      policeStation: stationName,
+      investigatingOfficer: firstOfficer
+        ? getOfficerDisplayName(firstOfficer)
+        : "",
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      policeStation: undefined,
+      investigatingOfficer: undefined,
+    }));
   };
 
   const startLocationTracking = () => {
     geolocation.clearSamples();
     geolocation.start();
     setLocationMessage(
-      "Location tracking started. Remain outdoors and still for a better reading.",
+      "Location tracking started. Remain outdoors and still while the reading settles.",
     );
   };
 
   const averageLocation = async () => {
     setAveraging(true);
-    setLocationMessage("Collecting high-accuracy location samples for 5 seconds...");
+    setLocationMessage(
+      "Collecting and filtering high-accuracy location samples for 5 seconds…",
+    );
 
     geolocation.clearSamples();
     geolocation.start();
@@ -285,6 +476,7 @@ export default function NewCaseRoadWizard({
 
     try {
       await delay(5_000);
+
       const samples = geolocation.getSamplesSince(startedAt);
       const usableSamples =
         samples.length > 0
@@ -295,11 +487,12 @@ export default function NewCaseRoadWizard({
 
       if (usableSamples.length === 0) {
         throw new Error(
-          "No location samples were received. Check browser permission and device location services.",
+          "No GPS samples were received. Check location permission and device location services.",
         );
       }
 
       const result = averageGeoCoordinates(usableSamples);
+
       setSelectedCoordinate({
         latitude: result.coordinate.latitude,
         longitude: result.coordinate.longitude,
@@ -308,13 +501,15 @@ export default function NewCaseRoadWizard({
       });
 
       setLocationMessage(
-        `Averaged ${result.sampleCount} sample(s). Best accuracy: ±${result.bestAccuracyMetres.toFixed(
+        `Averaged ${result.sampleCount} sample(s). Best device reading: ±${result.bestAccuracyMetres.toFixed(
           1,
-        )} m.`,
+        )} m. Confirm the red marker against the satellite image.`,
       );
     } catch (error) {
       setLocationMessage(
-        error instanceof Error ? error.message : "Location averaging failed.",
+        error instanceof Error
+          ? error.message
+          : "Location averaging failed.",
       );
     } finally {
       setAveraging(false);
@@ -337,165 +532,211 @@ export default function NewCaseRoadWizard({
       return;
     }
 
-    setSelectedCoordinate({
+    const coordinate: RoadDetectionCoordinate = {
       latitude,
       longitude,
-      accuracyMetres: 10,
+      accuracyMetres: 5,
       capturedAt: new Date().toISOString(),
-    });
-    setLocationMessage("Manual coordinate applied. Confirm it on the map.");
+    };
+
+    setSelectedCoordinate(coordinate);
+    locationMapRef.current?.focusCoordinate(coordinate, 18.5);
+    setLocationMessage(
+      "Manual coordinate applied. Confirm the red marker against visible road details.",
+    );
   };
 
   const extractSelectedScene = async () => {
-    if (!sceneArea) {
+    if (!sceneArea || !selectedCoordinate) {
       setSceneExtractionMessage(
-        "Select the accident-scene area on the map first.",
+        "Confirm the exact accident marker and draw the scene boundary first.",
+      );
+      return;
+    }
+
+    if (!coordinateInsideArea(selectedCoordinate, sceneArea)) {
+      setSceneExtractionMessage(
+        "The red accident marker is outside the blue boundary. Redraw the boundary so it contains the exact impact location.",
+      );
+      return;
+    }
+
+    if (
+      areaDimensions.widthMetres < 8 ||
+      areaDimensions.heightMetres < 8
+    ) {
+      setSceneExtractionMessage(
+        "The selected boundary is too small. Each side must be at least 8 metres.",
       );
       return;
     }
 
     setExtractingScene(true);
+    setSceneGeometryConfirmed(false);
     setSceneExtractionMessage(
-      "Capturing the selected map area and extracting its real geometry…",
+      "Downloading the exact selected-area geometry and map snapshot in parallel…",
     );
 
     try {
-      const snapshot =
-        await locationMapRef.current?.captureSelectedAreaSnapshot();
-      const result = await RealSceneExtractionService.extract(
-        sceneArea,
-        snapshot ?? undefined,
+      const geometryPromise = RealSceneExtractionService.extract(sceneArea);
+      const snapshotPromise =
+        locationMapRef.current?.captureSelectedAreaSnapshot() ??
+        Promise.resolve(null);
+
+      const [result, snapshot] = await Promise.all([
+        geometryPromise,
+        snapshotPromise,
+      ]);
+
+      const geometry: RealSceneGeometry = {
+        ...result.geometry,
+        snapshot: snapshot ?? result.geometry.snapshot,
+        warnings: snapshot
+          ? result.geometry.warnings.filter(
+              (warning) =>
+                !warning.toLowerCase().includes("snapshot"),
+            )
+          : result.geometry.warnings,
+      };
+
+      const roadDetection = RealSceneRoadDetectionService.detect(
+        geometry,
+        selectedCoordinate,
+        values.location,
       );
-      setRealSceneGeometry(result.geometry);
-      setSceneGeometryConfirmed(false);
+
+      setRealSceneGeometry(geometry);
+      setDetectionResult(roadDetection);
       setSelectedEnvironment(null);
-      setDetectionResult(null);
       setSceneSettings(null);
+
+      const anchor = preciseCoordinateToScenePosition(
+        selectedCoordinate,
+        geometry,
+      );
+
       setSceneExtractionMessage(
-        `Scene ready: ${result.geometry.roads.length} road section(s), ${result.geometry.buildings.length} building footprint(s), ${result.geometry.vegetation?.length ?? 0} vegetation item(s), ${result.geometry.landCover?.length ?? 0} mapped land-cover area(s), ${result.geometry.sceneWidthMetres.toFixed(1)} × ${result.geometry.sceneHeightMetres.toFixed(1)} m.`,
+        `Exact scene extracted: ${geometry.roads.length} road section(s), ${geometry.buildings.length} building(s), ${geometry.paths.length} path(s), ${geometry.vegetation?.length ?? 0} vegetation item(s). Accident anchor preserved at X ${anchor.x.toFixed(
+          3,
+        )}% · Y ${anchor.y.toFixed(3)}% inside the generated scene.`,
       );
     } catch (error) {
       setRealSceneGeometry(null);
-      setSceneGeometryConfirmed(false);
+      setDetectionResult(null);
+      setSelectedEnvironment(null);
+      setSceneSettings(null);
       setSceneExtractionMessage(
         error instanceof Error
           ? error.message
-          : "The selected scene could not be extracted.",
+          : "The exact selected scene could not be extracted.",
       );
     } finally {
       setExtractingScene(false);
     }
   };
 
-  const detectRoadLayout = async (
-    forceRefresh: boolean,
-    environment: SceneEnvironmentType = selectedEnvironment ?? "Road / Junction",
-  ) => {
-    if (!selectedCoordinate) return;
+  const reanalyseVerifiedGeometry = () => {
+    if (!realSceneGeometry || !selectedCoordinate) return;
 
-    const detectionCoordinate = sceneArea?.centre ?? selectedCoordinate;
+    const result = RealSceneRoadDetectionService.detect(
+      realSceneGeometry,
+      selectedCoordinate,
+      values.location,
+    );
 
-    setDetectingRoad(true);
-    setRoadError("");
+    setDetectionResult(result);
 
-    try {
-      const result = await RoadLayoutDetectionService.detectAtCoordinate(
-        detectionCoordinate,
-        80,
-        forceRefresh,
-      );
-      setDetectionResult(result);
+    if (selectedEnvironment && usesGeneratedRoad({
+      ...createDefaultRoadSceneSettings(),
+      sceneEnvironment: selectedEnvironment,
+    })) {
       setSceneSettings({
         ...result.detection.suggestedSceneSettings,
-        sceneEnvironment: environment,
-        groundSurface: "Unclassified Ground",
-        sceneWidthMetres:
-          realSceneGeometry?.sceneWidthMetres ??
-          result.detection.suggestedSceneSettings.sceneWidthMetres,
-        sceneHeightMetres:
-          realSceneGeometry?.sceneHeightMetres ??
-          result.detection.suggestedSceneSettings.sceneHeightMetres,
-        realSceneGeometry: realSceneGeometry ?? undefined,
+        sceneEnvironment: selectedEnvironment,
+        groundSurface:
+          sceneSettings?.groundSurface ?? "Unclassified Ground",
+        realSceneGeometry,
+        sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
+        sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
       });
-
-      const detectedLocation = result.detection.address.displayName.trim();
-      if (detectedLocation) {
-        setValues((current) => ({
-          ...current,
-          location: detectedLocation,
-        }));
-      }
-    } catch (error) {
-      setRoadError(
-        error instanceof Error
-          ? error.message
-          : "Road-layout detection failed. Select the layout manually.",
-      );
-    } finally {
-      setDetectingRoad(false);
     }
   };
 
-  const selectEnvironment = (sceneEnvironment: SceneEnvironmentType) => {
-    setSelectedEnvironment(sceneEnvironment);
-    setDetectionResult(null);
-    setRoadError("");
+  const selectEnvironment = (
+    environment: SceneEnvironmentType,
+  ) => {
+    if (!realSceneGeometry || !selectedCoordinate) return;
 
-    const sharedRealScene = realSceneGeometry
-      ? {
-          sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
-          sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
-          realSceneGeometry,
-        }
-      : {};
+    setSelectedEnvironment(environment);
 
-    if (sceneEnvironment === "Open Ground" || sceneEnvironment === "Custom Site") {
+    if (environment === "Open Ground" || environment === "Custom Site") {
       setSceneSettings({
-        ...createDefaultGroundSceneSettings(sceneEnvironment),
-        ...sharedRealScene,
+        ...createDefaultGroundSceneSettings(environment),
+        sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
+        sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
+        realSceneGeometry,
       });
       return;
     }
 
+    const result =
+      detectionResult ??
+      RealSceneRoadDetectionService.detect(
+        realSceneGeometry,
+        selectedCoordinate,
+        values.location,
+      );
+
+    setDetectionResult(result);
     setSceneSettings({
-      ...createDefaultRoadSceneSettings(),
-      ...sharedRealScene,
-      sceneEnvironment,
+      ...result.detection.suggestedSceneSettings,
+      sceneEnvironment: environment,
       groundSurface: "Unclassified Ground",
+      sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
+      sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
+      realSceneGeometry,
     });
-    void detectRoadLayout(false, sceneEnvironment);
   };
 
   const createCaseAndScene = () => {
-    if (!selectedCoordinate || !sceneSettings || !realSceneGeometry || !sceneGeometryConfirmed) return;
+    if (
+      !selectedCoordinate ||
+      !sceneSettings ||
+      !realSceneGeometry ||
+      !sceneGeometryConfirmed ||
+      !coordinateInsideArea(selectedCoordinate, sceneArea)
+    ) {
+      return;
+    }
 
     setCreating(true);
 
     try {
+      const exactCollisionPoint = preciseCoordinateToScenePosition(
+        selectedCoordinate,
+        realSceneGeometry,
+      );
+
       let confirmedDetection = undefined;
+
       if (usesGeneratedRoad(sceneSettings)) {
         const baseDetection =
           detectionResult?.detection ??
-          RoadLayoutDetectionService.createManualDetection(
+          RealSceneRoadDetectionService.detect(
+            realSceneGeometry,
             selectedCoordinate,
-            {
-              roadLayout: sceneSettings.roadLayout,
-              laneCount: sceneSettings.laneCount,
-              roadRotation: sceneSettings.roadRotation,
-              drivingSide: sceneSettings.drivingSide,
-              trafficControl: sceneSettings.trafficControl,
-              speedLimitKmh: sceneSettings.speedLimitKmh,
-              showPedestrianCrossing: sceneSettings.showPedestrianCrossing,
-            },
-            undefined,
-            roadError || "The officer selected the road layout manually.",
-          );
+            values.location,
+          ).detection;
 
-        confirmedDetection = RoadLayoutDetectionService.applyOfficerCorrections(
-          baseDetection,
-          sceneSettings,
-          values.investigatingOfficer,
-        );
+        confirmedDetection = {
+          ...RoadLayoutDetectionService.applyOfficerCorrections(
+            baseDetection,
+            sceneSettings,
+            values.investigatingOfficer,
+          ),
+          coordinate: selectedCoordinate,
+          junctionCentre: exactCollisionPoint,
+        };
       }
 
       const finalLocation =
@@ -503,24 +744,59 @@ export default function NewCaseRoadWizard({
         confirmedDetection?.address.displayName ||
         coordinateLabel(selectedCoordinate);
 
-      const saved = AccidentCaseService.createWithSceneEnvironment(
-        {
-          ...values,
-          caseNumber: values.caseNumber.trim(),
-          title: values.title.trim(),
-          location: finalLocation,
-          junctionId: values.junctionId.trim(),
-          investigatingOfficer: values.investigatingOfficer.trim(),
-          policeStation: values.policeStation.trim(),
-          summary: values.summary.trim(),
-          status: "Open",
-        },
-        selectedCoordinate,
-        sceneSettings,
-        confirmedDetection,
-      );
+      const finalSceneSettings: RoadSceneSettings = {
+        ...sceneSettings,
+        realSceneGeometry,
+        sceneWidthMetres: realSceneGeometry.sceneWidthMetres,
+        sceneHeightMetres: realSceneGeometry.sceneHeightMetres,
+      };
 
-      navigate(`/cases/${saved.id}/reconstruction`);
+      const savedCase =
+        AccidentCaseService.createWithSceneEnvironment(
+          {
+            ...values,
+            caseNumber: values.caseNumber.trim(),
+            title: values.title.trim(),
+            location: finalLocation,
+            junctionId: values.junctionId.trim(),
+            investigatingOfficer:
+              values.investigatingOfficer.trim(),
+            policeStation: values.policeStation.trim(),
+            summary: values.summary.trim(),
+            status: "Open",
+          },
+          selectedCoordinate,
+          finalSceneSettings,
+          confirmedDetection,
+        );
+
+      const linkedReconstruction =
+        AccidentCaseService.getLinkedReconstruction(savedCase);
+
+      if (linkedReconstruction) {
+        const preciseReconstruction = ReconstructionService.save({
+          ...linkedReconstruction,
+          siteCoordinate: selectedCoordinate,
+          collisionPoint: exactCollisionPoint,
+          scene: finalSceneSettings,
+          roadLayoutDetection: confirmedDetection,
+        });
+
+        AccidentCaseService.registerReconstructionSave(
+          savedCase.id,
+          preciseReconstruction,
+        );
+      }
+
+      navigate(`/cases/${savedCase.id}/reconstruction`);
+    } catch (error) {
+      console.error("Failed to create the precise scene:", error);
+      setSceneExtractionMessage(
+        error instanceof Error
+          ? error.message
+          : "The case and scene could not be created.",
+      );
+      setStep(4);
     } finally {
       setCreating(false);
     }
@@ -530,269 +806,429 @@ export default function NewCaseRoadWizard({
     <div ref={wizardRootRef} className="roadsafe-case-wizard">
       <WizardProgress step={step} />
 
-      {step === 2 && (
-        <div className="roadsafe-wizard-command" role="status">
-          <span className="roadsafe-wizard-command__number">1–2</span>
-          <div>
-            <strong>Mark the accident spot, then select the complete scene area.</strong>
-            <p>Place the red accident marker first. Next, draw the blue boundary around everything that must appear in the reconstruction. Only that selected area will be captured, extracted and used in 2D and 3D.</p>
-          </div>
-        </div>
-      )}
-
       {step === 1 && (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <section className="roadsafe-wizard-panel">
           <SectionHeading
             eyebrow="Step 1 of 4"
-            title="Record the basic accident-case details"
-            description="The accident location will be detected from the officer’s device in the next step."
+            title="Record the accident-case details"
+            description="Assign the responsible Zimbabwe police station and officer, then capture a complete initial incident account."
+            icon={<FileText size={18} />}
           />
 
-          <div className="mt-6 space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Case number" error={errors.caseNumber}>
-                <input
-                  value={values.caseNumber}
-                  onChange={(event) =>
-                    updateValue("caseNumber", event.target.value)
-                  }
-                  className={inputClass(Boolean(errors.caseNumber))}
-                />
-              </Field>
+          <div className="roadsafe-wizard-form-grid">
+            <Field label="Case number" error={errors.caseNumber}>
+              <input
+                value={values.caseNumber}
+                onChange={(event) =>
+                  updateValue("caseNumber", event.target.value)
+                }
+              />
+            </Field>
 
-              <Field label="Initial status">
-                <input
-                  value="Open"
-                  readOnly
-                  className={`${inputClass(false)} bg-slate-50 text-slate-500`}
-                />
-              </Field>
-            </div>
+            <Field label="Initial status">
+              <input value="Open" readOnly />
+            </Field>
 
-            <Field label="Case title" error={errors.title}>
+            <Field
+              label="Case title"
+              error={errors.title}
+              wide
+            >
               <input
                 value={values.title}
-                onChange={(event) => updateValue("title", event.target.value)}
-                className={inputClass(Boolean(errors.title))}
-                placeholder="Example: Two-vehicle collision near Bindura CBD"
+                onChange={(event) =>
+                  updateValue("title", event.target.value)
+                }
+                placeholder="Example: Two-vehicle collision at a Bindura junction"
               />
             </Field>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Accident date" error={errors.accidentDate}>
-                <input
-                  type="date"
-                  value={values.accidentDate}
-                  onChange={(event) =>
-                    updateValue("accidentDate", event.target.value)
-                  }
-                  className={inputClass(Boolean(errors.accidentDate))}
-                />
-              </Field>
-
-              <Field label="Accident time" error={errors.accidentTime}>
-                <input
-                  type="time"
-                  value={values.accidentTime}
-                  onChange={(event) =>
-                    updateValue("accidentTime", event.target.value)
-                  }
-                  className={inputClass(Boolean(errors.accidentTime))}
-                />
-              </Field>
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Investigating officer">
-                <input
-                  value={values.investigatingOfficer}
-                  onChange={(event) =>
-                    updateValue("investigatingOfficer", event.target.value)
-                  }
-                  className={inputClass(false)}
-                  placeholder="Officer name"
-                />
-              </Field>
-
-              <Field label="Police station">
-                <input
-                  value={values.policeStation}
-                  onChange={(event) =>
-                    updateValue("policeStation", event.target.value)
-                  }
-                  className={inputClass(false)}
-                  placeholder="Example: Bindura Central Police Station"
-                />
-              </Field>
-            </div>
-
-            <Field label="Initial case summary">
-              <textarea
-                rows={5}
-                value={values.summary}
-                onChange={(event) => updateValue("summary", event.target.value)}
-                className={`${inputClass(false)} resize-y`}
-                placeholder="Describe the reported accident and initial observations."
+            <Field label="Accident date" error={errors.accidentDate}>
+              <input
+                type="date"
+                value={values.accidentDate}
+                onChange={(event) =>
+                  updateValue("accidentDate", event.target.value)
+                }
               />
             </Field>
+
+            <Field label="Accident time" error={errors.accidentTime}>
+              <input
+                type="time"
+                value={values.accidentTime}
+                onChange={(event) =>
+                  updateValue("accidentTime", event.target.value)
+                }
+              />
+            </Field>
+
+            <Field
+              label="Responsible police station"
+              error={errors.policeStation}
+            >
+              <select
+                value={values.policeStation}
+                onChange={(event) => changeStation(event.target.value)}
+              >
+                <option value="">Select a Zimbabwe police station</option>
+                {ZIMBABWE_POLICE_STATIONS.map((item) => (
+                  <option key={item.id} value={item.name}>
+                    {item.name} · {item.province}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field
+              label="Investigating officer"
+              error={errors.investigatingOfficer}
+            >
+              <select
+                value={values.investigatingOfficer}
+                disabled={!station}
+                onChange={(event) =>
+                  updateValue(
+                    "investigatingOfficer",
+                    event.target.value,
+                  )
+                }
+              >
+                <option value="">
+                  {station
+                    ? "Select an officer from this station"
+                    : "Select the police station first"}
+                </option>
+                {station?.officers.map((officer) => {
+                  const name = getOfficerDisplayName(officer);
+                  return (
+                    <option key={officer.id} value={name}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+            </Field>
+          </div>
+
+          <div className="roadsafe-summary-workspace">
+            <div className="roadsafe-summary-workspace__header">
+              <div>
+                <p>Initial case summary</p>
+                <span>
+                  Capture the reported sequence, scene conditions,
+                  casualties, evidence and first officer observations.
+                </span>
+              </div>
+
+              <div className="roadsafe-summary-workspace__actions">
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateValue(
+                      "summary",
+                      values.summary.trim()
+                        ? `${values.summary.trim()}\n\n${SUMMARY_TEMPLATE}`
+                        : SUMMARY_TEMPLATE,
+                    )
+                  }
+                >
+                  <Sparkles size={13} />
+                  Add structured template
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!dictation.supported}
+                  onClick={
+                    dictation.listening
+                      ? dictation.stop
+                      : dictation.start
+                  }
+                  className={dictation.listening ? "is-recording" : ""}
+                >
+                  {dictation.listening ? (
+                    <>
+                      <Square size={11} fill="currentColor" />
+                      Stop dictation
+                    </>
+                  ) : (
+                    <>
+                      <Mic size={13} />
+                      Voice dictation
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              rows={13}
+              value={values.summary}
+              onChange={(event) =>
+                updateValue("summary", event.target.value)
+              }
+              placeholder="Describe the complete initial accident account or use voice dictation…"
+            />
+
+            <div className="roadsafe-summary-workspace__footer">
+              <span>
+                {values.summary.trim()
+                  ? `${values.summary.trim().split(/\s+/).length} words · ${values.summary.length} characters`
+                  : "No initial summary recorded yet"}
+              </span>
+
+              {dictation.listening && (
+                <span className="is-listening">
+                  <span />
+                  Listening
+                  {dictation.interimText
+                    ? `: ${dictation.interimText}`
+                    : "…"}
+                </span>
+              )}
+
+              {!dictation.supported && (
+                <span>
+                  <MicOff size={11} />
+                  Voice dictation requires Chrome or Edge
+                </span>
+              )}
+            </div>
+
+            {dictation.error && (
+              <div className="roadsafe-inline-alert is-danger">
+                {dictation.error}
+              </div>
+            )}
           </div>
 
           <WizardActions>
             <button
               type="button"
+              className="ui-button"
               onClick={() => navigate("/cases")}
-              className={secondaryButtonClass}
             >
               Cancel
             </button>
+
             <button
               type="button"
+              className="ui-button-primary"
               onClick={() => {
+                dictation.stop();
                 if (validateBasicDetails()) setStep(2);
               }}
-              className={primaryButtonClass}
             >
-              Continue to Location Detection
+              Continue to exact location
+              <ChevronRight size={14} />
             </button>
           </WizardActions>
         </section>
       )}
 
       {step === 2 && (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <section className="roadsafe-wizard-panel">
           <SectionHeading
             eyebrow="Step 2 of 4"
-            title="Mark the accident spot and select the complete scene area"
-            description="GPS may centre the map, but the officer remains in control: mark the collision spot, then draw the exact boundary that RoadSafe must reproduce."
+            title="Mark the exact accident point and scene boundary"
+            description="Search Zimbabwe, use GPS or click the map. The red marker is the exact accident anchor; the blue boundary is the only area RoadSafe will extract."
+            icon={<Map size={18} />}
           />
 
-          <div className="mt-6 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="font-black text-slate-900">Device location</h3>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-black ${
-                      geolocation.current
-                        ? getAccuracyTone(geolocation.current.accuracyMetres)
-                        : "bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {geolocation.current
-                      ? `±${geolocation.current.accuracyMetres.toFixed(1)} m`
-                      : geolocation.permission}
-                  </span>
-                </div>
+          <div className="roadsafe-location-layout">
+            <aside className="roadsafe-location-sidebar">
+              <InfoCard
+                icon={<LocateFixed size={15} />}
+                title="Device location"
+                badge={
+                  geolocation.current
+                    ? `±${geolocation.current.accuracyMetres.toFixed(1)} m`
+                    : geolocation.permission
+                }
+                badgeClass={
+                  geolocation.current
+                    ? getAccuracyClass(
+                        geolocation.current.accuracyMetres,
+                      )
+                    : ""
+                }
+              >
+                <DataRow
+                  label="Live coordinate"
+                  value={
+                    geolocation.current
+                      ? `${geolocation.current.latitude.toFixed(
+                          7,
+                        )}, ${geolocation.current.longitude.toFixed(7)}`
+                      : "Waiting for permission"
+                  }
+                  mono
+                />
+                <DataRow
+                  label="Samples"
+                  value={String(geolocation.sampleCount)}
+                />
 
-                <dl className="mt-4 space-y-3 text-sm">
-                  <div>
-                    <dt className="font-bold text-slate-500">Live coordinate</dt>
-                    <dd className="mt-1 font-mono text-slate-900">
-                      {geolocation.current
-                        ? `${geolocation.current.latitude.toFixed(
-                            6,
-                          )}, ${geolocation.current.longitude.toFixed(6)}`
-                        : "Waiting for location permission"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-bold text-slate-500">Samples</dt>
-                    <dd className="mt-1 text-slate-900">
-                      {geolocation.sampleCount}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="mt-5 grid gap-2">
+                <div className="roadsafe-stacked-actions">
                   <button
                     type="button"
+                    className="ui-button-primary"
                     onClick={startLocationTracking}
-                    className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
                   >
+                    <LocateFixed size={13} />
                     {geolocation.isWatching
-                      ? "Location Tracking Active"
-                      : "Allow Location Access"}
+                      ? "Tracking active"
+                      : "Allow location access"}
                   </button>
 
                   <button
                     type="button"
+                    className="ui-button"
                     disabled={averaging}
                     onClick={() => void averageLocation()}
-                    className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
                   >
-                    {averaging ? "Averaging for 5 seconds..." : "Average Location for 5 Seconds"}
+                    <Gauge size={13} />
+                    {averaging
+                      ? "Averaging for 5 seconds…"
+                      : "Average GPS for 5 seconds"}
                   </button>
 
                   {geolocation.current && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setSelectedCoordinate({
+                      className="ui-button"
+                      onClick={() => {
+                        const coordinate = {
                           latitude: geolocation.current!.latitude,
                           longitude: geolocation.current!.longitude,
-                          accuracyMetres: geolocation.current!.accuracyMetres,
-                          capturedAt: geolocation.current!.capturedAt,
-                        })
-                      }
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                          accuracyMetres:
+                            geolocation.current!.accuracyMetres,
+                          capturedAt:
+                            geolocation.current!.capturedAt,
+                        };
+
+                        setSelectedCoordinate(coordinate);
+                        locationMapRef.current?.focusCoordinate(
+                          coordinate,
+                          18.5,
+                        );
+                        setLocationMessage(
+                          "The current device reading is now the red accident marker.",
+                        );
+                      }}
                     >
-                      Use Current Reading
+                      <Crosshair size={13} />
+                      Use current reading
                     </button>
                   )}
                 </div>
+              </InfoCard>
 
-                {(geolocation.error || locationMessage) && (
-                  <p
-                    className={`mt-4 rounded-xl p-3 text-xs font-semibold ${
-                      geolocation.error
-                        ? "bg-red-50 text-red-700"
-                        : "bg-blue-50 text-blue-700"
-                    }`}
-                  >
-                    {geolocation.error || locationMessage}
-                  </p>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <h3 className="font-black text-slate-900">Manual coordinates</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Use this when browser location is unavailable or when testing on a computer.
-                </p>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <input
-                    value={manualLatitude}
-                    onChange={(event) => setManualLatitude(event.target.value)}
-                    className={inputClass(false)}
-                    placeholder="Latitude, e.g. -17.311842"
-                  />
-                  <input
-                    value={manualLongitude}
-                    onChange={(event) => setManualLongitude(event.target.value)}
-                    className={inputClass(false)}
-                    placeholder="Longitude, e.g. 31.345472"
-                  />
+              <InfoCard
+                icon={<MapPinned size={15} />}
+                title="Exact coordinate"
+              >
+                <div className="roadsafe-coordinate-grid">
+                  <label>
+                    <span>Latitude</span>
+                    <input
+                      inputMode="decimal"
+                      value={manualLatitude}
+                      onChange={(event) =>
+                        setManualLatitude(event.target.value)
+                      }
+                      placeholder="-17.825166"
+                    />
+                  </label>
+                  <label>
+                    <span>Longitude</span>
+                    <input
+                      inputMode="decimal"
+                      value={manualLongitude}
+                      onChange={(event) =>
+                        setManualLongitude(event.target.value)
+                      }
+                      placeholder="31.033510"
+                    />
+                  </label>
                 </div>
 
                 <button
                   type="button"
+                  className="ui-button w-full"
                   onClick={useManualCoordinate}
-                  className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
                 >
-                  Apply Manual Coordinate
+                  Apply exact coordinate
                 </button>
-              </div>
-            </div>
+              </InfoCard>
 
-            <div>
+              <InfoCard
+                icon={<Crosshair size={15} />}
+                title="Confirmed accident anchor"
+                badge={
+                  selectedCoordinate
+                    ? `${selectedCoordinate.accuracyMetres.toFixed(1)} m`
+                    : "Not set"
+                }
+                badgeClass={
+                  selectedCoordinate
+                    ? getAccuracyClass(
+                        selectedCoordinate.accuracyMetres,
+                      )
+                    : ""
+                }
+              >
+                <p className="roadsafe-coordinate-value">
+                  {locationDisplay}
+                </p>
+                <p className="roadsafe-card-note">
+                  Search results only position the map. Confirm the
+                  red marker against the visible road, lane or
+                  collision feature.
+                </p>
+              </InfoCard>
+
+              {(locationMessage || geolocation.error) && (
+                <div className="roadsafe-inline-alert">
+                  {locationMessage || geolocation.error}
+                </div>
+              )}
+            </aside>
+
+            <main className="roadsafe-location-main">
               <RoadLocationMap
                 ref={locationMapRef}
                 coordinate={selectedCoordinate}
-                currentCoordinate={geolocation.current}
+                currentCoordinate={
+                  liveCoordinate
+                    ? {
+                        latitude: liveCoordinate.latitude,
+                        longitude: liveCoordinate.longitude,
+                        accuracyMetres:
+                          liveCoordinate.accuracyMetres,
+                        capturedAt: liveCoordinate.capturedAt,
+                      }
+                    : null
+                }
+                roads={
+                  detectionResult?.detection.roads ?? []
+                }
+                features={
+                  detectionResult?.detection.features ?? []
+                }
                 editable
                 areaSelection={sceneArea}
                 realSceneGeometry={realSceneGeometry}
+                onSearchedLocationChange={(displayName) =>
+                  updateValue("location", displayName)
+                }
+                onCoordinateChange={(coordinate) => {
+                  setSelectedCoordinate(coordinate);
+                  setLocationMessage(
+                    "The exact accident marker was updated. Verify it against the map imagery.",
+                  );
+                }}
                 onAreaSelectionChange={(selection) => {
                   setSceneArea(selection);
                   setRealSceneGeometry(null);
@@ -800,606 +1236,691 @@ export default function NewCaseRoadWizard({
                   setSelectedEnvironment(null);
                   setDetectionResult(null);
                   setSceneSettings(null);
-                  setSceneExtractionMessage(
-                    selection
-                      ? "Scene boundary selected. This exact area—not a larger generated map—will become the shared 2D/3D reconstruction scene."
-                      : "Select the accident-scene area on the map.",
-                  );
-                }}
-                onCoordinateChange={(coordinate) => {
-                  setSelectedCoordinate(coordinate);
-                  setLocationMessage(
-                    "The accident pin was adjusted manually on the map.",
-                  );
+
+                  if (
+                    selection &&
+                    selectedCoordinate &&
+                    !coordinateInsideArea(
+                      selectedCoordinate,
+                      selection,
+                    )
+                  ) {
+                    setSceneExtractionMessage(
+                      "The blue boundary does not contain the red accident marker. Redraw the scene boundary.",
+                    );
+                  } else {
+                    setSceneExtractionMessage(
+                      selection
+                        ? "Exact boundary selected. Extract its mapped geometry for verification."
+                        : "Select the complete accident-scene boundary.",
+                    );
+                  }
                 }}
               />
 
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="font-black text-blue-950">Accident scene anchor</p>
-                  <p className="mt-1 break-all font-mono text-sm text-blue-800">
-                    {locationDisplay}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-blue-700">
-                    The red pin is a reference point. The blue selected boundary—not the pin—defines the reconstruction scene.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black text-sky-950">Selected-area scene engine</p>
-                      <p className="mt-1 text-xs leading-5 text-sky-800">
-                        Capture this exact area and preserve its real road curves, paths and mapped structures.
-                      </p>
-                    </div>
-                    {realSceneGeometry && (
-                      <span
-                        className={sceneGeometryConfirmed
-                          ? "rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800"
-                          : "rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-800"}
-                      >
-                        {sceneGeometryConfirmed ? "Confirmed" : "Review"}
-                      </span>
-                    )}
+              <div className="roadsafe-extraction-grid">
+                <InfoCard
+                  icon={<Database size={15} />}
+                  title="Exact selected-area extraction"
+                  badge={
+                    realSceneGeometry
+                      ? sceneGeometryConfirmed
+                        ? "Confirmed"
+                        : "Review"
+                      : "Waiting"
+                  }
+                  badgeClass={
+                    realSceneGeometry
+                      ? sceneGeometryConfirmed
+                        ? "is-good"
+                        : "is-warning"
+                      : ""
+                  }
+                >
+                  <div className="roadsafe-scene-dimensions">
+                    <DataRow
+                      label="Boundary size"
+                      value={
+                        sceneArea
+                          ? `${areaDimensions.widthMetres.toFixed(
+                              2,
+                            )} × ${areaDimensions.heightMetres.toFixed(
+                              2,
+                            )} m`
+                          : "Not selected"
+                      }
+                    />
+                    <DataRow
+                      label="Anchor inside boundary"
+                      value={
+                        sceneArea
+                          ? areaContainsAnchor
+                            ? "Yes"
+                            : "No"
+                          : "Waiting"
+                      }
+                    />
                   </div>
 
                   <button
                     type="button"
-                    disabled={!sceneArea || extractingScene}
+                    className="ui-button-primary w-full"
+                    disabled={
+                      !sceneArea ||
+                      !selectedCoordinate ||
+                      !areaContainsAnchor ||
+                      extractingScene
+                    }
                     onClick={() => void extractSelectedScene()}
-                    className="mt-4 w-full rounded-xl bg-blue-800 px-4 py-3 text-sm font-black text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-45"
                   >
+                    <Database size={13} />
                     {extractingScene
-                      ? "Extracting real scene geometry…"
+                      ? "Extracting exact geometry…"
                       : realSceneGeometry
-                        ? "Re-extract Selected Scene"
-                        : "Capture and Extract Selected Scene"}
+                        ? "Re-extract selected scene"
+                        : "Extract selected scene"}
                   </button>
 
                   {realSceneGeometry && (
                     <button
                       type="button"
+                      className={
+                        sceneGeometryConfirmed
+                          ? "ui-button roadsafe-confirm-button is-confirmed"
+                          : "ui-button roadsafe-confirm-button"
+                      }
                       onClick={() => {
                         setSceneGeometryConfirmed(true);
                         setSceneExtractionMessage(
-                          "The officer confirmed the extracted overlay for scene creation.",
+                          "The investigating officer confirmed the exact extracted map overlay.",
                         );
                       }}
-                      className={sceneGeometryConfirmed
-                        ? "mt-2 w-full rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm font-black text-emerald-800 transition"
-                        : "mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50"}
                     >
+                      <ShieldCheck size={13} />
                       {sceneGeometryConfirmed
-                        ? "Extracted Geometry Confirmed"
-                        : "Confirm Extracted Geometry"}
+                        ? "Geometry confirmed"
+                        : "Confirm extracted geometry"}
                     </button>
                   )}
+                </InfoCard>
 
-                  <p className="mt-3 text-xs font-semibold leading-5 text-sky-800">
-                    {sceneExtractionMessage ||
-                      "Draw a blue scene boundary on the map before continuing."}
-                  </p>
-
-                  {realSceneGeometry && (
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-700">
-                      <div className="rounded-lg bg-white/75 p-2">
-                        <dt className="font-bold text-slate-500">Scene size</dt>
-                        <dd className="mt-1 font-black">
-                          {realSceneGeometry.sceneWidthMetres.toFixed(1)} × {realSceneGeometry.sceneHeightMetres.toFixed(1)} m
-                        </dd>
-                      </div>
-                      <div className="rounded-lg bg-white/75 p-2">
-                        <dt className="font-bold text-slate-500">Geometry</dt>
-                        <dd className="mt-1 font-black">
-                          {realSceneGeometry.roads.length} roads · {realSceneGeometry.buildings.length} buildings · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover · {realSceneGeometry.vegetation?.length ?? 0} vegetation · {realSceneGeometry.landCover?.length ?? 0} land cover
-                        </dd>
-                      </div>
-                    </dl>
+                <InfoCard
+                  icon={<Waypoints size={15} />}
+                  title="Extraction result"
+                >
+                  {realSceneGeometry ? (
+                    <div className="roadsafe-metric-grid">
+                      <Metric
+                        label="Roads"
+                        value={realSceneGeometry.roads.length}
+                      />
+                      <Metric
+                        label="Buildings"
+                        value={realSceneGeometry.buildings.length}
+                      />
+                      <Metric
+                        label="Paths"
+                        value={realSceneGeometry.paths.length}
+                      />
+                      <Metric
+                        label="Vegetation"
+                        value={
+                          realSceneGeometry.vegetation?.length ?? 0
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <p className="roadsafe-card-note">
+                      Geometry will appear here immediately after
+                      extraction.
+                    </p>
                   )}
-                </div>
+
+                  {preciseAnchorPosition && (
+                    <div className="roadsafe-anchor-readout">
+                      <span>Generated-scene anchor</span>
+                      <strong>
+                        X {preciseAnchorPosition.x.toFixed(4)}% · Y{" "}
+                        {preciseAnchorPosition.y.toFixed(4)}%
+                      </strong>
+                    </div>
+                  )}
+                </InfoCard>
               </div>
-            </div>
+
+              {sceneExtractionMessage && (
+                <div
+                  className={`roadsafe-inline-alert ${
+                    sceneArea && !areaContainsAnchor
+                      ? "is-danger"
+                      : ""
+                  }`}
+                >
+                  {sceneExtractionMessage}
+                </div>
+              )}
+            </main>
           </div>
 
           <WizardActions>
             <button
               type="button"
+              className="ui-button"
               onClick={() => setStep(1)}
-              className={secondaryButtonClass}
             >
-              ← Back
+              Back to details
             </button>
+
             <button
               type="button"
-              disabled={!selectedCoordinate || !realSceneGeometry || !sceneGeometryConfirmed}
-              onClick={() => {
-                setSelectedEnvironment(null);
-                setDetectionResult(null);
-                setSceneSettings(null);
-                setStep(3);
-              }}
-              className={primaryButtonClass}
+              className="ui-button-primary"
+              disabled={
+                !selectedCoordinate ||
+                !realSceneGeometry ||
+                !sceneGeometryConfirmed ||
+                !areaContainsAnchor
+              }
+              onClick={() => setStep(3)}
             >
-              Choose Scene Environment →
+              Verify scene environment
+              <ChevronRight size={14} />
             </button>
           </WizardActions>
         </section>
       )}
 
-      {step === 3 && selectedCoordinate && (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
-          <SectionHeading
-            eyebrow="Step 3 of 4"
-            title="Choose the real-world scene environment"
-            description="The selected-area geometry remains the source of truth. Environment choices control how that verified geometry is presented—not which junction template is invented."
-          />
+      {step === 3 &&
+        selectedCoordinate &&
+        realSceneGeometry && (
+          <section className="roadsafe-wizard-panel">
+            <SectionHeading
+              eyebrow="Step 3 of 4"
+              title="Verify the generated scene geometry"
+              description="RoadSafe now analyses the already-extracted boundary. There is no second road-data download and no change of coordinates."
+              icon={<Waypoints size={18} />}
+            />
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {SCENE_ENVIRONMENTS.map((environment) => {
-              const selected = selectedEnvironment === environment.value;
-              return (
-                <button
-                  key={environment.value}
-                  type="button"
-                  onClick={() => selectEnvironment(environment.value)}
-                  className={`rounded-2xl border p-5 text-left transition ${
-                    selected
-                      ? "border-blue-500 bg-blue-50 shadow-sm"
-                      : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-white"
-                  }`}
-                >
-                  <span className="block text-sm font-black text-slate-950">
-                    {environment.title}
-                  </span>
-                  <span className="mt-2 block text-xs leading-5 text-slate-600">
-                    {environment.description}
-                  </span>
-                  <span
-                    className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
-                      selected
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-200 text-slate-600"
-                    }`}
+            <div className="roadsafe-geometry-source-banner">
+              <Database size={16} />
+              <div>
+                <strong>
+                  Verified scene data is ready locally
+                </strong>
+                <span>
+                  {realSceneGeometry.roads.length} road(s),{" "}
+                  {realSceneGeometry.buildings.length} building(s),{" "}
+                  {realSceneGeometry.paths.length} path(s) · extracted{" "}
+                  {new Date(
+                    realSceneGeometry.extractedAt,
+                  ).toLocaleTimeString()}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="ui-button"
+                onClick={reanalyseVerifiedGeometry}
+              >
+                <RotateCcw size={12} />
+                Re-analyse
+              </button>
+            </div>
+
+            <div className="roadsafe-environment-grid">
+              {SCENE_ENVIRONMENTS.map((environment) => {
+                const selected =
+                  selectedEnvironment === environment.value;
+
+                return (
+                  <button
+                    key={environment.value}
+                    type="button"
+                    className={selected ? "is-selected" : ""}
+                    onClick={() =>
+                      selectEnvironment(environment.value)
+                    }
                   >
-                    {selected ? "Selected" : "Choose"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="roadsafe-environment-grid__check">
+                      {selected ? <Check size={13} /> : null}
+                    </span>
+                    <strong>{environment.title}</strong>
+                    <small>{environment.description}</small>
+                  </button>
+                );
+              })}
+            </div>
 
-          {sceneSettings && selectedEnvironment && (
-            <div className="mt-6 space-y-6">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    Real scene anchor
-                  </p>
-                  <p className="mt-2 break-all font-mono text-sm font-bold text-slate-900">
-                    {coordinateLabel(selectedCoordinate)}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    Reported GPS accuracy ±{selectedCoordinate.accuracyMetres.toFixed(1)} m.
-                    This coordinate remains the terrain and field-placement anchor even when no road is generated.
-                  </p>
+            {sceneSettings && selectedEnvironment && (
+              <div className="roadsafe-geometry-workspace">
+                <div className="roadsafe-geometry-summary">
+                  <Metric
+                    label="Exact anchor X"
+                    value={`${preciseAnchorPosition?.x.toFixed(3) ?? "—"}%`}
+                  />
+                  <Metric
+                    label="Exact anchor Y"
+                    value={`${preciseAnchorPosition?.y.toFixed(3) ?? "—"}%`}
+                  />
+                  <Metric
+                    label="Scene width"
+                    value={`${realSceneGeometry.sceneWidthMetres.toFixed(
+                      2,
+                    )} m`}
+                  />
+                  <Metric
+                    label="Scene height"
+                    value={`${realSceneGeometry.sceneHeightMetres.toFixed(
+                      2,
+                    )} m`}
+                  />
                 </div>
 
-                <SelectField<GroundSurfaceType>
-                  label="Ground classification"
-                  value={sceneSettings.groundSurface}
-                  options={GROUND_SURFACES}
-                  onChange={(groundSurface) =>
-                    setSceneSettings((current) =>
-                      current ? { ...current, groundSurface } : current,
-                    )
-                  }
-                />
+                <div className="roadsafe-settings-row">
+                  <SelectField<GroundSurfaceType>
+                    label="Ground classification"
+                    value={sceneSettings.groundSurface}
+                    options={GROUND_SURFACES}
+                    onChange={(groundSurface) =>
+                      setSceneSettings((current) =>
+                        current
+                          ? { ...current, groundSurface }
+                          : current,
+                      )
+                    }
+                  />
+                </div>
+
+                {usesGeneratedRoad(sceneSettings) &&
+                  detectionResult && (
+                    <>
+                      <div className="roadsafe-detection-metrics">
+                        <StatusMetric
+                          label="Detected layout"
+                          value={
+                            detectionResult.detection.detectedLayout
+                          }
+                        />
+                        <StatusMetric
+                          label="Confidence"
+                          value={`${Math.round(
+                            detectionResult.detection.confidence * 100,
+                          )}% · ${
+                            detectionResult.detection.confidenceLabel
+                          }`}
+                          className={getConfidenceClass(
+                            detectionResult.detection.confidence,
+                          )}
+                        />
+                        <StatusMetric
+                          label="Road branches"
+                          value={String(
+                            detectionResult.detection.branchCount,
+                          )}
+                        />
+                        <StatusMetric
+                          label="Mapped road sections"
+                          value={String(
+                            detectionResult.detection.roads.length,
+                          )}
+                          className={
+                            detectionResult.detection.roads.length > 0
+                              ? "is-good"
+                              : "is-warning"
+                          }
+                        />
+                      </div>
+
+                      <div className="roadsafe-preview-grid">
+                        <RoadDetectionPreview
+                          detection={detectionResult.detection}
+                          sceneSettings={sceneSettings}
+                        />
+
+                        <div className="roadsafe-road-settings">
+                          <div>
+                            <p>Confirm or correct the road</p>
+                            <span>
+                              All values remain tied to the same verified
+                              scene bounds and exact accident anchor.
+                            </span>
+                          </div>
+
+                          <div className="roadsafe-road-settings__grid">
+                            <SelectField<RoadLayoutType>
+                              label="Road layout"
+                              value={sceneSettings.roadLayout}
+                              options={ROAD_LAYOUTS}
+                              onChange={(roadLayout) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        roadLayout,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+
+                            <SelectField<DrivingSide>
+                              label="Driving side"
+                              value={sceneSettings.drivingSide}
+                              options={["Left", "Right"]}
+                              onChange={(drivingSide) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        drivingSide,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+
+                            <SelectField<TrafficControlType>
+                              label="Traffic control"
+                              value={sceneSettings.trafficControl}
+                              options={TRAFFIC_CONTROLS}
+                              onChange={(trafficControl) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        trafficControl,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+
+                            <NumberField
+                              label="Lane count"
+                              value={sceneSettings.laneCount}
+                              minimum={1}
+                              maximum={8}
+                              onChange={(laneCount) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        laneCount,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+
+                            <NumberField
+                              label="Road rotation"
+                              value={sceneSettings.roadRotation}
+                              minimum={-180}
+                              maximum={180}
+                              suffix="°"
+                              onChange={(roadRotation) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        roadRotation,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+
+                            <NumberField
+                              label="Speed limit"
+                              value={sceneSettings.speedLimitKmh}
+                              minimum={10}
+                              maximum={160}
+                              suffix="km/h"
+                              onChange={(speedLimitKmh) =>
+                                setSceneSettings((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        speedLimitKmh,
+                                      }
+                                    : current,
+                                )
+                              }
+                            />
+                          </div>
+
+                          {detectionResult.warnings.length > 0 && (
+                            <div className="roadsafe-inline-alert is-warning">
+                              {detectionResult.warnings.join(" ")}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                {!usesGeneratedRoad(sceneSettings) && (
+                  <div className="roadsafe-preview-grid">
+                    <NeutralScenePreview
+                      settings={sceneSettings}
+                      coordinate={selectedCoordinate}
+                      anchor={preciseAnchorPosition}
+                    />
+
+                    <InfoCard
+                      icon={<ShieldCheck size={15} />}
+                      title="Ground-only scene"
+                      badge="Exact boundary"
+                      badgeClass="is-good"
+                    >
+                      <p className="roadsafe-card-note">
+                        The selected coordinate, north orientation,
+                        metre scale, extracted structures and terrain
+                        remain unchanged. Road generation is disabled.
+                      </p>
+                    </InfoCard>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <WizardActions>
+              <button
+                type="button"
+                className="ui-button"
+                onClick={() => setStep(2)}
+              >
+                Back to exact map
+              </button>
+
+              <button
+                type="button"
+                className="ui-button-primary"
+                disabled={!sceneSettings || !selectedEnvironment}
+                onClick={() => setStep(4)}
+              >
+                Review and create
+                <ChevronRight size={14} />
+              </button>
+            </WizardActions>
+          </section>
+        )}
+
+      {step === 4 &&
+        selectedCoordinate &&
+        realSceneGeometry &&
+        sceneSettings && (
+          <section className="roadsafe-wizard-panel">
+            <SectionHeading
+              eyebrow="Step 4 of 4"
+              title="Create the precise reconstruction scene"
+              description="The same exact marker, selected boundary and extracted geometry will be saved into the case and reconstruction."
+              icon={<ShieldCheck size={18} />}
+            />
+
+            <div className="roadsafe-review-grid">
+              <div className="roadsafe-review-column">
+                <SummaryCard title="Case assignment">
+                  <SummaryRow
+                    label="Case number"
+                    value={values.caseNumber}
+                  />
+                  <SummaryRow label="Title" value={values.title} />
+                  <SummaryRow
+                    label="Police station"
+                    value={values.policeStation}
+                  />
+                  <SummaryRow
+                    label="Investigating officer"
+                    value={values.investigatingOfficer}
+                  />
+                  <SummaryRow
+                    label="Accident time"
+                    value={`${values.accidentDate} · ${values.accidentTime}`}
+                  />
+                </SummaryCard>
+
+                <SummaryCard title="Exact spatial handoff">
+                  <SummaryRow
+                    label="Location"
+                    value={
+                      values.location ||
+                      coordinateLabel(selectedCoordinate)
+                    }
+                  />
+                  <SummaryRow
+                    label="Accident coordinate"
+                    value={coordinateLabel(selectedCoordinate)}
+                  />
+                  <SummaryRow
+                    label="Generated scene position"
+                    value={`X ${
+                      preciseAnchorPosition?.x.toFixed(5) ?? "—"
+                    }% · Y ${
+                      preciseAnchorPosition?.y.toFixed(5) ?? "—"
+                    }%`}
+                  />
+                  <SummaryRow
+                    label="Scene size"
+                    value={`${realSceneGeometry.sceneWidthMetres.toFixed(
+                      2,
+                    )} × ${realSceneGeometry.sceneHeightMetres.toFixed(
+                      2,
+                    )} m`}
+                  />
+                  <SummaryRow
+                    label="Environment"
+                    value={sceneSettings.sceneEnvironment}
+                  />
+                  <SummaryRow
+                    label="Extracted geometry"
+                    value={`${realSceneGeometry.roads.length} roads · ${realSceneGeometry.buildings.length} buildings · ${realSceneGeometry.paths.length} paths · ${realSceneGeometry.vegetation?.length ?? 0} vegetation`}
+                  />
+                </SummaryCard>
+
+                <SummaryCard title="Initial account">
+                  <p className="roadsafe-review-summary">
+                    {values.summary.trim() ||
+                      "No initial case summary was recorded."}
+                  </p>
+                </SummaryCard>
               </div>
 
-              {!usesGeneratedRoad(sceneSettings) && (
-                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-                  <NeutralScenePreview
-                    settings={sceneSettings}
-                    coordinate={selectedCoordinate}
-                  />
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                    <p className="font-black text-blue-950">
-                      Ground-only scene confirmed
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-blue-800">
-                      Road detection and lane snapping are disabled. The scene still uses
-                      the real GPS location, north orientation, metre scale and optional
-                      elevation terrain.
-                    </p>
-                    <ul className="mt-4 space-y-2 text-xs leading-5 text-blue-800">
-                      <li>• Place objects at real GPS points.</li>
-                      <li>• Walk curved lines such as drag marks or trails.</li>
-                      <li>• Walk boundaries for debris, spills or damaged areas.</li>
-                      <li>• Add roads later only when the officer confirms one.</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {usesGeneratedRoad(sceneSettings) && detectingRoad && (
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-8 text-center">
-                  <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-                  <p className="mt-4 font-black text-blue-950">
-                    Fetching nearby road data...
-                  </p>
-                  <p className="mt-2 text-sm text-blue-700">
-                    The selected environment permits a generated road, so RoadSafe is reading nearby geometry for officer review.
-                  </p>
-                </div>
-              )}
-
-              {usesGeneratedRoad(sceneSettings) && roadError && !detectionResult && (
-                <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
-                  <p className="font-black text-amber-950">
-                    Automatic road detection was unavailable
-                  </p>
-                  <p className="mt-2 text-sm text-amber-800">{roadError}</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void detectRoadLayout(true)}
-                      className="rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-black text-white"
-                    >
-                      Retry Detection
-                    </button>
-                    <span className="rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-900">
-                      Manual road settings remain available below
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {usesGeneratedRoad(sceneSettings) && detectionResult && (
-                <>
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <SummaryMetric
-                      label="Suggested layout"
-                      value={detectionResult.detection.detectedLayout}
-                    />
-                    <SummaryMetric
-                      label="Confidence"
-                      value={`${Math.round(
-                        detectionResult.detection.confidence * 100,
-                      )}% · ${detectionResult.detection.confidenceLabel}`}
-                      toneClass={getConfidenceTone(
-                        detectionResult.detection.confidence,
-                      )}
-                    />
-                    <SummaryMetric
-                      label="Road branches"
-                      value={String(detectionResult.detection.branchCount)}
-                    />
-                    <SummaryMetric
-                      label="Mapped roads"
-                      value={String(detectionResult.detection.roads.length)}
-                    />
-                  </div>
-
+              <div className="roadsafe-review-preview">
+                {usesGeneratedRoad(sceneSettings) &&
+                detectionResult ? (
                   <RoadDetectionPreview
                     detection={detectionResult.detection}
                     sceneSettings={sceneSettings}
                   />
-                </>
-              )}
-
-              {usesGeneratedRoad(sceneSettings) && (
-                <div className="rounded-2xl border border-slate-200 p-5">
-                  <div>
-                    <h3 className="font-black text-slate-900">
-                      Confirm or correct the generated road
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      The selected real coordinate is authoritative. These road values are editable suggestions only.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <SelectField<RoadLayoutType>
-                      label="Road layout"
-                      value={sceneSettings.roadLayout}
-                      options={ROAD_LAYOUTS}
-                      onChange={(roadLayout) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, roadLayout } : current,
-                        )
-                      }
-                    />
-                    <SelectField<DrivingSide>
-                      label="Driving side"
-                      value={sceneSettings.drivingSide}
-                      options={["Left", "Right"]}
-                      onChange={(drivingSide) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, drivingSide } : current,
-                        )
-                      }
-                    />
-                    <SelectField<TrafficControlType>
-                      label="Traffic control"
-                      value={sceneSettings.trafficControl}
-                      options={TRAFFIC_CONTROLS}
-                      onChange={(trafficControl) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, trafficControl } : current,
-                        )
-                      }
-                    />
-                    <NumberField
-                      label="Lane count"
-                      value={sceneSettings.laneCount}
-                      minimum={1}
-                      maximum={6}
-                      onChange={(laneCount) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, laneCount } : current,
-                        )
-                      }
-                    />
-                    <NumberField
-                      label="Road rotation"
-                      value={sceneSettings.roadRotation}
-                      minimum={-180}
-                      maximum={180}
-                      suffix="°"
-                      onChange={(roadRotation) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, roadRotation } : current,
-                        )
-                      }
-                    />
-                    <NumberField
-                      label="Speed limit"
-                      value={Math.max(10, sceneSettings.speedLimitKmh || 60)}
-                      minimum={10}
-                      maximum={160}
-                      suffix=" km/h"
-                      onChange={(speedLimitKmh) =>
-                        setSceneSettings((current) =>
-                          current ? { ...current, speedLimitKmh } : current,
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <WizardActions>
-            <button
-              type="button"
-              onClick={() => {
-                setStep(2);
-                setSelectedEnvironment(null);
-                setDetectionResult(null);
-                setSceneSettings(null);
-              }}
-              className={secondaryButtonClass}
-            >
-              ← Change Location
-            </button>
-            <button
-              type="button"
-              disabled={!sceneSettings || detectingRoad}
-              onClick={() => setStep(4)}
-              className={primaryButtonClass}
-            >
-              Review Scene Creation →
-            </button>
-          </WizardActions>
-        </section>
-      )}
-
-      {step === 4 && selectedCoordinate && sceneSettings && (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
-          <SectionHeading
-            eyebrow="Step 4 of 4"
-            title="Confirm the case and create the reconstruction"
-            description="The real coordinate and selected scene environment are saved together."
-          />
-
-          <div className="mt-6 grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
-            <div className="space-y-4">
-              <SummaryCard title="Case">
-                <SummaryRow label="Case number" value={values.caseNumber} />
-                <SummaryRow label="Title" value={values.title} />
-                <SummaryRow
-                  label="Accident time"
-                  value={`${values.accidentDate} · ${values.accidentTime}`}
-                />
-                <SummaryRow
-                  label="Officer"
-                  value={values.investigatingOfficer || "Not recorded"}
-                />
-              </SummaryCard>
-
-              <SummaryCard title="Real location and scene">
-                <SummaryRow
-                  label="Location"
-                  value={
-                    detectionResult?.detection.address.displayName ||
-                    values.location ||
-                    coordinateLabel(selectedCoordinate)
-                  }
-                />
-                <SummaryRow
-                  label="Coordinates"
-                  value={coordinateLabel(selectedCoordinate)}
-                />
-                <SummaryRow
-                  label="Reported accuracy"
-                  value={`±${selectedCoordinate.accuracyMetres.toFixed(1)} m`}
-                />
-                <SummaryRow
-                  label="Selected scene size"
-                  value={`${realSceneGeometry?.sceneWidthMetres.toFixed(1) ?? sceneSettings.sceneWidthMetres.toFixed(1)} × ${realSceneGeometry?.sceneHeightMetres.toFixed(1) ?? sceneSettings.sceneHeightMetres.toFixed(1)} m`}
-                />
-                <SummaryRow
-                  label="Mapped content"
-                  value={realSceneGeometry
-                    ? `${realSceneGeometry.buildings.length} buildings · ${realSceneGeometry.vegetation?.length ?? 0} vegetation · ${realSceneGeometry.landCover?.length ?? 0} land-cover areas`
-                    : "No extracted map content"}
-                />
-                <SummaryRow
-                  label="Environment"
-                  value={sceneSettings.sceneEnvironment}
-                />
-                <SummaryRow
-                  label="Ground"
-                  value={sceneSettings.groundSurface}
-                />
-                {usesGeneratedRoad(sceneSettings) && (
-                  <SummaryRow label="Road layout" value={sceneSettings.roadLayout} />
+                ) : (
+                  <NeutralScenePreview
+                    settings={sceneSettings}
+                    coordinate={selectedCoordinate}
+                    anchor={preciseAnchorPosition}
+                  />
                 )}
-                <SummaryRow
-                  label="Geometry source"
-                  value="Officer-selected exact map area with verified extracted geometry"
-                />
-              </SummaryCard>
 
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm leading-6 text-blue-800">
-                Field Capture remains available for GPS point placement, curved walking traces and walked boundaries at this location.
+                <div className="roadsafe-precision-checklist">
+                  {[
+                    "Red accident marker is inside the verified blue boundary",
+                    "Map geometry was extracted once and reused for road analysis",
+                    "Collision point is calculated from the exact latitude and longitude",
+                    "The same scene dimensions are saved for 2D and 3D",
+                  ].map((item) => (
+                    <div key={item}>
+                      <Check size={13} />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {usesGeneratedRoad(sceneSettings) && detectionResult ? (
-              <RoadDetectionPreview
-                detection={detectionResult.detection}
-                sceneSettings={sceneSettings}
-              />
-            ) : (
-              <NeutralScenePreview
-                settings={sceneSettings}
-                coordinate={selectedCoordinate}
-              />
+            {sceneExtractionMessage && (
+              <div className="roadsafe-inline-alert">
+                {sceneExtractionMessage}
+              </div>
             )}
-          </div>
 
-          <WizardActions>
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              className={secondaryButtonClass}
-            >
-              ← Back to Environment
-            </button>
-            <button
-              type="button"
-              disabled={creating}
-              onClick={createCaseAndScene}
-              className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {creating
-                ? "Creating Case and Scene..."
-                : "Create Case and Open Reconstruction →"}
-            </button>
-          </WizardActions>
-        </section>
-      )}
-    </div>
-  );
-}
+            <WizardActions>
+              <button
+                type="button"
+                className="ui-button"
+                onClick={() => setStep(3)}
+              >
+                Back to geometry
+              </button>
 
-function NeutralScenePreview({
-  settings,
-  coordinate,
-}: {
-  settings: RoadSceneSettings;
-  coordinate: RoadDetectionCoordinate;
-}) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
-      <div className="relative aspect-[16/9] min-h-[320px] overflow-hidden">
-        <RoadSceneEnvironment settings={settings} />
-        <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-blue-600 shadow-lg" />
-          <div className="absolute left-1/2 top-[calc(50%+18px)] -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/80 px-2.5 py-1.5 text-[10px] font-black text-white backdrop-blur-sm">
-            Real scene anchor
-          </div>
-        </div>
-      </div>
-      <div className="grid gap-3 border-t border-slate-700 bg-slate-900 p-4 text-xs text-slate-300 sm:grid-cols-3">
-        <div>
-          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
-            Environment
-          </span>
-          <strong className="mt-1 block text-slate-100">
-            {settings.sceneEnvironment}
-          </strong>
-        </div>
-        <div>
-          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
-            Ground
-          </span>
-          <strong className="mt-1 block text-slate-100">
-            {settings.groundSurface}
-          </strong>
-        </div>
-        <div>
-          <span className="block text-[9px] font-black uppercase tracking-wider text-slate-500">
-            Coordinate
-          </span>
-          <strong className="mt-1 block font-mono text-slate-100">
-            {coordinate.latitude.toFixed(5)}, {coordinate.longitude.toFixed(5)}
-          </strong>
-        </div>
-      </div>
+              <button
+                type="button"
+                className="ui-button-primary"
+                disabled={creating}
+                onClick={createCaseAndScene}
+              >
+                <ShieldCheck size={14} />
+                {creating
+                  ? "Creating precise scene…"
+                  : "Create case and open reconstruction"}
+              </button>
+            </WizardActions>
+          </section>
+        )}
     </div>
   );
 }
 
 function WizardProgress({ step }: { step: WizardStep }) {
   const steps = [
-    "Case Details",
-    "Mark Scene",
-    "Verify Geometry",
-    "Create Case",
-  ];
+    ["Case details", FileText],
+    ["Exact map", Map],
+    ["Geometry", Waypoints],
+    ["Create", ShieldCheck],
+  ] as const;
 
   return (
-    <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {steps.map((label, index) => {
-          const number = index + 1;
-          const active = number === step;
-          const completed = number < step;
+    <nav className="roadsafe-wizard-progress">
+      {steps.map(([label, Icon], index) => {
+        const number = (index + 1) as WizardStep;
+        const active = number === step;
+        const complete = number < step;
 
-          return (
-            <div
-              key={label}
-              className={`rounded-xl border px-3 py-3 ${
-                active
-                  ? "border-blue-500 bg-blue-50"
-                  : completed
-                    ? "border-emerald-300 bg-emerald-50"
-                    : "border-slate-200 bg-slate-50"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${
-                    active
-                      ? "bg-blue-600 text-white"
-                      : completed
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-200 text-slate-600"
-                  }`}
-                >
-                  {completed ? "✓" : number}
-                </span>
-                <span className="text-xs font-black text-slate-800">{label}</span>
-              </div>
+        return (
+          <div
+            key={label}
+            className={`${active ? "is-active" : ""} ${
+              complete ? "is-complete" : ""
+            }`}
+          >
+            <span>
+              {complete ? <Check size={13} /> : <Icon size={13} />}
+            </span>
+            <div>
+              <small>Step {number} of 4</small>
+              <strong>{label}</strong>
             </div>
-          );
-        })}
-      </div>
-    </div>
+          </div>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -1407,39 +1928,124 @@ function SectionHeading({
   eyebrow,
   title,
   description,
+  icon,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  icon: React.ReactNode;
 }) {
   return (
-    <div>
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">
-        {eyebrow}
-      </p>
-      <h2 className="mt-2 text-2xl font-black text-slate-950">{title}</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        {description}
-      </p>
-    </div>
+    <header className="roadsafe-wizard-heading">
+      <span className="roadsafe-wizard-heading__icon">
+        {icon}
+      </span>
+      <div>
+        <p>{eyebrow}</p>
+        <h2>{title}</h2>
+        <span>{description}</span>
+      </div>
+    </header>
   );
 }
 
 function Field({
   label,
   error,
+  wide = false,
   children,
 }: {
   label: string;
   error?: string;
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
-      <div className="mt-2">{children}</div>
-      {error && <p className="mt-1 text-xs font-bold text-red-600">{error}</p>}
+    <label
+      className={`roadsafe-wizard-field ${
+        wide ? "is-wide" : ""
+      }`}
+    >
+      <span>{label}</span>
+      {children}
+      {error && <small className="is-error">{error}</small>}
     </label>
+  );
+}
+
+function InfoCard({
+  icon,
+  title,
+  badge,
+  badgeClass = "",
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  badge?: string;
+  badgeClass?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="roadsafe-info-card">
+      <header>
+        <span>{icon}</span>
+        <strong>{title}</strong>
+        {badge && (
+          <em className={badgeClass}>{badge}</em>
+        )}
+      </header>
+      <div className="roadsafe-info-card__body">{children}</div>
+    </section>
+  );
+}
+
+function DataRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="roadsafe-data-row">
+      <span>{label}</span>
+      <strong className={mono ? "is-mono" : ""}>{value}</strong>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="roadsafe-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function StatusMetric({
+  label,
+  value,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={`roadsafe-status-metric ${className}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -1455,12 +2061,13 @@ function SelectField<Value extends string>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs font-black text-slate-600">{label}</span>
+    <label className="roadsafe-wizard-field">
+      <span>{label}</span>
       <select
         value={value}
-        onChange={(event) => onChange(event.target.value as Value)}
-        className={`${inputClass(false)} mt-2`}
+        onChange={(event) =>
+          onChange(event.target.value as Value)
+        }
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -1488,9 +2095,9 @@ function NumberField({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs font-black text-slate-600">{label}</span>
-      <div className="mt-2 flex items-center gap-2">
+    <label className="roadsafe-wizard-field">
+      <span>{label}</span>
+      <div className="roadsafe-number-field">
         <input
           type="number"
           min={minimum}
@@ -1498,31 +2105,16 @@ function NumberField({
           value={value}
           onChange={(event) =>
             onChange(
-              Math.min(maximum, Math.max(minimum, Number(event.target.value))),
+              Math.min(
+                maximum,
+                Math.max(minimum, Number(event.target.value)),
+              ),
             )
           }
-          className={inputClass(false)}
         />
-        {suffix && <span className="shrink-0 text-xs font-bold text-slate-500">{suffix}</span>}
+        {suffix && <small>{suffix}</small>}
       </div>
     </label>
-  );
-}
-
-function SummaryMetric({
-  label,
-  value,
-  toneClass = "bg-slate-100 text-slate-800",
-}: {
-  label: string;
-  value: string;
-  toneClass?: string;
-}) {
-  return (
-    <div className={`rounded-2xl p-4 ${toneClass}`}>
-      <p className="text-xs font-black uppercase tracking-wider opacity-70">{label}</p>
-      <p className="mt-2 font-black">{value}</p>
-    </div>
   );
 }
 
@@ -1534,44 +2126,73 @@ function SummaryCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 p-5">
-      <h3 className="font-black text-slate-900">{title}</h3>
-      <dl className="mt-4 space-y-3">{children}</dl>
-    </div>
+    <section className="roadsafe-summary-card">
+      <h3>{title}</h3>
+      <div>{children}</div>
+    </section>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div>
-      <dt className="text-xs font-black uppercase tracking-wider text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-1 break-words text-sm font-semibold text-slate-800">
-        {value}
-      </dd>
+    <div className="roadsafe-summary-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
 
-function WizardActions({ children }: { children: React.ReactNode }) {
+function WizardActions({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <footer className="roadsafe-wizard-actions">{children}</footer>;
+}
+
+function NeutralScenePreview({
+  settings,
+  coordinate,
+  anchor,
+}: {
+  settings: RoadSceneSettings;
+  coordinate: RoadDetectionCoordinate;
+  anchor: { x: number; y: number } | null;
+}) {
   return (
-    <div className="mt-7 flex flex-wrap justify-between gap-3 border-t border-slate-200 pt-5">
-      {children}
+    <div className="roadsafe-neutral-preview">
+      <div className="roadsafe-neutral-preview__scene">
+        <RoadSceneEnvironment settings={settings} />
+
+        <div
+          className="roadsafe-neutral-preview__anchor"
+          style={{
+            left: `${anchor?.x ?? 50}%`,
+            top: `${anchor?.y ?? 50}%`,
+          }}
+        >
+          <span />
+          <small>Exact accident anchor</small>
+        </div>
+      </div>
+
+      <footer>
+        <DataRow label="Environment" value={settings.sceneEnvironment} />
+        <DataRow label="Ground" value={settings.groundSurface} />
+        <DataRow
+          label="Coordinate"
+          value={`${coordinate.latitude.toFixed(
+            6,
+          )}, ${coordinate.longitude.toFixed(6)}`}
+          mono
+        />
+      </footer>
     </div>
   );
 }
-
-function inputClass(hasError: boolean): string {
-  return `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
-    hasError
-      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-      : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
-  }`;
-}
-
-const primaryButtonClass =
-  "rounded-sm bg-blue-800 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400";
-
-const secondaryButtonClass =
-  "rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50";
