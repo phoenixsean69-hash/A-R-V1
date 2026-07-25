@@ -125,40 +125,74 @@ function worldPosition(
   );
 }
 
-function participantTravelYawRadians(
+const NON_BODY_MATERIAL_TOKENS = [
+  "glass",
+  "window",
+  "windscreen",
+  "windshield",
+  "tyre",
+  "tire",
+  "wheel",
+  "rubber",
+  "chrome",
+  "light",
+  "lamp",
+  "indicator",
+  "skin",
+  "face",
+  "eye",
+  "hair",
+] as const;
+
+function applyExactParticipantColour(
+  root: THREE.Object3D,
   participant: ReconstructionVehicle,
-  currentTime: number,
-  durationSeconds: number,
-  width: number,
-  height: number,
-  fallbackRotationDegrees: number,
-): number {
-  const sampleWindowSeconds = 0.025;
-  const beforeTime = Math.max(0, currentTime - sampleWindowSeconds);
-  const afterTime = Math.min(
-    durationSeconds,
-    currentTime + sampleWindowSeconds,
+): void {
+  const colour =
+    PARTICIPANT_COLOURS[participant.colour] ?? 0x2563eb;
+  const human = ["Pedestrian", "Officer", "Witness"].includes(
+    participant.type,
   );
 
-  if (afterTime - beforeTime < 0.0001) {
-    return THREE.MathUtils.degToRad(fallbackRotationDegrees);
-  }
+  root.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
 
-  const beforeState = getParticipantStateAtTime(participant, beforeTime);
-  const afterState = getParticipantStateAtTime(participant, afterTime);
-  const before = worldPosition(beforeState.position, width, height);
-  const after = worldPosition(afterState.position, width, height);
-  const deltaX = after.x - before.x;
-  const deltaZ = after.z - before.z;
+    const objectName = object.name.toLowerCase();
+    const materials = Array.isArray(object.material)
+      ? object.material
+      : [object.material];
 
-  if (Math.hypot(deltaX, deltaZ) < 0.00001) {
-    return THREE.MathUtils.degToRad(fallbackRotationDegrees);
-  }
+    materials.forEach((material) => {
+      const materialName = material.name.toLowerCase();
+      const identity = `${objectName} ${materialName}`;
+      const nonBody = NON_BODY_MATERIAL_TOKENS.some((token) =>
+        identity.includes(token),
+      );
+      const typed = material as THREE.Material & {
+        color?: THREE.Color;
+        emissive?: THREE.Color;
+        map?: THREE.Texture | null;
+        transmission?: number;
+        opacity?: number;
+      };
 
-  // The participant model faces local +X. Three.js positive Y rotation
-  // maps +X toward -Z, which exactly matches screen-space Y increasing
-  // downwards. Deriving yaw from actual travel prevents side-sliding.
-  return Math.atan2(-deltaZ, deltaX);
+      if (!typed.color || nonBody) return;
+      if ((typed.transmission ?? 0) > 0.05) return;
+      if ((typed.opacity ?? 1) < 0.78) return;
+
+      // Preserve natural skin and clothing variation for people. Vehicle body
+      // panels, however, use the exact same palette as the 2D SVG so changing
+      // a participant colour produces a consistent result in both views.
+      if (human) {
+        typed.color.lerp(new THREE.Color(colour), 0.32);
+      } else {
+        typed.color.setHex(colour);
+        typed.map = null;
+        typed.emissive?.setHex(0x000000);
+      }
+      material.needsUpdate = true;
+    });
+  });
 }
 
 function makeTextSprite(text: string): THREE.Sprite {
@@ -658,6 +692,7 @@ function Reconstruction3DViewer({
             entry.modelRoot.remove(child);
             disposeObjectTree(child);
           });
+          applyExactParticipantColour(model, participant);
           entry.modelRoot.add(model);
           entry.holder.traverse((object) => {
             object.userData.participantId = participant.id;
@@ -866,16 +901,13 @@ function Reconstruction3DViewer({
       participantEntries.forEach((entry) => {
         const state = getParticipantStateAtTime(entry.participant, timeRef.current);
         entry.holder.position.copy(worldPosition(state.position, width, height));
+        // Use the exact shared trajectory heading returned to the 2D view.
+        // The old 3D-only time sampling could disagree at Point 1 and caused
+        // a visible snap as playback began. Positive Three.js Y rotation maps
+        // screen-space clockwise headings onto the reconstruction ground plane.
         entry.holder.rotation.set(
           0,
-          participantTravelYawRadians(
-            entry.participant,
-            timeRef.current,
-            reconstruction.durationSeconds,
-            width,
-            height,
-            state.rotation,
-          ),
+          THREE.MathUtils.degToRad(state.rotation),
           0,
         );
         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;

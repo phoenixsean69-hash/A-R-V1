@@ -10,7 +10,7 @@ import type {
 } from "../types/fieldPlacement";
 import {
   AUTO_ROAD_CURVE_NOTE_MARKER,
-  createRoadAlignedIntermediatePoints,
+  createRoadAlignedParticipantRoute,
   isAutoRoadCurvePoint,
   learnFromInvestigatorRoadRoute,
 } from "./reconstructionRoadRouting";
@@ -340,7 +340,7 @@ function generateRoadCurveIfNeeded(input: {
     return authored;
   }
 
-  const generated = createRoadAlignedIntermediatePoints({
+  const generated = createRoadAlignedParticipantRoute({
     startPoint: pointOne,
     impactPoint: pointZ,
     participantType,
@@ -348,8 +348,12 @@ function generateRoadCurveIfNeeded(input: {
     createId,
   });
 
-  return generated.length > 0
-    ? [pointOne, ...generated, pointZ]
+  return generated
+    ? [
+        generated.startPoint,
+        ...generated.intermediatePoints,
+        pointZ,
+      ]
     : authored;
 }
 

@@ -86,6 +86,7 @@ interface SearchProfile {
 interface RawRoadRoute {
   id: string;
   points: Point2[];
+  startProjectionPoint: Point2;
   travelDistanceMetres: number;
   startProjectionDistanceMetres: number;
   impactProjectionDistanceMetres: number;
@@ -115,6 +116,12 @@ export interface ReconstructionRoadRouteRecommendation {
   confidence: number;
   candidateCount: number;
   reason: string;
+}
+
+export interface RoadAlignedParticipantRoutePlan {
+  startPoint: MovementPathPoint;
+  intermediatePoints: MovementPathPoint[];
+  confidence: number;
 }
 
 let lastRecommendation: ReconstructionRoadRouteRecommendation = {
@@ -764,7 +771,6 @@ function createSameSegmentRoute(
     Math.abs(impactProjection.progress - startProjection.progress) *
     startProjection.segment.lengthMetres;
   const points = deduplicatePoints([
-    startLocal,
     startProjection.point,
     impactProjection.point,
     impactLocal,
@@ -773,6 +779,7 @@ function createSameSegmentRoute(
   return {
     id: `same:${startProjection.segment.id}:${forward ? "f" : "r"}`,
     points,
+    startProjectionPoint: { ...startProjection.point },
     travelDistanceMetres:
       distance(startLocal, startProjection.point) +
       alongDistance +
@@ -810,7 +817,6 @@ function createNetworkRoute(
 
   const nodePoints = edges.map((edge) => graph.nodes[edge.to].point);
   const points = deduplicatePoints([
-    startLocal,
     startProjection.point,
     startOption.point,
     ...nodePoints,
@@ -844,6 +850,7 @@ function createNetworkRoute(
   return {
     id: `${profile.id}:${startProjection.segment.id}:${impactProjection.segment.id}:${startOption.nodeId}:${impactOption.nodeId}:${excludedEdgeId ?? "none"}`,
     points,
+    startProjectionPoint: { ...startProjection.point },
     travelDistanceMetres,
     startProjectionDistanceMetres: startProjection.distanceMetres,
     impactProjectionDistanceMetres: impactProjection.distanceMetres,
@@ -1207,7 +1214,13 @@ function evaluateRoute(
     participantSampleSpacing(participantType),
   );
   if (sampled.length < 3) return null;
-  sampled[0] = { ...startLocal };
+  // A road-following participant must begin on the selected road segment.
+  // Keeping the raw click as the first motion sample created a lateral jump
+  // from Point 1 to the centreline and made the vehicle spawn facing across
+  // the road. The investigator's click is still measured by the snap feature,
+  // but the authored Point 1 is placed on the road for physically coherent
+  // movement.
+  sampled[0] = { ...route.startProjectionPoint };
   sampled[sampled.length - 1] = { ...impactLocal };
 
   const coverage = containmentRatio(sampled, graph);
@@ -1460,13 +1473,13 @@ export function learnFromInvestigatorRoadRoute(
   );
 }
 
-export function createRoadAlignedIntermediatePoints({
+export function createRoadAlignedParticipantRoute({
   startPoint,
   impactPoint,
   participantType,
   durationSeconds,
   createId,
-}: CreateRoadAlignedIntermediatePointsOptions): MovementPathPoint[] {
+}: CreateRoadAlignedIntermediatePointsOptions): RoadAlignedParticipantRoutePlan | null {
   const geometry = activeGeometry;
   if (!geometry || geometry.roads.length === 0) {
     lastRecommendation = {
@@ -1475,9 +1488,9 @@ export function createRoadAlignedIntermediatePoints({
       candidateCount: 0,
       reason: "No extracted road geometry is available.",
     };
-    return [];
+    return null;
   }
-  if (!isRoadFollowingParticipant(participantType)) return [];
+  if (!isRoadFollowingParticipant(participantType)) return null;
 
   const ranked = rankReconstructionRoutes(
     buildRankedCandidates(
@@ -1498,21 +1511,32 @@ export function createRoadAlignedIntermediatePoints({
           ? "No road-contained route connects Point 1 to Point Z."
           : "All generated routes were below the safety confidence threshold.",
     };
-    return [];
+    return null;
   }
 
   const sampled = selected.value.sampledPoints;
+  if (sampled.length < 2) return null;
+
   const cumulative: number[] = [0];
   for (let index = 1; index < sampled.length; index += 1) {
-    cumulative.push(cumulative[index - 1] + distance(sampled[index - 1], sampled[index]));
+    cumulative.push(
+      cumulative[index - 1] +
+        distance(sampled[index - 1], sampled[index]),
+    );
   }
-  const total = Math.max(0.001, cumulative[cumulative.length - 1]);
+
+  const total = Math.max(
+    0.001,
+    cumulative[cumulative.length - 1],
+  );
   const impactTime = clamp(
     impactPoint.timeSeconds,
     0.1,
     Math.max(0.1, durationSeconds - 0.05),
   );
-  const confidencePercent = Math.round(selected.confidence * 100);
+  const confidencePercent = Math.round(
+    selected.confidence * 100,
+  );
 
   lastRecommendation = {
     available: true,
@@ -1521,27 +1545,75 @@ export function createRoadAlignedIntermediatePoints({
     reason: `Selected from ${ranked.length} road-valid candidate routes.`,
   };
 
-  return sampled.slice(1, -1).map((point, intermediateIndex) => {
-    const sourceIndex = intermediateIndex + 1;
-    const progress = cumulative[sourceIndex] / total;
-    const previous = sampled[Math.max(0, sourceIndex - 1)];
-    const next = sampled[Math.min(sampled.length - 1, sourceIndex + 1)];
-    const speedProgress = progress * progress * (3 - 2 * progress);
+  const snappedStart = sampled[0];
+  const startDirectionTarget = sampled[1] ?? sampled[0];
+  const alignedStartPoint: MovementPathPoint = {
+    ...startPoint,
+    position: localMetresToScene(snappedStart, geometry),
+    rotation: headingDegrees(
+      snappedStart,
+      startDirectionTarget,
+      startPoint.rotation,
+    ),
+    notes: [
+      startPoint.notes ?? "",
+      "[RoadSafe:RoadSnappedStart]",
+      `${ROUTE_CONFIDENCE_NOTE_PREFIX}${confidencePercent}]`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  };
 
-    return {
-      id: createId(AUTO_ROAD_CURVE_ID_PREFIX.slice(0, -1)),
-      label: `AI road route ${intermediateIndex + 1}`,
-      position: localMetresToScene(point, geometry),
-      timeSeconds: Number((impactTime * progress).toFixed(3)),
-      speedKmh: Number(
-        (
-          startPoint.speedKmh +
-          (impactPoint.speedKmh - startPoint.speedKmh) * speedProgress
-        ).toFixed(2),
-      ),
-      rotation: headingDegrees(previous, next, startPoint.rotation),
-      action: "Cruise",
-      notes: `${AUTO_ROAD_CURVE_NOTE_MARKER}\n${ROUTE_CONFIDENCE_NOTE_PREFIX}${confidencePercent}]`,
-    };
-  });
+  const intermediatePoints = sampled
+    .slice(1, -1)
+    .map((point, intermediateIndex) => {
+      const sourceIndex = intermediateIndex + 1;
+      const progress = cumulative[sourceIndex] / total;
+      const previous = sampled[Math.max(0, sourceIndex - 1)];
+      const next = sampled[
+        Math.min(sampled.length - 1, sourceIndex + 1)
+      ];
+      const speedProgress =
+        progress * progress * (3 - 2 * progress);
+
+      return {
+        id: createId(AUTO_ROAD_CURVE_ID_PREFIX.slice(0, -1)),
+        label: `AI road route ${intermediateIndex + 1}`,
+        position: localMetresToScene(point, geometry),
+        timeSeconds: Number((impactTime * progress).toFixed(3)),
+        speedKmh: Number(
+          (
+            startPoint.speedKmh +
+            (impactPoint.speedKmh - startPoint.speedKmh) *
+              speedProgress
+          ).toFixed(2),
+        ),
+        rotation: headingDegrees(
+          previous,
+          next,
+          alignedStartPoint.rotation,
+        ),
+        action: "Cruise" as const,
+        notes: `${AUTO_ROAD_CURVE_NOTE_MARKER}\n${ROUTE_CONFIDENCE_NOTE_PREFIX}${confidencePercent}]`,
+      };
+    });
+
+  return {
+    startPoint: alignedStartPoint,
+    intermediatePoints,
+    confidence: selected.confidence,
+  };
+}
+
+/**
+ * Backward-compatible helper retained for callers that only need generated
+ * intermediate points. New route authoring should use
+ * createRoadAlignedParticipantRoute so Point 1 is snapped and aligned too.
+ */
+export function createRoadAlignedIntermediatePoints(
+  options: CreateRoadAlignedIntermediatePointsOptions,
+): MovementPathPoint[] {
+  return (
+    createRoadAlignedParticipantRoute(options)?.intermediatePoints ?? []
+  );
 }

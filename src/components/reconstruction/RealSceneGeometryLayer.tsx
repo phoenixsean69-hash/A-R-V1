@@ -23,6 +23,70 @@ interface Point2 {
   y: number;
 }
 
+
+const PARTICIPANT_VISUAL_STYLE_ID =
+  "roadsafe-reconstruction-participant-visual-scale";
+
+function ensureParticipantVisualScaleStyles(): void {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(PARTICIPANT_VISUAL_STYLE_ID)) return;
+
+  const style = document.createElement("style");
+  style.id = PARTICIPANT_VISUAL_STYLE_ID;
+  style.textContent = `
+    .reconstruction-workspace__2d-viewport
+      button[data-playback-participant-id] > div {
+      scale: var(--roadsafe-2d-participant-scale, 0.58);
+      transform-origin: center center;
+    }
+
+    .reconstruction-workspace__2d-viewport
+      [data-playback-speed-label-id] {
+      scale: var(--roadsafe-2d-participant-label-scale, 0.66);
+      transform-origin: center center;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function applyParticipantVisualScale(
+  geometry: RealSceneGeometry,
+): void {
+  if (typeof document === "undefined") return;
+
+  ensureParticipantVisualScaleStyles();
+
+  // Participant SVGs in the editor have fixed pixel dimensions, while the
+  // extracted road scene is measured in metres. Scale those SVGs against the
+  // selected area's true dimensions so a 4.5 m car no longer appears wider
+  // than an entire road. The tighter clamp keeps labels usable at very large
+  // and very small selected areas.
+  const longestSceneSide = Math.max(
+    1,
+    geometry.sceneWidthMetres,
+    geometry.sceneHeightMetres,
+  );
+  const participantScale = clamp(
+    55 / longestSceneSide,
+    0.34,
+    0.72,
+  );
+  const labelScale = clamp(
+    participantScale * 1.12,
+    0.44,
+    0.76,
+  );
+
+  document.documentElement.style.setProperty(
+    "--roadsafe-2d-participant-scale",
+    participantScale.toFixed(3),
+  );
+  document.documentElement.style.setProperty(
+    "--roadsafe-2d-participant-label-scale",
+    labelScale.toFixed(3),
+  );
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -259,6 +323,7 @@ export default function RealSceneGeometryLayer({
 }: RealSceneGeometryLayerProps) {
   useLayoutEffect(() => {
     setActiveReconstructionRoadGeometry(geometry);
+    applyParticipantVisualScale(geometry);
 
     return () => {
       clearActiveReconstructionRoadGeometry(geometry);
