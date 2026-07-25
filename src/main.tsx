@@ -7,8 +7,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import App from "./App.tsx";
 import { migratePreciseSceneCollisionConfirmation } from "./utils/migratePreciseSceneCollisionConfirmation";
+import { installParticipantAnchorSynchronization } from "./utils/reconstructionParticipantAnchorSync";
 
 migratePreciseSceneCollisionConfirmation();
+installParticipantAnchorSynchronization();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

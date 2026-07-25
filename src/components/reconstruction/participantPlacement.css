@@ -115,3 +115,45 @@
 .participant-placement__message {
   color: #f0c36d;
 }
+
+/*
+ * Exact participant anchor
+ * ------------------------
+ * The route-point marker represents a zero-dimensional scene coordinate.
+ * Participant visuals now use the same zero-dimensional coordinate as their
+ * rotation pivot. The body is centred around that pivot instead of allowing
+ * its changing width, height or browser button box to affect placement.
+ */
+.reconstruction-editor button[data-playback-participant-id] {
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  line-height: 0 !important;
+  transform-origin: 0 0 !important;
+}
+
+.reconstruction-editor button[data-playback-participant-id] > div {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+/*
+ * Keep the visible participant body clickable even though the scene anchor
+ * itself has no width or height.
+ */
+.reconstruction-editor button[data-playback-participant-id] > div,
+.reconstruction-editor button[data-playback-participant-id] > div * {
+  pointer-events: auto;
+}
