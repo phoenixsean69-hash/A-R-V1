@@ -7,6 +7,7 @@ import type {
   ReconstructionVehicle,
   SceneObjectType,
 } from "../types/reconstruction";
+import { AUTO_ROAD_CURVE_NOTE_MARKER } from "./reconstructionRoadRouting";
 
 export interface ReconstructionImpactEffectState {
   active: boolean;
@@ -842,8 +843,13 @@ function getSegmentMotionGeometry(
     turnSeverityDegrees <=
     profile.straightAngleTolerance;
 
+  const roadGraphControlled =
+    startPoint.notes?.includes(AUTO_ROAD_CURVE_NOTE_MARKER) === true ||
+    endPoint.notes?.includes(AUTO_ROAD_CURVE_NOTE_MARKER) === true;
+
   if (
     physicsControlled ||
+    roadGraphControlled ||
     effectivelyStraight ||
     segmentLength < 0.001
   ) {

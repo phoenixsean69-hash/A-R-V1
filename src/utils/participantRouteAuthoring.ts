@@ -12,6 +12,7 @@ import {
   AUTO_ROAD_CURVE_NOTE_MARKER,
   createRoadAlignedIntermediatePoints,
   isAutoRoadCurvePoint,
+  learnFromInvestigatorRoadRoute,
 } from "./reconstructionRoadRouting";
 
 const EARTH_RADIUS_METRES = 6_371_008.8;
@@ -334,7 +335,10 @@ function generateRoadCurveIfNeeded(input: {
     intermediates.length === 0 ||
     intermediates.every(isAutoRoadCurvePoint);
 
-  if (!mayRegenerate) return authored;
+  if (!mayRegenerate) {
+    learnFromInvestigatorRoadRoute(authored, participantType);
+    return authored;
+  }
 
   const generated = createRoadAlignedIntermediatePoints({
     startPoint: pointOne,

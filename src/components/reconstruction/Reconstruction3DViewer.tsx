@@ -23,6 +23,7 @@ import {
 } from "../../utils/reconstructionGeometry";
 import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
+import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
 import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
 
 interface Reconstruction3DViewerProps {
@@ -122,6 +123,42 @@ function worldPosition(
     y,
     (0.5 - position.y / 100) * height,
   );
+}
+
+function participantTravelYawRadians(
+  participant: ReconstructionVehicle,
+  currentTime: number,
+  durationSeconds: number,
+  width: number,
+  height: number,
+  fallbackRotationDegrees: number,
+): number {
+  const sampleWindowSeconds = 0.025;
+  const beforeTime = Math.max(0, currentTime - sampleWindowSeconds);
+  const afterTime = Math.min(
+    durationSeconds,
+    currentTime + sampleWindowSeconds,
+  );
+
+  if (afterTime - beforeTime < 0.0001) {
+    return THREE.MathUtils.degToRad(fallbackRotationDegrees);
+  }
+
+  const beforeState = getParticipantStateAtTime(participant, beforeTime);
+  const afterState = getParticipantStateAtTime(participant, afterTime);
+  const before = worldPosition(beforeState.position, width, height);
+  const after = worldPosition(afterState.position, width, height);
+  const deltaX = after.x - before.x;
+  const deltaZ = after.z - before.z;
+
+  if (Math.hypot(deltaX, deltaZ) < 0.00001) {
+    return THREE.MathUtils.degToRad(fallbackRotationDegrees);
+  }
+
+  // The participant model faces local +X. Three.js positive Y rotation
+  // maps +X toward -Z, which exactly matches screen-space Y increasing
+  // downwards. Deriving yaw from actual travel prevents side-sliding.
+  return Math.atan2(-deltaZ, deltaX);
 }
 
 function makeTextSprite(text: string): THREE.Sprite {
@@ -637,16 +674,20 @@ function Reconstruction3DViewer({
           worldPosition(point.position, width, height, 0.18),
         );
         if (positions.length > 1) {
-          const curve = new THREE.CatmullRomCurve3(
-            positions,
-            false,
-            "centripetal",
-            0.5,
+          const roadGraphControlled = authoredPoints.some(
+            (point) =>
+              point.notes?.includes(AUTO_ROAD_CURVE_NOTE_MARKER) === true,
           );
+          const renderedPoints = roadGraphControlled
+            ? positions
+            : new THREE.CatmullRomCurve3(
+                positions,
+                false,
+                "centripetal",
+                0.5,
+              ).getPoints(Math.max(18, positions.length * 8));
           const path = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(
-              curve.getPoints(Math.max(18, positions.length * 8)),
-            ),
+            new THREE.BufferGeometry().setFromPoints(renderedPoints),
             new THREE.LineBasicMaterial({
               color: PARTICIPANT_COLOURS[participant.colour] ?? 0xffffff,
               transparent: true,
@@ -825,7 +866,18 @@ function Reconstruction3DViewer({
       participantEntries.forEach((entry) => {
         const state = getParticipantStateAtTime(entry.participant, timeRef.current);
         entry.holder.position.copy(worldPosition(state.position, width, height));
-        entry.holder.rotation.set(0, -THREE.MathUtils.degToRad(state.rotation), 0);
+        entry.holder.rotation.set(
+          0,
+          participantTravelYawRadians(
+            entry.participant,
+            timeRef.current,
+            reconstruction.durationSeconds,
+            width,
+            height,
+            state.rotation,
+          ),
+          0,
+        );
         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
 
         const impact = impactByParticipant.get(entry.participant.id);
