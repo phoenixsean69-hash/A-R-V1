@@ -37,6 +37,25 @@ interface SegmentMotionGeometry {
   turnSeverityDegrees: number;
 }
 
+interface BezierArcLengthSample {
+  progress: number;
+  distance: number;
+}
+
+interface SegmentMotionSpline {
+  linear: boolean;
+  physicsControlled: boolean;
+  roadGraphControlled: boolean;
+  startPoint: MovementPathPoint;
+  endPoint: MovementPathPoint;
+  segmentDirection: Vector2;
+  controlOne: ReconstructionPosition;
+  controlTwo: ReconstructionPosition;
+  arcLengthSamples: BezierArcLengthSample[];
+  startTurnSeverityDegrees: number;
+  endTurnSeverityDegrees: number;
+}
+
 const HUMAN_TYPES = new Set<
   ReconstructionVehicle["type"]
 >([
@@ -266,11 +285,32 @@ function getMotionProfile(
   }
 }
 
+function smoothStep(progress: number): number {
+  const safe = clamp(progress, 0, 1);
+  return safe * safe * (3 - 2 * safe);
+}
+
+function smootherStep(progress: number): number {
+  const safe = clamp(progress, 0, 1);
+  return (
+    safe *
+    safe *
+    safe *
+    (safe * (safe * 6 - 15) + 10)
+  );
+}
+
 function getKinematicPositionProgress(
   start: MovementPathPoint,
   end: MovementPathPoint,
   timeProgress: number,
 ): number {
+  const safeTimeProgress = clamp(
+    timeProgress,
+    0,
+    1,
+  );
+
   const startSpeed =
     start.action === "Stop"
       ? 0
@@ -285,19 +325,28 @@ function getKinematicPositionProgress(
     (startSpeed + endSpeed) / 2;
 
   if (averageSpeed < 0.01) {
-    return (
-      timeProgress *
-      timeProgress *
-      (3 - 2 * timeProgress)
-    );
+    return smootherStep(safeTimeProgress);
   }
 
+  /*
+   * Use a smoothstep velocity transition and integrate it analytically.
+   * This keeps acceleration at zero at both path-point boundaries, removing
+   * the visible speed pulse that linear speed interpolation creates.
+   */
+  const speedDifference = endSpeed - startSpeed;
+  const integratedSmoothStep =
+    safeTimeProgress *
+      safeTimeProgress *
+      safeTimeProgress -
+    0.5 *
+      safeTimeProgress *
+      safeTimeProgress *
+      safeTimeProgress *
+      safeTimeProgress;
+
   const distanceFraction =
-    (startSpeed * timeProgress +
-      0.5 *
-        (endSpeed - startSpeed) *
-        timeProgress *
-        timeProgress) /
+    (startSpeed * safeTimeProgress +
+      speedDifference * integratedSmoothStep) /
     averageSpeed;
 
   return clamp(distanceFraction, 0, 1);
@@ -442,6 +491,11 @@ const sanitisedParticipantPathCache = new WeakMap<
 const participantPlaybackPathCache = new WeakMap<
   MovementPathPoint[],
   MovementPathPoint[]
+>();
+
+const participantMotionSplineCache = new WeakMap<
+  MovementPathPoint[],
+  Map<ReconstructionVehicle["type"], SegmentMotionSpline[]>
 >();
 
 export function sanitiseParticipantPathPoints(
@@ -629,6 +683,8 @@ function getSmoothSegmentControls(
   points: ReconstructionPosition[],
   segmentIndex: number,
   smoothing: number,
+  roadGraphControlled: boolean,
+  turnSeverityDegrees: number,
 ): {
   controlOne: ReconstructionPosition;
   controlTwo: ReconstructionPosition;
@@ -652,12 +708,18 @@ function getSmoothSegmentControls(
     distanceBetween(start, end),
   );
 
-  const incomingDirection = normaliseVector(
+  /*
+   * The shared Catmull-Rom style tangent direction makes adjacent cubic
+   * segments meet without a visible heading snap. Automatically generated
+   * road routes use slightly shorter handles so the smoothed curve remains
+   * close to the already road-valid centre-line samples.
+   */
+  const startTangent = normaliseVector(
     subtractPositions(end, previous),
     subtractPositions(end, start),
   );
 
-  const outgoingDirection = normaliseVector(
+  const endTangent = normaliseVector(
     subtractPositions(following, start),
     subtractPositions(end, start),
   );
@@ -672,25 +734,44 @@ function getSmoothSegmentControls(
     distanceBetween(end, following),
   );
 
+  const turnRatio = clamp(
+    turnSeverityDegrees / 150,
+    0,
+    1,
+  );
+
+  const roadHandleScale =
+    roadGraphControlled ? 0.72 : 1;
+
+  const sharpTurnScale =
+    interpolate(1, 0.72, turnRatio);
+
+  const effectiveSmoothing =
+    smoothing *
+    roadHandleScale *
+    sharpTurnScale;
+
   const controlOneDistance = Math.min(
-    segmentLength * 0.42 * smoothing,
-    previousLength * 0.5,
+    segmentLength * 0.38 * effectiveSmoothing,
+    previousLength * 0.42,
+    segmentLength * 0.46,
   );
 
   const controlTwoDistance = Math.min(
-    segmentLength * 0.42 * smoothing,
-    nextLength * 0.5,
+    segmentLength * 0.38 * effectiveSmoothing,
+    nextLength * 0.42,
+    segmentLength * 0.46,
   );
 
   const controlOne = addScaledVector(
     start,
-    incomingDirection,
+    startTangent,
     controlOneDistance,
   );
 
   const controlTwo = addScaledVector(
     end,
-    outgoingDirection,
+    endTangent,
     -controlTwoDistance,
   );
 
@@ -762,14 +843,180 @@ function cubicBezierTangent(
   };
 }
 
-function getSegmentMotionGeometry(
+function createBezierArcLengthSamples(
+  start: ReconstructionPosition,
+  controlOne: ReconstructionPosition,
+  controlTwo: ReconstructionPosition,
+  end: ReconstructionPosition,
+  turnSeverityDegrees: number,
+): BezierArcLengthSample[] {
+  const subdivisionCount = Math.round(
+    interpolate(
+      20,
+      38,
+      clamp(turnSeverityDegrees / 120, 0, 1),
+    ),
+  );
+
+  const samples: BezierArcLengthSample[] = [
+    {
+      progress: 0,
+      distance: 0,
+    },
+  ];
+
+  let previous = start;
+  let cumulativeDistance = 0;
+
+  for (
+    let index = 1;
+    index <= subdivisionCount;
+    index += 1
+  ) {
+    const progress = index / subdivisionCount;
+    const position = cubicBezierPoint(
+      start,
+      controlOne,
+      controlTwo,
+      end,
+      progress,
+    );
+
+    cumulativeDistance += distanceBetween(
+      previous,
+      position,
+    );
+
+    samples.push({
+      progress,
+      distance: cumulativeDistance,
+    });
+
+    previous = position;
+  }
+
+  return samples;
+}
+
+function getBezierProgressAtDistanceFraction(
+  samples: BezierArcLengthSample[],
+  distanceFraction: number,
+): number {
+  if (samples.length < 2) {
+    return clamp(distanceFraction, 0, 1);
+  }
+
+  const totalDistance =
+    samples[samples.length - 1].distance;
+
+  if (totalDistance < 0.000001) {
+    return clamp(distanceFraction, 0, 1);
+  }
+
+  const targetDistance =
+    clamp(distanceFraction, 0, 1) *
+    totalDistance;
+
+  let low = 0;
+  let high = samples.length - 1;
+
+  while (low + 1 < high) {
+    const middle = Math.floor((low + high) / 2);
+
+    if (
+      samples[middle].distance <
+      targetDistance
+    ) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+
+  const startSample = samples[low];
+  const endSample = samples[high];
+  const sampleDistance = Math.max(
+    0.000001,
+    endSample.distance -
+      startSample.distance,
+  );
+
+  const sampleProgress = clamp(
+    (targetDistance -
+      startSample.distance) /
+      sampleDistance,
+    0,
+    1,
+  );
+
+  return interpolate(
+    startSample.progress,
+    endSample.progress,
+    sampleProgress,
+  );
+}
+
+function getSmoothedBezierTangent(
+  spline: SegmentMotionSpline,
+  progress: number,
+): Vector2 {
+  const sampleWindow =
+    spline.roadGraphControlled ? 0.025 : 0.018;
+
+  const before = normaliseVector(
+    cubicBezierTangent(
+      spline.startPoint.position,
+      spline.controlOne,
+      spline.controlTwo,
+      spline.endPoint.position,
+      clamp(progress - sampleWindow, 0, 1),
+    ),
+    spline.segmentDirection,
+  );
+
+  const current = normaliseVector(
+    cubicBezierTangent(
+      spline.startPoint.position,
+      spline.controlOne,
+      spline.controlTwo,
+      spline.endPoint.position,
+      progress,
+    ),
+    spline.segmentDirection,
+  );
+
+  const after = normaliseVector(
+    cubicBezierTangent(
+      spline.startPoint.position,
+      spline.controlOne,
+      spline.controlTwo,
+      spline.endPoint.position,
+      clamp(progress + sampleWindow, 0, 1),
+    ),
+    spline.segmentDirection,
+  );
+
+  return normaliseVector(
+    {
+      x:
+        before.x * 0.2 +
+        current.x * 0.6 +
+        after.x * 0.2,
+      y:
+        before.y * 0.2 +
+        current.y * 0.6 +
+        after.y * 0.2,
+    },
+    current,
+  );
+}
+
+function createSegmentMotionSpline(
   participant: ReconstructionVehicle,
   points: MovementPathPoint[],
   segmentIndex: number,
-  progress: number,
-): SegmentMotionGeometry {
+): SegmentMotionSpline {
   const profile = getMotionProfile(participant);
-
   const startPoint = points[segmentIndex];
   const endPoint = points[segmentIndex + 1];
 
@@ -792,6 +1039,14 @@ function getSegmentMotionGeometry(
   const segmentLength = vectorLength(segmentVector);
   const segmentDirection = normaliseVector(
     segmentVector,
+    {
+      x: Math.cos(
+        degreesToRadians(startPoint.rotation),
+      ),
+      y: Math.sin(
+        degreesToRadians(startPoint.rotation),
+      ),
+    },
   );
 
   const incomingDirection = normaliseVector(
@@ -810,64 +1065,87 @@ function getSegmentMotionGeometry(
     segmentDirection,
   );
 
-  const startTurnSeverity =
+  let startTurnSeverityDegrees =
     angleDifferenceDegrees(
       incomingDirection,
       segmentDirection,
     );
 
-  const endTurnSeverity =
+  let endTurnSeverityDegrees =
     angleDifferenceDegrees(
       segmentDirection,
       outgoingDirection,
     );
 
-  const hasExplicitTurn =
+  if (
     startPoint.action === "Turn Left" ||
-    startPoint.action === "Turn Right" ||
-    endPoint.action === "Turn Left" ||
-    endPoint.action === "Turn Right";
+    startPoint.action === "Turn Right"
+  ) {
+    startTurnSeverityDegrees = Math.max(
+      startTurnSeverityDegrees,
+      35,
+    );
+  }
 
-  const turnSeverityDegrees = Math.max(
-    startTurnSeverity,
-    endTurnSeverity,
-    hasExplicitTurn ? 35 : 0,
-  );
+  if (
+    endPoint.action === "Turn Left" ||
+    endPoint.action === "Turn Right"
+  ) {
+    endTurnSeverityDegrees = Math.max(
+      endTurnSeverityDegrees,
+      35,
+    );
+  }
 
   const physicsControlled =
     isPhysicsGeneratedPathPoint(startPoint) ||
     isPhysicsGeneratedPathPoint(endPoint) ||
     POST_IMPACT_ACTIONS.has(startPoint.action);
 
+  const roadGraphControlled =
+    startPoint.notes?.includes(
+      AUTO_ROAD_CURVE_NOTE_MARKER,
+    ) === true ||
+    endPoint.notes?.includes(
+      AUTO_ROAD_CURVE_NOTE_MARKER,
+    ) === true;
+
+  const maximumTurnSeverity = Math.max(
+    startTurnSeverityDegrees,
+    endTurnSeverityDegrees,
+  );
+
   const effectivelyStraight =
-    turnSeverityDegrees <=
+    maximumTurnSeverity <=
     profile.straightAngleTolerance;
 
-  const roadGraphControlled =
-    startPoint.notes?.includes(AUTO_ROAD_CURVE_NOTE_MARKER) === true ||
-    endPoint.notes?.includes(AUTO_ROAD_CURVE_NOTE_MARKER) === true;
-
-  if (
+  const linear =
     physicsControlled ||
-    roadGraphControlled ||
     effectivelyStraight ||
-    segmentLength < 0.001
-  ) {
+    segmentLength < 0.001;
+
+  if (linear) {
     return {
-      position: {
-        x: interpolate(
-          startPoint.position.x,
-          endPoint.position.x,
-          progress,
-        ),
-        y: interpolate(
-          startPoint.position.y,
-          endPoint.position.y,
-          progress,
-        ),
-      },
-      tangent: segmentDirection,
-      turnSeverityDegrees,
+      linear: true,
+      physicsControlled,
+      roadGraphControlled,
+      startPoint,
+      endPoint,
+      segmentDirection,
+      controlOne: startPoint.position,
+      controlTwo: endPoint.position,
+      arcLengthSamples: [
+        {
+          progress: 0,
+          distance: 0,
+        },
+        {
+          progress: 1,
+          distance: segmentLength,
+        },
+      ],
+      startTurnSeverityDegrees,
+      endTurnSeverityDegrees,
     };
   }
 
@@ -875,27 +1153,156 @@ function getSegmentMotionGeometry(
     points.map((point) => point.position),
     segmentIndex,
     profile.curveTension,
+    roadGraphControlled,
+    maximumTurnSeverity,
   );
 
   return {
-    position: cubicBezierPoint(
-      startPoint.position,
-      controls.controlOne,
-      controls.controlTwo,
-      endPoint.position,
-      progress,
-    ),
-    tangent: normaliseVector(
-      cubicBezierTangent(
+    linear: false,
+    physicsControlled,
+    roadGraphControlled,
+    startPoint,
+    endPoint,
+    segmentDirection,
+    controlOne: controls.controlOne,
+    controlTwo: controls.controlTwo,
+    arcLengthSamples:
+      createBezierArcLengthSamples(
         startPoint.position,
         controls.controlOne,
         controls.controlTwo,
         endPoint.position,
-        progress,
+        maximumTurnSeverity,
       ),
-      segmentDirection,
+    startTurnSeverityDegrees,
+    endTurnSeverityDegrees,
+  };
+}
+
+function getParticipantMotionSplines(
+  participant: ReconstructionVehicle,
+  points: MovementPathPoint[],
+): SegmentMotionSpline[] {
+  let typeCache =
+    participantMotionSplineCache.get(points);
+
+  if (!typeCache) {
+    typeCache = new Map();
+    participantMotionSplineCache.set(
+      points,
+      typeCache,
+    );
+  }
+
+  const cached = typeCache.get(
+    participant.type,
+  );
+
+  if (cached) {
+    return cached;
+  }
+
+  const splines = Array.from(
+    {
+      length: Math.max(
+        0,
+        points.length - 1,
+      ),
+    },
+    (_, index) =>
+      createSegmentMotionSpline(
+        participant,
+        points,
+        index,
+      ),
+  );
+
+  typeCache.set(participant.type, splines);
+  return splines;
+}
+
+function getSegmentMotionGeometry(
+  participant: ReconstructionVehicle,
+  points: MovementPathPoint[],
+  segmentIndex: number,
+  distanceProgress: number,
+): SegmentMotionGeometry {
+  const splines = getParticipantMotionSplines(
+    participant,
+    points,
+  );
+
+  const spline = splines[segmentIndex];
+
+  if (!spline) {
+    const startPoint = points[segmentIndex];
+    const endPoint =
+      points[segmentIndex + 1] ?? startPoint;
+    const direction = normaliseVector(
+      subtractPositions(
+        endPoint.position,
+        startPoint.position,
+      ),
+    );
+
+    return {
+      position: startPoint.position,
+      tangent: direction,
+      turnSeverityDegrees: 0,
+    };
+  }
+
+  const localTurnSeverity = interpolate(
+    spline.startTurnSeverityDegrees,
+    spline.endTurnSeverityDegrees,
+    smoothStep(distanceProgress),
+  );
+
+  if (spline.linear) {
+    return {
+      position: {
+        x: interpolate(
+          spline.startPoint.position.x,
+          spline.endPoint.position.x,
+          distanceProgress,
+        ),
+        y: interpolate(
+          spline.startPoint.position.y,
+          spline.endPoint.position.y,
+          distanceProgress,
+        ),
+      },
+      tangent: spline.segmentDirection,
+      turnSeverityDegrees:
+        localTurnSeverity,
+    };
+  }
+
+  /*
+   * Convert travelled-distance progress into the matching cubic parameter.
+   * Equal time/distance increments therefore produce equal visual movement,
+   * even where the Bézier parameterisation is non-uniform.
+   */
+  const curveProgress =
+    getBezierProgressAtDistanceFraction(
+      spline.arcLengthSamples,
+      distanceProgress,
+    );
+
+  return {
+    position: cubicBezierPoint(
+      spline.startPoint.position,
+      spline.controlOne,
+      spline.controlTwo,
+      spline.endPoint.position,
+      curveProgress,
     ),
-    turnSeverityDegrees,
+    tangent: getSmoothedBezierTangent(
+      spline,
+      curveProgress,
+    ),
+    turnSeverityDegrees:
+      localTurnSeverity,
   };
 }
 
@@ -1034,7 +1441,7 @@ export function getParticipantStateAtTime(
     const first = points[0];
     const next = points[1] ?? first;
 
-    const tangent = normaliseVector(
+    const fallbackTangent = normaliseVector(
       subtractPositions(
         next.position,
         first.position,
@@ -1048,6 +1455,16 @@ export function getParticipantStateAtTime(
         ),
       },
     );
+
+    const tangent =
+      points.length >= 2
+        ? getSegmentMotionGeometry(
+            participant,
+            points,
+            0,
+            0,
+          ).tangent
+        : fallbackTangent;
 
     const heading = angleFromVector(tangent);
 
@@ -1082,7 +1499,7 @@ export function getParticipantStateAtTime(
     const previous =
       points[Math.max(0, points.length - 2)];
 
-    const tangent = normaliseVector(
+    const fallbackTangent = normaliseVector(
       subtractPositions(
         finalPoint.position,
         previous.position,
@@ -1096,6 +1513,16 @@ export function getParticipantStateAtTime(
         ),
       },
     );
+
+    const tangent =
+      points.length >= 2
+        ? getSegmentMotionGeometry(
+            participant,
+            points,
+            points.length - 2,
+            1,
+          ).tangent
+        : fallbackTangent;
 
     const physicsControlled =
       isPhysicsGeneratedPathPoint(finalPoint) ||
@@ -1180,13 +1607,48 @@ export function getParticipantStateAtTime(
     geometry.tangent,
   );
 
-  const rotation = physicsControlled
-    ? interpolateAngle(
-        start.rotation,
-        end.rotation,
-        positionProgress,
-      )
+  const physicsRotation = interpolateAngle(
+    start.rotation,
+    end.rotation,
+    smootherStep(positionProgress),
+  );
+
+  let rotation = physicsControlled
+    ? physicsRotation
     : pathHeading;
+
+  /*
+   * Blend the first post-impact physics heading from the final guided-road
+   * tangent. The physics path still takes control immediately, but the visual
+   * body orientation no longer snaps on the exact transition frame.
+   */
+  if (
+    physicsControlled &&
+    safeIndex > 0 &&
+    POST_IMPACT_ACTIONS.has(start.action) &&
+    positionProgress < 0.16
+  ) {
+    const previousGeometry =
+      getSegmentMotionGeometry(
+        participant,
+        points,
+        safeIndex - 1,
+        1,
+      );
+
+    const previousHeading =
+      angleFromVector(
+        previousGeometry.tangent,
+      );
+
+    rotation = interpolateAngle(
+      previousHeading,
+      physicsRotation,
+      smootherStep(
+        positionProgress / 0.16,
+      ),
+    );
+  }
 
   const endSpeed =
     end.action === "Stop" ? 0 : end.speedKmh;
@@ -1196,7 +1658,7 @@ export function getParticipantStateAtTime(
     interpolate(
       start.speedKmh,
       endSpeed,
-      timeProgress,
+      smoothStep(timeProgress),
     ),
   );
 
@@ -1371,6 +1833,8 @@ export function buildSmoothSvgPath(
       points,
       index,
       normalisedSmoothing,
+      false,
+      0,
     );
 
     const end = points[index + 1];
