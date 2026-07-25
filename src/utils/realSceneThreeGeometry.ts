@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { getEffectiveRealRoadWidthMetres } from "./reconstructionWorldScale";
+import { getDisplayRealRoadWidthMetres } from "./reconstructionWorldScale";
 
 import type {
   RealSceneGeometry,
@@ -482,7 +482,8 @@ export function addRealSceneGeometryToThreeScene({
     const points = road.localPoints.map((point) =>
       worldPoint(point, geometry, heightAt, 0.085),
     );
-    const renderedRoadWidth = getEffectiveRealRoadWidthMetres(road);
+    // Display width only: routing and physics stay on the true road width.
+    const renderedRoadWidth = getDisplayRealRoadWidthMetres(road);
     if (showPavements) {
       addRibbon(
         group,

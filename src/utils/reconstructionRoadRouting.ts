@@ -1214,12 +1214,10 @@ function evaluateRoute(
     participantSampleSpacing(participantType),
   );
   if (sampled.length < 3) return null;
-  // A road-following participant must begin on the selected road segment.
-  // Keeping the raw click as the first motion sample created a lateral jump
-  // from Point 1 to the centreline and made the vehicle spawn facing across
-  // the road. The investigator's click is still measured by the snap feature,
-  // but the authored Point 1 is placed on the road for physically coherent
-  // movement.
+  // Route evaluation starts from the projection of Point 1 onto the road so
+  // containment and curvature checks reflect the on-road journey. The final
+  // authored route re-attaches the investigator's exact click as Point 1 and
+  // merges onto this projection (see createRoadAlignedParticipantRoute).
   sampled[0] = { ...route.startProjectionPoint };
   sampled[sampled.length - 1] = { ...impactLocal };
 
@@ -1517,11 +1515,20 @@ export function createRoadAlignedParticipantRoute({
   const sampled = selected.value.sampledPoints;
   if (sampled.length < 2) return null;
 
+  // The participant must spawn exactly where the investigator clicked.
+  // Route evaluation starts at the centreline projection, so re-attach the
+  // exact click as the first route point and let the vehicle merge onto the
+  // road instead of teleporting it sideways to the centreline.
+  const startLocal = sceneToLocalMetres(startPoint.position, geometry);
+  const mergeDistance = distance(startLocal, sampled[0]);
+  const routePoints =
+    mergeDistance > 0.4 ? [startLocal, ...sampled] : sampled;
+
   const cumulative: number[] = [0];
-  for (let index = 1; index < sampled.length; index += 1) {
+  for (let index = 1; index < routePoints.length; index += 1) {
     cumulative.push(
       cumulative[index - 1] +
-        distance(sampled[index - 1], sampled[index]),
+        distance(routePoints[index - 1], routePoints[index]),
     );
   }
 
@@ -1545,13 +1552,13 @@ export function createRoadAlignedParticipantRoute({
     reason: `Selected from ${ranked.length} road-valid candidate routes.`,
   };
 
-  const snappedStart = sampled[0];
-  const startDirectionTarget = sampled[1] ?? sampled[0];
+  const routeStart = routePoints[0];
+  const startDirectionTarget = routePoints[1] ?? routePoints[0];
   const alignedStartPoint: MovementPathPoint = {
     ...startPoint,
-    position: localMetresToScene(snappedStart, geometry),
+    position: { ...startPoint.position },
     rotation: headingDegrees(
-      snappedStart,
+      routeStart,
       startDirectionTarget,
       startPoint.rotation,
     ),
@@ -1564,14 +1571,14 @@ export function createRoadAlignedParticipantRoute({
       .join("\n"),
   };
 
-  const intermediatePoints = sampled
+  const intermediatePoints = routePoints
     .slice(1, -1)
     .map((point, intermediateIndex) => {
       const sourceIndex = intermediateIndex + 1;
       const progress = cumulative[sourceIndex] / total;
-      const previous = sampled[Math.max(0, sourceIndex - 1)];
-      const next = sampled[
-        Math.min(sampled.length - 1, sourceIndex + 1)
+      const previous = routePoints[Math.max(0, sourceIndex - 1)];
+      const next = routePoints[
+        Math.min(routePoints.length - 1, sourceIndex + 1)
       ];
       const speedProgress =
         progress * progress * (3 - 2 * progress);

@@ -61,3 +61,21 @@ export function getEffectiveRealRoadWidthMetres(
     Math.max(reportedWidth, laneBasedMinimum, roadTypeMinimum).toFixed(2),
   );
 }
+
+/**
+ * Purely visual widening applied to the rendered road ribbon only. Routing,
+ * physics and containment checks always use getEffectiveRealRoadWidthMetres;
+ * this multiplier just makes the drawn road more generous for zooming and
+ * manual participant placement.
+ */
+export const ROAD_DISPLAY_WIDTH_SCALE = 1.35;
+
+export function getDisplayRealRoadWidthMetres(
+  road: Pick<RealSceneRoadGeometry, "highwayType" | "laneCount" | "widthMetres">,
+): number {
+  return Number(
+    (getEffectiveRealRoadWidthMetres(road) * ROAD_DISPLAY_WIDTH_SCALE).toFixed(
+      2,
+    ),
+  );
+}

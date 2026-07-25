@@ -6,9 +6,12 @@ import type {
   ReconstructionVehicle,
 } from "../types/reconstruction";
 import {
+  clamp,
   getParticipantStateAtTime,
   getReconstructionImpactEffectState,
 } from "./reconstructionGeometry";
+import { getParticipantPhysicalFootprint } from "./participantPhysicalFootprint";
+import { getReconstructionWorldDimensions } from "./reconstructionWorldScale";
 
 export interface ReconstructionCanvasRenderOptions {
   caseNumber: string;
@@ -33,6 +36,30 @@ const COLOURS: Record<string, string> = {
   Orange: "#ea580c",
   Purple: "#9333ea",
 };
+
+interface CanvasWorldScale {
+  pxPerMetreX: number;
+  pxPerMetreY: number;
+  pxPerMetre: number;
+}
+
+function getCanvasWorldScale(
+  reconstruction: AccidentReconstruction,
+  width: number,
+  height: number,
+): CanvasWorldScale {
+  const world = getReconstructionWorldDimensions(reconstruction);
+  const rawX = width / world.widthMetres;
+  const rawY = height / world.heightMetres;
+  const pxPerMetreX = Number.isFinite(rawX) && rawX > 0 ? rawX : 8;
+  const pxPerMetreY = Number.isFinite(rawY) && rawY > 0 ? rawY : 8;
+
+  return {
+    pxPerMetreX,
+    pxPerMetreY,
+    pxPerMetre: Math.min(pxPerMetreX, pxPerMetreY),
+  };
+}
 
 function toCanvasPoint(
   point: ReconstructionPosition,
@@ -103,6 +130,7 @@ function drawRoad(
   reconstruction: AccidentReconstruction,
   width: number,
   height: number,
+  scale: CanvasWorldScale,
 ): void {
   const scene = reconstruction.scene;
   const night = scene.timeOfDay === "Night";
@@ -118,13 +146,32 @@ function drawRoad(
 
   const roadColour = scene.roadSurface === "Wet" ? "#384152" : "#475569";
   const pavementColour = "#a8a29e";
-  const horizontalHeight = height * 0.34;
-  const verticalWidth = width * 0.25;
+  // True-scale road: same lane formula as the 3D generated road, converted
+  // to pixels through the scene metre scale so vehicles and the road stay
+  // in proportion at every canvas size.
+  const roadWidthMetres = Math.min(18, 6.2 + scene.laneCount * 3.15);
+  const horizontalHeight = clamp(
+    roadWidthMetres * scale.pxPerMetreY,
+    24,
+    height * 0.85,
+  );
+  const verticalWidth = clamp(
+    roadWidthMetres * scale.pxPerMetreX,
+    24,
+    width * 0.85,
+  );
+  const pavementPxY = Math.max(6, 2 * scale.pxPerMetreY);
+  const pavementPxX = Math.max(6, 2 * scale.pxPerMetreX);
 
   const drawHorizontal = () => {
     if (scene.showPavements) {
       context.fillStyle = pavementColour;
-      context.fillRect(0, height / 2 - horizontalHeight / 2 - 18, width, horizontalHeight + 36);
+      context.fillRect(
+        0,
+        height / 2 - horizontalHeight / 2 - pavementPxY,
+        width,
+        horizontalHeight + pavementPxY * 2,
+      );
     }
     context.fillStyle = roadColour;
     context.fillRect(0, height / 2 - horizontalHeight / 2, width, horizontalHeight);
@@ -135,7 +182,12 @@ function drawRoad(
       context.fillStyle = pavementColour;
       const y = fromTop ? 0 : height / 2;
       const h = fromTop && toBottom ? height : height / 2;
-      context.fillRect(width / 2 - verticalWidth / 2 - 18, y, verticalWidth + 36, h);
+      context.fillRect(
+        width / 2 - verticalWidth / 2 - pavementPxX,
+        y,
+        verticalWidth + pavementPxX * 2,
+        h,
+      );
     }
     context.fillStyle = roadColour;
     const y = fromTop ? 0 : height / 2;
@@ -364,6 +416,7 @@ function drawParticipant(
   timeSeconds: number,
   width: number,
   height: number,
+  scale: CanvasWorldScale,
 ): void {
   const state = getParticipantStateAtTime(participant, timeSeconds);
   const position = toCanvasPoint(state.position, width, height);
@@ -377,6 +430,10 @@ function drawParticipant(
   context.shadowOffsetY = 4;
 
   if (["Pedestrian", "Officer", "Witness"].includes(participant.type)) {
+    // The stick figure artwork spans roughly 50px. Treat that as a 1.7m
+    // person and scale it through the scene metre resolution.
+    const iconScale = clamp((1.7 * scale.pxPerMetre) / 50, 0.3, 2.4);
+    context.scale(iconScale, iconScale);
     context.strokeStyle = colour;
     context.fillStyle = colour;
     context.lineWidth = 6;
@@ -394,6 +451,9 @@ function drawParticipant(
     context.lineTo(8, 25);
     context.stroke();
   } else if (participant.type === "Bicycle") {
+    // The bicycle artwork spans roughly 48px for a 1.8m bicycle.
+    const iconScale = clamp((1.8 * scale.pxPerMetre) / 48, 0.3, 2.4);
+    context.scale(iconScale, iconScale);
     context.strokeStyle = colour;
     context.lineWidth = 4;
     context.beginPath();
@@ -406,14 +466,15 @@ function drawParticipant(
     context.closePath();
     context.stroke();
   } else {
-    const dimensions =
-      participant.type === "Bus"
-        ? { width: 58, height: 25 }
-        : participant.type === "Truck"
-          ? { width: 52, height: 27 }
-          : participant.type === "Motorcycle"
-            ? { width: 30, height: 13 }
-            : { width: 42, height: 22 };
+    const footprint = getParticipantPhysicalFootprint(participant.type);
+    const lengthMetres =
+      participant.physics?.lengthMetres ?? footprint.lengthMetres;
+    const widthMetres =
+      participant.physics?.widthMetres ?? footprint.widthMetres;
+    const dimensions = {
+      width: Math.max(16, lengthMetres * scale.pxPerMetre),
+      height: Math.max(9, widthMetres * scale.pxPerMetre),
+    };
 
     context.fillStyle = colour;
     context.strokeStyle = "white";
@@ -667,7 +728,9 @@ export function renderReconstructionFrame(
   const height = canvas.height;
   context.clearRect(0, 0, width, height);
 
-  drawRoad(context, reconstruction, width, height);
+  const worldScale = getCanvasWorldScale(reconstruction, width, height);
+
+  drawRoad(context, reconstruction, width, height, worldScale);
 
   reconstruction.sceneObjects.forEach((object) =>
     drawSceneObject(context, object, width, height),
@@ -690,7 +753,7 @@ export function renderReconstructionFrame(
   }
 
   reconstruction.vehicles.forEach((participant) =>
-    drawParticipant(context, participant, timeSeconds, width, height),
+    drawParticipant(context, participant, timeSeconds, width, height, worldScale),
   );
 
   drawImpactEffect(context, reconstruction, timeSeconds, width, height);

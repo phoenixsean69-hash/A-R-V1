@@ -11,7 +11,7 @@ import {
   clearActiveReconstructionRoadGeometry,
   setActiveReconstructionRoadGeometry,
 } from "../../utils/reconstructionRoadRouting";
-import { getEffectiveRealRoadWidthMetres } from "../../utils/reconstructionWorldScale";
+import { getDisplayRealRoadWidthMetres } from "../../utils/reconstructionWorldScale";
 
 interface RealSceneGeometryLayerProps {
   geometry: RealSceneGeometry;
@@ -191,8 +191,9 @@ function createRoadRibbon(
     road.isRoundabout,
   );
   if (samples.length < 2) return [];
+  // Display width only: routing and physics stay on the true road width.
   const halfWidth =
-    getEffectiveRealRoadWidthMetres(road) / 2 + extraWidthMetres;
+    getDisplayRealRoadWidthMetres(road) / 2 + extraWidthMetres;
   const left: Point2[] = [];
   const right: Point2[] = [];
 
