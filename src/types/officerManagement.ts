@@ -23,6 +23,7 @@ export interface ManagedOfficer {
   registeredAt: string;
   lastActivityAt: string;
   mustChangePassword: boolean;
+  avatarFileId: string;
 }
 
 export interface CreateOfficerInput {

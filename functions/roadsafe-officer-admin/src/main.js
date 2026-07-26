@@ -4,7 +4,10 @@ import {
   AppwriteException,
   Client,
   ID,
+  Permission,
   Query,
+  Role,
+  TablesDB,
   Teams,
   Users,
 } from "node-appwrite";
@@ -14,6 +17,18 @@ const ROLES = new Set([
   "supervisor",
   "station_admin",
 ]);
+
+const ROADSAFE_DATABASE_ID =
+  process.env.ROADSAFE_DATABASE_ID ||
+  "6a65ba680015d256c655";
+
+const OFFICER_PROFILES_TABLE_ID =
+  process.env.ROADSAFE_PROFILES_TABLE_ID ||
+  "6a65baad0030250bf9b9";
+
+const AUDIT_LOGS_TABLE_ID =
+  process.env.ROADSAFE_AUDIT_LOGS_TABLE_ID ||
+  "6a65bb1400100c00ad6f";
 
 function normaliseRole(value) {
   return String(value ?? "")
@@ -82,7 +97,8 @@ function validatePhone(value) {
 }
 
 function validRole(value) {
-  const role = normaliseRole(value);
+  const role =
+    normaliseRole(value);
 
   if (!ROLES.has(role)) {
     throw new Error(
@@ -114,18 +130,303 @@ function roleFromMembership(
   );
 }
 
+function requestMetadata(req) {
+  const forwarded =
+    cleanText(
+      req.headers["x-forwarded-for"],
+      256,
+    );
+
+  return {
+    requestId:
+      cleanText(
+        req.headers[
+          "x-appwrite-execution-id"
+        ],
+        64,
+      ) ||
+      crypto.randomUUID(),
+    ipAddress:
+      forwarded
+        .split(",")[0]
+        ?.trim()
+        .slice(0, 45) || "",
+    userAgent:
+      cleanText(
+        req.headers["user-agent"],
+        512,
+      ),
+  };
+}
+
+function safeJson(value) {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return JSON.stringify({
+      note:
+        "RoadSafe could not serialize audit details.",
+    });
+  }
+}
+
+function profilePermissions(
+  teamId,
+) {
+  return [
+    Permission.read(
+      Role.team(teamId),
+    ),
+    Permission.update(
+      Role.team(
+        teamId,
+        "station_admin",
+      ),
+    ),
+    Permission.delete(
+      Role.team(
+        teamId,
+        "station_admin",
+      ),
+    ),
+  ];
+}
+
+function fallbackServiceNumber(
+  userId,
+) {
+  return `PENDING-${String(
+    userId,
+  )
+    .slice(-8)
+    .toUpperCase()}`;
+}
+
+function profileData({
+  user,
+  membership,
+  teamName,
+  existingProfile,
+  statusOverride,
+}) {
+  const prefs =
+    user.prefs ?? {};
+
+  const role =
+    roleFromMembership(
+      membership,
+    );
+
+  const accountStatus =
+    statusOverride ??
+    (prefs.accountStatus ===
+    "removed"
+      ? "removed"
+      : user.status === false
+        ? "blocked"
+        : "active");
+
+  return {
+    userId: user.$id,
+    stationTeamId:
+      membership.teamId,
+    stationName:
+      teamName,
+    fullName:
+      user.name ||
+      membership.userName ||
+      "Unnamed officer",
+    email:
+      user.email ||
+      membership.userEmail ||
+      "",
+    phone:
+      user.phone || "",
+    serviceNumber:
+      cleanText(
+        prefs.serviceNumber,
+        40,
+      ) ||
+      existingProfile?.serviceNumber ||
+      fallbackServiceNumber(
+        user.$id,
+      ),
+    rank:
+      cleanText(
+        prefs.rank,
+        80,
+      ) ||
+      existingProfile?.rank ||
+      "Unspecified",
+    role,
+    status:
+      accountStatus,
+    mustChangePassword:
+      prefs.mustChangePassword ===
+      true,
+    avatarFileId:
+      cleanText(
+        existingProfile?.avatarFileId,
+        36,
+      ),
+  };
+}
+
+async function getRowOrNull({
+  tablesDB,
+  tableId,
+  rowId,
+}) {
+  try {
+    return await tablesDB.getRow({
+      databaseId:
+        ROADSAFE_DATABASE_ID,
+      tableId,
+      rowId,
+    });
+  } catch (requestError) {
+    if (
+      requestError instanceof
+        AppwriteException &&
+      requestError.code === 404
+    ) {
+      return null;
+    }
+
+    throw requestError;
+  }
+}
+
+async function upsertOfficerProfile({
+  tablesDB,
+  user,
+  membership,
+  teamName,
+  statusOverride,
+}) {
+  const existingProfile =
+    await getRowOrNull({
+      tablesDB,
+      tableId:
+        OFFICER_PROFILES_TABLE_ID,
+      rowId: user.$id,
+    });
+
+  const data =
+    profileData({
+      user,
+      membership,
+      teamName,
+      existingProfile,
+      statusOverride,
+    });
+
+  if (existingProfile) {
+    return tablesDB.updateRow({
+      databaseId:
+        ROADSAFE_DATABASE_ID,
+      tableId:
+        OFFICER_PROFILES_TABLE_ID,
+      rowId:
+        user.$id,
+      data,
+      permissions:
+        profilePermissions(
+          membership.teamId,
+        ),
+    });
+  }
+
+  return tablesDB.createRow({
+    databaseId:
+      ROADSAFE_DATABASE_ID,
+    tableId:
+      OFFICER_PROFILES_TABLE_ID,
+    rowId:
+      user.$id,
+    data,
+    permissions:
+      profilePermissions(
+        membership.teamId,
+      ),
+  });
+}
+
+async function writeAudit({
+  tablesDB,
+  metadata,
+  stationTeamId,
+  actor,
+  actorRole,
+  action,
+  entityType,
+  entityId = "",
+  entityLabel = "",
+  targetUserId = "",
+  outcome = "success",
+  severity = "info",
+  details = {},
+}) {
+  try {
+    await tablesDB.createRow({
+      databaseId:
+        ROADSAFE_DATABASE_ID,
+      tableId:
+        AUDIT_LOGS_TABLE_ID,
+      rowId: ID.unique(),
+      data: {
+        stationTeamId,
+        actorUserId:
+          actor?.$id || "system",
+        actorName:
+          actor?.name ||
+          actor?.email ||
+          "RoadSafe System",
+        actorRole:
+          actorRole ||
+          "system",
+        action,
+        entityType,
+        entityId,
+        entityLabel,
+        targetUserId,
+        outcome,
+        severity,
+        sourceClient:
+          "function",
+        requestId:
+          metadata.requestId,
+        ipAddress:
+          metadata.ipAddress,
+        userAgent:
+          metadata.userAgent,
+        detailsJson:
+          safeJson(details),
+        occurredAt:
+          new Date().toISOString(),
+      },
+      permissions: [],
+    });
+  } catch (auditError) {
+    console.error(
+      "RoadSafe audit write failed:",
+      auditError,
+    );
+  }
+}
+
 async function requireStationAdmin({
   users,
   callerId,
   teamId,
 }) {
   if (!callerId) {
-    const error =
+    const requestError =
       new Error(
         "An authenticated RoadSafe account is required.",
       );
-    error.statusCode = 401;
-    throw error;
+    requestError.statusCode = 401;
+    throw requestError;
   }
 
   const memberships =
@@ -148,30 +449,29 @@ async function requireStationAdmin({
     );
 
   if (!membership) {
-    const error =
+    const requestError =
       new Error(
         "The caller does not belong to this police station.",
       );
-    error.statusCode = 403;
-    throw error;
+    requestError.statusCode = 403;
+    throw requestError;
   }
 
   const roles =
-    (membership.roles ?? []).map(
-      normaliseRole,
-    );
+    (membership.roles ?? [])
+      .map(normaliseRole);
 
   if (
     !roles.includes(
       "station_admin",
     )
   ) {
-    const error =
+    const requestError =
       new Error(
         "Only a Station Administrator can manage police officers.",
       );
-    error.statusCode = 403;
-    throw error;
+    requestError.statusCode = 403;
+    throw requestError;
   }
 
   return membership;
@@ -191,14 +491,15 @@ async function getMembership({
       });
 
     if (
-      membership.userId !== userId
+      membership.userId !==
+      userId
     ) {
-      const error =
+      const requestError =
         new Error(
           "The selected membership does not belong to the selected officer.",
         );
-      error.statusCode = 400;
-      throw error;
+      requestError.statusCode = 400;
+      throw requestError;
     }
 
     return membership;
@@ -220,12 +521,12 @@ async function getMembership({
     result.memberships[0];
 
   if (!membership) {
-    const error =
+    const requestError =
       new Error(
         "The officer is not a member of this police station.",
       );
-    error.statusCode = 404;
-    throw error;
+    requestError.statusCode = 404;
+    throw requestError;
   }
 
   return membership;
@@ -234,89 +535,166 @@ async function getMembership({
 function buildManagedOfficer({
   membership,
   user,
+  profile,
 }) {
-  const prefs = user?.prefs ?? {};
+  const prefs =
+    user?.prefs ?? {};
 
   return {
-    userId: user?.$id ?? membership.userId,
-    membershipId: membership.$id,
-    teamId: membership.teamId,
+    userId:
+      user?.$id ??
+      membership.userId,
+    membershipId:
+      membership.$id,
+    teamId:
+      membership.teamId,
     name:
+      profile?.fullName ||
       user?.name ||
       membership.userName ||
       "Unnamed officer",
     email:
+      profile?.email ||
       user?.email ||
       membership.userEmail ||
       "",
-    phone: user?.phone || "",
-    serviceNumber: String(prefs.serviceNumber ?? ""),
-    rank: String(prefs.rank ?? ""),
-    role: roleFromMembership(membership),
-    roles: membership.roles ?? [],
-    status: user?.status === false ? "blocked" : "active",
+    phone:
+      profile?.phone ||
+      user?.phone ||
+      "",
+    serviceNumber:
+      profile?.serviceNumber ||
+      String(
+        prefs.serviceNumber ??
+          "",
+      ),
+    rank:
+      profile?.rank ||
+      String(
+        prefs.rank ?? "",
+      ),
+    role:
+      profile?.role ||
+      roleFromMembership(
+        membership,
+      ),
+    roles:
+      membership.roles ?? [],
+    status:
+      profile?.status ===
+      "blocked"
+        ? "blocked"
+        : user?.status === false
+          ? "blocked"
+          : "active",
     joinedAt:
-      membership.joined || membership.invited || "",
-    registeredAt: user?.registration || "",
-    lastActivityAt: user?.accessedAt || "",
+      membership.joined ||
+      membership.invited ||
+      "",
+    registeredAt:
+      user?.registration || "",
+    lastActivityAt:
+      user?.accessedAt || "",
     mustChangePassword:
-      prefs.mustChangePassword === true,
+      profile?.mustChangePassword ===
+        true ||
+      prefs.mustChangePassword ===
+        true,
+    avatarFileId:
+      profile?.avatarFileId ||
+      "",
   };
 }
 
 async function managedOfficer({
   users,
+  tablesDB,
   membership,
+  teamName,
   user,
+  statusOverride,
 }) {
   const resolvedUser =
     user ??
     (await users.get({
-      userId: membership.userId,
+      userId:
+        membership.userId,
     }));
+
+  const profile =
+    await upsertOfficerProfile({
+      tablesDB,
+      user: resolvedUser,
+      membership,
+      teamName,
+      statusOverride,
+    });
 
   return buildManagedOfficer({
     membership,
     user: resolvedUser,
+    profile,
   });
 }
 
 async function listStationOfficers({
   users,
   teams,
+  tablesDB,
   teamId,
+  teamName,
 }) {
   const result =
     await teams.listMemberships({
       teamId,
-      queries: [Query.limit(100)],
+      queries: [
+        Query.limit(100),
+      ],
       total: false,
     });
 
   const activeMemberships =
-    result.memberships.filter(membershipActive);
+    result.memberships.filter(
+      membershipActive,
+    );
 
   try {
-    const officers = await Promise.all(
-      activeMemberships.map((membership) =>
-        managedOfficer({
-          users,
-          membership,
-        }),
-      ),
-    );
+    const officers =
+      await Promise.all(
+        activeMemberships.map(
+          (membership) =>
+            managedOfficer({
+              users,
+              tablesDB,
+              membership,
+              teamName,
+            }),
+        ),
+      );
 
-    return officers.sort((first, second) =>
-      first.name.localeCompare(second.name),
+    return officers.sort(
+      (first, second) =>
+        first.name.localeCompare(
+          second.name,
+        ),
     );
   } catch (readError) {
-    const scopeError = new Error(
-      `RoadSafe found ${activeMemberships.length} active station membership(s), but could not read their Appwrite user records. Enable users.read, users.write, teams.read and teams.write in the Function Auth scopes. Original error: ${readError.message ?? String(readError)}`,
-    );
+    const scopeError =
+      new Error(
+        `RoadSafe found ${activeMemberships.length} active station membership(s), but could not synchronize officer profiles. Enable users.read, users.write, teams.read, teams.write, rows.read and rows.write in the Function scopes. Original error: ${
+          readError.message ??
+          String(readError)
+        }`,
+      );
+
     scopeError.statusCode =
-      Number.isInteger(readError.code) && readError.code >= 400
+      Number.isInteger(
+        readError.code,
+      ) &&
+      readError.code >= 400
         ? readError.code
         : 500;
+
     throw scopeError;
   }
 }
@@ -324,13 +702,17 @@ async function listStationOfficers({
 async function countActiveAdmins({
   users,
   teams,
+  tablesDB,
   teamId,
+  teamName,
 }) {
   const officers =
     await listStationOfficers({
       users,
       teams,
+      tablesDB,
       teamId,
+      teamName,
     });
 
   return officers.filter(
@@ -345,8 +727,10 @@ async function countActiveAdmins({
 async function protectAdministrator({
   users,
   teams,
+  tablesDB,
   callerId,
   teamId,
+  teamName,
   targetUserId,
   targetMembership,
   operation,
@@ -354,14 +738,15 @@ async function protectAdministrator({
   nextStatus,
 }) {
   if (
-    callerId === targetUserId
+    callerId ===
+    targetUserId
   ) {
-    const error =
+    const requestError =
       new Error(
         "A Station Administrator cannot change, block or remove their own account.",
       );
-    error.statusCode = 400;
-    throw error;
+    requestError.statusCode = 400;
+    throw requestError;
   }
 
   const targetRole =
@@ -382,29 +767,35 @@ async function protectAdministrator({
         "set_status" &&
         nextStatus === false));
 
-  if (!removesAdmin) return;
+  if (!removesAdmin) {
+    return;
+  }
 
   const adminCount =
     await countActiveAdmins({
       users,
       teams,
+      tablesDB,
       teamId,
+      teamName,
     });
 
   if (adminCount <= 1) {
-    const error =
+    const requestError =
       new Error(
         "RoadSafe cannot remove or block the station's last active administrator.",
       );
-    error.statusCode = 400;
-    throw error;
+    requestError.statusCode = 400;
+    throw requestError;
   }
 }
 
 async function uniqueOfficerCheck({
   users,
   teams,
+  tablesDB,
   teamId,
+  teamName,
   email,
   serviceNumber,
 }) {
@@ -424,19 +815,21 @@ async function uniqueOfficerCheck({
     emailResults.users.length >
     0
   ) {
-    const error =
+    const requestError =
       new Error(
         "An Appwrite account already exists with that email address.",
       );
-    error.statusCode = 409;
-    throw error;
+    requestError.statusCode = 409;
+    throw requestError;
   }
 
   const officers =
     await listStationOfficers({
       users,
       teams,
+      tablesDB,
       teamId,
+      teamName,
     });
 
   if (
@@ -448,12 +841,12 @@ async function uniqueOfficerCheck({
         serviceNumber,
     )
   ) {
-    const error =
+    const requestError =
       new Error(
         "That police service number is already registered at this station.",
       );
-    error.statusCode = 409;
-    throw error;
+    requestError.statusCode = 409;
+    throw requestError;
   }
 }
 
@@ -496,7 +889,9 @@ export default async function ({
   const apiKey =
     req.headers[
       "x-appwrite-key"
-    ];
+    ] ||
+    process.env
+      .APPWRITE_FUNCTION_API_KEY;
   const callerId =
     req.headers[
       "x-appwrite-user-id"
@@ -528,11 +923,14 @@ export default async function ({
     new Users(client);
   const teams =
     new Teams(client);
+  const tablesDB =
+    new TablesDB(client);
 
   let body;
 
   try {
-    body = parseBody(req);
+    body =
+      parseBody(req);
   } catch (parseError) {
     return json(
       res,
@@ -568,13 +966,47 @@ export default async function ({
     );
   }
 
-  try {
-    await requireStationAdmin({
-      users,
-      callerId,
-      teamId,
-    });
+  const metadata =
+    requestMetadata(req);
 
+  let actor = null;
+  let actorMembership = null;
+  let actorRole =
+    "system";
+  let teamName =
+    teamId;
+
+  try {
+    actorMembership =
+      await requireStationAdmin({
+        users,
+        callerId,
+        teamId,
+      });
+
+    actorRole =
+      roleFromMembership(
+        actorMembership,
+      );
+
+    actor =
+      await users.get({
+        userId:
+          callerId,
+      });
+
+    const team =
+      await teams.get({
+        teamId,
+      });
+
+    teamName =
+      team.name || teamId;
+
+    /*
+     * Opening Officer Management automatically backfills the bootstrap
+     * administrator and all existing station members into officer_profiles.
+     */
     if (
       action ===
       "list_officers"
@@ -583,7 +1015,9 @@ export default async function ({
         await listStationOfficers({
           users,
           teams,
+          tablesDB,
           teamId,
+          teamName,
         });
 
       return json(res, {
@@ -598,6 +1032,7 @@ export default async function ({
     ) {
       const input =
         body.officer ?? {};
+
       const name =
         cleanText(
           input.name,
@@ -657,7 +1092,9 @@ export default async function ({
       await uniqueOfficerCheck({
         users,
         teams,
+        tablesDB,
         teamId,
+        teamName,
         email,
         serviceNumber,
       });
@@ -667,11 +1104,13 @@ export default async function ({
 
       let user = null;
       let membership = null;
+      let profile = null;
 
       try {
         user =
           await users.create({
-            userId: ID.unique(),
+            userId:
+              ID.unique(),
             email,
             phone:
               phone || undefined,
@@ -682,37 +1121,75 @@ export default async function ({
 
         const updatedUser =
           await users.updatePrefs({
-          userId: user.$id,
-          prefs: {
-            serviceNumber,
-            rank,
-            roadSafeRole: role,
-            stationTeamId:
-              teamId,
-            mustChangePassword:
-              true,
-            accountStatus:
-              "active",
-            createdBy:
-              callerId,
-            createdAt:
-              new Date().toISOString(),
-          },
-        });
+            userId:
+              user.$id,
+            prefs: {
+              serviceNumber,
+              rank,
+              roadSafeRole:
+                role,
+              stationTeamId:
+                teamId,
+              mustChangePassword:
+                true,
+              accountStatus:
+                "active",
+              createdBy:
+                callerId,
+              createdAt:
+                new Date().toISOString(),
+            },
+          });
 
         membership =
           await teams.createMembership({
             teamId,
             roles: [role],
-            userId: user.$id,
+            userId:
+              user.$id,
             name,
+          });
+
+        profile =
+          await upsertOfficerProfile({
+            tablesDB,
+            user: updatedUser,
+            membership,
+            teamName,
           });
 
         const officer =
           buildManagedOfficer({
             membership,
-            user: updatedUser,
+            user:
+              updatedUser,
+            profile,
           });
+
+        await writeAudit({
+          tablesDB,
+          metadata,
+          stationTeamId:
+            teamId,
+          actor,
+          actorRole,
+          action:
+            "officer_created",
+          entityType:
+            "officer_profile",
+          entityId:
+            user.$id,
+          entityLabel:
+            name,
+          targetUserId:
+            user.$id,
+          details: {
+            serviceNumber,
+            rank,
+            role,
+            email,
+          },
+        });
 
         log(
           JSON.stringify({
@@ -739,15 +1216,37 @@ export default async function ({
           201,
         );
       } catch (creationError) {
+        if (profile?.$id) {
+          try {
+            await tablesDB.deleteRow({
+              databaseId:
+                ROADSAFE_DATABASE_ID,
+              tableId:
+                OFFICER_PROFILES_TABLE_ID,
+              rowId:
+                profile.$id,
+            });
+          } catch (rollbackError) {
+            error(
+              `Profile rollback failed: ${
+                rollbackError.message
+              }`,
+            );
+          }
+        }
+
         if (membership?.$id) {
           try {
             await teams.deleteMembership({
               teamId,
-              membershipId: membership.$id,
+              membershipId:
+                membership.$id,
             });
           } catch (rollbackError) {
             error(
-              `Membership rollback failed: ${rollbackError.message}`,
+              `Membership rollback failed: ${
+                rollbackError.message
+              }`,
             );
           }
         }
@@ -755,13 +1254,14 @@ export default async function ({
         if (user?.$id) {
           try {
             await users.delete({
-              userId: user.$id,
+              userId:
+                user.$id,
             });
-          } catch (
-            rollbackError
-          ) {
+          } catch (rollbackError) {
             error(
-              `Officer rollback failed: ${rollbackError.message}`,
+              `Officer rollback failed: ${
+                rollbackError.message
+              }`,
             );
           }
         }
@@ -804,17 +1304,23 @@ export default async function ({
       "update_role"
     ) {
       const role =
-        validRole(body.role);
+        validRole(
+          body.role,
+        );
 
       await protectAdministrator({
         users,
         teams,
+        tablesDB,
         callerId,
         teamId,
+        teamName,
         targetUserId,
         targetMembership,
-        operation: action,
-        nextRole: role,
+        operation:
+          action,
+        nextRole:
+          role,
       });
 
       const membership =
@@ -831,38 +1337,65 @@ export default async function ({
             targetUserId,
         });
 
-      await users.updatePrefs({
-        userId:
-          targetUserId,
-        prefs: mergePrefs(
-          user.prefs,
-          {
-            roadSafeRole:
-              role,
-            roleUpdatedBy:
-              callerId,
-            roleUpdatedAt:
-              new Date().toISOString(),
-          },
-        ),
-      });
-
-      const officer =
-        await managedOfficer({
-          users,
-          membership,
+      const updatedUser =
+        await users.updatePrefs({
+          userId:
+            targetUserId,
+          prefs:
+            mergePrefs(
+              user.prefs,
+              {
+                roadSafeRole:
+                  role,
+                roleUpdatedBy:
+                  callerId,
+                roleUpdatedAt:
+                  new Date().toISOString(),
+              },
+            ),
         });
 
-      log(
-        JSON.stringify({
-          audit:
-            "officer_role_changed",
-          callerId,
+      const profile =
+        await upsertOfficerProfile({
+          tablesDB,
+          user:
+            updatedUser,
+          membership,
+          teamName,
+        });
+
+      const officer =
+        buildManagedOfficer({
+          membership,
+          user:
+            updatedUser,
+          profile,
+        });
+
+      await writeAudit({
+        tablesDB,
+        metadata,
+        stationTeamId:
           teamId,
+        actor,
+        actorRole,
+        action:
+          "officer_role_changed",
+        entityType:
+          "officer_profile",
+        entityId:
           targetUserId,
-          role,
-        }),
-      );
+        entityLabel:
+          officer.name,
+        targetUserId,
+        details: {
+          previousRole:
+            roleFromMembership(
+              targetMembership,
+            ),
+          newRole: role,
+        },
+      });
 
       return json(res, {
         ok: true,
@@ -880,57 +1413,97 @@ export default async function ({
       await protectAdministrator({
         users,
         teams,
+        tablesDB,
         callerId,
         teamId,
+        teamName,
         targetUserId,
         targetMembership,
-        operation: action,
-        nextStatus: status,
+        operation:
+          action,
+        nextStatus:
+          status,
       });
 
-      const user =
+      const statusUser =
         await users.updateStatus({
           userId:
             targetUserId,
           status,
         });
 
-      await users.updatePrefs({
-        userId:
-          targetUserId,
-        prefs: mergePrefs(
-          user.prefs,
-          {
-            accountStatus:
-              status
-                ? "active"
-                : "blocked",
-            statusUpdatedBy:
-              callerId,
-            statusUpdatedAt:
-              new Date().toISOString(),
-          },
-        ),
-      });
-
-      const officer =
-        await managedOfficer({
-          users,
-          membership:
-            targetMembership,
+      const updatedUser =
+        await users.updatePrefs({
+          userId:
+            targetUserId,
+          prefs:
+            mergePrefs(
+              statusUser.prefs,
+              {
+                accountStatus:
+                  status
+                    ? "active"
+                    : "blocked",
+                statusUpdatedBy:
+                  callerId,
+                statusUpdatedAt:
+                  new Date().toISOString(),
+              },
+            ),
         });
 
-      log(
-        JSON.stringify({
-          audit:
+      const profile =
+        await upsertOfficerProfile({
+          tablesDB,
+          user:
+            updatedUser,
+          membership:
+            targetMembership,
+          teamName,
+          statusOverride:
             status
-              ? "officer_reactivated"
-              : "officer_blocked",
-          callerId,
+              ? "active"
+              : "blocked",
+        });
+
+      const officer =
+        buildManagedOfficer({
+          membership:
+            targetMembership,
+          user:
+            updatedUser,
+          profile,
+        });
+
+      await writeAudit({
+        tablesDB,
+        metadata,
+        stationTeamId:
           teamId,
+        actor,
+        actorRole,
+        action:
+          status
+            ? "officer_reactivated"
+            : "officer_blocked",
+        entityType:
+          "officer_profile",
+        entityId:
           targetUserId,
-        }),
-      );
+        entityLabel:
+          officer.name,
+        targetUserId,
+        severity:
+          status
+            ? "info"
+            : "warning",
+        details: {
+          status:
+            status
+              ? "active"
+              : "blocked",
+        },
+      });
 
       return json(res, {
         ok: true,
@@ -945,17 +1518,20 @@ export default async function ({
       await protectAdministrator({
         users,
         teams,
+        tablesDB,
         callerId,
         teamId,
+        teamName,
         targetUserId,
         targetMembership,
-        operation: action,
+        operation:
+          action,
       });
 
       const temporaryPassword =
         generateTemporaryPassword();
 
-      const user =
+      const passwordUser =
         await users.updatePassword({
           userId:
             targetUserId,
@@ -971,39 +1547,68 @@ export default async function ({
 
       const updatedUser =
         await users.updatePrefs({
-        userId:
-          targetUserId,
-        prefs: mergePrefs(
-          user.prefs,
-          {
-            mustChangePassword:
-              true,
-            accountStatus:
-              "active",
-            passwordResetBy:
-              callerId,
-            passwordResetAt:
-              new Date().toISOString(),
-          },
-        ),
-      });
+          userId:
+            targetUserId,
+          prefs:
+            mergePrefs(
+              passwordUser.prefs,
+              {
+                mustChangePassword:
+                  true,
+                accountStatus:
+                  "active",
+                passwordResetBy:
+                  callerId,
+                passwordResetAt:
+                  new Date().toISOString(),
+              },
+            ),
+        });
+
+      const profile =
+        await upsertOfficerProfile({
+          tablesDB,
+          user:
+            updatedUser,
+          membership:
+            targetMembership,
+          teamName,
+          statusOverride:
+            "active",
+        });
 
       const officer =
         buildManagedOfficer({
           membership:
             targetMembership,
-          user: updatedUser,
+          user:
+            updatedUser,
+          profile,
         });
 
-      log(
-        JSON.stringify({
-          audit:
-            "officer_password_reset",
-          callerId,
+      await writeAudit({
+        tablesDB,
+        metadata,
+        stationTeamId:
           teamId,
+        actor,
+        actorRole,
+        action:
+          "password_reset",
+        entityType:
+          "authentication",
+        entityId:
           targetUserId,
-        }),
-      );
+        entityLabel:
+          officer.name,
+        targetUserId,
+        severity:
+          "warning",
+        details: {
+          mustChangePassword:
+            true,
+        },
+      });
 
       return json(res, {
         ok: true,
@@ -1019,16 +1624,28 @@ export default async function ({
       await protectAdministrator({
         users,
         teams,
+        tablesDB,
         callerId,
         teamId,
+        teamName,
         targetUserId,
         targetMembership,
-        operation: action,
+        operation:
+          action,
       });
 
       const user =
         await users.get({
           userId:
+            targetUserId,
+        });
+
+      const existingProfile =
+        await getRowOrNull({
+          tablesDB,
+          tableId:
+            OFFICER_PROFILES_TABLE_ID,
+          rowId:
             targetUserId,
         });
 
@@ -1038,38 +1655,84 @@ export default async function ({
           targetMembership.$id,
       });
 
-      await users.updateStatus({
-        userId:
-          targetUserId,
-        status: false,
-      });
+      const blockedUser =
+        await users.updateStatus({
+          userId:
+            targetUserId,
+          status:
+            false,
+        });
 
       await users.updatePrefs({
         userId:
           targetUserId,
-        prefs: mergePrefs(
-          user.prefs,
-          {
-            stationTeamId: "",
-            accountStatus:
-              "removed",
-            removedBy:
-              callerId,
-            removedAt:
-              new Date().toISOString(),
-          },
-        ),
+        prefs:
+          mergePrefs(
+            blockedUser.prefs,
+            {
+              stationTeamId:
+                "",
+              accountStatus:
+                "removed",
+              removedBy:
+                callerId,
+              removedAt:
+                new Date().toISOString(),
+            },
+          ),
       });
 
-      log(
-        JSON.stringify({
-          audit:
-            "officer_removed",
-          callerId,
+      if (existingProfile) {
+        await tablesDB.updateRow({
+          databaseId:
+            ROADSAFE_DATABASE_ID,
+          tableId:
+            OFFICER_PROFILES_TABLE_ID,
+          rowId:
+            targetUserId,
+          data: {
+            status:
+              "removed",
+            mustChangePassword:
+              false,
+          },
+          permissions:
+            profilePermissions(
+              teamId,
+            ),
+        });
+      }
+
+      await writeAudit({
+        tablesDB,
+        metadata,
+        stationTeamId:
           teamId,
+        actor,
+        actorRole,
+        action:
+          "officer_removed",
+        entityType:
+          "officer_profile",
+        entityId:
           targetUserId,
-        }),
-      );
+        entityLabel:
+          user.name ||
+          user.email,
+        targetUserId,
+        severity:
+          "warning",
+        details: {
+          previousRole:
+            roleFromMembership(
+              targetMembership,
+            ),
+          accountBlocked:
+            true,
+          membershipRemoved:
+            true,
+        },
+      });
 
       return json(res, {
         ok: true,
@@ -1095,6 +1758,46 @@ export default async function ({
       AppwriteException
         ? requestError.code
         : 500);
+
+    if (actor && teamId) {
+      await writeAudit({
+        tablesDB,
+        metadata,
+        stationTeamId:
+          teamId,
+        actor,
+        actorRole,
+        action:
+          `${action || "officer_management"}_failed`,
+        entityType:
+          "system",
+        entityId:
+          cleanText(
+            body.userId,
+            128,
+          ),
+        targetUserId:
+          cleanText(
+            body.userId,
+            36,
+          ),
+        outcome:
+          statusCode === 401 ||
+          statusCode === 403
+            ? "denied"
+            : "failed",
+        severity:
+          statusCode === 401 ||
+          statusCode === 403
+            ? "warning"
+            : "critical",
+        details: {
+          message:
+            requestError.message ??
+            "Unknown failure",
+        },
+      });
+    }
 
     error(
       requestError.stack ??
