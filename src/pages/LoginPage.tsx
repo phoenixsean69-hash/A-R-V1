@@ -246,7 +246,7 @@ export default function LoginPage() {
 
             <p className="text-center text-[9px] leading-5 text-slate-600">
               Account access is controlled through your
-              Appwrite police-station team membership.
+              Admins police-station team membership.
             </p>
           </form>
         </section>

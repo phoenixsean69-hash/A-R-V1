@@ -554,7 +554,7 @@ export default function OfficerManagementPage() {
                 Create and control RoadSafe accounts for{" "}
                 {auth.identity?.stationTeam?.name ??
                   "this police station"}.
-                Officers never need Appwrite Console access.
+                Officers never need Admin access.
               </p>
             </div>
           </div>

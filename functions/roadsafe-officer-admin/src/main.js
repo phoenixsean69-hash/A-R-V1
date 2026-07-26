@@ -231,67 +231,54 @@ async function getMembership({
   return membership;
 }
 
-async function managedOfficer({
-  users,
+function buildManagedOfficer({
   membership,
+  user,
 }) {
-  const user =
-    await users.get({
-      userId:
-        membership.userId,
-    });
-
-  const prefs =
-    user.prefs ?? {};
+  const prefs = user?.prefs ?? {};
 
   return {
-    userId: user.$id,
-    membershipId:
-      membership.$id,
-    teamId:
-      membership.teamId,
+    userId: user?.$id ?? membership.userId,
+    membershipId: membership.$id,
+    teamId: membership.teamId,
     name:
-      user.name ||
+      user?.name ||
       membership.userName ||
       "Unnamed officer",
     email:
-      user.email ||
+      user?.email ||
       membership.userEmail ||
       "",
-    phone:
-      user.phone ||
-      "",
-    serviceNumber:
-      String(
-        prefs.serviceNumber ??
-          "",
-      ),
-    rank:
-      String(
-        prefs.rank ??
-          "",
-      ),
-    role: roleFromMembership(
-      membership,
-    ),
-    roles:
-      membership.roles ?? [],
-    status:
-      user.status
-        ? "active"
-        : "blocked",
+    phone: user?.phone || "",
+    serviceNumber: String(prefs.serviceNumber ?? ""),
+    rank: String(prefs.rank ?? ""),
+    role: roleFromMembership(membership),
+    roles: membership.roles ?? [],
+    status: user?.status === false ? "blocked" : "active",
     joinedAt:
-      membership.joined ||
-      membership.invited ||
-      "",
-    registeredAt:
-      user.registration || "",
-    lastActivityAt:
-      user.accessedAt || "",
+      membership.joined || membership.invited || "",
+    registeredAt: user?.registration || "",
+    lastActivityAt: user?.accessedAt || "",
     mustChangePassword:
-      prefs.mustChangePassword ===
-      true,
+      prefs.mustChangePassword === true,
   };
+}
+
+async function managedOfficer({
+  users,
+  membership,
+  user,
+}) {
+  const resolvedUser =
+    user ??
+    (await users.get({
+      userId: membership.userId,
+    }));
+
+  return buildManagedOfficer({
+    membership,
+    user: resolvedUser,
+  });
 }
 
 async function listStationOfficers({
@@ -302,37 +289,36 @@ async function listStationOfficers({
   const result =
     await teams.listMemberships({
       teamId,
-      queries: [
-        Query.limit(100),
-      ],
+      queries: [Query.limit(100)],
       total: false,
     });
 
-  const officers =
-    await Promise.all(
-      result.memberships
-        .filter(membershipActive)
-        .map((membership) =>
-          managedOfficer({
-            users,
-            membership,
-          }).catch((error) => {
-            console.error(
-              `Unable to load user ${membership.userId}.`,
-              error,
-            );
-            return null;
-          }),
-        ),
-    );
+  const activeMemberships =
+    result.memberships.filter(membershipActive);
 
-  return officers
-    .filter(Boolean)
-    .sort((first, second) =>
-      first.name.localeCompare(
-        second.name,
+  try {
+    const officers = await Promise.all(
+      activeMemberships.map((membership) =>
+        managedOfficer({
+          users,
+          membership,
+        }),
       ),
     );
+
+    return officers.sort((first, second) =>
+      first.name.localeCompare(second.name),
+    );
+  } catch (readError) {
+    const scopeError = new Error(
+      `RoadSafe found ${activeMemberships.length} active station membership(s), but could not read their Appwrite user records. Enable users.read, users.write, teams.read and teams.write in the Function Auth scopes. Original error: ${readError.message ?? String(readError)}`,
+    );
+    scopeError.statusCode =
+      Number.isInteger(readError.code) && readError.code >= 400
+        ? readError.code
+        : 500;
+    throw scopeError;
+  }
 }
 
 async function countActiveAdmins({
@@ -680,6 +666,7 @@ export default async function ({
         generateTemporaryPassword();
 
       let user = null;
+      let membership = null;
 
       try {
         user =
@@ -693,7 +680,8 @@ export default async function ({
             name,
           });
 
-        await users.updatePrefs({
+        const updatedUser =
+          await users.updatePrefs({
           userId: user.$id,
           prefs: {
             serviceNumber,
@@ -712,7 +700,7 @@ export default async function ({
           },
         });
 
-        const membership =
+        membership =
           await teams.createMembership({
             teamId,
             roles: [role],
@@ -721,9 +709,9 @@ export default async function ({
           });
 
         const officer =
-          await managedOfficer({
-            users,
+          buildManagedOfficer({
             membership,
+            user: updatedUser,
           });
 
         log(
@@ -751,6 +739,19 @@ export default async function ({
           201,
         );
       } catch (creationError) {
+        if (membership?.$id) {
+          try {
+            await teams.deleteMembership({
+              teamId,
+              membershipId: membership.$id,
+            });
+          } catch (rollbackError) {
+            error(
+              `Membership rollback failed: ${rollbackError.message}`,
+            );
+          }
+        }
+
         if (user?.$id) {
           try {
             await users.delete({
@@ -968,7 +969,8 @@ export default async function ({
         status: true,
       });
 
-      await users.updatePrefs({
+      const updatedUser =
+        await users.updatePrefs({
         userId:
           targetUserId,
         prefs: mergePrefs(
@@ -987,10 +989,10 @@ export default async function ({
       });
 
       const officer =
-        await managedOfficer({
-          users,
+        buildManagedOfficer({
           membership:
             targetMembership,
+          user: updatedUser,
         });
 
       log(

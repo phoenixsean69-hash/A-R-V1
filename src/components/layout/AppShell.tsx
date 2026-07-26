@@ -465,7 +465,7 @@ export default function AppShell() {
           </p>
           <div className="mt-2 flex items-center gap-2 text-[9px] font-semibold text-[#8ed6ca]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#55b9aa] shadow-[0_0_9px_rgba(85,185,170,0.65)]" />
-            Appwrite session active
+            Session active
           </div>
         </div>
       </aside>

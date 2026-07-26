@@ -79,6 +79,7 @@ function parseFunctionResponse(
     500;
 
   if (
+    result.status === "failed" ||
     statusCode >= 400 ||
     payload.ok === false
   ) {
@@ -142,19 +143,41 @@ export const OfficerManagementService = {
       officer: input,
     });
 
+    if (!response.officer) {
+      throw new Error(
+        "The Function did not return the newly created officer.",
+      );
+    }
+
+    if (response.temporaryPassword) {
+      return {
+        officer: response.officer,
+        temporaryPassword:
+          response.temporaryPassword,
+      };
+    }
+
+    const recovery = await execute({
+      action: "reset_password",
+      teamId: input.teamId,
+      userId: response.officer.userId,
+      membershipId:
+        response.officer.membershipId,
+    });
+
     if (
-      !response.officer ||
-      !response.temporaryPassword
+      !recovery.officer ||
+      !recovery.temporaryPassword
     ) {
       throw new Error(
-        "The officer account was created without temporary credentials.",
+        "The officer was created, but RoadSafe could not issue recoverable temporary credentials.",
       );
     }
 
     return {
-      officer: response.officer,
+      officer: recovery.officer,
       temporaryPassword:
-        response.temporaryPassword,
+        recovery.temporaryPassword,
     };
   },
 

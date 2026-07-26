@@ -64,7 +64,7 @@ export default function AccessPendingPage() {
             />
 
             <p className="text-[9px] leading-5">
-              Appwrite must return one active membership with
+              Admins must return one active membership with
               <strong> field_officer</strong>,
               <strong> supervisor</strong> or
               <strong> station_admin</strong>.
