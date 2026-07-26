@@ -57,6 +57,96 @@ const ROLE_PRIORITY: Record<
   station_admin: 3,
 };
 
+const NETWORK_RETRY_DELAYS_MS = [
+  350,
+  800,
+] as const;
+
+function delay(
+  milliseconds: number,
+): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(
+      resolve,
+      milliseconds,
+    );
+  });
+}
+
+function isTransientNetworkError(
+  error: unknown,
+): boolean {
+  const message =
+    error instanceof Error
+      ? `${error.name} ${error.message}`
+      : String(error);
+
+  const normalised =
+    message.toLowerCase();
+
+  return (
+    normalised.includes(
+      "failed to fetch",
+    ) ||
+    normalised.includes(
+      "fetch failed",
+    ) ||
+    normalised.includes(
+      "networkerror",
+    ) ||
+    normalised.includes(
+      "network error",
+    ) ||
+    normalised.includes(
+      "load failed",
+    ) ||
+    normalised.includes(
+      "connection",
+    )
+  );
+}
+
+async function withTransientRetry<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (
+    let attempt = 0;
+    attempt <=
+    NETWORK_RETRY_DELAYS_MS.length;
+    attempt += 1
+  ) {
+    try {
+      return await operation();
+    } catch (requestError) {
+      lastError =
+        requestError;
+
+      const retryable =
+        isTransientNetworkError(
+          requestError,
+        );
+
+      if (
+        !retryable ||
+        attempt >=
+          NETWORK_RETRY_DELAYS_MS.length
+      ) {
+        throw requestError;
+      }
+
+      await delay(
+        NETWORK_RETRY_DELAYS_MS[
+          attempt
+        ],
+      );
+    }
+  }
+
+  throw lastError;
+}
+
 function normaliseRole(value: string): string {
   return value
     .trim()
@@ -99,16 +189,14 @@ async function getCurrentUserMembership(
   teamId: string,
   user: Models.User<Models.Preferences>,
 ): Promise<Models.Membership | null> {
-  /*
-   * Ask Appwrite to return only the current account's membership.
-   * Once Appwrite applies the userId filter, the first result is already
-   * the correct membership and does not need a fragile second comparison.
-   */
   const directResult =
     await teams.listMemberships({
       teamId,
       queries: [
-        Query.equal("userId", user.$id),
+        Query.equal(
+          "userId",
+          user.$id,
+        ),
       ],
       total: false,
     });
@@ -120,10 +208,6 @@ async function getCurrentUserMembership(
     return directMembership;
   }
 
-  /*
-   * Defensive fallback for response-format or privacy differences.
-   * userId is the primary match; email is only used when Appwrite returns it.
-   */
   const allResult =
     await teams.listMemberships({
       teamId,
@@ -134,7 +218,8 @@ async function getCurrentUserMembership(
   const exactMembership =
     allResult.memberships.find(
       (membership) =>
-        membership.userId === user.$id ||
+        membership.userId ===
+          user.$id ||
         Boolean(
           membership.userEmail &&
             user.email &&
@@ -151,12 +236,10 @@ async function getCurrentUserMembership(
     return exactMembership;
   }
 
-  /*
-   * A team returned by teams.list() already belongs to the authenticated
-   * user. This final fallback is safe only when the team has exactly one
-   * membership, which is common during the first-station bootstrap.
-   */
-  if (allResult.memberships.length === 1) {
+  if (
+    allResult.memberships.length ===
+    1
+  ) {
     return allResult.memberships[0];
   }
 
@@ -166,10 +249,11 @@ async function getCurrentUserMembership(
 async function resolveTeamAccess(
   user: Models.User<Models.Preferences>,
 ): Promise<TeamAccess | null> {
-  const teamList = await teams.list({
-    queries: [],
-    total: false,
-  });
+  const teamList =
+    await teams.list({
+      queries: [],
+      total: false,
+    });
 
   const resolved: TeamAccess[] = [];
 
@@ -188,16 +272,21 @@ async function resolveTeamAccess(
         continue;
       }
 
-      if (!membershipIsActive(membership)) {
+      if (
+        !membershipIsActive(
+          membership,
+        )
+      ) {
         console.info(
           `RoadSafe membership ${membership.$id} is still pending.`,
         );
         continue;
       }
 
-      const role = recognisedRole(
-        membership.roles,
-      );
+      const role =
+        recognisedRole(
+          membership.roles,
+        );
 
       if (!role) {
         console.info(
@@ -213,6 +302,19 @@ async function resolveTeamAccess(
         role,
       });
     } catch (teamError) {
+      /*
+       * A temporary network interruption must escape this loop so the complete
+       * account/team resolution can be retried. Non-network errors remain
+       * isolated to the affected Team.
+       */
+      if (
+        isTransientNetworkError(
+          teamError,
+        )
+      ) {
+        throw teamError;
+      }
+
       console.error(
         `RoadSafe could not inspect membership for team ${team.$id}.`,
         teamError,
@@ -232,6 +334,14 @@ async function resolveTeamAccess(
 function errorMessage(
   error: unknown,
 ): string {
+  if (
+    isTransientNetworkError(
+      error,
+    )
+  ) {
+    return "RoadSafe could not reach Appwrite after several attempts. Check the internet connection, confirm the Appwrite endpoint, then try again.";
+  }
+
   if (
     error instanceof AppwriteException
   ) {
@@ -281,25 +391,41 @@ export function AuthProvider({
       setError("");
 
       try {
-        const user =
-          await account.get();
+        const resolved =
+          await withTransientRetry(
+            async () => {
+              const user =
+                await account.get();
 
-        const access =
-          await resolveTeamAccess(user);
+              const access =
+                await resolveTeamAccess(
+                  user,
+                );
+
+              return {
+                user,
+                access,
+              };
+            },
+          );
 
         setIdentity({
-          user,
+          user: resolved.user,
           role:
-            access?.role ??
+            resolved.access?.role ??
             "unassigned",
           stationTeam:
-            access?.team ?? null,
+            resolved.access?.team ??
+            null,
           membership:
-            access?.membership ??
+            resolved.access
+              ?.membership ??
             null,
         });
 
-        setStatus("authenticated");
+        setStatus(
+          "authenticated",
+        );
       } catch (requestError) {
         if (
           requestError instanceof
@@ -319,7 +445,9 @@ export function AuthProvider({
           "unauthenticated",
         );
         setError(
-          errorMessage(requestError),
+          errorMessage(
+            requestError,
+          ),
         );
       }
     }, []);
@@ -355,8 +483,34 @@ export function AuthProvider({
 
         await refresh();
       } catch (requestError) {
+        /*
+         * A session request can reach Appwrite even when its browser response
+         * is interrupted. Before reporting a network failure, check whether
+         * the session now exists.
+         */
+        if (
+          isTransientNetworkError(
+            requestError,
+          )
+        ) {
+          try {
+            await delay(400);
+
+            await withTransientRetry(
+              () => account.get(),
+            );
+
+            await refresh();
+            return;
+          } catch {
+            // The original network failure remains the useful error.
+          }
+        }
+
         const message =
-          errorMessage(requestError);
+          errorMessage(
+            requestError,
+          );
 
         setError(message);
         throw new Error(message);
