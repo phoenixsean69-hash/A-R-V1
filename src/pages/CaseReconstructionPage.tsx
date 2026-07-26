@@ -5,8 +5,16 @@ import {
   type ErrorInfo,
   type ReactNode,
 } from "react";
-import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, Orbit, RefreshCw } from "lucide-react";
+import {
+  Link,
+  useParams,
+} from "react-router-dom";
+import {
+  AlertTriangle,
+  Orbit,
+  RefreshCw,
+  ScanLine,
+} from "lucide-react";
 
 import AccidentReconstructionEditor from "../components/reconstruction/AccidentReconstructionEditor";
 import { AccidentCaseService } from "../services/accidentCaseService";
@@ -43,10 +51,15 @@ class ReconstructionErrorBoundary extends Component<
   static getDerivedStateFromError(
     error: Error,
   ): ReconstructionErrorBoundaryState {
-    return { error };
+    return {
+      error,
+    };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  componentDidCatch(
+    error: Error,
+    info: ErrorInfo,
+  ) {
     console.error(
       "The reconstruction editor failed to render:",
       error,
@@ -64,14 +77,20 @@ class ReconstructionErrorBoundary extends Component<
         <div className="ui-panel w-full max-w-3xl overflow-hidden">
           <div className="border-b border-[#18243f] p-5 text-center">
             <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
-              <AlertTriangle size={20} strokeWidth={1.8} />
+              <AlertTriangle
+                size={20}
+                strokeWidth={1.8}
+              />
             </div>
+
             <p className="mt-4 text-[9px] font-bold uppercase tracking-[0.1em] text-[#e28b9d]">
               Reconstruction editor error
             </p>
+
             <h1 className="mt-2 text-xl font-bold text-slate-100">
               The editor could not be displayed
             </h1>
+
             <p className="mx-auto mt-3 max-w-2xl text-[10px] leading-5 text-slate-500">
               The accident case has not been deleted. Reload the editor or
               return to the case workspace.
@@ -86,14 +105,23 @@ class ReconstructionErrorBoundary extends Component<
           <div className="flex flex-wrap justify-center gap-3 border-t border-[#18243f] p-4">
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={() =>
+                window.location.reload()
+              }
               className="ui-button-primary"
             >
-              <RefreshCw size={14} />
+              <RefreshCw
+                size={14}
+              />
               Reload reconstruction
             </button>
 
-            <Link to={this.props.casePath} className="ui-button">
+            <Link
+              to={
+                this.props.casePath
+              }
+              className="ui-button"
+            >
               Return to case
             </Link>
           </div>
@@ -103,37 +131,56 @@ class ReconstructionErrorBoundary extends Component<
   }
 }
 
-function rememberReconstructionCase(caseId: string): void {
+function rememberReconstructionCase(
+  caseId: string,
+): void {
   try {
-    localStorage.setItem(LAST_RECONSTRUCTION_CASE_KEY, caseId);
+    localStorage.setItem(
+      LAST_RECONSTRUCTION_CASE_KEY,
+      caseId,
+    );
   } catch (error) {
-    console.warn("Unable to remember the reconstruction case.", error);
+    console.warn(
+      "Unable to remember the reconstruction case.",
+      error,
+    );
   }
 }
 
-function loadReconstruction(caseId?: string): ReconstructionLoadResult {
+function loadReconstruction(
+  caseId?: string,
+): ReconstructionLoadResult {
   if (!caseId) {
     return {
       accidentCase: null,
       reconstruction: null,
-      error: "No accident case ID was supplied in the route.",
+      error:
+        "No accident case ID was supplied in the route.",
     };
   }
 
   try {
-    const accidentCase = AccidentCaseService.getById(caseId);
+    const accidentCase =
+      AccidentCaseService.getById(
+        caseId,
+      );
 
     if (!accidentCase) {
       return {
         accidentCase: null,
         reconstruction: null,
-        error: "The requested accident case could not be found.",
+        error:
+          "The requested accident case could not be found.",
       };
     }
 
     const reconstruction =
-      AccidentCaseService.getLinkedReconstruction(accidentCase) ??
-      AccidentCaseService.ensureReconstruction(caseId);
+      AccidentCaseService.getLinkedReconstruction(
+        accidentCase,
+      ) ??
+      AccidentCaseService.ensureReconstruction(
+        caseId,
+      );
 
     if (!reconstruction) {
       return {
@@ -150,7 +197,10 @@ function loadReconstruction(caseId?: string): ReconstructionLoadResult {
       error: "",
     };
   } catch (error) {
-    console.error("Failed to open the case reconstruction:", error);
+    console.error(
+      "Failed to open the case reconstruction:",
+      error,
+    );
 
     return {
       accidentCase: null,
@@ -164,30 +214,63 @@ function loadReconstruction(caseId?: string): ReconstructionLoadResult {
 }
 
 export default function CaseReconstructionPage() {
-  const { caseId } = useParams<{ caseId: string }>();
-  const loadResult = useMemo(
-    () => loadReconstruction(caseId),
-    [caseId],
-  );
-  const { accidentCase, reconstruction, error } = loadResult;
+  const { caseId } =
+    useParams<{
+      caseId: string;
+    }>();
+
+  const loadResult =
+    useMemo(
+      () =>
+        loadReconstruction(
+          caseId,
+        ),
+      [caseId],
+    );
+
+  const {
+    accidentCase,
+    reconstruction,
+    error,
+  } =
+    loadResult;
 
   useEffect(() => {
-    if (caseId && accidentCase && reconstruction) {
-      rememberReconstructionCase(caseId);
+    if (
+      caseId &&
+      accidentCase &&
+      reconstruction
+    ) {
+      rememberReconstructionCase(
+        caseId,
+      );
     }
-  }, [accidentCase, caseId, reconstruction]);
+  }, [
+    accidentCase,
+    caseId,
+    reconstruction,
+  ]);
 
-  if (!accidentCase || !reconstruction || !caseId) {
+  if (
+    !accidentCase ||
+    !reconstruction ||
+    !caseId
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#030714] p-4">
         <section className="ui-panel w-full max-w-2xl overflow-hidden text-center">
           <div className="border-b border-[#18243f] p-6">
             <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
-              <AlertTriangle size={20} strokeWidth={1.8} />
+              <AlertTriangle
+                size={20}
+                strokeWidth={1.8}
+              />
             </div>
+
             <h1 className="mt-4 text-xl font-bold text-slate-100">
               Unable to open reconstruction
             </h1>
+
             <p className="mt-3 text-[10px] leading-5 text-slate-500">
               {error ||
                 "The accident case or its linked reconstruction could not be loaded."}
@@ -196,11 +279,17 @@ export default function CaseReconstructionPage() {
 
           <div className="p-4">
             <Link
-              to={caseId ? `/cases/${caseId}` : "/reconstruction"}
+              to={
+                caseId
+                  ? `/cases/${caseId}`
+                  : "/reconstruction"
+              }
               className="ui-button inline-flex"
             >
               <Orbit size={14} />
-              {caseId ? "Return to case" : "Pick another scene"}
+              {caseId
+                ? "Return to case"
+                : "Pick another scene"}
             </Link>
           </div>
         </section>
@@ -209,34 +298,64 @@ export default function CaseReconstructionPage() {
   }
 
   return (
-    <ReconstructionErrorBoundary casePath={`/cases/${caseId}`}>
-      <AccidentReconstructionEditor
-        key={reconstruction.id}
-        reconstructionId={reconstruction.id}
-        caseContext={{
-          caseId,
-          caseNumber: accidentCase.caseNumber,
-          caseTitle: accidentCase.title,
-          casePath: `/cases/${caseId}`,
-          reportPath: `/cases/${caseId}/report`,
-          footagePath: `/cases/${caseId}/footage`,
-          recordedBy: accidentCase.investigatingOfficer,
-        }}
-        onReconstructionSaved={(savedReconstruction) => {
-          AccidentCaseService.registerReconstructionSave(
+    <ReconstructionErrorBoundary
+      casePath={`/cases/${caseId}`}
+    >
+      <div className="relative min-h-screen">
+        <Link
+          to={`/cases/${caseId}/reconstruction/ar`}
+          className="fixed right-4 top-4 z-[80] inline-flex items-center gap-2 rounded-md border border-[#315b91] bg-[#0b1b38]/95 px-3 py-2 text-[10px] font-bold text-[#a8ccff] shadow-xl backdrop-blur-md transition-colors hover:border-[#4d8cf5] hover:bg-[#10264c] hover:text-white"
+          title="Place this reconstruction on the real accident scene"
+        >
+          <ScanLine size={15} />
+          Open AR view
+        </Link>
+
+        <AccidentReconstructionEditor
+          key={
+            reconstruction.id
+          }
+          reconstructionId={
+            reconstruction.id
+          }
+          caseContext={{
             caseId,
+            caseNumber:
+              accidentCase.caseNumber,
+            caseTitle:
+              accidentCase.title,
+            casePath:
+              `/cases/${caseId}`,
+            reportPath:
+              `/cases/${caseId}/report`,
+            footagePath:
+              `/cases/${caseId}/footage`,
+            recordedBy:
+              accidentCase.investigatingOfficer,
+          }}
+          onReconstructionSaved={(
             savedReconstruction,
-          );
-          rememberReconstructionCase(caseId);
-        }}
-        onFootageSaved={(footage) => {
-          AccidentCaseService.registerFootage(
-            caseId,
-            footage.id,
-            footage.isPrimary,
-          );
-        }}
-      />
+          ) => {
+            AccidentCaseService.registerReconstructionSave(
+              caseId,
+              savedReconstruction,
+            );
+
+            rememberReconstructionCase(
+              caseId,
+            );
+          }}
+          onFootageSaved={(
+            footage,
+          ) => {
+            AccidentCaseService.registerFootage(
+              caseId,
+              footage.id,
+              footage.isPrimary,
+            );
+          }}
+        />
+      </div>
     </ReconstructionErrorBoundary>
   );
 }
