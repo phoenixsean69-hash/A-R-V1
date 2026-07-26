@@ -1,18 +1,26 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  AlertTriangle,
   Archive,
+  CheckCircle2,
+  Cloud,
   Copy,
   ExternalLink,
   FileText,
   Filter,
+  LoaderCircle,
   Orbit,
   Plus,
+  RefreshCw,
   Search,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import CaseStatusBadge from "../components/cases/CaseStatusBadge";
+import { useAuth } from "../context/AuthContext";
+import { useCaseSync } from "../context/CaseSyncContext";
 import { AccidentCaseService } from "../services/accidentCaseService";
 import type { AccidentCaseStatus } from "../types/accidentCase";
 import { ACCIDENT_CASE_STATUSES } from "../types/accidentCase";
@@ -44,13 +52,26 @@ function rememberReconstructionCase(caseId: string): void {
 
 export default function AccidentCasesPage() {
   const navigate = useNavigate();
+  const { identity } = useAuth();
+  const caseSync = useCaseSync();
+
   const [version, setVersion] = useState(0);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | AccidentCaseStatus>("All");
   const [view, setView] = useState<"table" | "cards">("table");
+  const [importing, setImporting] = useState(false);
+
   void version;
+  void caseSync.revision;
 
   const cases = AccidentCaseService.getAll();
+
+  const isStationAdministrator =
+    identity?.role === "station_admin";
+
+  const canManageLifecycle =
+    identity?.role === "supervisor" ||
+    identity?.role === "station_admin";
 
   const filteredCases = useMemo(() => {
     const normalisedQuery = query.trim().toLowerCase();
@@ -111,8 +132,110 @@ export default function AccidentCasesPage() {
     setVersion((current) => current + 1);
   };
 
+  const importLegacyCases = async () => {
+    if (
+      !window.confirm(
+        `Import ${caseSync.localOnlyCount} local case(s) into the shared station database? Existing cloud cases with the same case number will be skipped.`,
+      )
+    ) {
+      return;
+    }
+
+    setImporting(true);
+
+    try {
+      await caseSync.importLocalCases();
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const syncLabel =
+    caseSync.status === "loading"
+      ? "Loading shared register"
+      : caseSync.status === "syncing"
+        ? "Synchronizing changes"
+        : caseSync.status === "error"
+          ? "Synchronization needs attention"
+          : caseSync.status === "synced"
+            ? "Shared register synchronized"
+            : "Shared register waiting";
+
   return (
     <div className="mx-auto min-w-0 max-w-[1500px] space-y-3">
+      <section className="ui-panel min-w-0 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#1d2c4b] bg-[#080e1c] text-[#8db8fb]">
+              {caseSync.status === "error" ? (
+                <AlertTriangle size={16} />
+              ) : caseSync.status === "loading" ||
+                caseSync.status === "syncing" ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : caseSync.status === "synced" ? (
+                <CheckCircle2 size={16} />
+              ) : (
+                <Cloud size={16} />
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                {syncLabel}
+              </p>
+              <p className="mt-1 max-w-3xl text-[9px] leading-4 text-slate-600">
+                Case metadata is shared through Appwrite. Reconstruction scene
+                content remains local during this first migration phase.
+              </p>
+
+              {caseSync.error && (
+                <p className="mt-2 text-[9px] text-red-300">
+                  {caseSync.error}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {caseSync.canImportLocalCases &&
+              caseSync.localOnlyCount > 0 && (
+                <button
+                  type="button"
+                  className="ui-button"
+                  disabled={importing}
+                  onClick={() => void importLegacyCases()}
+                >
+                  {importing ? (
+                    <LoaderCircle className="animate-spin" size={13} />
+                  ) : (
+                    <Upload size={13} />
+                  )}
+                  Import {caseSync.localOnlyCount} local
+                </button>
+              )}
+
+            <button
+              type="button"
+              className="ui-button"
+              onClick={() => void caseSync.refresh()}
+            >
+              <RefreshCw size={13} />
+              Refresh
+            </button>
+
+            {caseSync.status === "error" && (
+              <button
+                type="button"
+                className="ui-button-primary"
+                onClick={caseSync.retryPending}
+              >
+                Retry pending
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["All cases", cases.length, "Complete investigation register"],
@@ -147,7 +270,7 @@ export default function AccidentCasesPage() {
           <div className="min-w-0">
             <h2 className="ui-panel-title">Accident case register</h2>
             <p className="mt-1 truncate text-[9px] text-slate-600">
-              Every row is backed by a stored case record.
+              Shared station cases with local reconstruction links.
             </p>
           </div>
 
@@ -286,6 +409,13 @@ export default function AccidentCasesPage() {
                         >
                           {record.title}
                         </p>
+                        <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-slate-700">
+                          {record.cloudSyncState === "synced"
+                            ? `Cloud v${record.cloudVersion ?? 1}`
+                            : record.cloudSyncState === "error"
+                              ? "Cloud error"
+                              : "Pending sync"}
+                        </p>
                       </td>
 
                       <td className="min-w-0 px-3 py-3">
@@ -382,29 +512,32 @@ export default function AccidentCasesPage() {
                             <Copy size={13} />
                           </button>
 
-                          {record.status !== "Archived" && (
+                          {canManageLifecycle &&
+                            record.status !== "Archived" && (
+                              <button
+                                type="button"
+                                className="ui-icon-button h-7 w-7 shrink-0"
+                                title="Archive case"
+                                aria-label={`Archive ${record.caseNumber}`}
+                                onClick={() => archiveCase(record.id)}
+                              >
+                                <Archive size={13} />
+                              </button>
+                            )}
+
+                          {isStationAdministrator && (
                             <button
                               type="button"
-                              className="ui-icon-button h-7 w-7 shrink-0"
-                              title="Archive case"
-                              aria-label={`Archive ${record.caseNumber}`}
-                              onClick={() => archiveCase(record.id)}
+                              className="ui-icon-button h-7 w-7 shrink-0 text-red-400"
+                              title="Delete case"
+                              aria-label={`Delete ${record.caseNumber}`}
+                              onClick={() =>
+                                deleteCase(record.id, record.caseNumber)
+                              }
                             >
-                              <Archive size={13} />
+                              <Trash2 size={13} />
                             </button>
                           )}
-
-                          <button
-                            type="button"
-                            className="ui-icon-button h-7 w-7 shrink-0 text-red-400"
-                            title="Delete case"
-                            aria-label={`Delete ${record.caseNumber}`}
-                            onClick={() =>
-                              deleteCase(record.id, record.caseNumber)
-                            }
-                          >
-                            <Trash2 size={13} />
-                          </button>
                         </div>
                       </td>
                     </tr>

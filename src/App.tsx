@@ -12,6 +12,7 @@ import {
 } from "./components/auth/AuthRoutes";
 import AppShell from "./components/layout/AppShell";
 import { AuthProvider } from "./context/AuthContext";
+import { CaseSyncProvider } from "./context/CaseSyncContext";
 import AccidentReconstructionPage from "./pages/AccidentReconstructionPage";
 import AccessPendingPage from "./pages/AccessPendingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -42,132 +43,134 @@ const STATION_ROLES = [
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <LoginPage />
-              </PublicOnlyRoute>
-            }
-          />
-
-          <Route element={<RequireAuth />}>
+      <CaseSyncProvider>
+        <BrowserRouter>
+          <Routes>
             <Route
-              path="/change-password"
-              element={<ChangePasswordPage />}
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <LoginPage />
+                </PublicOnlyRoute>
+              }
             />
 
-            <Route
-              path="/access-pending"
-              element={<AccessPendingPage />}
-            />
-
-            <Route element={<AppShell />}>
+            <Route element={<RequireAuth />}>
               <Route
-                index
-                element={<ClientHomeRedirect />}
+                path="/change-password"
+                element={<ChangePasswordPage />}
               />
 
               <Route
-                element={
-                  <RequireRole
-                    roles={[
-                      ...ALL_ASSIGNED_ROLES,
-                    ]}
-                  />
-                }
-              >
+                path="/access-pending"
+                element={<AccessPendingPage />}
+              />
+
+              <Route element={<AppShell />}>
                 <Route
-                  path="cases/*"
-                  element={<CaseManagementRoutes />}
+                  index
+                  element={<ClientHomeRedirect />}
                 />
+
                 <Route
-                  path="reconstruction"
                   element={
-                    <AccidentReconstructionPage />
+                    <RequireRole
+                      roles={[
+                        ...ALL_ASSIGNED_ROLES,
+                      ]}
+                    />
                   }
-                />
-                <Route
-                  path="scene-map"
-                  element={<SceneMapPage />}
-                />
-                <Route
-                  path="evidence"
-                  element={<EvidencePage />}
-                />
-                <Route
-                  path="reports"
-                  element={<ReportsPage />}
-                />
-                <Route
-                  path="footage"
-                  element={<FootagePage />}
-                />
-              </Route>
-
-              <Route
-                element={
-                  <RequireRole
-                    roles={[
-                      "field_officer",
-                    ]}
+                >
+                  <Route
+                    path="cases/*"
+                    element={<CaseManagementRoutes />}
                   />
-                }
-              >
-                <Route
-                  path="field"
-                  element={<FieldDashboardPage />}
-                />
-              </Route>
-
-              <Route
-                element={
-                  <RequireRole
-                    roles={[
-                      ...STATION_ROLES,
-                    ]}
+                  <Route
+                    path="reconstruction"
+                    element={
+                      <AccidentReconstructionPage />
+                    }
                   />
-                }
-              >
-                <Route
-                  path="station"
-                  element={<Dashboard />}
-                />
-                <Route
-                  path="analytics"
-                  element={<AnalyticsPage />}
-                />
-                <Route
-                  path="settings"
-                  element={<SettingsPage />}
-                />
-              </Route>
-
-              <Route
-                element={
-                  <RequireRole
-                    roles={[
-                      "station_admin",
-                    ]}
+                  <Route
+                    path="scene-map"
+                    element={<SceneMapPage />}
                   />
-                }
-              >
+                  <Route
+                    path="evidence"
+                    element={<EvidencePage />}
+                  />
+                  <Route
+                    path="reports"
+                    element={<ReportsPage />}
+                  />
+                  <Route
+                    path="footage"
+                    element={<FootagePage />}
+                  />
+                </Route>
+
                 <Route
-                  path="officers"
-                  element={<OfficerManagementPage />}
+                  element={
+                    <RequireRole
+                      roles={[
+                        "field_officer",
+                      ]}
+                    />
+                  }
+                >
+                  <Route
+                    path="field"
+                    element={<FieldDashboardPage />}
+                  />
+                </Route>
+
+                <Route
+                  element={
+                    <RequireRole
+                      roles={[
+                        ...STATION_ROLES,
+                      ]}
+                    />
+                  }
+                >
+                  <Route
+                    path="station"
+                    element={<Dashboard />}
+                  />
+                  <Route
+                    path="analytics"
+                    element={<AnalyticsPage />}
+                  />
+                  <Route
+                    path="settings"
+                    element={<SettingsPage />}
+                  />
+                </Route>
+
+                <Route
+                  element={
+                    <RequireRole
+                      roles={[
+                        "station_admin",
+                      ]}
+                    />
+                  }
+                >
+                  <Route
+                    path="officers"
+                    element={<OfficerManagementPage />}
+                  />
+                </Route>
+
+                <Route
+                  path="unauthorized"
+                  element={<UnauthorizedPage />}
                 />
               </Route>
-
-              <Route
-                path="unauthorized"
-                element={<UnauthorizedPage />}
-              />
             </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </CaseSyncProvider>
     </AuthProvider>
   );
 }

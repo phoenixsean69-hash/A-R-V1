@@ -1,6 +1,7 @@
 import { ReconstructionService } from "./reconstructionService";
 import { ReconstructionFootageService } from "./reconstructionFootageService";
 import { RoadLayoutDetectionService } from "./roadLayoutDetectionService";
+import { CaseCloudBridge } from "./caseCloudBridge";
 
 import type {
   AccidentCase,
@@ -17,6 +18,7 @@ import type {
 } from "../types/reconstruction";
 
 import type { RoadLayoutDetection } from "../types/roadLayoutDetection";
+import type { CaseCloudEventType } from "../types/caseCloud";
 import { createDefaultRoadSceneSettings } from "../types/reconstruction";
 
 const STORAGE_KEY = "roadsafe-ar-accident-cases";
@@ -51,15 +53,24 @@ function normaliseCase(record: AccidentCase): AccidentCase {
     siteCoordinate: record.siteCoordinate
       ? {
           ...record.siteCoordinate,
-          accuracyMetres: Math.max(0, Number(record.siteCoordinate.accuracyMetres ?? 0)),
+          accuracyMetres: Math.max(
+            0,
+            Number(record.siteCoordinate.accuracyMetres ?? 0),
+          ),
           capturedAt: record.siteCoordinate.capturedAt || now,
         }
       : undefined,
-    footageIds: Array.isArray(record.footageIds) ? record.footageIds : [],
+    footageIds: Array.isArray(record.footageIds)
+      ? record.footageIds
+      : [],
     primaryFootageId: record.primaryFootageId || undefined,
     summary: record.summary || "",
     createdAt: record.createdAt || now,
     updatedAt: record.updatedAt || now,
+    reviewStatus: record.reviewStatus ?? "draft",
+    cloudVersion: Math.max(0, Number(record.cloudVersion ?? 0)),
+    cloudSyncState: record.cloudSyncState ?? "local",
+    cloudSyncError: record.cloudSyncError || undefined,
   };
 }
 
@@ -140,15 +151,24 @@ function synchroniseReconstructionMetadata(
   };
 }
 
-function persistCase(record: AccidentCase): AccidentCase {
+function persistCase(
+  record: AccidentCase,
+  eventType: CaseCloudEventType = "case_updated",
+): AccidentCase {
   const records = readCases();
-  const updated = normaliseCase(record);
+  const updated = normaliseCase({
+    ...record,
+    cloudSyncState: "pending",
+    cloudSyncError: undefined,
+  });
   const index = records.findIndex((item) => item.id === updated.id);
 
   if (index >= 0) records[index] = updated;
   else records.push(updated);
 
   writeCases(records);
+  CaseCloudBridge.queueSave(updated, eventType);
+
   return updated;
 }
 
@@ -157,6 +177,61 @@ function getLinkedReconstructionFromRecord(
 ): AccidentReconstruction | null {
   if (!record.reconstructionId) return null;
   return ReconstructionService.getById(record.reconstructionId);
+}
+
+function mergeCloudRecordIntoLocal(
+  cloudRecord: AccidentCase,
+): AccidentCase {
+  const records = readCases();
+  const cloud = normaliseCase({
+    ...cloudRecord,
+    cloudSyncState: "synced",
+    cloudSyncError: undefined,
+    cloudSyncedAt:
+      cloudRecord.cloudSyncedAt ||
+      new Date().toISOString(),
+  });
+
+  const index = records.findIndex(
+    (item) => item.id === cloud.id,
+  );
+
+  if (index >= 0) {
+    const local = records[index];
+
+    /*
+     * Keep the local reconstruction link and local scene metadata when an older
+     * cloud row does not yet contain them. Reconstruction content itself remains
+     * in the existing ReconstructionService during Phase 1.
+     */
+    records[index] = normaliseCase({
+      ...local,
+      ...cloud,
+      reconstructionId:
+        cloud.reconstructionId ??
+        local.reconstructionId,
+      roadLayoutDetection:
+        cloud.roadLayoutDetection ??
+        local.roadLayoutDetection,
+      siteCoordinate:
+        cloud.siteCoordinate ??
+        local.siteCoordinate,
+      footageIds:
+        cloud.footageIds.length > 0
+          ? cloud.footageIds
+          : local.footageIds,
+      primaryFootageId:
+        cloud.primaryFootageId ??
+        local.primaryFootageId,
+      cloudSyncState: "synced",
+      cloudSyncError: undefined,
+    });
+  } else {
+    records.push(cloud);
+  }
+
+  writeCases(records);
+  return cloud;
 }
 
 export const AccidentCaseService = {
@@ -170,6 +245,43 @@ export const AccidentCaseService = {
 
   getById(caseId: string): AccidentCase | null {
     return this.getAll().find((record) => record.id === caseId) ?? null;
+  },
+
+  getLocalOnlyCases(cloudIds: ReadonlySet<string>): AccidentCase[] {
+    return this.getAll().filter(
+      (record) => !cloudIds.has(record.id),
+    );
+  },
+
+  mergeCloudRecord(record: AccidentCase): AccidentCase {
+    return mergeCloudRecordIntoLocal(record);
+  },
+
+  applyCloudSnapshot(records: AccidentCase[]): AccidentCase[] {
+    for (const record of records) {
+      mergeCloudRecordIntoLocal(record);
+    }
+
+    return this.getAll();
+  },
+
+  markCloudError(caseId: string, message: string): AccidentCase | null {
+    const record = this.getById(caseId);
+    if (!record) return null;
+
+    const records = readCases();
+    const index = records.findIndex((item) => item.id === caseId);
+    if (index < 0) return null;
+
+    const updated = normaliseCase({
+      ...record,
+      cloudSyncState: "error",
+      cloudSyncError: message,
+    });
+
+    records[index] = updated;
+    writeCases(records);
+    return updated;
   },
 
   generateNextCaseNumber(): string {
@@ -200,6 +312,8 @@ export const AccidentCaseService = {
       primaryFootageId: undefined,
       createdAt: now,
       updatedAt: now,
+      reviewStatus: "draft",
+      cloudSyncState: "local",
     });
 
     const reconstruction = ReconstructionService.save(
@@ -211,7 +325,7 @@ export const AccidentCaseService = {
       reconstructionId: reconstruction.id,
     };
 
-    return persistCase(linkedRecord);
+    return persistCase(linkedRecord, "case_created");
   },
 
   createWithSceneEnvironment(
@@ -236,16 +350,21 @@ export const AccidentCaseService = {
       primaryFootageId: undefined,
       createdAt: now,
       updatedAt: now,
+      reviewStatus: "draft",
+      cloudSyncState: "local",
     });
 
     const reconstruction = ReconstructionService.save(
       createEmptyReconstruction(baseRecord, sceneSettings, normalisedDetection),
     );
 
-    return persistCase({
-      ...baseRecord,
-      reconstructionId: reconstruction.id,
-    });
+    return persistCase(
+      {
+        ...baseRecord,
+        reconstructionId: reconstruction.id,
+      },
+      normalisedDetection ? "road_geometry_detected" : "case_created",
+    );
   },
 
   createWithRoadLayout(
@@ -262,10 +381,13 @@ export const AccidentCaseService = {
   },
 
   save(record: AccidentCase): AccidentCase {
-    const updated = persistCase({
-      ...record,
-      updatedAt: new Date().toISOString(),
-    });
+    const updated = persistCase(
+      {
+        ...record,
+        updatedAt: new Date().toISOString(),
+      },
+      "case_updated",
+    );
 
     const linkedReconstruction = getLinkedReconstructionFromRecord(updated);
 
@@ -292,6 +414,7 @@ export const AccidentCaseService = {
     }
 
     writeCases(readCases().filter((item) => item.id !== caseId));
+    CaseCloudBridge.queueDelete(caseId);
   },
 
   duplicate(caseId: string): AccidentCase | null {
@@ -326,7 +449,15 @@ export const AccidentCaseService = {
   archive(caseId: string): AccidentCase | null {
     const record = this.getById(caseId);
     if (!record) return null;
-    return this.save({ ...record, status: "Archived" });
+
+    return persistCase(
+      {
+        ...record,
+        status: "Archived",
+        updatedAt: new Date().toISOString(),
+      },
+      "case_archived",
+    );
   },
 
   getLinkedReconstruction(
@@ -353,9 +484,6 @@ export const AccidentCaseService = {
         synchronised.description !== existing.description ||
         synchronised.roadLayoutDetection !== existing.roadLayoutDetection;
 
-      // Opening a reconstruction must remain a read operation whenever possible.
-      // Previously this method saved every existing reconstruction during render,
-      // which could throw a localStorage quota error and leave a white page.
       if (!metadataChanged) {
         return existing;
       }
@@ -367,9 +495,6 @@ export const AccidentCaseService = {
           "Unable to synchronise reconstruction metadata while opening it:",
           error,
         );
-
-        // The editor can still open with the normalised in-memory record. The
-        // user will receive the normal save error if browser storage remains full.
         return synchronised;
       }
     }
@@ -384,16 +509,19 @@ export const AccidentCaseService = {
         ),
       );
 
-      persistCase({
-        ...record,
-        reconstructionId: reconstruction.id,
-        status:
-          record.status === "Open" ||
-          record.status === "Reconstruction Complete"
-            ? "Under Investigation"
-            : record.status,
-        updatedAt: new Date().toISOString(),
-      });
+      persistCase(
+        {
+          ...record,
+          reconstructionId: reconstruction.id,
+          status:
+            record.status === "Open" ||
+            record.status === "Reconstruction Complete"
+              ? "Under Investigation"
+              : record.status,
+          updatedAt: new Date().toISOString(),
+        },
+        "reconstruction_started",
+      );
 
       return reconstruction;
     } catch (error) {
@@ -423,15 +551,18 @@ export const AccidentCaseService = {
       ReconstructionService.save(synchronised);
     }
 
-    return persistCase({
-      ...record,
-      reconstructionId: reconstruction.id,
-      status:
-        record.status === "Open" || record.status === "Reconstruction Complete"
-          ? "Under Investigation"
-          : record.status,
-      updatedAt: new Date().toISOString(),
-    });
+    return persistCase(
+      {
+        ...record,
+        reconstructionId: reconstruction.id,
+        status:
+          record.status === "Open" || record.status === "Reconstruction Complete"
+            ? "Under Investigation"
+            : record.status,
+        updatedAt: new Date().toISOString(),
+      },
+      "reconstruction_saved",
+    );
   },
 
   getStats(record: AccidentCase): AccidentCaseStats {
@@ -597,13 +728,16 @@ export const AccidentCaseService = {
         ? footageId
         : record.primaryFootageId;
 
-    return persistCase({
-      ...record,
-      footageIds,
-      primaryFootageId,
-      status: record.status === "Open" ? "Under Investigation" : record.status,
-      updatedAt: new Date().toISOString(),
-    });
+    return persistCase(
+      {
+        ...record,
+        footageIds,
+        primaryFootageId,
+        status: record.status === "Open" ? "Under Investigation" : record.status,
+        updatedAt: new Date().toISOString(),
+      },
+      "footage_recorded",
+    );
   },
 
   removeFootage(caseId: string, footageId: string): AccidentCase | null {
@@ -612,28 +746,36 @@ export const AccidentCaseService = {
 
     const footageIds = record.footageIds.filter((id) => id !== footageId);
     const remaining = ReconstructionFootageService.getByCaseId(caseId);
-    const nextPrimary = remaining.find((item) => item.isPrimary)?.id ?? remaining[0]?.id;
+    const nextPrimary =
+      remaining.find((item) => item.isPrimary)?.id ??
+      remaining[0]?.id;
 
-    return persistCase({
-      ...record,
-      footageIds,
-      primaryFootageId:
-        record.primaryFootageId === footageId
-          ? nextPrimary
-          : record.primaryFootageId,
-      updatedAt: new Date().toISOString(),
-    });
+    return persistCase(
+      {
+        ...record,
+        footageIds,
+        primaryFootageId:
+          record.primaryFootageId === footageId
+            ? nextPrimary
+            : record.primaryFootageId,
+        updatedAt: new Date().toISOString(),
+      },
+      "case_updated",
+    );
   },
 
   setPrimaryFootage(caseId: string, footageId: string): AccidentCase | null {
     const record = this.getById(caseId);
     if (!record || !record.footageIds.includes(footageId)) return null;
 
-    return persistCase({
-      ...record,
-      primaryFootageId: footageId,
-      updatedAt: new Date().toISOString(),
-    });
+    return persistCase(
+      {
+        ...record,
+        primaryFootageId: footageId,
+        updatedAt: new Date().toISOString(),
+      },
+      "case_updated",
+    );
   },
 
   setStatus(
@@ -655,7 +797,21 @@ export const AccidentCaseService = {
       };
     }
 
-    const saved = this.save({ ...record, status });
+    const eventType: CaseCloudEventType =
+      status === "Archived"
+        ? "case_archived"
+        : status === "Closed"
+          ? "case_closed"
+          : "status_changed";
+
+    const saved = persistCase(
+      {
+        ...record,
+        status,
+        updatedAt: new Date().toISOString(),
+      },
+      eventType,
+    );
 
     const reconstruction = getLinkedReconstructionFromRecord(saved);
     if (reconstruction) {

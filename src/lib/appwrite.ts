@@ -22,7 +22,7 @@ const profilesTableId =
 
 const casesTableId =
   import.meta.env.VITE_APPWRITE_CASES_TABLE_ID?.trim() ??
-  "6a65bae000064a38d2d1";
+  "6a65bade00064a38d2d1";
 
 const caseEventsTableId =
   import.meta.env.VITE_APPWRITE_CASE_EVENTS_TABLE_ID?.trim() ??
@@ -39,9 +39,14 @@ const officerAvatarsBucketId =
 export const appwriteConfig = {
   endpoint,
   projectId,
+
   officerAdminFunctionId:
     import.meta.env.VITE_APPWRITE_OFFICER_ADMIN_FUNCTION_ID?.trim() ??
     "roadsafe-officer-admin",
+
+  caseServiceFunctionId:
+    import.meta.env.VITE_APPWRITE_CASE_SERVICE_FUNCTION_ID?.trim() ??
+    "roadsafe-case-service",
 
   databaseId,
   profilesTableId,

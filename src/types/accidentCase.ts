@@ -8,6 +8,19 @@ export type AccidentCaseStatus =
   | "Closed"
   | "Archived";
 
+export type AccidentCaseReviewStatus =
+  | "draft"
+  | "in_progress"
+  | "submitted"
+  | "changes_requested"
+  | "approved";
+
+export type AccidentCaseCloudSyncState =
+  | "local"
+  | "pending"
+  | "synced"
+  | "error";
+
 export interface AccidentCase {
   id: string;
   caseNumber: string;
@@ -27,6 +40,22 @@ export interface AccidentCase {
   summary: string;
   createdAt: string;
   updatedAt: string;
+
+  /**
+   * Shared Appwrite case metadata.
+   *
+   * These fields are optional so older local RoadSafe cases continue to open
+   * before they are imported into the station database.
+   */
+  stationTeamId?: string;
+  createdByUserId?: string;
+  assignedOfficerUserId?: string;
+  assignedSupervisorUserId?: string;
+  reviewStatus?: AccidentCaseReviewStatus;
+  cloudVersion?: number;
+  cloudSyncedAt?: string;
+  cloudSyncState?: AccidentCaseCloudSyncState;
+  cloudSyncError?: string;
 }
 
 export interface AccidentCaseFormValues {
