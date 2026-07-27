@@ -2,11 +2,16 @@ import {
   Component,
   useEffect,
   useMemo,
+  useState,
   type ErrorInfo,
   type ReactNode,
 } from "react";
 import {
+  createPortal,
+} from "react-dom";
+import {
   Link,
+  useNavigate,
   useParams,
 } from "react-router-dom";
 import {
@@ -24,6 +29,9 @@ import type { AccidentReconstruction } from "../types/reconstruction";
 
 const LAST_RECONSTRUCTION_CASE_KEY =
   "roadsafe-ar-last-reconstruction-case-id";
+
+const VIEW_SWITCH_SELECTOR =
+  ".reconstruction-workspace__view-switch";
 
 interface ReconstructionLoadResult {
   accidentCase: AccidentCase | null;
@@ -213,11 +221,71 @@ function loadReconstruction(
   }
 }
 
+function useReconstructionViewSwitch(
+  reconstructionId?: string,
+): HTMLElement | null {
+  const [
+    viewSwitch,
+    setViewSwitch,
+  ] =
+    useState<HTMLElement | null>(
+      null,
+    );
+
+  useEffect(() => {
+    let disposed = false;
+
+    const resolveViewSwitch = () => {
+      if (disposed) {
+        return;
+      }
+
+      const element =
+        document.querySelector<HTMLElement>(
+          VIEW_SWITCH_SELECTOR,
+        );
+
+      setViewSwitch(
+        (current) =>
+          current === element
+            ? current
+            : element,
+      );
+    };
+
+    resolveViewSwitch();
+
+    const observer =
+      new MutationObserver(
+        resolveViewSwitch,
+      );
+
+    observer.observe(
+      document.body,
+      {
+        childList: true,
+        subtree: true,
+      },
+    );
+
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      setViewSwitch(null);
+    };
+  }, [reconstructionId]);
+
+  return viewSwitch;
+}
+
 export default function CaseReconstructionPage() {
   const { caseId } =
     useParams<{
       caseId: string;
     }>();
+
+  const navigate =
+    useNavigate();
 
   const loadResult =
     useMemo(
@@ -234,6 +302,11 @@ export default function CaseReconstructionPage() {
     error,
   } =
     loadResult;
+
+  const viewSwitch =
+    useReconstructionViewSwitch(
+      reconstruction?.id,
+    );
 
   useEffect(() => {
     if (
@@ -286,7 +359,10 @@ export default function CaseReconstructionPage() {
               }
               className="ui-button inline-flex"
             >
-              <Orbit size={14} />
+              <Orbit
+                size={14}
+              />
+
               {caseId
                 ? "Return to case"
                 : "Pick another scene"}
@@ -301,16 +377,7 @@ export default function CaseReconstructionPage() {
     <ReconstructionErrorBoundary
       casePath={`/cases/${caseId}`}
     >
-      <div className="relative min-h-screen">
-        <Link
-          to={`/cases/${caseId}/reconstruction/ar`}
-          className="fixed right-4 top-4 z-[80] inline-flex items-center gap-2 rounded-md border border-[#315b91] bg-[#0b1b38]/95 px-3 py-2 text-[10px] font-bold text-[#a8ccff] shadow-xl backdrop-blur-md transition-colors hover:border-[#4d8cf5] hover:bg-[#10264c] hover:text-white"
-          title="Place this reconstruction on the real accident scene"
-        >
-          <ScanLine size={15} />
-          Open AR view
-        </Link>
-
+      <>
         <AccidentReconstructionEditor
           key={
             reconstruction.id
@@ -355,7 +422,27 @@ export default function CaseReconstructionPage() {
             );
           }}
         />
-      </div>
+
+        {viewSwitch &&
+          createPortal(
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/cases/${caseId}/reconstruction/ar`,
+                )
+              }
+              title="Place this reconstruction on the real accident scene"
+              aria-label="Open augmented reality reconstruction view"
+            >
+              <ScanLine
+                size={13}
+              />
+              AR View
+            </button>,
+            viewSwitch,
+          )}
+      </>
     </ReconstructionErrorBoundary>
   );
 }
