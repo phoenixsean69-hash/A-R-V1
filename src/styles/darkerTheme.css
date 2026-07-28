@@ -1,0 +1,322 @@
+:root {
+  color-scheme: dark;
+
+  --roadsafe-bg-deep: #01030a;
+  --roadsafe-bg: #030611;
+  --roadsafe-surface: #050a14;
+  --roadsafe-surface-raised: #070d18;
+  --roadsafe-surface-hover: #091321;
+
+  --roadsafe-border: #101b2d;
+  --roadsafe-border-strong: #172945;
+
+  --roadsafe-accent: #274f87;
+  --roadsafe-accent-hover: #315f9d;
+  --roadsafe-accent-soft: #0b1930;
+
+  --roadsafe-text: #c6d0df;
+  --roadsafe-text-muted: #6f7d91;
+}
+
+html,
+body,
+#root {
+  background: var(--roadsafe-bg-deep) !important;
+}
+
+body {
+  color: var(--roadsafe-text);
+}
+
+.roadsafe-shell,
+.reconstruction-editor,
+.reconstruction-workspace {
+  background: var(--roadsafe-bg-deep) !important;
+}
+
+/* Shared cards and panels */
+.ui-panel,
+.roadsafe-shell .bg-white,
+.roadsafe-shell .bg-gray-50,
+.roadsafe-shell .bg-gray-100,
+.roadsafe-shell .bg-slate-50,
+.roadsafe-shell .bg-slate-100,
+.reconstruction-editor .bg-white,
+.reconstruction-editor .bg-gray-50,
+.reconstruction-editor .bg-gray-100,
+.reconstruction-editor .bg-slate-50,
+.reconstruction-editor .bg-slate-100 {
+  background-color: var(--roadsafe-surface) !important;
+  border-color: var(--roadsafe-border) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34) !important;
+}
+
+.ui-panel-header,
+.roadsafe-shell .border-gray-100,
+.roadsafe-shell .border-gray-200,
+.roadsafe-shell .border-gray-300,
+.roadsafe-shell .border-slate-100,
+.roadsafe-shell .border-slate-200,
+.roadsafe-shell .border-slate-300,
+.reconstruction-editor .border-gray-100,
+.reconstruction-editor .border-gray-200,
+.reconstruction-editor .border-gray-300,
+.reconstruction-editor .border-slate-100,
+.reconstruction-editor .border-slate-200,
+.reconstruction-editor .border-slate-300 {
+  border-color: var(--roadsafe-border) !important;
+}
+
+/* Buttons */
+.ui-button,
+.ui-icon-button {
+  background: var(--roadsafe-surface-raised) !important;
+  border-color: var(--roadsafe-border-strong) !important;
+  color: #b8c4d5 !important;
+}
+
+.ui-button:hover,
+.ui-icon-button:hover {
+  background: var(--roadsafe-surface-hover) !important;
+  border-color: #203858 !important;
+  color: #e2e8f0 !important;
+}
+
+.ui-button-primary {
+  background: #10284c !important;
+  border-color: var(--roadsafe-accent) !important;
+  color: #e7edf6 !important;
+}
+
+.ui-button-primary:hover {
+  background: #16345f !important;
+  border-color: var(--roadsafe-accent-hover) !important;
+}
+
+/* Form controls */
+.ui-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  background-color: #030812 !important;
+  border-color: var(--roadsafe-border) !important;
+  color: #c9d3e0 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #465367 !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #294d7c !important;
+  box-shadow: 0 0 0 2px rgba(41, 77, 124, 0.18) !important;
+}
+
+.ui-badge {
+  background: #081429 !important;
+  border-color: #1c365c !important;
+  color: #6797cf !important;
+}
+
+/* Blue and indigo accents */
+.reconstruction-editor [class*="bg-blue-"],
+.reconstruction-editor [class*="bg-indigo-"],
+.roadsafe-shell [class*="bg-blue-"],
+.roadsafe-shell [class*="bg-indigo-"] {
+  background-color: #102a51 !important;
+}
+
+.reconstruction-editor [class*="hover:bg-blue-"]:hover,
+.reconstruction-editor [class*="hover:bg-indigo-"]:hover,
+.roadsafe-shell [class*="hover:bg-blue-"]:hover,
+.roadsafe-shell [class*="hover:bg-indigo-"]:hover {
+  background-color: #15345f !important;
+}
+
+/* Green and emerald status colours */
+.reconstruction-editor [class*="bg-emerald-"],
+.reconstruction-editor [class*="bg-green-"],
+.roadsafe-shell [class*="bg-emerald-"],
+.roadsafe-shell [class*="bg-green-"] {
+  background-color: #071b18 !important;
+}
+
+.reconstruction-editor [class*="text-emerald-"],
+.reconstruction-editor [class*="text-green-"],
+.roadsafe-shell [class*="text-emerald-"],
+.roadsafe-shell [class*="text-green-"] {
+  color: #659e92 !important;
+}
+
+/* Amber and yellow warnings */
+.reconstruction-editor [class*="bg-amber-"],
+.reconstruction-editor [class*="bg-yellow-"],
+.roadsafe-shell [class*="bg-amber-"],
+.roadsafe-shell [class*="bg-yellow-"] {
+  background-color: #1d170a !important;
+}
+
+.reconstruction-editor [class*="text-amber-"],
+.reconstruction-editor [class*="text-yellow-"],
+.roadsafe-shell [class*="text-amber-"],
+.roadsafe-shell [class*="text-yellow-"] {
+  color: #a88f54 !important;
+}
+
+/* Red and rose alerts */
+.reconstruction-editor [class*="bg-red-"],
+.reconstruction-editor [class*="bg-rose-"],
+.roadsafe-shell [class*="bg-red-"],
+.roadsafe-shell [class*="bg-rose-"] {
+  background-color: #210d14 !important;
+}
+
+.reconstruction-editor [class*="text-red-"],
+.reconstruction-editor [class*="text-rose-"],
+.roadsafe-shell [class*="text-red-"],
+.roadsafe-shell [class*="text-rose-"] {
+  color: #b46a79 !important;
+}
+
+/* Cyan information accents */
+.reconstruction-editor [class*="bg-cyan-"],
+.roadsafe-shell [class*="bg-cyan-"] {
+  background-color: #071923 !important;
+}
+
+.reconstruction-editor [class*="text-cyan-"],
+.roadsafe-shell [class*="text-cyan-"] {
+  color: #5e8fa4 !important;
+}
+
+/* Checkboxes, radio buttons and ranges */
+.reconstruction-editor input[type="checkbox"],
+.reconstruction-editor input[type="radio"],
+.roadsafe-range {
+  accent-color: #315f9d !important;
+}
+
+/* Reconstruction workspace */
+.reconstruction-workspace__header,
+.reconstruction-workspace__toolbar,
+.reconstruction-workspace__properties,
+.reconstruction-workspace__context-panel,
+.reconstruction-workspace__canvas,
+.reconstruction-workspace__timeline {
+  background-color: #030710 !important;
+  border-color: var(--roadsafe-border) !important;
+}
+
+.reconstruction-workspace__button,
+.reconstruction-workspace__icon-button,
+.reconstruction-workspace__view-switch button {
+  background: #050b16 !important;
+  border-color: #13233b !important;
+  color: #8998ac !important;
+}
+
+.reconstruction-workspace__button:hover,
+.reconstruction-workspace__icon-button:hover,
+.reconstruction-workspace__view-switch button:hover,
+.reconstruction-workspace__view-switch button.is-active {
+  background: #0a182c !important;
+  border-color: #25466f !important;
+  color: #c8d5e6 !important;
+}
+
+/* Dashboard */
+.dashboard-stat-card {
+  border-color: #101b2b !important;
+  background:
+    linear-gradient(
+      145deg,
+      #02050c 0%,
+      #050912 58%,
+      #080c13 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(110, 145, 190, 0.02),
+    0 12px 26px rgba(0, 0, 0, 0.32) !important;
+}
+
+.dashboard-stat-card:hover {
+  border-color: #192b43 !important;
+  background:
+    linear-gradient(
+      145deg,
+      #030711 0%,
+      #070d17 58%,
+      #0a1019 100%
+    ) !important;
+}
+
+.dashboard-stat-icon {
+  background: #041023 !important;
+  border-color: #183452 !important;
+  color: #628fc4 !important;
+}
+
+.dashboard-command-grid .ui-panel {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 8, 17, 0.99),
+      rgba(1, 5, 12, 0.99)
+    ) !important;
+  border-color: #101d31 !important;
+}
+
+/* MapLibre */
+.maplibregl-map {
+  background: #02060d !important;
+}
+
+.maplibregl-ctrl-group,
+.maplibregl-popup-content {
+  background: #030811 !important;
+  border-color: #14233a !important;
+  color: #b7c3d2 !important;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.48) !important;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: #030811 !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #081221 !important;
+}
+
+/* 3D and AR surfaces */
+.reconstruction-3d,
+.dashboard-3d-preview,
+canvas {
+  background-color: #01040a;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar-track {
+  background: #02050b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #17263b;
+  border: 2px solid #02050b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #203550;
+}
+
+/* Preserve printable reports */
+@media print {
+  html,
+  body,
+  #root,
+  .roadsafe-shell {
+    background: white !important;
+  }
+}
