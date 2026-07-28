@@ -89,7 +89,7 @@ export default function FieldDashboardPage() {
                 to={to}
                 className={`min-w-0 rounded-md border p-4 transition-colors ${
                   primary
-                    ? "border-[#3f78c5] bg-[#122d59] hover:bg-[#173a70]"
+                    ? "border-[#162f52] bg-[#122d59] hover:bg-[#173a70]"
                     : "border-[#1a2946] bg-[#070d1a] hover:border-[#29446f] hover:bg-[#0a1325]"
                 }`}
               >

@@ -214,7 +214,7 @@ function getButtonClasses(stage: RecorderStage): string {
     case "error":
       return "border-[#713646] bg-[#321722] text-[#e28b9d] hover:bg-[#3b1b28]";
     case "idle":
-      return "border-[#3f78c5] bg-[#163a73] text-white hover:bg-[#1b4789]";
+      return "border-[#162f52] bg-[#163a73] text-white hover:bg-[#1b4789]";
   }
 }
 

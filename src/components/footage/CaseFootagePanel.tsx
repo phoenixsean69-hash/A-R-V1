@@ -258,7 +258,7 @@ export default function CaseFootagePanel({
                 <div className="grid min-w-0 grid-cols-2 gap-1.5 border-t border-[#1a2946] p-2">
                   <Link
                     to={`/cases/${accidentCase.id}/footage/${record.id}`}
-                    className={`${compactActionClass} border-[#3f78c5] bg-[#163a73] text-white hover:bg-[#1b4789]`}
+                    className={`${compactActionClass} border-[#162f52] bg-[#163a73] text-white hover:bg-[#1b4789]`}
                   >
                     <Play size={10} fill="currentColor" />
                     Play
