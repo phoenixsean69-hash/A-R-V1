@@ -11,10 +11,12 @@ import {
   applySafeAuthoredPointUpdate,
   canMoveAuthoredRoutePoint,
   createLockedParticipantRoute,
+  FREEHAND_ROUTE_NOTE_MARKER,
   getAuthoredImpactPoint,
   insertProgressiveRoutePoint,
   isPhysicsGeneratedRoutePoint,
   isPointZ,
+  MANUAL_ROUTE_ANCHOR_NOTE_MARKER,
   normalisePointZRoute,
   removeIntermediateRoutePoint,
   updatePointZPosition,
@@ -33,10 +35,13 @@ export interface PendingParticipantPlacement {
 interface ParticipantFactoryOptions {
   type: ReconstructionVehicleType;
   index: number;
-  startPosition: ReconstructionPosition;
-  collisionPosition: ReconstructionPosition;
+  startPosition:
+    ReconstructionPosition;
+  collisionPosition:
+    ReconstructionPosition;
   durationSeconds: number;
-  createId: (prefix: string) => string;
+  createId:
+    (prefix: string) => string;
   getDefaultSpeed: (
     type: ReconstructionVehicleType,
   ) => number;
@@ -49,8 +54,10 @@ interface ParticipantFactoryOptions {
 }
 
 interface UpdateCollisionPointOptions {
-  reconstruction: AccidentReconstruction;
-  collisionPosition: ReconstructionPosition;
+  reconstruction:
+    AccidentReconstruction;
+  collisionPosition:
+    ReconstructionPosition;
   source: "Manual" | "Derived";
   confirmed?: boolean;
   locked?: boolean;
@@ -64,38 +71,52 @@ function participantColour(
     return "Yellow";
   }
 
-  return index % 2 === 0 ? "Red" : "Blue";
+  return index % 2 === 0
+    ? "Red"
+    : "Blue";
 }
 
 function clearGeneratedPhysicsPoints(
   pathPoints: MovementPathPoint[],
 ): MovementPathPoint[] {
   return pathPoints.filter(
-    (point) => !isPhysicsGeneratedRoutePoint(point),
+    (point) =>
+      !isPhysicsGeneratedRoutePoint(
+        point,
+      ),
   );
 }
 
 function normaliseParticipant(
-  participant: ReconstructionVehicle,
+  participant:
+    ReconstructionVehicle,
   reconstruction: Pick<
     AccidentReconstruction,
-    "collisionPoint" | "durationSeconds"
+    | "collisionPoint"
+    | "durationSeconds"
   >,
-  createId?: (prefix: string) => string,
+  createId?:
+    (prefix: string) => string,
 ): ReconstructionVehicle {
-  const pathPoints = normalisePointZRoute({
-    pathPoints: clearGeneratedPhysicsPoints(
-      participant.pathPoints,
-    ),
-    collisionPosition:
-      reconstruction.collisionPoint,
-    durationSeconds:
-      reconstruction.durationSeconds,
-    speedKmh:
-      participant.estimatedSpeedKmh,
-    participantType: participant.type,
-    createId,
-  });
+  const pathPoints =
+    normalisePointZRoute({
+      pathPoints:
+        clearGeneratedPhysicsPoints(
+          participant.pathPoints,
+        ),
+      collisionPosition:
+        reconstruction
+          .collisionPoint,
+      durationSeconds:
+        reconstruction
+          .durationSeconds,
+      speedKmh:
+        participant
+          .estimatedSpeedKmh,
+      participantType:
+        participant.type,
+      createId,
+    });
 
   return syncLegacyParticipantFields({
     ...participant,
@@ -117,14 +138,16 @@ export function createParticipantAtConfirmedPosition({
   const estimatedSpeedKmh =
     getDefaultSpeed(type);
 
-  const pathPoints = createLockedParticipantRoute({
-    startPosition,
-    collisionPosition,
-    durationSeconds,
-    speedKmh: estimatedSpeedKmh,
-    participantType: type,
-    createId,
-  });
+  const pathPoints =
+    createLockedParticipantRoute({
+      startPosition,
+      collisionPosition,
+      durationSeconds,
+      speedKmh:
+        estimatedSpeedKmh,
+      participantType: type,
+      createId,
+    });
 
   return syncLegacyParticipantFields({
     id: createId("participant"),
@@ -138,39 +161,54 @@ export function createParticipantAtConfirmedPosition({
     originLocation: "",
     destinationLocation: "",
     pathPoints,
-    startPosition: pathPoints[0].position,
+    startPosition:
+      pathPoints[0].position,
     collisionPosition:
-      pathPoints[pathPoints.length - 1].position,
+      pathPoints[
+        pathPoints.length - 1
+      ].position,
     finalPosition:
-      pathPoints[pathPoints.length - 1].position,
-    startRotation: pathPoints[0].rotation,
+      pathPoints[
+        pathPoints.length - 1
+      ].position,
+    startRotation:
+      pathPoints[0].rotation,
     collisionRotation:
-      pathPoints[pathPoints.length - 1].rotation,
+      pathPoints[
+        pathPoints.length - 1
+      ].rotation,
     finalRotation:
-      pathPoints[pathPoints.length - 1].rotation,
+      pathPoints[
+        pathPoints.length - 1
+      ].rotation,
     collisionTimeSeconds:
-      pathPoints[pathPoints.length - 1]
-        .timeSeconds,
+      pathPoints[
+        pathPoints.length - 1
+      ].timeSeconds,
     role: getDefaultRole(type),
     injured: false,
   });
 }
 
 export function normaliseAllPointZRoutes(
-  reconstruction: AccidentReconstruction,
-  createId?: (prefix: string) => string,
+  reconstruction:
+    AccidentReconstruction,
+  createId?:
+    (prefix: string) => string,
 ): AccidentReconstruction {
   return {
     ...reconstruction,
-    lastPhysicsSimulation: undefined,
-    vehicles: reconstruction.vehicles.map(
-      (participant) =>
-        normaliseParticipant(
-          participant,
-          reconstruction,
-          createId,
-        ),
-    ),
+    lastPhysicsSimulation:
+      undefined,
+    vehicles:
+      reconstruction.vehicles.map(
+        (participant) =>
+          normaliseParticipant(
+            participant,
+            reconstruction,
+            createId,
+          ),
+      ),
   };
 }
 
@@ -181,26 +219,31 @@ export function updateReconstructionCollisionPoint({
   confirmed,
   locked,
 }: UpdateCollisionPointOptions): AccidentReconstruction {
-  const now = new Date().toISOString();
+  const now =
+    new Date().toISOString();
 
   const vehicles =
     reconstruction.vehicles.map(
       (participant) =>
         syncLegacyParticipantFields({
           ...participant,
-          pathPoints: updatePointZPosition({
-            pathPoints:
-              clearGeneratedPhysicsPoints(
-                participant.pathPoints,
-              ),
-            collisionPosition,
-            durationSeconds:
-              reconstruction.durationSeconds,
-            speedKmh:
-              participant.estimatedSpeedKmh,
-            participantType:
-              participant.type,
-          }),
+          pathPoints:
+            updatePointZPosition({
+              pathPoints:
+                clearGeneratedPhysicsPoints(
+                  participant
+                    .pathPoints,
+                ),
+              collisionPosition,
+              durationSeconds:
+                reconstruction
+                  .durationSeconds,
+              speedKmh:
+                participant
+                  .estimatedSpeedKmh,
+              participantType:
+                participant.type,
+            }),
         }),
     );
 
@@ -213,26 +256,34 @@ export function updateReconstructionCollisionPoint({
       source,
       confirmed:
         confirmed ??
-        reconstruction.collisionSetup
+        reconstruction
+          .collisionSetup
           ?.confirmed ??
         false,
       locked:
         locked ??
-        reconstruction.collisionSetup
+        reconstruction
+          .collisionSetup
           ?.locked ??
         false,
       toleranceMetres:
-        reconstruction.collisionSetup
-          ?.toleranceMetres ?? 2,
+        reconstruction
+          .collisionSetup
+          ?.toleranceMetres ??
+        2,
       notes:
-        reconstruction.collisionSetup
-          ?.notes ?? "",
+        reconstruction
+          .collisionSetup
+          ?.notes ??
+        "",
       confidence:
-        reconstruction.collisionSetup
+        reconstruction
+          .collisionSetup
           ?.confidence,
       lastCalculatedAt: now,
     },
-    lastPhysicsSimulation: undefined,
+    lastPhysicsSimulation:
+      undefined,
     vehicles,
   };
 }
@@ -243,44 +294,55 @@ export function updateParticipantAuthoredPoint({
   pointId,
   updates,
 }: {
-  reconstruction: AccidentReconstruction;
+  reconstruction:
+    AccidentReconstruction;
   participantId: string;
   pointId: string;
-  updates: Partial<MovementPathPoint>;
+  updates:
+    Partial<MovementPathPoint>;
 }): AccidentReconstruction {
   return {
     ...reconstruction,
-    lastPhysicsSimulation: undefined,
-    vehicles: reconstruction.vehicles.map(
-      (participant) => {
-        if (participant.id !== participantId) {
-          return participant;
-        }
+    lastPhysicsSimulation:
+      undefined,
+    vehicles:
+      reconstruction.vehicles.map(
+        (participant) => {
+          if (
+            participant.id !==
+            participantId
+          ) {
+            return participant;
+          }
 
-        const pathPoints =
-          applySafeAuthoredPointUpdate({
-            pathPoints:
-              clearGeneratedPhysicsPoints(
-                participant.pathPoints,
-              ),
-            pointId,
-            updates,
-            collisionPosition:
-              reconstruction.collisionPoint,
-            durationSeconds:
-              reconstruction.durationSeconds,
-            speedKmh:
-              participant.estimatedSpeedKmh,
-            participantType:
-              participant.type,
+          const pathPoints =
+            applySafeAuthoredPointUpdate({
+              pathPoints:
+                clearGeneratedPhysicsPoints(
+                  participant
+                    .pathPoints,
+                ),
+              pointId,
+              updates,
+              collisionPosition:
+                reconstruction
+                  .collisionPoint,
+              durationSeconds:
+                reconstruction
+                  .durationSeconds,
+              speedKmh:
+                participant
+                  .estimatedSpeedKmh,
+              participantType:
+                participant.type,
+            });
+
+          return syncLegacyParticipantFields({
+            ...participant,
+            pathPoints,
           });
-
-        return syncLegacyParticipantFields({
-          ...participant,
-          pathPoints,
-        });
-      },
-    ),
+        },
+      ),
   };
 }
 
@@ -290,20 +352,29 @@ export function insertParticipantIntermediatePoint({
   selectedPointId,
   createId,
 }: {
-  reconstruction: AccidentReconstruction;
+  reconstruction:
+    AccidentReconstruction;
   participantId: string;
-  selectedPointId: string | null;
-  createId: (prefix: string) => string;
+  selectedPointId:
+    string | null;
+  createId:
+    (prefix: string) => string;
 }): {
-  reconstruction: AccidentReconstruction;
-  insertedPointId: string | null;
+  reconstruction:
+    AccidentReconstruction;
+  insertedPointId:
+    string | null;
 } {
-  let insertedPointId: string | null = null;
+  let insertedPointId:
+    string | null = null;
 
   const vehicles =
     reconstruction.vehicles.map(
       (participant) => {
-        if (participant.id !== participantId) {
+        if (
+          participant.id !==
+          participantId
+        ) {
           return participant;
         }
 
@@ -311,14 +382,18 @@ export function insertParticipantIntermediatePoint({
           normalisePointZRoute({
             pathPoints:
               clearGeneratedPhysicsPoints(
-                participant.pathPoints,
+                participant
+                  .pathPoints,
               ),
             collisionPosition:
-              reconstruction.collisionPoint,
+              reconstruction
+                .collisionPoint,
             durationSeconds:
-              reconstruction.durationSeconds,
+              reconstruction
+                .durationSeconds,
             speedKmh:
-              participant.estimatedSpeedKmh,
+              participant
+                .estimatedSpeedKmh,
             participantType:
               participant.type,
             createId,
@@ -329,16 +404,30 @@ export function insertParticipantIntermediatePoint({
             pathPoints: normalised,
             selectedPointId,
             durationSeconds:
-              reconstruction.durationSeconds,
+              reconstruction
+                .durationSeconds,
             createId,
           });
 
         insertedPointId =
           inserted.insertedPointId;
 
+        const pathPoints =
+          inserted.pathPoints.map(
+            (point) =>
+              point.id ===
+              inserted.insertedPointId
+                ? {
+                    ...point,
+                    notes:
+                      MANUAL_ROUTE_ANCHOR_NOTE_MARKER,
+                  }
+                : point,
+          );
+
         return syncLegacyParticipantFields({
           ...participant,
-          pathPoints: inserted.pathPoints,
+          pathPoints,
         });
       },
     );
@@ -347,7 +436,8 @@ export function insertParticipantIntermediatePoint({
     insertedPointId,
     reconstruction: {
       ...reconstruction,
-      lastPhysicsSimulation: undefined,
+      lastPhysicsSimulation:
+        undefined,
       vehicles,
     },
   };
@@ -358,86 +448,62 @@ export function deleteParticipantIntermediatePoint({
   participantId,
   pointId,
 }: {
-  reconstruction: AccidentReconstruction;
+  reconstruction:
+    AccidentReconstruction;
   participantId: string;
   pointId: string;
 }): AccidentReconstruction {
   return {
     ...reconstruction,
-    lastPhysicsSimulation: undefined,
-    vehicles: reconstruction.vehicles.map(
-      (participant) => {
-        if (participant.id !== participantId) {
-          return participant;
-        }
+    lastPhysicsSimulation:
+      undefined,
+    vehicles:
+      reconstruction.vehicles.map(
+        (participant) => {
+          if (
+            participant.id !==
+            participantId
+          ) {
+            return participant;
+          }
 
-        const pathPoints =
-          removeIntermediateRoutePoint({
+          const pathPoints =
+            removeIntermediateRoutePoint({
+              pathPoints:
+                clearGeneratedPhysicsPoints(
+                  participant
+                    .pathPoints,
+                ),
+              pointId,
+            });
+
+          return syncLegacyParticipantFields({
+            ...participant,
             pathPoints:
-              clearGeneratedPhysicsPoints(
-                participant.pathPoints,
-              ),
-            pointId,
+              normalisePointZRoute({
+                pathPoints,
+                collisionPosition:
+                  reconstruction
+                    .collisionPoint,
+                durationSeconds:
+                  reconstruction
+                    .durationSeconds,
+                speedKmh:
+                  participant
+                    .estimatedSpeedKmh,
+                participantType:
+                  participant.type,
+              }),
           });
-
-        return syncLegacyParticipantFields({
-          ...participant,
-          pathPoints:
-            normalisePointZRoute({
-              pathPoints,
-              collisionPosition:
-                reconstruction.collisionPoint,
-              durationSeconds:
-                reconstruction.durationSeconds,
-              speedKmh:
-                participant.estimatedSpeedKmh,
-              participantType:
-                participant.type,
-            }),
-        });
-      },
-    ),
+        },
+      ),
   };
-}
-
-function sampleDrawnRoute(
-  routePoints: ReconstructionPosition[],
-  maximumIntermediatePoints = 16,
-): ReconstructionPosition[] {
-  if (routePoints.length <= 2) {
-    return routePoints;
-  }
-
-  const sampleStep = Math.max(
-    1,
-    Math.ceil(
-      routePoints.length /
-        Math.max(
-          2,
-          maximumIntermediatePoints,
-        ),
-    ),
-  );
-
-  const sampled = routePoints.filter(
-    (_, index) => index % sampleStep === 0,
-  );
-
-  const final =
-    routePoints[routePoints.length - 1];
-
-  if (
-    sampled[sampled.length - 1] !== final
-  ) {
-    sampled.push(final);
-  }
-
-  return sampled;
 }
 
 function routePointDistance(
   first: ReconstructionPosition,
-  second: ReconstructionPosition,
+  second:
+    ReconstructionPosition,
 ): number {
   return Math.hypot(
     second.x - first.x,
@@ -445,13 +511,367 @@ function routePointDistance(
   );
 }
 
+function removeNearDuplicateDrawnPoints(
+  routePoints:
+    ReconstructionPosition[],
+  minimumDistance = 0.16,
+): ReconstructionPosition[] {
+  const result:
+    ReconstructionPosition[] = [];
+
+  for (
+    const point of routePoints
+  ) {
+    const previous =
+      result[
+        result.length - 1
+      ];
+
+    if (
+      !previous ||
+      routePointDistance(
+        previous,
+        point,
+      ) >= minimumDistance
+    ) {
+      result.push({
+        ...point,
+      });
+    }
+  }
+
+  const final =
+    routePoints[
+      routePoints.length - 1
+    ];
+
+  if (
+    final &&
+    result[
+      result.length - 1
+    ] !== final
+  ) {
+    result.push({
+      ...final,
+    });
+  }
+
+  return result;
+}
+
+function smoothDrawnRoute(
+  routePoints:
+    ReconstructionPosition[],
+  passes = 3,
+): ReconstructionPosition[] {
+  let current =
+    routePoints.map(
+      (point) => ({
+        ...point,
+      }),
+    );
+
+  for (
+    let pass = 0;
+    pass < passes;
+    pass += 1
+  ) {
+    current = current.map(
+      (
+        point,
+        index,
+        points,
+      ) => {
+        if (
+          index === 0 ||
+          index ===
+            points.length - 1
+        ) {
+          return point;
+        }
+
+        const previous =
+          points[index - 1];
+
+        const next =
+          points[index + 1];
+
+        return {
+          x:
+            previous.x * 0.2 +
+            point.x * 0.6 +
+            next.x * 0.2,
+          y:
+            previous.y * 0.2 +
+            point.y * 0.6 +
+            next.y * 0.2,
+        };
+      },
+    );
+  }
+
+  return current;
+}
+
+function distanceFromDrawnPointToSegment(
+  point: ReconstructionPosition,
+  start: ReconstructionPosition,
+  end: ReconstructionPosition,
+): number {
+  const segmentX =
+    end.x - start.x;
+
+  const segmentY =
+    end.y - start.y;
+
+  const segmentLengthSquared =
+    segmentX * segmentX +
+    segmentY * segmentY;
+
+  if (
+    segmentLengthSquared <
+    0.000001
+  ) {
+    return routePointDistance(
+      point,
+      start,
+    );
+  }
+
+  const projection = clamp(
+    (
+      (
+        point.x -
+        start.x
+      ) *
+        segmentX +
+      (
+        point.y -
+        start.y
+      ) *
+        segmentY
+    ) /
+      segmentLengthSquared,
+    0,
+    1,
+  );
+
+  return Math.hypot(
+    point.x -
+      (
+        start.x +
+        segmentX * projection
+      ),
+    point.y -
+      (
+        start.y +
+        segmentY * projection
+      ),
+  );
+}
+
+function simplifyDrawnRoute(
+  routePoints:
+    ReconstructionPosition[],
+  tolerance: number,
+): ReconstructionPosition[] {
+  if (routePoints.length <= 2) {
+    return routePoints;
+  }
+
+  const first = routePoints[0];
+
+  const last =
+    routePoints[
+      routePoints.length - 1
+    ];
+
+  let furthestIndex = -1;
+  let furthestDistance = 0;
+
+  for (
+    let index = 1;
+    index <
+    routePoints.length - 1;
+    index += 1
+  ) {
+    const pointDistance =
+      distanceFromDrawnPointToSegment(
+        routePoints[index],
+        first,
+        last,
+      );
+
+    if (
+      pointDistance >
+      furthestDistance
+    ) {
+      furthestDistance =
+        pointDistance;
+
+      furthestIndex = index;
+    }
+  }
+
+  if (
+    furthestIndex < 0 ||
+    furthestDistance <= tolerance
+  ) {
+    return [first, last];
+  }
+
+  const left =
+    simplifyDrawnRoute(
+      routePoints.slice(
+        0,
+        furthestIndex + 1,
+      ),
+      tolerance,
+    );
+
+  const right =
+    simplifyDrawnRoute(
+      routePoints.slice(
+        furthestIndex,
+      ),
+      tolerance,
+    );
+
+  return [
+    ...left.slice(0, -1),
+    ...right,
+  ];
+}
+
+function reduceDrawnRoutePointCount(
+  routePoints:
+    ReconstructionPosition[],
+  maximumPoints: number,
+): ReconstructionPosition[] {
+  let result =
+    routePoints.map(
+      (point) => ({
+        ...point,
+      }),
+    );
+
+  while (
+    result.length >
+    maximumPoints
+  ) {
+    let removeIndex = -1;
+
+    let smallestDeviation =
+      Number.POSITIVE_INFINITY;
+
+    for (
+      let index = 1;
+      index <
+      result.length - 1;
+      index += 1
+    ) {
+      const deviation =
+        distanceFromDrawnPointToSegment(
+          result[index],
+          result[index - 1],
+          result[index + 1],
+        );
+
+      if (
+        deviation <
+        smallestDeviation
+      ) {
+        smallestDeviation =
+          deviation;
+
+        removeIndex = index;
+      }
+    }
+
+    if (removeIndex < 0) {
+      break;
+    }
+
+    result = result.filter(
+      (_, index) =>
+        index !== removeIndex,
+    );
+  }
+
+  return result;
+}
+
+function sampleDrawnRoute(
+  routePoints:
+    ReconstructionPosition[],
+  maximumPoints = 8,
+): ReconstructionPosition[] {
+  if (routePoints.length <= 2) {
+    return routePoints;
+  }
+
+  const cleaned =
+    removeNearDuplicateDrawnPoints(
+      routePoints,
+    );
+
+  if (cleaned.length <= 2) {
+    return cleaned;
+  }
+
+  const smoothed =
+    smoothDrawnRoute(cleaned);
+
+  const simplified =
+    simplifyDrawnRoute(
+      smoothed,
+      0.5,
+    );
+
+  const sampled =
+    reduceDrawnRoutePointCount(
+      simplified,
+      Math.max(
+        3,
+        maximumPoints,
+      ),
+    );
+
+  /*
+   * Preserve the exact start and final pointer locations. Only the noisy
+   * interior trace is smoothed and reduced.
+   */
+  sampled[0] = {
+    ...routePoints[0],
+  };
+
+  sampled[
+    sampled.length - 1
+  ] = {
+    ...routePoints[
+      routePoints.length - 1
+    ],
+  };
+
+  return sampled;
+}
+
 function nearestDrawnIndex(
-  points: ReconstructionPosition[],
-  target: ReconstructionPosition,
+  points:
+    ReconstructionPosition[],
+  target:
+    ReconstructionPosition,
 ): number {
   return points.reduce(
-    (bestIndex, point, index) =>
-      routePointDistance(point, target) <
+    (
+      bestIndex,
+      point,
+      index,
+    ) =>
+      routePointDistance(
+        point,
+        target,
+      ) <
       routePointDistance(
         points[bestIndex],
         target,
@@ -468,114 +888,149 @@ export function replaceParticipantRouteFromDrawing({
   routePoints,
   createId,
 }: {
-  reconstruction: AccidentReconstruction;
+  reconstruction:
+    AccidentReconstruction;
   participantId: string;
-  routePoints: ReconstructionPosition[];
-  createId: (prefix: string) => string;
+  routePoints:
+    ReconstructionPosition[];
+  createId:
+    (prefix: string) => string;
 }): AccidentReconstruction {
   if (routePoints.length < 2) {
     return reconstruction;
   }
 
   const sampled =
-    sampleDrawnRoute(routePoints);
+    sampleDrawnRoute(
+      routePoints,
+    );
 
   return {
     ...reconstruction,
-    lastPhysicsSimulation: undefined,
-    vehicles: reconstruction.vehicles.map(
-      (participant) => {
-        if (participant.id !== participantId) {
-          return participant;
-        }
+    lastPhysicsSimulation:
+      undefined,
+    vehicles:
+      reconstruction.vehicles.map(
+        (participant) => {
+          if (
+            participant.id !==
+            participantId
+          ) {
+            return participant;
+          }
 
-        const oldPointZ =
-          getAuthoredImpactPoint(
-            participant.pathPoints,
-          );
-
-        const pointZTime =
-          oldPointZ?.timeSeconds ??
-          reconstruction.durationSeconds *
-            0.55;
-
-        const impactIndex =
-          nearestDrawnIndex(
-            sampled,
-            reconstruction.collisionPoint,
-          );
-
-        const beforeImpact =
-          sampled.slice(0, impactIndex + 1);
-
-        const startPosition =
-          beforeImpact[0] ??
-          participant.startPosition;
-
-        const base =
-          createLockedParticipantRoute({
-            startPosition,
-            collisionPosition:
-              reconstruction.collisionPoint,
-            durationSeconds:
-              reconstruction.durationSeconds,
-            speedKmh:
-              participant.estimatedSpeedKmh,
-            participantType:
-              participant.type,
-            createId,
-            impactTimeSeconds: pointZTime,
-          });
-
-        let pathPoints = base;
-
-        const interior =
-          beforeImpact.slice(1, -1);
-
-        interior.forEach((position) => {
-          const inserted =
-            insertProgressiveRoutePoint({
-              pathPoints,
-              selectedPointId:
-                pathPoints[
-                  pathPoints.length - 2
-                ]?.id ?? null,
-              durationSeconds:
-                reconstruction.durationSeconds,
-              createId,
-            });
-
-          pathPoints =
-            inserted.pathPoints.map(
-              (point) =>
-                point.id ===
-                inserted.insertedPointId
-                  ? {
-                      ...point,
-                      position,
-                    }
-                  : point,
+          const oldPointZ =
+            getAuthoredImpactPoint(
+              participant.pathPoints,
             );
-        });
 
-        return syncLegacyParticipantFields({
-          ...participant,
-          pathPoints:
-            normalisePointZRoute({
-              pathPoints,
+          const pointZTime =
+            oldPointZ?.timeSeconds ??
+            reconstruction
+              .durationSeconds *
+              0.55;
+
+          const impactIndex =
+            nearestDrawnIndex(
+              sampled,
+              reconstruction
+                .collisionPoint,
+            );
+
+          const beforeImpact =
+            sampled.slice(
+              0,
+              impactIndex + 1,
+            );
+
+          const startPosition =
+            beforeImpact[0] ??
+            participant
+              .startPosition;
+
+          const base =
+            createLockedParticipantRoute({
+              startPosition,
               collisionPosition:
-                reconstruction.collisionPoint,
+                reconstruction
+                  .collisionPoint,
               durationSeconds:
-                reconstruction.durationSeconds,
+                reconstruction
+                  .durationSeconds,
               speedKmh:
-                participant.estimatedSpeedKmh,
+                participant
+                  .estimatedSpeedKmh,
               participantType:
                 participant.type,
               createId,
-            }),
-        });
-      },
-    ),
+              impactTimeSeconds:
+                pointZTime,
+            });
+
+          let pathPoints = base;
+
+          const interior =
+            beforeImpact.slice(
+              1,
+              -1,
+            );
+
+          interior.forEach(
+            (position) => {
+              const inserted =
+                insertProgressiveRoutePoint({
+                  pathPoints,
+                  selectedPointId:
+                    pathPoints[
+                      pathPoints
+                        .length - 2
+                    ]?.id ?? null,
+                  durationSeconds:
+                    reconstruction
+                      .durationSeconds,
+                  createId,
+                });
+
+              pathPoints =
+                inserted.pathPoints.map(
+                  (point) =>
+                    point.id ===
+                    inserted
+                      .insertedPointId
+                      ? {
+                          ...point,
+                          position: {
+                            ...position,
+                          },
+                          notes:
+                            FREEHAND_ROUTE_NOTE_MARKER,
+                        }
+                      : point,
+                );
+            },
+          );
+
+          return syncLegacyParticipantFields({
+            ...participant,
+            pathPoints:
+              normalisePointZRoute({
+                pathPoints,
+                collisionPosition:
+                  reconstruction
+                    .collisionPoint,
+                durationSeconds:
+                  reconstruction
+                    .durationSeconds,
+                speedKmh:
+                  participant
+                    .estimatedSpeedKmh,
+                participantType:
+                  participant.type,
+                createId,
+              }),
+          });
+        },
+      ),
   };
 }
 
@@ -585,123 +1040,155 @@ export function changeParticipantApproachHeading({
   headingLabel,
   degrees,
 }: {
-  reconstruction: AccidentReconstruction;
+  reconstruction:
+    AccidentReconstruction;
   participantId: string;
   headingLabel: string;
   degrees: number;
 }): AccidentReconstruction {
   return {
     ...reconstruction,
-    lastPhysicsSimulation: undefined,
-    vehicles: reconstruction.vehicles.map(
-      (participant) => {
-        if (participant.id !== participantId) {
-          return participant;
-        }
+    lastPhysicsSimulation:
+      undefined,
+    vehicles:
+      reconstruction.vehicles.map(
+        (participant) => {
+          if (
+            participant.id !==
+            participantId
+          ) {
+            return participant;
+          }
 
-        const pathPoints =
-          normalisePointZRoute({
-            pathPoints:
-              clearGeneratedPhysicsPoints(
-                participant.pathPoints,
-              ),
-            collisionPosition:
-              reconstruction.collisionPoint,
-            durationSeconds:
-              reconstruction.durationSeconds,
-            speedKmh:
-              participant.estimatedSpeedKmh,
-            participantType:
-              participant.type,
-          });
-
-        const authored =
-          pathPoints.filter(
-            (point) =>
-              !isPhysicsGeneratedRoutePoint(
-                point,
-              ),
-          );
-
-        const pointOne =
-          authored[0];
-
-        const pointZ =
-          authored[
-            authored.length - 1
-          ];
-
-        if (!pointOne || !pointZ) {
-          return participant;
-        }
-
-        const radians =
-          (degrees * Math.PI) / 180;
-
-        const approachDistance = clamp(
-          Math.hypot(
-            pointZ.position.x -
-              pointOne.position.x,
-            pointZ.position.y -
-              pointOne.position.y,
-          ),
-          8,
-          45,
-        );
-
-        const startPosition = {
-          x: clamp(
-            pointZ.position.x -
-              Math.cos(radians) *
-                approachDistance,
-            3,
-            97,
-          ),
-          y: clamp(
-            pointZ.position.y -
-              Math.sin(radians) *
-                approachDistance,
-            3,
-            97,
-          ),
-        };
-
-        const updated = pathPoints.map(
-          (point) =>
-            point.id === pointOne.id
-              ? {
-                  ...point,
-                  position: startPosition,
-                }
-              : point,
-        );
-
-        return syncLegacyParticipantFields({
-          ...participant,
-          destinationLocation:
-            `${headingLabel}bound`,
-          pathPoints:
+          const pathPoints =
             normalisePointZRoute({
-              pathPoints: updated,
+              pathPoints:
+                clearGeneratedPhysicsPoints(
+                  participant
+                    .pathPoints,
+                ),
               collisionPosition:
-                reconstruction.collisionPoint,
+                reconstruction
+                  .collisionPoint,
               durationSeconds:
-                reconstruction.durationSeconds,
+                reconstruction
+                  .durationSeconds,
               speedKmh:
-                participant.estimatedSpeedKmh,
+                participant
+                  .estimatedSpeedKmh,
               participantType:
                 participant.type,
-            }),
-        });
-      },
-    ),
+            });
+
+          const authored =
+            pathPoints.filter(
+              (point) =>
+                !isPhysicsGeneratedRoutePoint(
+                  point,
+                ),
+            );
+
+          const pointOne =
+            authored[0];
+
+          const pointZ =
+            authored[
+              authored.length - 1
+            ];
+
+          if (
+            !pointOne ||
+            !pointZ
+          ) {
+            return participant;
+          }
+
+          const radians =
+            (
+              degrees *
+              Math.PI
+            ) / 180;
+
+          const approachDistance =
+            clamp(
+              Math.hypot(
+                pointZ.position.x -
+                  pointOne
+                    .position.x,
+                pointZ.position.y -
+                  pointOne
+                    .position.y,
+              ),
+              8,
+              45,
+            );
+
+          const startPosition = {
+            x: clamp(
+              pointZ.position.x -
+                Math.cos(
+                  radians,
+                ) *
+                  approachDistance,
+              3,
+              97,
+            ),
+            y: clamp(
+              pointZ.position.y -
+                Math.sin(
+                  radians,
+                ) *
+                  approachDistance,
+              3,
+              97,
+            ),
+          };
+
+          const updated =
+            pathPoints.map(
+              (point) =>
+                point.id ===
+                pointOne.id
+                  ? {
+                      ...point,
+                      position:
+                        startPosition,
+                    }
+                  : point,
+            );
+
+          return syncLegacyParticipantFields({
+            ...participant,
+            destinationLocation:
+              `${headingLabel}bound`,
+            pathPoints:
+              normalisePointZRoute({
+                pathPoints:
+                  updated,
+                collisionPosition:
+                  reconstruction
+                    .collisionPoint,
+                durationSeconds:
+                  reconstruction
+                    .durationSeconds,
+                speedKmh:
+                  participant
+                    .estimatedSpeedKmh,
+                participantType:
+                  participant.type,
+              }),
+          });
+        },
+      ),
   };
 }
 
 export function canBeginRoutePointDrag(
   point: MovementPathPoint,
 ): boolean {
-  return canMoveAuthoredRoutePoint(point);
+  return canMoveAuthoredRoutePoint(
+    point,
+  );
 }
 
 export function isLockedCollisionAnchor(

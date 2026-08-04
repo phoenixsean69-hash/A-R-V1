@@ -573,6 +573,205 @@ export function getPhysicsPathPoints(
  * but once an internal physics sample begins, later authored anchors are not
  * allowed to pull the moving body back to the collision marker.
  */
+
+const VEHICLE_ROUTE_ANCHOR_ACTIONS = new Set<MovementAction>([
+  "Start",
+  "Enter Scene",
+  "Brake",
+  "Turn Left",
+  "Turn Right",
+  "Swerve",
+  "Impact",
+  "Ricochet",
+  "Deflect",
+  "Slide",
+  "Fall",
+  "Stop",
+  "Exit Scene",
+]);
+
+function distanceFromPositionToSegment(
+  position: ReconstructionPosition,
+  start: ReconstructionPosition,
+  end: ReconstructionPosition,
+): number {
+  const segmentX = end.x - start.x;
+  const segmentY = end.y - start.y;
+  const segmentLengthSquared =
+    segmentX * segmentX +
+    segmentY * segmentY;
+
+  if (segmentLengthSquared < 0.000001) {
+    return distanceBetween(position, start);
+  }
+
+  const projection = clamp(
+    (
+      (position.x - start.x) * segmentX +
+      (position.y - start.y) * segmentY
+    ) / segmentLengthSquared,
+    0,
+    1,
+  );
+
+  return Math.hypot(
+    position.x -
+      (start.x + segmentX * projection),
+    position.y -
+      (start.y + segmentY * projection),
+  );
+}
+
+function simplifyMovementPathSection(
+  points: MovementPathPoint[],
+  tolerance: number,
+): MovementPathPoint[] {
+  if (points.length <= 2) {
+    return points;
+  }
+
+  const first = points[0];
+  const last = points[points.length - 1];
+
+  let furthestIndex = -1;
+  let furthestDistance = 0;
+
+  for (
+    let index = 1;
+    index < points.length - 1;
+    index += 1
+  ) {
+    const distance =
+      distanceFromPositionToSegment(
+        points[index].position,
+        first.position,
+        last.position,
+      );
+
+    if (distance > furthestDistance) {
+      furthestDistance = distance;
+      furthestIndex = index;
+    }
+  }
+
+  if (
+    furthestIndex < 0 ||
+    furthestDistance <= tolerance
+  ) {
+    return [first, last];
+  }
+
+  const left = simplifyMovementPathSection(
+    points.slice(0, furthestIndex + 1),
+    tolerance,
+  );
+
+  const right = simplifyMovementPathSection(
+    points.slice(furthestIndex),
+    tolerance,
+  );
+
+  return [
+    ...left.slice(0, -1),
+    ...right,
+  ];
+}
+
+function vehicleRouteStabilisationTolerance(
+  participant: ReconstructionVehicle,
+): number {
+  switch (participant.type) {
+    case "Bus":
+    case "Truck":
+      return 0.75;
+
+    case "Motorcycle":
+    case "Bicycle":
+      return 0.45;
+
+    case "Car":
+    default:
+      return 0.6;
+  }
+}
+
+function stabiliseAuthoredVehiclePlaybackPath(
+  participant: ReconstructionVehicle,
+  points: MovementPathPoint[],
+): MovementPathPoint[] {
+  if (
+    HUMAN_TYPES.has(participant.type) ||
+    points.length < 3 ||
+    points.some(
+      (point) =>
+        point.notes?.includes(
+          AUTO_ROAD_CURVE_NOTE_MARKER,
+        ) === true,
+    )
+  ) {
+    return points;
+  }
+
+  const anchorIndices = points
+    .map((point, index) => ({
+      point,
+      index,
+    }))
+    .filter(
+      ({ point, index }) =>
+        index === 0 ||
+        index === points.length - 1 ||
+        VEHICLE_ROUTE_ANCHOR_ACTIONS.has(
+          point.action,
+        ) ||
+        Boolean(point.linkedSceneObjectId),
+    )
+    .map(({ index }) => index);
+
+  const uniqueAnchorIndices = [
+    ...new Set(anchorIndices),
+  ].sort((left, right) => left - right);
+
+  const tolerance =
+    vehicleRouteStabilisationTolerance(
+      participant,
+    );
+
+  const stabilised: MovementPathPoint[] = [];
+
+  for (
+    let anchorIndex = 0;
+    anchorIndex <
+    uniqueAnchorIndices.length - 1;
+    anchorIndex += 1
+  ) {
+    const startIndex =
+      uniqueAnchorIndices[anchorIndex];
+
+    const endIndex =
+      uniqueAnchorIndices[anchorIndex + 1];
+
+    const section =
+      simplifyMovementPathSection(
+        points.slice(
+          startIndex,
+          endIndex + 1,
+        ),
+        tolerance,
+      );
+
+    stabilised.push(
+      ...(anchorIndex === 0
+        ? section
+        : section.slice(1)),
+    );
+  }
+
+  return stabilised.length >= 2
+    ? stabilised
+    : points;
+}
+
 export function getParticipantPlaybackPathPoints(
   participant: ReconstructionVehicle,
 ): MovementPathPoint[] {
@@ -589,23 +788,43 @@ export function getParticipantPlaybackPathPoints(
     isPhysicsGeneratedPathPoint,
   );
 
+  const stabilisedAuthoredPoints =
+    stabiliseAuthoredVehiclePlaybackPath(
+      participant,
+      points.filter(
+        (point) =>
+          !isPhysicsGeneratedPathPoint(point),
+      ),
+    );
+
   if (!firstPhysicsPoint) {
-    participantPlaybackPathCache.set(participant.pathPoints, points);
-    return points;
+    const result =
+      stabilisedAuthoredPoints.length >= 2
+        ? stabilisedAuthoredPoints
+        : points;
+
+    participantPlaybackPathCache.set(
+      participant.pathPoints,
+      result,
+    );
+
+    return result;
   }
 
-  const authoredBeforePhysics = points.filter(
-    (point) =>
-      !isPhysicsGeneratedPathPoint(point) &&
-      point.timeSeconds <
-        firstPhysicsPoint.timeSeconds - 0.0001,
-  );
+  const authoredBeforePhysics =
+    stabilisedAuthoredPoints.filter(
+      (point) =>
+        point.timeSeconds <
+        firstPhysicsPoint.timeSeconds -
+          0.0001,
+    );
 
   const physicsPath = points.filter(
     (point) =>
       isPhysicsGeneratedPathPoint(point) &&
       point.timeSeconds >=
-        firstPhysicsPoint.timeSeconds - 0.0001,
+        firstPhysicsPoint.timeSeconds -
+          0.0001,
   );
 
   const playback = sortMovementPathPoints([
@@ -613,8 +832,16 @@ export function getParticipantPlaybackPathPoints(
     ...physicsPath,
   ]);
 
-  const result = playback.length >= 2 ? playback : points;
-  participantPlaybackPathCache.set(participant.pathPoints, result);
+  const result =
+    playback.length >= 2
+      ? playback
+      : points;
+
+  participantPlaybackPathCache.set(
+    participant.pathPoints,
+    result,
+  );
+
   return result;
 }
 
@@ -1119,9 +1346,36 @@ function createSegmentMotionSpline(
     maximumTurnSeverity <=
     profile.straightAngleTolerance;
 
+  const deliberateCurveAction = [
+    startPoint.action,
+    endPoint.action,
+  ].some(
+    (action) =>
+      action === "Turn Left" ||
+      action === "Turn Right" ||
+      action === "Swerve",
+  );
+
+  /*
+   * Pointer-drawn routes contain tiny direction changes even when the
+   * investigator intended a straight approach. Treat those small changes as
+   * route noise instead of turning every segment into a Bézier curve.
+   */
+  const routeWobbleTolerance =
+    HUMAN_TYPES.has(participant.type)
+      ? 9
+      : 12;
+
+  const looksLikeMinorRouteNoise =
+    !roadGraphControlled &&
+    !deliberateCurveAction &&
+    maximumTurnSeverity <=
+      routeWobbleTolerance;
+
   const linear =
     physicsControlled ||
     effectivelyStraight ||
+    looksLikeMinorRouteNoise ||
     segmentLength < 0.001;
 
   if (linear) {

@@ -102,7 +102,8 @@ import { createDefaultRoadSceneSettings } from "../../types/reconstruction";
 
 import {
   buildSmoothSvgPath,
-  clamp,
+  clamp,  getParticipantPlaybackPathPoints,
+
   getParticipantStateAtTime,
   getPointsCentroid,
   getReconstructionImpactEffectState,
@@ -843,28 +844,63 @@ const participantPathGeometryCache = new WeakMap<
   { path: string; skidPath: string }
 >();
 
-function getParticipantPathGeometry(pathPoints: MovementPathPoint[]) {
-  const cached = participantPathGeometryCache.get(pathPoints);
+function getParticipantPathGeometry(
+  participant: ReconstructionVehicle,
+) {
+  const cacheKey = participant.pathPoints;
+  const cached =
+    participantPathGeometryCache.get(
+      cacheKey,
+    );
+
   if (cached) return cached;
 
-  const authoredPathPoints = sortMovementPathPoints(pathPoints).filter(
-    (point) => !isPhysicsGeneratedPathPoint(point),
-  );
+  const authoredPathPoints =
+    getParticipantPlaybackPathPoints(
+      participant,
+    ).filter(
+      (point) =>
+        !isPhysicsGeneratedPathPoint(point),
+    );
+
   const path = buildSmoothSvgPath(
-    authoredPathPoints.map((point) => point.position),
-    0.85,
+    authoredPathPoints.map(
+      (point) => point.position,
+    ),
+    isHumanParticipant(participant.type)
+      ? 0.82
+      : 0.58,
   );
-  const skidPoints = authoredPathPoints.filter((point, index) =>
-    point.action === "Brake" ||
-    (index > 0 && authoredPathPoints[index - 1].action === "Brake"),
-  );
+
+  const skidPoints =
+    authoredPathPoints.filter(
+      (point, index) =>
+        point.action === "Brake" ||
+        (
+          index > 0 &&
+          authoredPathPoints[index - 1]
+            .action === "Brake"
+        ),
+    );
+
   const geometry = {
     path,
-    skidPath: skidPoints.length > 1
-      ? buildSmoothSvgPath(skidPoints.map((point) => point.position), 0.7)
-      : "",
+    skidPath:
+      skidPoints.length > 1
+        ? buildSmoothSvgPath(
+            skidPoints.map(
+              (point) => point.position,
+            ),
+            0.55,
+          )
+        : "",
   };
-  participantPathGeometryCache.set(pathPoints, geometry);
+
+  participantPathGeometryCache.set(
+    cacheKey,
+    geometry,
+  );
+
   return geometry;
 }
 
@@ -3984,7 +4020,7 @@ export default function AccidentReconstructionEditor({
               {reconstruction.vehicles.map((participant, participantIndex) => {
                 const state = getParticipantStateAtTime(participant, currentTime);
                 const pathPoints = sortMovementPathPoints(participant.pathPoints);
-                const { path, skidPath } = getParticipantPathGeometry(participant.pathPoints);
+                const { path, skidPath } = getParticipantPathGeometry(participant);
                 const activeAction = pathPoints.find((point) => point.id === state.activePointId)?.action;
                 const vectorLength = Math.min(14, 3 + state.speedKmh / 8);
                 const vectorRadians = (state.rotation * Math.PI) / 180;

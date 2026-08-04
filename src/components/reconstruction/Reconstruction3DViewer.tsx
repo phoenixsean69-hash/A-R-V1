@@ -16,11 +16,10 @@ import {
   type ReconstructionSceneObject,
   type ReconstructionVehicle,
 } from "../../types/reconstruction";
-import {
+import {  getParticipantPlaybackPathPoints,
+
   getParticipantStateAtTime,
-  isPhysicsGeneratedPathPoint,
-  sortMovementPathPoints,
-} from "../../utils/reconstructionGeometry";
+  isPhysicsGeneratedPathPoint,} from "../../utils/reconstructionGeometry";
 import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
@@ -702,9 +701,15 @@ function Reconstruction3DViewer({
         .catch(() => settleAsset(true));
 
       if (effectiveShowPaths) {
-        const authoredPoints = sortMovementPathPoints(participant.pathPoints).filter(
-          (point) => !isPhysicsGeneratedPathPoint(point),
-        );
+        const authoredPoints =
+          getParticipantPlaybackPathPoints(
+            participant,
+          ).filter(
+            (point) =>
+              !isPhysicsGeneratedPathPoint(
+                point,
+              ),
+          );
         const positions = authoredPoints.map((point) =>
           worldPosition(point.position, width, height, 0.18),
         );

@@ -13,11 +13,10 @@ import {
   type ReconstructionSceneObject,
   type ReconstructionVehicle,
 } from "../../../types/reconstruction";
-import {
+import {  getParticipantPlaybackPathPoints,
+
   getParticipantStateAtTime,
-  isPhysicsGeneratedPathPoint,
-  sortMovementPathPoints,
-} from "../../../utils/reconstructionGeometry";
+  isPhysicsGeneratedPathPoint,} from "../../../utils/reconstructionGeometry";
 import { addRealSceneGeometryToThreeScene } from "../../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../../utils/reconstructionSurfaceEffects";
 import { getReconstructionWorldDimensions } from "../../../utils/reconstructionWorldScale";
@@ -1178,8 +1177,8 @@ export function createARReconstructionScene({
     );
 
     const authoredPoints =
-      sortMovementPathPoints(
-        participant.pathPoints,
+      getParticipantPlaybackPathPoints(
+        participant,
       ).filter(
         (point) =>
           !isPhysicsGeneratedPathPoint(
