@@ -4036,42 +4036,20 @@ export default function AccidentReconstructionEditor({
                     100,
                   ),
                 };
-                const participantWasInImpact =
-                  impactEffect.participantIds.includes(
-                    participant.id,
-                  );
-
-                const impactEnvelope =
-                  impactEffect.active &&
-                  participantWasInImpact
-                    ? Math.max(
-                        0,
-                        1 -
-                          impactEffect.progress /
-                            0.34,
-                      ) *
-                      impactEffect.intensity
+                const nearImpact =
+                  Math.hypot(
+                    state.position.x - impactEffect.position.x,
+                    state.position.y - impactEffect.position.y,
+                  ) <= 12;
+                const shakeStrength =
+                  impactEffect.active && nearImpact
+                    ? (1 - impactEffect.progress) * 5 * impactEffect.intensity
                     : 0;
-
-                const rotationShake =
-                  Math.sin(
-                    impactEffect.progress *
-                      Math.PI *
-                      3 +
-                      participantIndex *
-                        0.18,
-                  ) *
-                  impactEnvelope *
-                  1.25;
-
-                /*
-                 * Position is controlled only by the reconstruction path.
-                 * Collision emphasis is rotational plus the independent impact
-                 * overlay, so React rerenders cannot overwrite the native-frame
-                 * DOM path with a second translated body position.
-                 */
-                const shakeX = 0;
-                const shakeY = 0;
+                const shakePhase =
+                  impactEffect.progress * 72 + participantIndex * 2.4;
+                const shakeX = Math.sin(shakePhase) * shakeStrength;
+                const shakeY = Math.cos(shakePhase * 1.31) * shakeStrength * 0.65;
+                const rotationShake = Math.sin(shakePhase * 0.83) * shakeStrength * 0.8;
 
                 return (
                   <div key={participant.id}>

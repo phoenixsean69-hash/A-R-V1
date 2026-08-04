@@ -14,7 +14,6 @@ export interface ReconstructionImpactEffectState {
   impactTimeSeconds: number;
   intensity: number;
   position: ReconstructionPosition;
-  participantIds: string[];
   progress: number;
 }
 
@@ -2039,9 +2038,6 @@ export function getReconstructionImpactEffectState(
       participantCollisionEvent
         ?.contactPoint ??
       reconstruction.collisionPoint,
-    participantIds:
-      participantCollisionEvent
-        ?.participantIds ?? [],
     progress: clamp(
       elapsed / effectDuration,
       0,

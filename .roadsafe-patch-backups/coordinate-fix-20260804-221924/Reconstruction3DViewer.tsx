@@ -24,10 +24,6 @@ import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeom
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
 import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
-import {
-  reconstructionHeadingToThreeYawRadians,
-  reconstructionPositionToThreeVector,
-} from "../../utils/reconstructionThreeCoordinates";
 
 interface Reconstruction3DViewerProps {
   reconstruction: AccidentReconstruction;
@@ -121,11 +117,10 @@ function worldPosition(
   height: number,
   y = 0,
 ): THREE.Vector3 {
-  return reconstructionPositionToThreeVector(
-    position,
-    width,
-    height,
+  return new THREE.Vector3(
+    (position.x / 100 - 0.5) * width,
     y,
+    (0.5 - position.y / 100) * height,
   );
 }
 
@@ -1049,9 +1044,7 @@ function Reconstruction3DViewer({
         // screen-space clockwise headings onto the reconstruction ground plane.
         entry.holder.rotation.set(
           0,
-          reconstructionHeadingToThreeYawRadians(
-            state.rotation,
-          ),
+          THREE.MathUtils.degToRad(state.rotation),
           0,
         );
         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
@@ -1294,7 +1287,7 @@ function Reconstruction3DViewer({
           </button>
         )}
         <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#29446f] bg-[#050a16]/88 px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
-          {getReconstructionWorldDimensions(reconstruction).source} Ãƒâ€šÃ‚Â· {effectiveCameraMode}
+          {getReconstructionWorldDimensions(reconstruction).source} · {effectiveCameraMode}
         </div>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#29446f] bg-[#050a16]/85 px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
           {visibleTime.toFixed(1)}s
@@ -1306,7 +1299,7 @@ function Reconstruction3DViewer({
           {assetStatus.total > 0 && assetStatus.loaded < assetStatus.total
             ? `Loading realistic assets ${assetStatus.loaded}/${assetStatus.total}`
             : assetStatus.failed > 0
-              ? `Realistic assets ready Ãƒâ€šÃ‚Â· ${assetStatus.failed} fallback(s)`
+              ? `Realistic assets ready · ${assetStatus.failed} fallback(s)`
               : "Realistic GLB/PBR assets ready"}
         </div>
       </div>
@@ -1388,10 +1381,10 @@ function Reconstruction3DViewer({
                   onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
                   className="ui-input py-1.5"
                 >
-                  <option value={0.5}>0.5ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={1}>1ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={1.5}>1.5ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={2}>2ÃƒÆ’Ã¢â‚¬â€</option>
+                  <option value={0.5}>0.5×</option>
+                  <option value={1}>1×</option>
+                  <option value={1.5}>1.5×</option>
+                  <option value={2}>2×</option>
                 </select>
               </div>
             )}

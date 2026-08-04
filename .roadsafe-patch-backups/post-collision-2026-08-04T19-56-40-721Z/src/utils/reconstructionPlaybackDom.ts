@@ -287,58 +287,25 @@ function paintParticipant(
     timeSeconds,
   );
 
-  const participantWasInImpact =
-    impactEffect.participantIds.includes(
-      participant.id,
-    );
-
-  /*
-   * The collision trajectory already contains the physical displacement.
-   * Do not add a second screen-space translation shake to the body; that made
-   * participants appear to teleport around the solver path. Keep only a small,
-   * short angular body recoil while the separate impact overlay provides the
-   * visual flash.
-   */
-  const impactEnvelope =
-    impactEffect.active &&
-    participantWasInImpact
-      ? Math.max(
-          0,
-          1 -
-            impactEffect.progress /
-              0.34,
-        ) *
-        impactEffect.intensity
+  const nearImpact =
+    Math.hypot(
+      state.position.x - impactEffect.position.x,
+      state.position.y - impactEffect.position.y,
+    ) <= 12;
+  const impactShake =
+    impactEffect.active && nearImpact
+      ? (1 - impactEffect.progress) * 5 * impactEffect.intensity
       : 0;
-
-  const impactRotation =
-    Math.sin(
-      impactEffect.progress *
-        Math.PI *
-        3,
-    ) *
-    impactEnvelope *
-    1.25;
-
-  const potholePhase =
-    timeSeconds * 25 +
-    participantIndex * 1.9;
-
+  const impactPhase = impactEffect.progress * 72 + participantIndex * 2.4;
+  const potholePhase = timeSeconds * 25 + participantIndex * 1.9;
   const shakeX =
-    Math.sin(potholePhase) *
-    pothole.screenShakePixels;
-
+    Math.sin(impactPhase) * impactShake +
+    Math.sin(potholePhase) * pothole.screenShakePixels;
   const shakeY =
-    Math.abs(
-      Math.sin(
-        potholePhase * 1.7,
-      ),
-    ) *
-    pothole.screenShakePixels *
-    0.7;
-
+    Math.cos(impactPhase * 1.31) * impactShake * 0.65 +
+    Math.abs(Math.sin(potholePhase * 1.7)) * pothole.screenShakePixels * 0.7;
   const rotationShake =
-    impactRotation +
+    Math.sin(impactPhase * 0.83) * impactShake * 0.8 +
     pothole.rollDegrees;
 
   const nodes = participantNodes(sceneRoot, participant.id);

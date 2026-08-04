@@ -24,10 +24,6 @@ import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeom
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
 import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
-import {
-  reconstructionHeadingToThreeYawRadians,
-  reconstructionPositionToThreeVector,
-} from "../../utils/reconstructionThreeCoordinates";
 
 interface Reconstruction3DViewerProps {
   reconstruction: AccidentReconstruction;
@@ -121,11 +117,10 @@ function worldPosition(
   height: number,
   y = 0,
 ): THREE.Vector3 {
-  return reconstructionPositionToThreeVector(
-    position,
-    width,
-    height,
+  return new THREE.Vector3(
+    (position.x / 100 - 0.5) * width,
     y,
+    (0.5 - position.y / 100) * height,
   );
 }
 
@@ -452,184 +447,52 @@ function applyImpactPose(
   currentTime: number,
   impactTime: number | undefined,
   speedKmh: number,
-  enabled: boolean,
 ): void {
   const root = entry.modelRoot;
-
   root.position.set(0, 0, 0);
   root.rotation.set(0, 0, 0);
   root.scale.set(1, 1, 1);
-
-  if (
-    !enabled ||
-    impactTime === undefined ||
-    currentTime < impactTime
-  ) {
-    return;
-  }
+  if (impactTime === undefined || currentTime < impactTime) return;
 
   const elapsed = currentTime - impactTime;
   const severity = clamp(speedKmh / 70, 0.2, 1);
-
-  const human = [
-    "Pedestrian",
-    "Officer",
-    "Witness",
-  ].includes(entry.participant.type);
-
-  const twoWheeler = [
-    "Bicycle",
-    "Motorcycle",
-  ].includes(entry.participant.type);
+  const human = ["Pedestrian", "Officer", "Witness"].includes(
+    entry.participant.type,
+  );
+  const twoWheeler = ["Bicycle", "Motorcycle"].includes(
+    entry.participant.type,
+  );
 
   if (human) {
-    const launchVelocity = clamp(
-      3.6 + speedKmh / 25,
-      4,
-      7.2,
-    );
-
-    const flightDuration =
-      (2 * launchVelocity) / 9.81;
-
-    const flightRotationX =
-      Math.PI * (1.5 + severity * 1.1);
-
-    const flightRotationZ =
-      Math.PI * (0.55 + severity * 0.45);
-
-    if (elapsed <= flightDuration) {
-      const progress = clamp(
-        elapsed / flightDuration,
-        0,
-        1,
-      );
-
+    const launchVelocity = clamp(3.6 + speedKmh / 25, 4, 7.2);
+    const flightDuration = (2 * launchVelocity) / 9.81;
+    if (elapsed < flightDuration) {
       root.position.y = Math.max(
         0,
-        launchVelocity * elapsed -
-          4.905 * elapsed * elapsed,
+        launchVelocity * elapsed - 4.905 * elapsed * elapsed,
       );
-
-      root.rotation.x =
-        flightRotationX * progress;
-
-      root.rotation.z =
-        flightRotationZ * progress;
-
-      return;
+      root.rotation.x = elapsed * (5 + severity * 3);
+      root.rotation.z = elapsed * (2 + severity * 2.5);
+    } else {
+      root.position.y = 0.12;
+      root.rotation.x = Math.PI / 2;
+      root.rotation.z = 0.2;
     }
-
-    /*
-     * Continue from the landing orientation rather than snapping from several
-     * radians of airborne rotation directly to PI / 2.
-     */
-    const settleProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed - flightDuration,
-        0,
-        0.45,
-      );
-
-    root.position.y =
-      THREE.MathUtils.lerp(
-        0,
-        0.12,
-        settleProgress,
-      );
-
-    root.rotation.x =
-      THREE.MathUtils.lerp(
-        flightRotationX,
-        flightRotationX +
-          Math.PI / 2,
-        settleProgress,
-      );
-
-    root.rotation.z =
-      THREE.MathUtils.lerp(
-        flightRotationZ,
-        flightRotationZ + 0.2,
-        settleProgress,
-      );
-
     return;
   }
 
   if (twoWheeler) {
-    const tipProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed,
-        0,
-        0.9,
-      );
-
-    root.rotation.x =
-      tipProgress *
-      Math.PI *
-      0.45;
-
-    root.rotation.z =
-      tipProgress *
-      severity *
-      1.5;
-
-    const hopDuration = 0.42;
-
-    root.position.y =
-      elapsed < hopDuration
-        ? Math.sin(
-            Math.PI *
-              (elapsed / hopDuration),
-          ) *
-          0.35 *
-          severity
-        : 0;
-
+    const progress = THREE.MathUtils.smoothstep(elapsed, 0, 0.9);
+    root.rotation.x = progress * Math.PI * 0.45;
+    root.rotation.z = progress * severity * 1.5;
+    root.position.y = Math.abs(Math.sin(elapsed * 8)) * Math.exp(-elapsed * 3) * 0.6;
     return;
   }
 
-  /*
-   * One suspension compression/rebound cycle is enough for a vehicle impact.
-   * The old repeating sine wave looked like frame jitter because it moved the
-   * model independently of the already-physical post-impact trajectory.
-   */
-  const recoilDuration = 0.52;
-
-  if (elapsed >= recoilDuration) {
-    return;
-  }
-
-  const progress = clamp(
-    elapsed / recoilDuration,
-    0,
-    1,
-  );
-
-  const compression =
-    Math.sin(Math.PI * progress) *
-    (1 - progress * 0.35);
-
-  const rebound =
-    Math.sin(
-      Math.PI * 2 * progress,
-    ) *
-    (1 - progress);
-
-  root.position.y =
-    compression *
-    0.11 *
-    severity;
-
-  root.rotation.z =
-    rebound *
-    0.035 *
-    severity;
-
-  root.rotation.x =
-    -compression *
-    0.025 *
-    severity;
+  const recoil = Math.sin(elapsed * 11) * Math.exp(-elapsed * 3.1);
+  root.position.y = Math.abs(recoil) * 0.24 * severity;
+  root.rotation.z = recoil * 0.14 * severity;
+  root.rotation.x = -recoil * 0.07 * severity;
 }
 
 function Reconstruction3DViewer({
@@ -1049,22 +912,13 @@ function Reconstruction3DViewer({
         // screen-space clockwise headings onto the reconstruction ground plane.
         entry.holder.rotation.set(
           0,
-          reconstructionHeadingToThreeYawRadians(
-            state.rotation,
-          ),
+          THREE.MathUtils.degToRad(state.rotation),
           0,
         );
         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
 
         const impact = impactByParticipant.get(entry.participant.id);
-        applyImpactPose(
-          entry,
-          timeRef.current,
-          impact?.time,
-          impact?.speed ??
-            entry.participant.estimatedSpeedKmh,
-          effectiveShowPhysics,
-        );
+        applyImpactPose(entry, timeRef.current, impact?.time, impact?.speed ?? entry.participant.estimatedSpeedKmh);
         const potholeEffect = getParticipantPotholeEffect(
           reconstruction,
           entry.participant,
@@ -1072,10 +926,7 @@ function Reconstruction3DViewer({
           state.speedKmh,
           timeRef.current,
         );
-        if (
-          effectiveShowPhysics &&
-          potholeEffect.active
-        ) {
+        if (potholeEffect.active) {
           entry.modelRoot.position.y += potholeEffect.verticalMetres;
           entry.modelRoot.rotation.x += THREE.MathUtils.degToRad(
             potholeEffect.pitchDegrees,
@@ -1294,7 +1145,7 @@ function Reconstruction3DViewer({
           </button>
         )}
         <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#29446f] bg-[#050a16]/88 px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
-          {getReconstructionWorldDimensions(reconstruction).source} Ãƒâ€šÃ‚Â· {effectiveCameraMode}
+          {getReconstructionWorldDimensions(reconstruction).source} · {effectiveCameraMode}
         </div>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#29446f] bg-[#050a16]/85 px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
           {visibleTime.toFixed(1)}s
@@ -1306,7 +1157,7 @@ function Reconstruction3DViewer({
           {assetStatus.total > 0 && assetStatus.loaded < assetStatus.total
             ? `Loading realistic assets ${assetStatus.loaded}/${assetStatus.total}`
             : assetStatus.failed > 0
-              ? `Realistic assets ready Ãƒâ€šÃ‚Â· ${assetStatus.failed} fallback(s)`
+              ? `Realistic assets ready · ${assetStatus.failed} fallback(s)`
               : "Realistic GLB/PBR assets ready"}
         </div>
       </div>
@@ -1388,10 +1239,10 @@ function Reconstruction3DViewer({
                   onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
                   className="ui-input py-1.5"
                 >
-                  <option value={0.5}>0.5ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={1}>1ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={1.5}>1.5ÃƒÆ’Ã¢â‚¬â€</option>
-                  <option value={2}>2ÃƒÆ’Ã¢â‚¬â€</option>
+                  <option value={0.5}>0.5×</option>
+                  <option value={1}>1×</option>
+                  <option value={1.5}>1.5×</option>
+                  <option value={2}>2×</option>
                 </select>
               </div>
             )}

@@ -20,10 +20,6 @@ import {  getParticipantPlaybackPathPoints,
 import { addRealSceneGeometryToThreeScene } from "../../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../../utils/reconstructionSurfaceEffects";
 import { getReconstructionWorldDimensions } from "../../../utils/reconstructionWorldScale";
-import {
-  reconstructionHeadingToThreeYawRadians,
-  reconstructionPositionToThreeVector,
-} from "../../../utils/reconstructionThreeCoordinates";
 
 interface ParticipantEntry {
   participant: ReconstructionVehicle;
@@ -96,11 +92,12 @@ function worldPosition(
   height: number,
   y = 0,
 ): THREE.Vector3 {
-  return reconstructionPositionToThreeVector(
-    position,
-    width,
-    height,
+  return new THREE.Vector3(
+    (position.x / 100 - 0.5) *
+      width,
     y,
+    (0.5 - position.y / 100) *
+      height,
   );
 }
 
@@ -780,11 +777,26 @@ function applyImpactPose(
   speedKmh: number,
   enabled: boolean,
 ): void {
-  const root = entry.modelRoot;
+  const root =
+    entry.modelRoot;
 
-  root.position.set(0, 0, 0);
-  root.rotation.set(0, 0, 0);
-  root.scale.set(1, 1, 1);
+  root.position.set(
+    0,
+    0,
+    0,
+  );
+
+  root.rotation.set(
+    0,
+    0,
+    0,
+  );
+
+  root.scale.set(
+    1,
+    1,
+    1,
+  );
 
   if (
     !enabled ||
@@ -794,96 +806,84 @@ function applyImpactPose(
     return;
   }
 
-  const elapsed = currentTime - impactTime;
-  const severity = clamp(speedKmh / 70, 0.2, 1);
+  const elapsed =
+    currentTime -
+    impactTime;
+
+  const severity =
+    clamp(
+      speedKmh / 70,
+      0.2,
+      1,
+    );
 
   const human = [
     "Pedestrian",
     "Officer",
     "Witness",
-  ].includes(entry.participant.type);
+  ].includes(
+    entry.participant.type,
+  );
 
   const twoWheeler = [
     "Bicycle",
     "Motorcycle",
-  ].includes(entry.participant.type);
+  ].includes(
+    entry.participant.type,
+  );
 
   if (human) {
-    const launchVelocity = clamp(
-      3.6 + speedKmh / 25,
-      4,
-      7.2,
-    );
+    const launchVelocity =
+      clamp(
+        3.6 +
+          speedKmh / 25,
+        4,
+        7.2,
+      );
 
     const flightDuration =
-      (2 * launchVelocity) / 9.81;
+      (2 * launchVelocity) /
+      9.81;
 
-    const flightRotationX =
-      Math.PI * (1.5 + severity * 1.1);
-
-    const flightRotationZ =
-      Math.PI * (0.55 + severity * 0.45);
-
-    if (elapsed <= flightDuration) {
-      const progress = clamp(
-        elapsed / flightDuration,
-        0,
-        1,
-      );
-
-      root.position.y = Math.max(
-        0,
-        launchVelocity * elapsed -
-          4.905 * elapsed * elapsed,
-      );
+    if (
+      elapsed <
+      flightDuration
+    ) {
+      root.position.y =
+        Math.max(
+          0,
+          launchVelocity *
+            elapsed -
+            4.905 *
+              elapsed *
+              elapsed,
+        );
 
       root.rotation.x =
-        flightRotationX * progress;
+        elapsed *
+        (
+          5 +
+          severity * 3
+        );
 
       root.rotation.z =
-        flightRotationZ * progress;
-
-      return;
+        elapsed *
+        (
+          2 +
+          severity * 2.5
+        );
+    } else {
+      root.position.y = 0.12;
+      root.rotation.x =
+        Math.PI / 2;
+      root.rotation.z = 0.2;
     }
-
-    /*
-     * Continue from the landing orientation rather than snapping from several
-     * radians of airborne rotation directly to PI / 2.
-     */
-    const settleProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed - flightDuration,
-        0,
-        0.45,
-      );
-
-    root.position.y =
-      THREE.MathUtils.lerp(
-        0,
-        0.12,
-        settleProgress,
-      );
-
-    root.rotation.x =
-      THREE.MathUtils.lerp(
-        flightRotationX,
-        flightRotationX +
-          Math.PI / 2,
-        settleProgress,
-      );
-
-    root.rotation.z =
-      THREE.MathUtils.lerp(
-        flightRotationZ,
-        flightRotationZ + 0.2,
-        settleProgress,
-      );
 
     return;
   }
 
   if (twoWheeler) {
-    const tipProgress =
+    const progress =
       THREE.MathUtils.smoothstep(
         elapsed,
         0,
@@ -891,70 +891,52 @@ function applyImpactPose(
       );
 
     root.rotation.x =
-      tipProgress *
+      progress *
       Math.PI *
       0.45;
 
     root.rotation.z =
-      tipProgress *
+      progress *
       severity *
       1.5;
 
-    const hopDuration = 0.42;
-
     root.position.y =
-      elapsed < hopDuration
-        ? Math.sin(
-            Math.PI *
-              (elapsed / hopDuration),
-          ) *
-          0.35 *
-          severity
-        : 0;
+      Math.abs(
+        Math.sin(
+          elapsed * 8,
+        ),
+      ) *
+      Math.exp(
+        -elapsed * 3,
+      ) *
+      0.6;
 
     return;
   }
 
-  /*
-   * One suspension compression/rebound cycle is enough for a vehicle impact.
-   * The old repeating sine wave looked like frame jitter because it moved the
-   * model independently of the already-physical post-impact trajectory.
-   */
-  const recoilDuration = 0.52;
-
-  if (elapsed >= recoilDuration) {
-    return;
-  }
-
-  const progress = clamp(
-    elapsed / recoilDuration,
-    0,
-    1,
-  );
-
-  const compression =
-    Math.sin(Math.PI * progress) *
-    (1 - progress * 0.35);
-
-  const rebound =
+  const recoil =
     Math.sin(
-      Math.PI * 2 * progress,
+      elapsed * 11,
     ) *
-    (1 - progress);
+    Math.exp(
+      -elapsed * 3.1,
+    );
 
   root.position.y =
-    compression *
-    0.11 *
+    Math.abs(
+      recoil,
+    ) *
+    0.24 *
     severity;
 
   root.rotation.z =
-    rebound *
-    0.035 *
+    recoil *
+    0.14 *
     severity;
 
   root.rotation.x =
-    -compression *
-    0.025 *
+    -recoil *
+    0.07 *
     severity;
 }
 
@@ -1505,7 +1487,7 @@ export function createARReconstructionScene({
 
         entry.holder.rotation.set(
           0,
-          reconstructionHeadingToThreeYawRadians(
+          THREE.MathUtils.degToRad(
             state.rotation,
           ),
           0,

@@ -20,10 +20,6 @@ import {  getParticipantPlaybackPathPoints,
 import { addRealSceneGeometryToThreeScene } from "../../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../../utils/reconstructionSurfaceEffects";
 import { getReconstructionWorldDimensions } from "../../../utils/reconstructionWorldScale";
-import {
-  reconstructionHeadingToThreeYawRadians,
-  reconstructionPositionToThreeVector,
-} from "../../../utils/reconstructionThreeCoordinates";
 
 interface ParticipantEntry {
   participant: ReconstructionVehicle;
@@ -96,11 +92,12 @@ function worldPosition(
   height: number,
   y = 0,
 ): THREE.Vector3 {
-  return reconstructionPositionToThreeVector(
-    position,
-    width,
-    height,
+  return new THREE.Vector3(
+    (position.x / 100 - 0.5) *
+      width,
     y,
+    (0.5 - position.y / 100) *
+      height,
   );
 }
 
@@ -1505,7 +1502,7 @@ export function createARReconstructionScene({
 
         entry.holder.rotation.set(
           0,
-          reconstructionHeadingToThreeYawRadians(
+          THREE.MathUtils.degToRad(
             state.rotation,
           ),
           0,

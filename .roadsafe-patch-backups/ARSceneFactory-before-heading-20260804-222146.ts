@@ -1505,7 +1505,7 @@ export function createARReconstructionScene({
 
         entry.holder.rotation.set(
           0,
-          reconstructionHeadingToThreeYawRadians(
+          THREE.MathUtils.degToRad(
             state.rotation,
           ),
           0,
