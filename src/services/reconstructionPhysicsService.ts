@@ -1,3 +1,14 @@
+/*
+ * [RoadSafe:PhysicsFoundationImportV1]
+ */
+import {
+  ceilSimulationTime,
+  normaliseParticipantPhysicsProfile,
+  normaliseReconstructionPhysicsSettings,
+  normaliseSceneObjectPhysicsProfile,
+  quantiseSimulationTime,
+} from "../utils/reconstructionPhysicsFoundation";
+
 import {
   usesGeneratedRoad,
   type AccidentReconstruction,
@@ -238,19 +249,23 @@ function participantVelocityAtTime(
 function resolveParticipantPhysicsProfile(
   participant: ReconstructionVehicle,
 ): ResolvedParticipantPhysicsProfile {
-  return {
-    ...getDefaultParticipantPhysics(participant),
+  return normaliseParticipantPhysicsProfile({
+    ...getDefaultParticipantPhysics(
+      participant,
+    ),
     ...(participant.physics ?? {}),
-  } as ResolvedParticipantPhysicsProfile;
+  }) as ResolvedParticipantPhysicsProfile;
 }
 
 function resolveSceneObjectPhysicsProfile(
   object: ReconstructionSceneObject,
 ): ResolvedSceneObjectPhysicsProfile {
-  return {
-    ...getDefaultSceneObjectPhysics(object),
+  return normaliseSceneObjectPhysicsProfile({
+    ...getDefaultSceneObjectPhysics(
+      object,
+    ),
     ...(object.physics ?? {}),
-  } as ResolvedSceneObjectPhysicsProfile;
+  }) as ResolvedSceneObjectPhysicsProfile;
 }
 
 function participantDimensions(
@@ -1659,7 +1674,7 @@ function createPhysicsCollisionEvent(input: {
 }): PhysicsCollisionEvent {
   const kinematics = createCollisionKinematics({
     collisionEventId: input.id,
-    timeSeconds: input.timeSeconds,
+    timeSeconds: quantiseSimulationTime(input.timeSeconds),
     contactPoint: input.contactPoint,
     participantIds: input.participantIds,
     result: input.result,
@@ -1720,7 +1735,7 @@ function makePhysicsPoint(
     id: createId("physics-point"),
     label,
     position,
-    timeSeconds,
+    timeSeconds: quantiseSimulationTime(timeSeconds),
     speedKmh: Number(mpsToKmh(magnitude(body.velocity)).toFixed(1)),
     rotation: Number(normaliseDegrees(body.rotation).toFixed(1)),
     action,
@@ -1823,9 +1838,7 @@ function recordPhysicsTransition(
       width,
       height,
     ),
-    timeSeconds: Number(
-      timeSeconds.toFixed(4),
-    ),
+    timeSeconds: quantiseSimulationTime(timeSeconds),
     speedKmh: Number(
       mpsToKmh(
         magnitude(body.velocity),
@@ -1899,10 +1912,61 @@ function createPlaybackPhysicsSignature(
   });
 }
 
+
+/*
+ * [RoadSafe:CleanPhysicsInputV1]
+ *
+ * Every new simulation starts from investigator-authored movement only.
+ * Generated samples from a previous simulation may never become inputs to a
+ * later simulation.
+ */
+function createCleanPhysicsInput(
+  source: AccidentReconstruction,
+): AccidentReconstruction {
+  const vehicles =
+    source.vehicles.map(
+      (participant) => {
+        const authoredPathPoints =
+          sortMovementPathPoints(
+            participant.pathPoints,
+          ).filter(
+            (point) =>
+              !isPhysicsGeneratedPathPoint(
+                point,
+              ),
+          );
+
+        return syncLegacyParticipantFields({
+          ...participant,
+          pathPoints:
+            authoredPathPoints,
+        });
+      },
+    );
+
+  return {
+    ...source,
+    vehicles,
+    lastPhysicsSimulation:
+      undefined,
+    timelineEvents:
+      source.timelineEvents.filter(
+        (event) =>
+          !event.id.startsWith(
+            "physics-event",
+          ),
+      ),
+  };
+}
+
 export function preparePhysicsForPlayback(
   source: AccidentReconstruction,
 ): AccidentReconstruction {
-  const settings = { ...DEFAULT_PHYSICS_SETTINGS, ...(source.physicsSettings ?? {}) };
+  const settings =
+    normaliseReconstructionPhysicsSettings({
+      ...DEFAULT_PHYSICS_SETTINGS,
+      ...(source.physicsSettings ?? {}),
+    });
   const shouldRun =
     settings.enabled &&
     settings.mode === "Physics After Primary Impact" &&
@@ -1930,9 +1994,17 @@ export function preparePhysicsForPlayback(
 }
 
 export function applyPhysicsSimulation(
-  source: AccidentReconstruction,
+  inputSource: AccidentReconstruction,
 ): AccidentReconstruction {
-  const settings = { ...DEFAULT_PHYSICS_SETTINGS, ...(source.physicsSettings ?? {}) };
+  const source =
+    createCleanPhysicsInput(
+      inputSource,
+    );
+  const settings =
+    normaliseReconstructionPhysicsSettings({
+      ...DEFAULT_PHYSICS_SETTINGS,
+      ...(source.physicsSettings ?? {}),
+    });
   if (!settings.enabled || settings.mode === "Guided Paths") {
     return {
       ...source,
@@ -2795,7 +2867,7 @@ export function applyPhysicsSimulation(
     potholeInteractions,
     surfaceInteractions,
     generatedPathPoints,
-    simulatedDurationSeconds: Number(simulatedDurationSeconds.toFixed(2)),
+    simulatedDurationSeconds: ceilSimulationTime(simulatedDurationSeconds),
     collisionEvents,
     primaryCollisionKinematics,
     participantKinematics,
@@ -2876,9 +2948,13 @@ export function applyPhysicsSimulation(
   const result: AccidentReconstruction = {
     ...source,
     collisionPoint: { ...source.collisionPoint },
-    durationSeconds: Number(
-      Math.max(source.durationSeconds, simulatedDurationSeconds).toFixed(2),
-    ),
+    durationSeconds:
+      ceilSimulationTime(
+        Math.max(
+          source.durationSeconds,
+          simulatedDurationSeconds,
+        ),
+      ),
     vehicles: updatedVehicles,
     sceneObjects: source.sceneObjects.map((object) => ({
       ...object,

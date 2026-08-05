@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "composite": false,
+    "incremental": false,
+    "noEmit": true,
+    "tsBuildInfoFile": null,
+    "types": [
+      "vite/client",
+      "geojson"
+    ]
+  },
+  "files": [
+    "src/utils/reconstructionPhysicsFoundation.ts",
+    "src/services/reconstructionPhysicsService.ts",
+    "src/components/reconstruction/AccidentReconstructionEditor.tsx"
+  ],
+  "include": [],
+  "exclude": []
+}
