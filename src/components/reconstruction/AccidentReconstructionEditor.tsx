@@ -340,7 +340,9 @@ function validateReconstruction(
     const invalidPoint = participant.pathPoints.some(
       (point) =>
         point.timeSeconds < 0 ||
-        point.timeSeconds > reconstruction.durationSeconds,
+        point.timeSeconds >
+          reconstruction.durationSeconds +
+            0.0001,
     );
 
     if (invalidPoint) {
