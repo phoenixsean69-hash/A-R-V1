@@ -12,6 +12,7 @@ import {
 import {
   usesGeneratedRoad,
   type AccidentReconstruction,
+  type ParticipantImpactResponse,
   type ReconstructionPosition,
   type ReconstructionSceneObject,
   type ReconstructionVehicle,
@@ -24,6 +25,10 @@ import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeom
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
 import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
+import {
+  getParticipantImpactVisualPose,
+  indexEarliestParticipantImpactResponses,
+} from "../../utils/reconstructionImpactVisualization";
 import {
   reconstructionHeadingToThreeYawRadians,
   reconstructionPositionToThreeVector,
@@ -447,189 +452,74 @@ function addGeneratedRoad(
   }
 }
 
+/*
+ * [RoadSafe:ImpulseDrivenImpactVisualizationV1]
+ */
 function applyImpactPose(
   entry: ParticipantRenderEntry,
   currentTime: number,
-  impactTime: number | undefined,
-  speedKmh: number,
+  response:
+    ParticipantImpactResponse | undefined,
+  participantHeadingDegrees: number,
   enabled: boolean,
 ): void {
-  const root = entry.modelRoot;
+  const root =
+    entry.modelRoot;
 
-  root.position.set(0, 0, 0);
-  root.rotation.set(0, 0, 0);
-  root.scale.set(1, 1, 1);
+  root.position.set(
+    0,
+    0,
+    0,
+  );
+
+  root.rotation.set(
+    0,
+    0,
+    0,
+  );
+
+  root.scale.set(
+    1,
+    1,
+    1,
+  );
 
   if (
     !enabled ||
-    impactTime === undefined ||
-    currentTime < impactTime
+    !response
   ) {
     return;
   }
 
-  const elapsed = currentTime - impactTime;
-  const severity = clamp(speedKmh / 70, 0.2, 1);
-
-  const human = [
-    "Pedestrian",
-    "Officer",
-    "Witness",
-  ].includes(entry.participant.type);
-
-  const twoWheeler = [
-    "Bicycle",
-    "Motorcycle",
-  ].includes(entry.participant.type);
-
-  if (human) {
-    const launchVelocity = clamp(
-      3.6 + speedKmh / 25,
-      4,
-      7.2,
+  const dimensions =
+    participantDimensions(
+      entry.participant,
     );
 
-    const flightDuration =
-      (2 * launchVelocity) / 9.81;
-
-    const flightRotationX =
-      Math.PI * (1.5 + severity * 1.1);
-
-    const flightRotationZ =
-      Math.PI * (0.55 + severity * 0.45);
-
-    if (elapsed <= flightDuration) {
-      const progress = clamp(
-        elapsed / flightDuration,
-        0,
-        1,
-      );
-
-      root.position.y = Math.max(
-        0,
-        launchVelocity * elapsed -
-          4.905 * elapsed * elapsed,
-      );
-
-      root.rotation.x =
-        flightRotationX * progress;
-
-      root.rotation.z =
-        flightRotationZ * progress;
-
-      return;
-    }
-
-    /*
-     * Continue from the landing orientation rather than snapping from several
-     * radians of airborne rotation directly to PI / 2.
-     */
-    const settleProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed - flightDuration,
-        0,
-        0.45,
-      );
-
-    root.position.y =
-      THREE.MathUtils.lerp(
-        0,
-        0.12,
-        settleProgress,
-      );
-
-    root.rotation.x =
-      THREE.MathUtils.lerp(
-        flightRotationX,
-        flightRotationX +
-          Math.PI / 2,
-        settleProgress,
-      );
-
-    root.rotation.z =
-      THREE.MathUtils.lerp(
-        flightRotationZ,
-        flightRotationZ + 0.2,
-        settleProgress,
-      );
-
-    return;
-  }
-
-  if (twoWheeler) {
-    const tipProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed,
-        0,
-        0.9,
-      );
-
-    root.rotation.x =
-      tipProgress *
-      Math.PI *
-      0.45;
-
-    root.rotation.z =
-      tipProgress *
-      severity *
-      1.5;
-
-    const hopDuration = 0.42;
-
-    root.position.y =
-      elapsed < hopDuration
-        ? Math.sin(
-            Math.PI *
-              (elapsed / hopDuration),
-          ) *
-          0.35 *
-          severity
-        : 0;
-
-    return;
-  }
-
-  /*
-   * One suspension compression/rebound cycle is enough for a vehicle impact.
-   * The old repeating sine wave looked like frame jitter because it moved the
-   * model independently of the already-physical post-impact trajectory.
-   */
-  const recoilDuration = 0.52;
-
-  if (elapsed >= recoilDuration) {
-    return;
-  }
-
-  const progress = clamp(
-    elapsed / recoilDuration,
-    0,
-    1,
-  );
-
-  const compression =
-    Math.sin(Math.PI * progress) *
-    (1 - progress * 0.35);
-
-  const rebound =
-    Math.sin(
-      Math.PI * 2 * progress,
-    ) *
-    (1 - progress);
+  const pose =
+    getParticipantImpactVisualPose({
+      response,
+      currentTimeSeconds:
+        currentTime,
+      participantHeadingDegrees,
+      participantHeightMetres:
+        dimensions[1],
+    });
 
   root.position.y =
-    compression *
-    0.11 *
-    severity;
+    pose.verticalMetres;
 
-  root.rotation.z =
-    rebound *
-    0.035 *
-    severity;
-
-  root.rotation.x =
-    -compression *
-    0.025 *
-    severity;
+  root.rotation.set(
+    THREE.MathUtils.degToRad(
+      pose.rotationXDegrees,
+    ),
+    THREE.MathUtils.degToRad(
+      pose.rotationYDegrees,
+    ),
+    THREE.MathUtils.degToRad(
+      pose.rotationZDegrees,
+    ),
+  );
 }
 
 function Reconstruction3DViewer({
@@ -949,18 +839,10 @@ function Reconstruction3DViewer({
     const participantImpact = collisionEvents
       .filter((event) => event.type === "Participant-Participant")
       .sort((left, right) => left.timeSeconds - right.timeSeconds)[0];
-    const impactByParticipant = new Map<string, { time: number; speed: number }>();
-    collisionEvents.forEach((event) => {
-      event.participantIds.forEach((participantId) => {
-        const existing = impactByParticipant.get(participantId);
-        if (!existing || event.timeSeconds < existing.time) {
-          impactByParticipant.set(participantId, {
-            time: event.timeSeconds,
-            speed: event.relativeSpeedKmh,
-          });
-        }
-      });
-    });
+    const impactByParticipant =
+      indexEarliestParticipantImpactResponses(
+        collisionEvents,
+      );
 
     // Point Z and the visible primary marker are authoritative in both views.
     // A physics contact can be reported a few centimetres away because bodies
@@ -1064,9 +946,8 @@ function Reconstruction3DViewer({
         applyImpactPose(
           entry,
           timeRef.current,
-          impact?.time,
-          impact?.speed ??
-            entry.participant.estimatedSpeedKmh,
+          impact,
+          state.rotation,
           effectiveShowPhysics,
         );
         const potholeEffect = getParticipantPotholeEffect(

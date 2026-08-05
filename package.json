@@ -16,7 +16,8 @@
     "playback-core:verify": "node scripts/verify-phase0-canonical-metric-playback-core.mjs && tsc -p tsconfig.phase0.json",
     "playback-views:verify": "node scripts/verify-phase0-step3b2b-visual-playback.mjs && tsc -p tsconfig.phase0.json",
     "playback-authoring:verify": "node scripts/verify-phase0-step3b2c-canonical-speed-authoring.mjs && tsc -p tsconfig.phase0.json",
-    "impact-response:verify": "node scripts/verify-phase0-step4a-impact-response-data.mjs && tsc -p tsconfig.phase0.json"
+    "impact-response:verify": "node scripts/verify-phase0-step4a-impact-response-data.mjs && tsc -p tsconfig.phase0.json",
+    "impact-visuals:verify": "node scripts/verify-phase0-step4b-impact-visualization.mjs && tsc -p tsconfig.phase0.json"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

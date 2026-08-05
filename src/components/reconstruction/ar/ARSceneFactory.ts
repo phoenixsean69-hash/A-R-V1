@@ -9,6 +9,7 @@ import {
 import {
   usesGeneratedRoad,
   type AccidentReconstruction,
+  type ParticipantImpactResponse,
   type ReconstructionPosition,
   type ReconstructionSceneObject,
   type ReconstructionVehicle,
@@ -20,6 +21,10 @@ import {  getParticipantPlaybackPathPoints,
 import { addRealSceneGeometryToThreeScene } from "../../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../../utils/reconstructionSurfaceEffects";
 import { getReconstructionWorldDimensions } from "../../../utils/reconstructionWorldScale";
+import {
+  getParticipantImpactVisualPose,
+  indexEarliestParticipantImpactResponses,
+} from "../../../utils/reconstructionImpactVisualization";
 import {
   reconstructionHeadingToThreeYawRadians,
   reconstructionPositionToThreeVector,
@@ -75,20 +80,6 @@ const PARTICIPANT_COLOURS: Record<string, number> = {
   Orange: 0xea580c,
   Purple: 0x9333ea,
 };
-
-function clamp(
-  value: number,
-  minimum: number,
-  maximum: number,
-): number {
-  return Math.min(
-    maximum,
-    Math.max(
-      minimum,
-      value,
-    ),
-  );
-}
 
 function worldPosition(
   position: ReconstructionPosition,
@@ -773,189 +764,74 @@ function createRoadGuide(
   return group;
 }
 
+/*
+ * [RoadSafe:ImpulseDrivenImpactVisualizationV1]
+ */
 function applyImpactPose(
   entry: ParticipantEntry,
   currentTime: number,
-  impactTime: number | undefined,
-  speedKmh: number,
+  response:
+    ParticipantImpactResponse | undefined,
+  participantHeadingDegrees: number,
   enabled: boolean,
 ): void {
-  const root = entry.modelRoot;
+  const root =
+    entry.modelRoot;
 
-  root.position.set(0, 0, 0);
-  root.rotation.set(0, 0, 0);
-  root.scale.set(1, 1, 1);
+  root.position.set(
+    0,
+    0,
+    0,
+  );
+
+  root.rotation.set(
+    0,
+    0,
+    0,
+  );
+
+  root.scale.set(
+    1,
+    1,
+    1,
+  );
 
   if (
     !enabled ||
-    impactTime === undefined ||
-    currentTime < impactTime
+    !response
   ) {
     return;
   }
 
-  const elapsed = currentTime - impactTime;
-  const severity = clamp(speedKmh / 70, 0.2, 1);
-
-  const human = [
-    "Pedestrian",
-    "Officer",
-    "Witness",
-  ].includes(entry.participant.type);
-
-  const twoWheeler = [
-    "Bicycle",
-    "Motorcycle",
-  ].includes(entry.participant.type);
-
-  if (human) {
-    const launchVelocity = clamp(
-      3.6 + speedKmh / 25,
-      4,
-      7.2,
+  const dimensions =
+    participantDimensions(
+      entry.participant,
     );
 
-    const flightDuration =
-      (2 * launchVelocity) / 9.81;
-
-    const flightRotationX =
-      Math.PI * (1.5 + severity * 1.1);
-
-    const flightRotationZ =
-      Math.PI * (0.55 + severity * 0.45);
-
-    if (elapsed <= flightDuration) {
-      const progress = clamp(
-        elapsed / flightDuration,
-        0,
-        1,
-      );
-
-      root.position.y = Math.max(
-        0,
-        launchVelocity * elapsed -
-          4.905 * elapsed * elapsed,
-      );
-
-      root.rotation.x =
-        flightRotationX * progress;
-
-      root.rotation.z =
-        flightRotationZ * progress;
-
-      return;
-    }
-
-    /*
-     * Continue from the landing orientation rather than snapping from several
-     * radians of airborne rotation directly to PI / 2.
-     */
-    const settleProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed - flightDuration,
-        0,
-        0.45,
-      );
-
-    root.position.y =
-      THREE.MathUtils.lerp(
-        0,
-        0.12,
-        settleProgress,
-      );
-
-    root.rotation.x =
-      THREE.MathUtils.lerp(
-        flightRotationX,
-        flightRotationX +
-          Math.PI / 2,
-        settleProgress,
-      );
-
-    root.rotation.z =
-      THREE.MathUtils.lerp(
-        flightRotationZ,
-        flightRotationZ + 0.2,
-        settleProgress,
-      );
-
-    return;
-  }
-
-  if (twoWheeler) {
-    const tipProgress =
-      THREE.MathUtils.smoothstep(
-        elapsed,
-        0,
-        0.9,
-      );
-
-    root.rotation.x =
-      tipProgress *
-      Math.PI *
-      0.45;
-
-    root.rotation.z =
-      tipProgress *
-      severity *
-      1.5;
-
-    const hopDuration = 0.42;
-
-    root.position.y =
-      elapsed < hopDuration
-        ? Math.sin(
-            Math.PI *
-              (elapsed / hopDuration),
-          ) *
-          0.35 *
-          severity
-        : 0;
-
-    return;
-  }
-
-  /*
-   * One suspension compression/rebound cycle is enough for a vehicle impact.
-   * The old repeating sine wave looked like frame jitter because it moved the
-   * model independently of the already-physical post-impact trajectory.
-   */
-  const recoilDuration = 0.52;
-
-  if (elapsed >= recoilDuration) {
-    return;
-  }
-
-  const progress = clamp(
-    elapsed / recoilDuration,
-    0,
-    1,
-  );
-
-  const compression =
-    Math.sin(Math.PI * progress) *
-    (1 - progress * 0.35);
-
-  const rebound =
-    Math.sin(
-      Math.PI * 2 * progress,
-    ) *
-    (1 - progress);
+  const pose =
+    getParticipantImpactVisualPose({
+      response,
+      currentTimeSeconds:
+        currentTime,
+      participantHeadingDegrees,
+      participantHeightMetres:
+        dimensions[1],
+    });
 
   root.position.y =
-    compression *
-    0.11 *
-    severity;
+    pose.verticalMetres;
 
-  root.rotation.z =
-    rebound *
-    0.035 *
-    severity;
-
-  root.rotation.x =
-    -compression *
-    0.025 *
-    severity;
+  root.rotation.set(
+    THREE.MathUtils.degToRad(
+      pose.rotationXDegrees,
+    ),
+    THREE.MathUtils.degToRad(
+      pose.rotationYDegrees,
+    ),
+    THREE.MathUtils.degToRad(
+      pose.rotationZDegrees,
+    ),
+  );
 }
 
 export function createARReconstructionScene({
@@ -1084,44 +960,9 @@ export function createARReconstructionScene({
     [];
 
   const impactByParticipant =
-    new Map<
-      string,
-      {
-        time: number;
-        speed: number;
-      }
-    >();
-
-  for (
-    const collision
-    of collisionEvents
-  ) {
-    for (
-      const participantId
-      of collision.participantIds
-    ) {
-      const existing =
-        impactByParticipant.get(
-          participantId,
-        );
-
-      if (
-        !existing ||
-        collision.timeSeconds <
-          existing.time
-      ) {
-        impactByParticipant.set(
-          participantId,
-          {
-            time:
-              collision.timeSeconds,
-            speed:
-              collision.relativeSpeedKmh,
-          },
-        );
-      }
-    }
-  }
+    indexEarliestParticipantImpactResponses(
+      collisionEvents,
+    );
 
   let disposed = false;
   let loaded = 0;
@@ -1520,10 +1361,8 @@ export function createARReconstructionScene({
         applyImpactPose(
           entry,
           timeSeconds,
-          impact?.time,
-          impact?.speed ??
-            entry.participant
-              .estimatedSpeedKmh,
+          impact,
+          state.rotation,
           physicsEffects,
         );
 
