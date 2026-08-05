@@ -1,0 +1,657 @@
+﻿=== ROADSAFE FULL-BUILD ERROR CONTEXT ===
+
+Generated: 2026-08-05 15:51:38 +02:00
+Branch: main
+HEAD: 64f18cf
+
+=== PACKAGE VERSIONS ===
+```text
+roadsafe-ar@0.0.0 C:\Users\nooklyweb\Desktop\roadsafe-ar
+Γö£ΓöÇΓöÇ maplibre-gl@5.24.0
+Γö£ΓöÇΓöÇ react-router-dom@7.18.1
+ΓööΓöÇΓöÇ typescript@6.0.3
+```
+
+============================================================
+FILE: src\components\auth\AuthRoutes.tsx
+LINES: 55-115
+```text
+   55 |     </div>
+   56 |   );
+   57 | }
+   58 | 
+   59 | export function RequireAuth() {
+   60 |   const auth = useAuth();
+   61 |   const location = useLocation();
+   62 | 
+   63 |   if (auth.status === "loading") {
+   64 |     return <LoadingScreen />;
+   65 |   }
+   66 | 
+   67 |   if (
+   68 |     auth.status ===
+   69 |     "configuration-error"
+   70 |   ) {
+   71 |     return (
+   72 |       <ConfigurationScreen
+   73 |         message={auth.error}
+   74 |       />
+   75 |     );
+   76 |   }
+   77 | 
+   78 |   if (
+   79 |     auth.status !==
+   80 |       "authenticated" ||
+   81 |     !auth.identity
+   82 |   ) {
+   83 |     return (
+   84 |       <Navigate
+   85 |         to="/login"
+   86 |         replace
+   87 |         state={{
+   88 |           from: `${location.pathname}${location.search}`,
+   89 |         }}
+   90 |       />
+   91 |     );
+   92 |   }
+   93 | 
+   94 |   const mustChangePassword =
+   95 |     auth.identity.user.prefs
+   96 |       ?.mustChangePassword === true;
+   97 | 
+   98 |   if (
+   99 |     mustChangePassword &&
+  100 |     location.pathname !==
+  101 |       "/change-password"
+  102 |   ) {
+  103 |     return (
+  104 |       <Navigate
+  105 |         to="/change-password"
+  106 |         replace
+  107 |       />
+  108 |     );
+  109 |   }
+  110 | 
+  111 |   return <Outlet />;
+  112 | }
+  113 | 
+  114 | export function PublicOnlyRoute({
+  115 |   children,
+```
+
+============================================================
+FILE: src\pages\ChangePasswordPage.tsx
+LINES: 1-145
+```text
+    1 | import {
+    2 |   useState,
+    3 |   type FormEvent,
+    4 | } from "react";
+    5 | import {
+    6 |   Eye,
+    7 |   EyeOff,
+    8 |   KeyRound,
+    9 |   ShieldCheck,
+   10 | } from "lucide-react";
+   11 | import {
+   12 |   Navigate,
+   13 |   useNavigate,
+   14 | } from "react-router-dom";
+   15 | 
+   16 | import { useAuth } from "../context/AuthContext";
+   17 | import { account } from "../lib/appwrite";
+   18 | 
+   19 | function passwordIssue(
+   20 |   password: string,
+   21 | ): string {
+   22 |   if (password.length < 12) {
+   23 |     return "Use at least 12 characters.";
+   24 |   }
+   25 | 
+   26 |   if (!/[A-Z]/.test(password)) {
+   27 |     return "Add at least one uppercase letter.";
+   28 |   }
+   29 | 
+   30 |   if (!/[a-z]/.test(password)) {
+   31 |     return "Add at least one lowercase letter.";
+   32 |   }
+   33 | 
+   34 |   if (!/\d/.test(password)) {
+   35 |     return "Add at least one number.";
+   36 |   }
+   37 | 
+   38 |   if (!/[^A-Za-z0-9]/.test(password)) {
+   39 |     return "Add at least one symbol.";
+   40 |   }
+   41 | 
+   42 |   return "";
+   43 | }
+   44 | 
+   45 | export default function ChangePasswordPage() {
+   46 |   const auth = useAuth();
+   47 |   const navigate = useNavigate();
+   48 | 
+   49 |   const [currentPassword, setCurrentPassword] =
+   50 |     useState("");
+   51 |   const [newPassword, setNewPassword] =
+   52 |     useState("");
+   53 |   const [confirmPassword, setConfirmPassword] =
+   54 |     useState("");
+   55 |   const [showPasswords, setShowPasswords] =
+   56 |     useState(false);
+   57 |   const [submitting, setSubmitting] =
+   58 |     useState(false);
+   59 |   const [error, setError] =
+   60 |     useState("");
+   61 | 
+   62 |   if (!auth.identity) {
+   63 |     return <Navigate to="/login" replace />;
+   64 |   }
+   65 | 
+   66 |   const mustChangePassword =
+   67 |     auth.identity.user.prefs
+   68 |       ?.mustChangePassword === true;
+   69 | 
+   70 |   const submit = async (
+   71 |     event: FormEvent<HTMLFormElement>,
+   72 |   ) => {
+   73 |     event.preventDefault();
+   74 | 
+   75 |     const issue =
+   76 |       passwordIssue(newPassword);
+   77 | 
+   78 |     if (!currentPassword) {
+   79 |       setError(
+   80 |         "Enter the temporary or current password.",
+   81 |       );
+   82 |       return;
+   83 |     }
+   84 | 
+   85 |     if (issue) {
+   86 |       setError(issue);
+   87 |       return;
+   88 |     }
+   89 | 
+   90 |     if (
+   91 |       newPassword !== confirmPassword
+   92 |     ) {
+   93 |       setError(
+   94 |         "The new passwords do not match.",
+   95 |       );
+   96 |       return;
+   97 |     }
+   98 | 
+   99 |     if (
+  100 |       newPassword === currentPassword
+  101 |     ) {
+  102 |       setError(
+  103 |         "The new password must be different from the temporary password.",
+  104 |       );
+  105 |       return;
+  106 |     }
+  107 | 
+  108 |     setSubmitting(true);
+  109 |     setError("");
+  110 | 
+  111 |     try {
+  112 |       await account.updatePassword({
+  113 |         password: newPassword,
+  114 |         oldPassword: currentPassword,
+  115 |       });
+  116 | 
+  117 |       await account.updatePrefs({
+  118 |         prefs: {
+  119 |           ...auth.identity.user.prefs,
+  120 |           mustChangePassword: false,
+  121 |           passwordChangedAt:
+  122 |             new Date().toISOString(),
+  123 |         },
+  124 |       });
+  125 | 
+  126 |       await auth.refresh();
+  127 |       navigate("/", {
+  128 |         replace: true,
+  129 |       });
+  130 |     } catch (requestError) {
+  131 |       setError(
+  132 |         requestError instanceof Error
+  133 |           ? requestError.message
+  134 |           : "The password could not be changed.",
+  135 |       );
+  136 |     } finally {
+  137 |       setSubmitting(false);
+  138 |     }
+  139 |   };
+  140 | 
+  141 |   return (
+  142 |     <div className="grid min-h-screen place-items-center bg-[#030714] p-5 text-slate-200">
+  143 |       <section className="ui-panel w-full max-w-xl overflow-hidden">
+  144 |         <header className="border-b border-[#18243f] p-6 text-center">
+  145 |           <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+```
+
+============================================================
+FILE: src\components\cases\RoadLocationMap.tsx
+LINES: 1405-1505
+```text
+ 1405 |           return null;
+ 1406 |         }
+ 1407 |       },
+ 1408 | 
+ 1409 |       focusCoordinate(
+ 1410 |         nextCoordinate: RoadDetectionCoordinate,
+ 1411 |         zoom = 18,
+ 1412 |       ) {
+ 1413 |         mapRef.current?.easeTo({
+ 1414 |           center: [
+ 1415 |             nextCoordinate.longitude,
+ 1416 |             nextCoordinate.latitude,
+ 1417 |           ],
+ 1418 |           zoom,
+ 1419 |           duration: 450,
+ 1420 |         });
+ 1421 |       },
+ 1422 |     }),
+ 1423 |     [],
+ 1424 |   );
+ 1425 | 
+ 1426 |   useEffect(() => {
+ 1427 |     if (
+ 1428 |       !containerRef.current ||
+ 1429 |       mapRef.current
+ 1430 |     ) {
+ 1431 |       return;
+ 1432 |     }
+ 1433 | 
+ 1434 |     const centre:
+ 1435 |       | [number, number]
+ 1436 |       | undefined =
+ 1437 |       coordinateRef.current
+ 1438 |         ? [
+ 1439 |             coordinateRef.current
+ 1440 |               .longitude,
+ 1441 |             coordinateRef.current
+ 1442 |               .latitude,
+ 1443 |           ]
+ 1444 |         : [
+ 1445 |             31.0335,
+ 1446 |             -17.8252,
+ 1447 |           ];
+ 1448 | 
+ 1449 |     const map =
+ 1450 |       new maplibregl.Map({
+ 1451 |         container:
+ 1452 |           containerRef.current,
+ 1453 |         style: getMapStyle(
+ 1454 |           mapModeRef.current,
+ 1455 |         ),
+ 1456 |         center: centre,
+ 1457 |         zoom:
+ 1458 |           coordinateRef.current
+ 1459 |             ? 18
+ 1460 |             : 6,
+ 1461 |         minZoom: 4,
+ 1462 |         maxZoom: 20,
+ 1463 |         preserveDrawingBuffer: true,
+ 1464 |         attributionControl: false,
+ 1465 |       });
+ 1466 | 
+ 1467 |     map.addControl(
+ 1468 |       new maplibregl.NavigationControl(),
+ 1469 |       "top-right",
+ 1470 |     );
+ 1471 |     map.addControl(
+ 1472 |       new maplibregl.AttributionControl({
+ 1473 |         compact: true,
+ 1474 |       }),
+ 1475 |       "bottom-right",
+ 1476 |     );
+ 1477 | 
+ 1478 |     map.on("load", () => {
+ 1479 |       installSourcesAndLayers(map);
+ 1480 |     });
+ 1481 | 
+ 1482 |     map.on("styledata", () => {
+ 1483 |       if (
+ 1484 |         map.isStyleLoaded()
+ 1485 |       ) {
+ 1486 |         installSourcesAndLayers(map);
+ 1487 |       }
+ 1488 |     });
+ 1489 | 
+ 1490 |     map.on("click", (event) => {
+ 1491 |       if (
+ 1492 |         !editableRef.current ||
+ 1493 |         drawingModeRef.current
+ 1494 |       ) {
+ 1495 |         return;
+ 1496 |       }
+ 1497 | 
+ 1498 |       const target =
+ 1499 |         event.originalEvent
+ 1500 |           .target as HTMLElement | null;
+ 1501 | 
+ 1502 |       if (
+ 1503 |         target?.closest(
+ 1504 |           "[data-map-control='true']",
+ 1505 |         )
+```
+
+============================================================
+FILE: src\components\layout\AppShell.tsx
+LINES: 1-55
+```text
+    1 | import {
+    2 |   useEffect,
+    3 |   useMemo,
+    4 |   useState,
+    5 | } from "react";
+    6 | import {
+    7 |   Link,
+    8 |   NavLink,
+    9 |   Outlet,
+   10 |   useLocation,
+   11 | } from "react-router-dom";
+   12 | import {
+   13 |   AppWindow,
+   14 |   BarChart3,
+   15 |   Bell,
+   16 |   Boxes,
+   17 |   Building2,
+   18 |   ChevronDown,
+   19 |   ClipboardList,
+   20 |   FileText,
+   21 |   FolderKanban,
+   22 |   Home,
+   23 |   LogOut,
+   24 |   Map,
+   25 |   Menu,
+   26 |   RadioTower,
+   27 |   Settings,
+   28 |   ShieldCheck,
+   29 |   Video,
+   30 |   X,
+   31 | } from "lucide-react";
+   32 | 
+   33 | import { useAuth } from "../../context/AuthContext";
+   34 | import { WorkspaceDataService } from "../../services/workspaceDataService";
+   35 | import {
+   36 |   isStationRole,
+   37 |   roleLabel,
+   38 | } from "../../types/auth";
+   39 | import { usesGeneratedRoad } from "../../types/reconstruction";
+   40 | 
+   41 | const sharedNavItems = [
+   42 |   {
+   43 |     to: "/cases",
+   44 |     label: "Cases",
+   45 |     icon: FolderKanban,
+   46 |   },
+   47 |   {
+   48 |     to: "/reconstruction",
+   49 |     label: "Reconstructions",
+   50 |     icon: Boxes,
+   51 |   },
+   52 |   {
+   53 |     to: "/scene-map",
+   54 |     label: "Scene Map",
+   55 |     icon: Map,
+```
+
+============================================================
+FILE: src\components\layout\AppShell.tsx
+LINES: 320-430
+```text
+  320 |     ],
+  321 |     [
+  322 |       "Weather",
+  323 |       activeReconstruction?.scene
+  324 |         .weather || "Not configured",
+  325 |     ],
+  326 |     [
+  327 |       activeReconstruction &&
+  328 |       usesGeneratedRoad(
+  329 |         activeReconstruction.scene,
+  330 |       )
+  331 |         ? "Road"
+  332 |         : "Ground",
+  333 |       activeReconstruction
+  334 |         ? usesGeneratedRoad(
+  335 |             activeReconstruction.scene,
+  336 |           )
+  337 |           ? activeReconstruction.scene
+  338 |               .roadSurface
+  339 |           : activeReconstruction.scene
+  340 |               .groundSurface
+  341 |         : "Not configured",
+  342 |     ],
+  343 |   ];
+  344 | 
+  345 |   return (
+  346 |     <div className="roadsafe-shell min-h-screen bg-[#030714] text-slate-200">
+  347 |       <aside
+  348 |         className={`roadsafe-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[214px] flex-col overflow-y-auto overscroll-contain border-r border-[#182849] bg-[#040918] transition-transform duration-150 lg:translate-x-0 ${
+  349 |           mobileOpen
+  350 |             ? "translate-x-0"
+  351 |             : "-translate-x-full"
+  352 |         }`}
+  353 |       >
+  354 |         <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-[#182849] px-4">
+  355 |           <Link
+  356 |             to={homePath}
+  357 |             className="flex min-w-0 items-center gap-3"
+  358 |           >
+  359 |             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#3765a3] bg-[#08142c] text-[#7fb0ff]">
+  360 |               <ShieldCheck
+  361 |                 size={23}
+  362 |                 strokeWidth={1.65}
+  363 |               />
+  364 |             </div>
+  365 | 
+  366 |             <div className="min-w-0">
+  367 |               <p className="truncate text-[15px] font-black tracking-[0.12em] text-slate-100">
+  368 |                 ROADSAFE AR
+  369 |               </p>
+  370 |               <p className="truncate text-[8px] uppercase tracking-[0.13em] text-slate-500">
+  371 |                 {stationClient
+  372 |                   ? "Station Client"
+  373 |                   : "Field Client"}
+  374 |               </p>
+  375 |             </div>
+  376 |           </Link>
+  377 | 
+  378 |           <button
+  379 |             className="ui-icon-button lg:hidden"
+  380 |             onClick={() =>
+  381 |               setMobileOpen(false)
+  382 |             }
+  383 |             aria-label="Close navigation"
+  384 |           >
+  385 |             <X size={17} />
+  386 |           </button>
+  387 |         </div>
+  388 | 
+  389 |         <div className="border-b border-[#182849] px-3 py-3">
+  390 |           <p className="truncate text-[9px] font-bold text-slate-300">
+  391 |             {identity?.stationTeam?.name ??
+  392 |               "No station assigned"}
+  393 |           </p>
+  394 |           <p className="mt-1 truncate text-[8px] uppercase tracking-[0.09em] text-[#6fa8ff]">
+  395 |             {roleLabel(role)}
+  396 |           </p>
+  397 |         </div>
+  398 | 
+  399 |         <nav className="shrink-0 space-y-1 p-2.5">
+  400 |           {navItems.map(
+  401 |             ({
+  402 |               to,
+  403 |               label,
+  404 |               icon: Icon,
+  405 |               end,
+  406 |             }) => (
+  407 |               <NavLink
+  408 |                 key={to}
+  409 |                 to={to}
+  410 |                 end={end}
+  411 |                 onClick={() =>
+  412 |                   setMobileOpen(false)
+  413 |                 }
+  414 |                 className={({
+  415 |                   isActive,
+  416 |                 }) =>
+  417 |                   `flex items-center gap-3 rounded-md px-3 py-2.5 text-[11px] font-semibold transition-colors duration-100 ${
+  418 |                     isActive
+  419 |                       ? "bg-[#0d2448] text-[#8ebcff]"
+  420 |                       : "text-slate-400 hover:bg-[#081122] hover:text-slate-100"
+  421 |                   }`
+  422 |                 }
+  423 |               >
+  424 |                 <Icon
+  425 |                   size={15}
+  426 |                   strokeWidth={1.65}
+  427 |                 />
+  428 |                 <span>{label}</span>
+  429 |               </NavLink>
+  430 |             ),
+```
+
+============================================================
+FILE: src\pages\CaseARReconstructionPage.tsx
+LINES: 1-45
+```text
+    1 | import {
+    2 |   useMemo,
+    3 | } from "react";
+    4 | import {
+    5 |   Link,
+    6 |   useNavigate,
+    7 |   useParams,
+    8 | } from "react-router-dom";
+    9 | import {
+   10 |   AlertTriangle,
+   11 |   ArrowLeft,
+   12 |   ScanLine,
+   13 | } from "lucide-react";
+   14 | 
+   15 | import ARReconstructionViewer from "../components/reconstruction/ar/ARReconstructionViewer";
+   16 | import { AccidentCaseService } from "../services/accidentCaseService";
+   17 | 
+   18 | interface ARLoadResult {
+   19 |   error: string;
+   20 |   accidentCase:
+   21 |     | ReturnType<
+   22 |         typeof AccidentCaseService.getById
+   23 |       >
+   24 |     | null;
+   25 |   reconstruction:
+   26 |     | ReturnType<
+   27 |         typeof AccidentCaseService.getLinkedReconstruction
+   28 |       >
+   29 |     | null;
+   30 | }
+   31 | 
+   32 | function loadARScene(
+   33 |   caseId?: string,
+   34 | ): ARLoadResult {
+   35 |   if (!caseId) {
+   36 |     return {
+   37 |       error:
+   38 |         "No accident case ID was supplied.",
+   39 |       accidentCase: null,
+   40 |       reconstruction: null,
+   41 |     };
+   42 |   }
+   43 | 
+   44 |   const accidentCase =
+   45 |     AccidentCaseService.getById(
+```
+
+============================================================
+=== PREFERENCES TYPE AND MUST-CHANGE-PASSWORD USAGE ===
+
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:94: const mustChangePassword =
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:96: ?.mustChangePassword === true;
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:99: mustChangePassword &&
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\context\AuthContext.tsx:43: team: Models.Team<Models.Preferences>;
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\context\AuthContext.tsx:190: user: Models.User<Models.Preferences>,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\context\AuthContext.tsx:250: user: Models.User<Models.Preferences>,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:66: const mustChangePassword =
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:68: ?.mustChangePassword === true;
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:120: mustChangePassword: false,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:150: {mustChangePassword
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:156: {mustChangePassword
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\OfficerManagementPage.tsx:231: officer.mustChangePassword,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\OfficerManagementPage.tsx:1071: {officer.mustChangePassword
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\SettingsPage.tsx:81: Workspace preferences
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\types\auth.ts:16: user: Models.User<Models.Preferences>;
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\types\auth.ts:18: stationTeam: Models.Team<Models.Preferences> | null;
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\types\officerManagement.ts:25: mustChangePassword: boolean;
+
+============================================================
+=== AUTH IDENTITY DECLARATIONS AND NULL CHECKS ===
+
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:62: if (!auth.identity) {
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:67: auth.identity.user.prefs
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\ChangePasswordPage.tsx:119: ...auth.identity.user.prefs,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:81: !auth.identity
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:95: auth.identity.user.prefs
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:139: auth.identity
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:154: if (!auth.identity) {
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:164: auth.identity.role ===
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:177: auth.identity.role,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:194: if (!auth.identity) {
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\auth\AuthRoutes.tsx:203: switch (auth.identity.role) {
+
+============================================================
+=== MAPLIBRE MAP CREATION CONTEXT ===
+
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\cases\RoadLocationMap.tsx:1463: preserveDrawingBuffer: true,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\cases\RoadLocationMap.tsx:1450: new maplibregl.Map({
+
+============================================================
+=== APPSHELL NAVIGATION ITEM CONTEXT ===
+
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:22: Home,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:241: label: "Field Home",
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:224: end: true,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:243: end: true,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:8: NavLink,
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:407: <NavLink
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:429: </NavLink>
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:216: const navItems = useMemo(
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\components\layout\AppShell.tsx:400: {navItems.map(
+
+============================================================
+=== UNUSED SCANLINE CONTEXT ===
+
+C:\Users\nooklyweb\Desktop\roadsafe-ar\src\pages\CaseARReconstructionPage.tsx:12: ScanLine,
+
+=== CURRENT GIT STATUS ===
+```text
+ M package.json
+ M src/components/fieldPlacement/FieldSceneLivePreview.tsx
+ M src/components/reconstruction/AccidentReconstructionEditor.tsx
+ M src/components/reconstruction/ForensicScenePreview.tsx
+ M src/components/reconstruction/ParticipantPathPanel.tsx
+ M src/components/reconstruction/Reconstruction3DViewer.tsx
+ M src/components/reconstruction/ar/ARSceneFactory.ts
+ M src/services/reconstructionPhysicsService.ts
+ M src/utils/reconstructionCanvasRenderer.ts
+ M src/utils/reconstructionGeometry.ts
+ M src/utils/reconstructionMotionKinematics.ts
+ M src/utils/reconstructionPlaybackDom.ts
+?? phase0-full-build-check.txt
+?? phase0-full-build-error-context.txt
+?? phase0-step3b2b-visual-callsite-context.txt
+?? phase0-step3b2c-ParticipantPathPanel.txt
+?? scripts/apply-phase0-step3b2a-canonical-metric-core.mjs
+?? scripts/apply-phase0-step3b2b-visual-playback.mjs
+?? scripts/apply-phase0-step3b2c-canonical-speed-authoring.mjs
+?? scripts/extract-phase0-step3b2-core.mjs
+?? scripts/extract-phase0-step3b2b-visual-callsite-context.mjs
+?? scripts/repair-phase0-step3b2a-line-endings.mjs
+?? scripts/verify-phase0-canonical-metric-playback-core.mjs
+?? scripts/verify-phase0-step3b2b-visual-playback.mjs
+?? scripts/verify-phase0-step3b2c-canonical-speed-authoring.mjs
+```
+

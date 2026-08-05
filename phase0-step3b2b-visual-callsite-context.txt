@@ -1,0 +1,1367 @@
+=== PHASE 0 STEP 3B2B · VISUAL CALL-SITE CONTEXT ===
+
+Generated: 2026-08-05T13:17:41.453Z
+Files scanned: 7
+
+============================================================
+FILE: src/components/fieldPlacement/FieldSceneLivePreview.tsx
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 11
+```ts
+import { getParticipantStateAtTime } from "../../utils/reconstructionGeometry";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 177-177
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(participant, currentTimeSeconds)
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 176-197
+- FieldSceneLivePreview · lines 76-244
+
+FILE: src/components/fieldPlacement/FieldSceneLivePreview.tsx
+LINES: 142-212
+```text
+  142 |                 points={processedTraceScenePoints.map((point) => `${point.x},${point.y}`).join(" ")}
+  143 |                 fill="#0ea5e9"
+  144 |                 fillOpacity={0.15}
+  145 |                 stroke="#0284c7"
+  146 |                 strokeWidth={0.75}
+  147 |                 vectorEffect="non-scaling-stroke"
+  148 |               />
+  149 |             ) : (
+  150 |               <polyline
+  151 |                 points={processedTraceScenePoints.map((point) => `${point.x},${point.y}`).join(" ")}
+  152 |                 fill="none"
+  153 |                 stroke="#0284c7"
+  154 |                 strokeWidth={0.85}
+  155 |                 strokeLinecap="round"
+  156 |                 strokeLinejoin="round"
+  157 |                 vectorEffect="non-scaling-stroke"
+  158 |               />
+  159 |             )
+  160 |           )}
+  161 |         </svg>
+  162 | 
+  163 |         {reconstruction.sceneObjects
+  164 |           .filter((object) => object.visible)
+  165 |           .map((object) => (
+  166 |             <div
+  167 |               key={object.id}
+  168 |               className="absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-slate-950/80 px-2 py-1 text-[9px] font-black text-white shadow"
+  169 |               style={{ left: `${object.position.x}%`, top: `${object.position.y}%` }}
+  170 |               title={object.label}
+  171 |             >
+  172 |               {object.type === "Pothole" ? "◉" : object.type === "Skid Mark" ? "〰" : "◆"}
+  173 |             </div>
+  174 |           ))}
+  175 | 
+  176 |         {reconstruction.vehicles.map((participant) => {
+  177 |           const state = getParticipantStateAtTime(participant, currentTimeSeconds);
+  178 |           return (
+  179 |             <div
+  180 |               key={`${participant.id}-field-position`}
+  181 |               className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+  182 |               style={{
+  183 |                 left: `${state.position.x}%`,
+  184 |                 top: `${state.position.y}%`,
+  185 |                 transform: `translate(-50%, -50%) rotate(${state.rotation}deg)`,
+  186 |               }}
+  187 |               title={`${participant.name} at ${currentTimeSeconds.toFixed(1)}s`}
+  188 |             >
+  189 |               <div
+  190 |                 className="flex h-7 min-w-7 items-center justify-center rounded-md border-2 border-white px-1 text-[8px] font-black text-white shadow-lg"
+  191 |                 style={{ backgroundColor: COLOURS[participant.colour] ?? "#2563eb" }}
+  192 |               >
+  193 |                 {participant.name.slice(0, 8)}
+  194 |               </div>
+  195 |             </div>
+  196 |           );
+  197 |         })}
+  198 | 
+  199 |         {currentTargetPosition && (
+  200 |           <div
+  201 |             className="absolute z-40 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-300 bg-amber-500/50 shadow"
+  202 |             style={{
+  203 |               left: `${currentTargetPosition.x}%`,
+  204 |               top: `${currentTargetPosition.y}%`,
+  205 |             }}
+  206 |             title="Current stored target position"
+  207 |           />
+  208 |         )}
+  209 | 
+  210 |         {liveScenePosition && (
+  211 |           <div
+  212 |             className="absolute z-50 -translate-x-1/2 -translate-y-1/2"
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/fieldPlacement/FieldSceneLivePreview.tsx
+LINES: 176-197
+```text
+  176 |         {reconstruction.vehicles.map((participant) => {
+  177 |           const state = getParticipantStateAtTime(participant, currentTimeSeconds);
+  178 |           return (
+  179 |             <div
+  180 |               key={`${participant.id}-field-position`}
+  181 |               className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+  182 |               style={{
+  183 |                 left: `${state.position.x}%`,
+  184 |                 top: `${state.position.y}%`,
+  185 |                 transform: `translate(-50%, -50%) rotate(${state.rotation}deg)`,
+  186 |               }}
+  187 |               title={`${participant.name} at ${currentTimeSeconds.toFixed(1)}s`}
+  188 |             >
+  189 |               <div
+  190 |                 className="flex h-7 min-w-7 items-center justify-center rounded-md border-2 border-white px-1 text-[8px] font-black text-white shadow-lg"
+  191 |                 style={{ backgroundColor: COLOURS[participant.colour] ?? "#2563eb" }}
+  192 |               >
+  193 |                 {participant.name.slice(0, 8)}
+  194 |               </div>
+  195 |             </div>
+  196 |           );
+  197 |         })}
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+CALL COUNT: 3
+
+=== RELEVANT IMPORTS ===
+
+LINE: 1
+```ts
+import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
+```
+
+LINE: 104
+```ts
+import {
+  buildSmoothSvgPath,
+  clamp,  getParticipantPlaybackPathPoints,
+
+  getParticipantStateAtTime,
+  getPointsCentroid,
+  getReconstructionImpactEffectState,
+  isPhysicsGeneratedPathPoint,
+  isTraceableSceneObjectType,
+  shiftSceneObjectTrace,
+  sortMovementPathPoints,
+  syncLegacyParticipantFields,
+} from "../../utils/reconstructionGeometry";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 1300-1300
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(selectedParticipant, currentTime)
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 1298-1301
+- AccidentReconstructionEditor · lines 920-5231
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 1265-1335
+```text
+ 1265 |   useEffect(() => {
+ 1266 |     return () => {
+ 1267 |       if (saveMessageTimerRef.current !== null) {
+ 1268 |         window.clearTimeout(saveMessageTimerRef.current);
+ 1269 |       }
+ 1270 | 
+ 1271 |       if (animationFrameRef.current !== null) {
+ 1272 |         window.cancelAnimationFrame(animationFrameRef.current);
+ 1273 |       }
+ 1274 | 
+ 1275 |       if (pointerMoveFrameRef.current !== null) {
+ 1276 |         window.cancelAnimationFrame(pointerMoveFrameRef.current);
+ 1277 |       }
+ 1278 |     };
+ 1279 |   }, []);
+ 1280 | 
+ 1281 |   const selectedParticipant = useMemo(
+ 1282 |     () =>
+ 1283 |       reconstruction.vehicles.find(
+ 1284 |         (participant) => participant.id === selectedParticipantId,
+ 1285 |       ) ?? null,
+ 1286 |     [reconstruction.vehicles, selectedParticipantId],
+ 1287 |   );
+ 1288 | 
+ 1289 |   const selectedSceneObject = useMemo(
+ 1290 |     () =>
+ 1291 |       reconstruction.sceneObjects.find(
+ 1292 |         (object) => object.id === selectedSceneObjectId,
+ 1293 |       ) ?? null,
+ 1294 |     [reconstruction.sceneObjects, selectedSceneObjectId],
+ 1295 |   );
+ 1296 | 
+ 1297 |   const selectedParticipantState = useMemo(
+ 1298 |     () =>
+ 1299 |       selectedParticipant
+ 1300 |         ? getParticipantStateAtTime(selectedParticipant, currentTime)
+ 1301 |         : null,
+ 1302 |     [currentTime, selectedParticipant],
+ 1303 |   );
+ 1304 | 
+ 1305 |   const selectedPhysicsEvent = useMemo(() => {
+ 1306 |     const events = reconstruction.lastPhysicsSimulation?.collisionEvents ?? [];
+ 1307 |     if (selectedParticipantId) {
+ 1308 |       return [...events]
+ 1309 |         .reverse()
+ 1310 |         .find((event) => event.participantIds.includes(selectedParticipantId)) ?? null;
+ 1311 |     }
+ 1312 |     return events[events.length - 1] ?? null;
+ 1313 |   }, [reconstruction.lastPhysicsSimulation, selectedParticipantId]);
+ 1314 | 
+ 1315 |   const selectedParticipantKinematics = useMemo(() => {
+ 1316 |     const participants = selectedPhysicsEvent?.kinematics?.participants ?? [];
+ 1317 | 
+ 1318 |     if (selectedParticipantId) {
+ 1319 |       return (
+ 1320 |         participants.find(
+ 1321 |           (participant) => participant.participantId === selectedParticipantId,
+ 1322 |         ) ?? null
+ 1323 |       );
+ 1324 |     }
+ 1325 | 
+ 1326 |     return participants[0] ?? null;
+ 1327 |   }, [selectedParticipantId, selectedPhysicsEvent]);
+ 1328 | 
+ 1329 |   const compactCollisionSetup = useMemo(
+ 1330 |     () => ({
+ 1331 |       source: "Manual" as const,
+ 1332 |       confirmed: false,
+ 1333 |       locked: false,
+ 1334 |       toleranceMetres: 2,
+ 1335 |       notes: "",
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 1298-1301
+```text
+ 1298 |     () =>
+ 1299 |       selectedParticipant
+ 1300 |         ? getParticipantStateAtTime(selectedParticipant, currentTime)
+ 1301 |         : null,
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+=== CALL 2 ===
+
+CALL LINES: 4044-4044
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(participant, currentTime)
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 4043-4254
+- AccidentReconstructionEditor · lines 920-5231
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 4009-4079
+```text
+ 4009 |                 onPointerDown={handleEvidencePointerDown}
+ 4010 |               />
+ 4011 | 
+ 4012 |               {selectedSceneObject?.tracePoints &&
+ 4013 |                 selectedSceneObject.tracePoints.length >= 2 &&
+ 4014 |                 getEditableTracePointIndices(
+ 4015 |                   selectedSceneObject.tracePoints.length,
+ 4016 |                 ).map((pointIndex) => {
+ 4017 |                   const point = selectedSceneObject.tracePoints?.[pointIndex];
+ 4018 |                   if (!point) return null;
+ 4019 | 
+ 4020 |                   return (
+ 4021 |                     <button
+ 4022 |                       key={`${selectedSceneObject.id}-trace-${pointIndex}`}
+ 4023 |                       type="button"
+ 4024 |                       data-scene-interactive="true"
+ 4025 |                       onPointerDown={(event) => {
+ 4026 |                         event.preventDefault();
+ 4027 |                         event.stopPropagation();
+ 4028 |                         if (activeWorkspaceTool === "Move") {
+ 4029 |                           setDragState({
+ 4030 |                             kind: "scene-object-trace-point",
+ 4031 |                             objectId: selectedSceneObject.id,
+ 4032 |                             pointIndex,
+ 4033 |                           });
+ 4034 |                         }
+ 4035 |                       }}
+ 4036 |                       className="absolute z-30 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-purple-500 shadow"
+ 4037 |                       style={{ left: `${point.x}%`, top: `${point.y}%` }}
+ 4038 |                       title={`Curve point ${pointIndex + 1}`}
+ 4039 |                     />
+ 4040 |                   );
+ 4041 |                 })}
+ 4042 | 
+ 4043 |               {reconstruction.vehicles.map((participant, participantIndex) => {
+ 4044 |                 const state = getParticipantStateAtTime(participant, currentTime);
+ 4045 |                 const pathPoints = sortMovementPathPoints(participant.pathPoints);
+ 4046 |                 const { path, skidPath } = getParticipantPathGeometry(participant);
+ 4047 |                 const activeAction = pathPoints.find((point) => point.id === state.activePointId)?.action;
+ 4048 |                 const vectorLength = Math.min(14, 3 + state.speedKmh / 8);
+ 4049 |                 const vectorRadians = (state.rotation * Math.PI) / 180;
+ 4050 |                 const vectorEnd = {
+ 4051 |                   x: clamp(
+ 4052 |                     state.position.x + Math.cos(vectorRadians) * vectorLength,
+ 4053 |                     0,
+ 4054 |                     100,
+ 4055 |                   ),
+ 4056 |                   y: clamp(
+ 4057 |                     state.position.y + Math.sin(vectorRadians) * vectorLength,
+ 4058 |                     0,
+ 4059 |                     100,
+ 4060 |                   ),
+ 4061 |                 };
+ 4062 |                 const participantWasInImpact =
+ 4063 |                   impactEffect.participantIds.includes(
+ 4064 |                     participant.id,
+ 4065 |                   );
+ 4066 | 
+ 4067 |                 const impactEnvelope =
+ 4068 |                   impactEffect.active &&
+ 4069 |                   participantWasInImpact
+ 4070 |                     ? Math.max(
+ 4071 |                         0,
+ 4072 |                         1 -
+ 4073 |                           impactEffect.progress /
+ 4074 |                             0.34,
+ 4075 |                       ) *
+ 4076 |                       impactEffect.intensity
+ 4077 |                     : 0;
+ 4078 | 
+ 4079 |                 const rotationShake =
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 4043-4098
+```text
+ 4043 |               {reconstruction.vehicles.map((participant, participantIndex) => {
+ 4044 |                 const state = getParticipantStateAtTime(participant, currentTime);
+ 4045 |                 const pathPoints = sortMovementPathPoints(participant.pathPoints);
+ 4046 |                 const { path, skidPath } = getParticipantPathGeometry(participant);
+ 4047 |                 const activeAction = pathPoints.find((point) => point.id === state.activePointId)?.action;
+ 4048 |                 const vectorLength = Math.min(14, 3 + state.speedKmh / 8);
+ 4049 |                 const vectorRadians = (state.rotation * Math.PI) / 180;
+ 4050 |                 const vectorEnd = {
+ 4051 |                   x: clamp(
+ 4052 |                     state.position.x + Math.cos(vectorRadians) * vectorLength,
+ 4053 |                     0,
+ 4054 |                     100,
+ 4055 |                   ),
+ 4056 |                   y: clamp(
+ 4057 |                     state.position.y + Math.sin(vectorRadians) * vectorLength,
+ 4058 |                     0,
+ 4059 |                     100,
+ 4060 |                   ),
+ 4061 |                 };
+ 4062 |                 const participantWasInImpact =
+ 4063 |                   impactEffect.participantIds.includes(
+ 4064 |                     participant.id,
+ 4065 |                   );
+ 4066 | 
+ 4067 |                 const impactEnvelope =
+ 4068 |                   impactEffect.active &&
+ 4069 |                   participantWasInImpact
+ 4070 |                     ? Math.max(
+ 4071 |                         0,
+ 4072 |                         1 -
+ 4073 |                           impactEffect.progress /
+ 4074 |                             0.34,
+ 4075 |                       ) *
+ 4076 |                       impactEffect.intensity
+ 4077 |                     : 0;
+ 4078 | 
+ 4079 |                 const rotationShake =
+ 4080 |                   Math.sin(
+ 4081 |                     impactEffect.progress *
+ 4082 |                       Math.PI *
+ 4083 |                       3 +
+ 4084 |                       participantIndex *
+ 4085 |                         0.18,
+ 4086 |                   ) *
+ 4087 |                   impactEnvelope *
+ 4088 |                   1.25;
+ 4089 | 
+ 4090 |                 /*
+ 4091 |                  * Position is controlled only by the reconstruction path.
+ 4092 |                  * Collision emphasis is rotational plus the independent impact
+ 4093 |                  * overlay, so React rerenders cannot overwrite the native-frame
+ 4094 |                  * DOM path with a second translated body position.
+ 4095 |                  */
+ 4096 |                 const shakeX = 0;
+ 4097 |                 const shakeY = 0;
+ 4098 | 
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+=== CALL 3 ===
+
+CALL LINES: 4311-4314
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(
+                        participant,
+                        currentTime,
+                      )
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 4310-4346
+- AccidentReconstructionEditor · lines 920-5231
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 4276-4349
+```text
+ 4276 | 
+ 4277 |               <div className="reconstruction-workspace__participant-roster">
+ 4278 |                 <div className="reconstruction-workspace__context-title">
+ 4279 |                   <Activity size={13} />
+ 4280 |                   Participants
+ 4281 |                 </div>
+ 4282 | 
+ 4283 |                 <div className="reconstruction-workspace__participant-add">
+ 4284 |                   <select
+ 4285 |                     value={newParticipantType}
+ 4286 |                     onChange={(event) =>
+ 4287 |                       setNewParticipantType(
+ 4288 |                         event.target.value as ReconstructionVehicleType,
+ 4289 |                       )
+ 4290 |                     }
+ 4291 |                     aria-label="Participant type"
+ 4292 |                   >
+ 4293 |                     {PARTICIPANT_TYPES.map((type) => (
+ 4294 |                       <option key={type} value={type}>
+ 4295 |                         {type}
+ 4296 |                       </option>
+ 4297 |                     ))}
+ 4298 |                   </select>
+ 4299 |                   <button type="button" onClick={handleAddParticipant}>
+ 4300 |                     Add
+ 4301 |                   </button>
+ 4302 |                 </div>
+ 4303 | 
+ 4304 |                 <div className="reconstruction-workspace__participant-list">
+ 4305 |                   {reconstruction.vehicles.length === 0 ? (
+ 4306 |                     <div className="reconstruction-workspace__empty-properties">
+ 4307 |                       Add the first participant to begin plotting the reconstruction.
+ 4308 |                     </div>
+ 4309 |                   ) : (
+ 4310 |                     reconstruction.vehicles.map((participant) => {
+ 4311 |                       const participantState = getParticipantStateAtTime(
+ 4312 |                         participant,
+ 4313 |                         currentTime,
+ 4314 |                       );
+ 4315 | 
+ 4316 |                       return (
+ 4317 |                         <button
+ 4318 |                           key={participant.id}
+ 4319 |                           type="button"
+ 4320 |                           onClick={() => handleSelectParticipant(participant.id)}
+ 4321 |                           className={
+ 4322 |                             selectedParticipantId === participant.id
+ 4323 |                               ? "is-active"
+ 4324 |                               : ""
+ 4325 |                           }
+ 4326 |                         >
+ 4327 |                           <span
+ 4328 |                             className="reconstruction-workspace__participant-swatch"
+ 4329 |                             style={{
+ 4330 |                               backgroundColor: getParticipantColour(
+ 4331 |                                 participant.colour,
+ 4332 |                               ),
+ 4333 |                             }}
+ 4334 |                           />
+ 4335 |                           <span className="reconstruction-workspace__participant-copy">
+ 4336 |                             <strong>{participant.name}</strong>
+ 4337 |                             <small>
+ 4338 |                               {participant.type} · {participantState.speedKmh.toFixed(1)} km/h
+ 4339 |                             </small>
+ 4340 |                           </span>
+ 4341 |                           <span className="reconstruction-workspace__participant-points">
+ 4342 |                             {getVisibleParticipantControlPoints(participant.pathPoints).length} route pts
+ 4343 |                           </span>
+ 4344 |                         </button>
+ 4345 |                       );
+ 4346 |                     })
+ 4347 |                   )}
+ 4348 |                 </div>
+ 4349 |               </div>
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/AccidentReconstructionEditor.tsx
+LINES: 4310-4346
+```text
+ 4310 |                     reconstruction.vehicles.map((participant) => {
+ 4311 |                       const participantState = getParticipantStateAtTime(
+ 4312 |                         participant,
+ 4313 |                         currentTime,
+ 4314 |                       );
+ 4315 | 
+ 4316 |                       return (
+ 4317 |                         <button
+ 4318 |                           key={participant.id}
+ 4319 |                           type="button"
+ 4320 |                           onClick={() => handleSelectParticipant(participant.id)}
+ 4321 |                           className={
+ 4322 |                             selectedParticipantId === participant.id
+ 4323 |                               ? "is-active"
+ 4324 |                               : ""
+ 4325 |                           }
+ 4326 |                         >
+ 4327 |                           <span
+ 4328 |                             className="reconstruction-workspace__participant-swatch"
+ 4329 |                             style={{
+ 4330 |                               backgroundColor: getParticipantColour(
+ 4331 |                                 participant.colour,
+ 4332 |                               ),
+ 4333 |                             }}
+ 4334 |                           />
+ 4335 |                           <span className="reconstruction-workspace__participant-copy">
+ 4336 |                             <strong>{participant.name}</strong>
+ 4337 |                             <small>
+ 4338 |                               {participant.type} · {participantState.speedKmh.toFixed(1)} km/h
+ 4339 |                             </small>
+ 4340 |                           </span>
+ 4341 |                           <span className="reconstruction-workspace__participant-points">
+ 4342 |                             {getVisibleParticipantControlPoints(participant.pathPoints).length} route pts
+ 4343 |                           </span>
+ 4344 |                         </button>
+ 4345 |                       );
+ 4346 |                     })
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/components/reconstruction/ar/ARSceneFactory.ts
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 16
+```ts
+import {  getParticipantPlaybackPathPoints,
+
+  getParticipantStateAtTime,
+  isPhysicsGeneratedPathPoint,} from "../../../utils/reconstructionGeometry";
+```
+
+LINE: 22
+```ts
+import { getReconstructionWorldDimensions } from "../../../utils/reconstructionWorldScale";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 1493-1496
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(
+            entry.participant,
+            timeSeconds,
+          )
+```
+
+ANCESTOR FUNCTIONS:
+- update · lines 1484-1556
+- createARReconstructionScene · lines 961-1582
+
+FILE: src/components/reconstruction/ar/ARSceneFactory.ts
+LINES: 1458-1531
+```text
+ 1458 |               measurement.start,
+ 1459 |               width,
+ 1460 |               height,
+ 1461 |               0.08,
+ 1462 |             ),
+ 1463 |             worldPosition(
+ 1464 |               measurement.end,
+ 1465 |               width,
+ 1466 |               height,
+ 1467 |               0.08,
+ 1468 |             ),
+ 1469 |           ]),
+ 1470 |         new THREE.LineDashedMaterial({
+ 1471 |           color: 0x38bdf8,
+ 1472 |           dashSize: 0.35,
+ 1473 |           gapSize: 0.2,
+ 1474 |         }),
+ 1475 |       );
+ 1476 | 
+ 1477 |     line.computeLineDistances();
+ 1478 |     evidenceGroup.add(line);
+ 1479 |   }
+ 1480 | 
+ 1481 |   const runtime: ARSceneRuntime = {
+ 1482 |     root,
+ 1483 | 
+ 1484 |     update(
+ 1485 |       timeSeconds,
+ 1486 |       physicsEffects,
+ 1487 |     ) {
+ 1488 |       for (
+ 1489 |         const entry
+ 1490 |         of participantEntries.values()
+ 1491 |       ) {
+ 1492 |         const state =
+ 1493 |           getParticipantStateAtTime(
+ 1494 |             entry.participant,
+ 1495 |             timeSeconds,
+ 1496 |           );
+ 1497 | 
+ 1498 |         entry.holder.position.copy(
+ 1499 |           worldPosition(
+ 1500 |             state.position,
+ 1501 |             width,
+ 1502 |             height,
+ 1503 |           ),
+ 1504 |         );
+ 1505 | 
+ 1506 |         entry.holder.rotation.set(
+ 1507 |           0,
+ 1508 |           reconstructionHeadingToThreeYawRadians(
+ 1509 |             state.rotation,
+ 1510 |           ),
+ 1511 |           0,
+ 1512 |         );
+ 1513 | 
+ 1514 |         const impact =
+ 1515 |           impactByParticipant.get(
+ 1516 |             entry.participant.id,
+ 1517 |           );
+ 1518 | 
+ 1519 |         applyImpactPose(
+ 1520 |           entry,
+ 1521 |           timeSeconds,
+ 1522 |           impact?.time,
+ 1523 |           impact?.speed ??
+ 1524 |             entry.participant
+ 1525 |               .estimatedSpeedKmh,
+ 1526 |           physicsEffects,
+ 1527 |         );
+ 1528 | 
+ 1529 |         const potholeEffect =
+ 1530 |           getParticipantPotholeEffect(
+ 1531 |             reconstruction,
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/ar/ARSceneFactory.ts
+LINES: 1484-1539
+```text
+ 1484 |     update(
+ 1485 |       timeSeconds,
+ 1486 |       physicsEffects,
+ 1487 |     ) {
+ 1488 |       for (
+ 1489 |         const entry
+ 1490 |         of participantEntries.values()
+ 1491 |       ) {
+ 1492 |         const state =
+ 1493 |           getParticipantStateAtTime(
+ 1494 |             entry.participant,
+ 1495 |             timeSeconds,
+ 1496 |           );
+ 1497 | 
+ 1498 |         entry.holder.position.copy(
+ 1499 |           worldPosition(
+ 1500 |             state.position,
+ 1501 |             width,
+ 1502 |             height,
+ 1503 |           ),
+ 1504 |         );
+ 1505 | 
+ 1506 |         entry.holder.rotation.set(
+ 1507 |           0,
+ 1508 |           reconstructionHeadingToThreeYawRadians(
+ 1509 |             state.rotation,
+ 1510 |           ),
+ 1511 |           0,
+ 1512 |         );
+ 1513 | 
+ 1514 |         const impact =
+ 1515 |           impactByParticipant.get(
+ 1516 |             entry.participant.id,
+ 1517 |           );
+ 1518 | 
+ 1519 |         applyImpactPose(
+ 1520 |           entry,
+ 1521 |           timeSeconds,
+ 1522 |           impact?.time,
+ 1523 |           impact?.speed ??
+ 1524 |             entry.participant
+ 1525 |               .estimatedSpeedKmh,
+ 1526 |           physicsEffects,
+ 1527 |         );
+ 1528 | 
+ 1529 |         const potholeEffect =
+ 1530 |           getParticipantPotholeEffect(
+ 1531 |             reconstruction,
+ 1532 |             entry.participant,
+ 1533 |             state.position,
+ 1534 |             state.speedKmh,
+ 1535 |             timeSeconds,
+ 1536 |           );
+ 1537 | 
+ 1538 |         if (
+ 1539 |           physicsEffects &&
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/components/reconstruction/ForensicScenePreview.tsx
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 9
+```ts
+import { getParticipantStateAtTime } from "../../utils/reconstructionGeometry";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 179-179
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(participant, timeSeconds)
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 178-188
+- ForensicScenePreview · lines 126-203
+
+FILE: src/components/reconstruction/ForensicScenePreview.tsx
+LINES: 144-204
+```text
+  144 |           <feColorMatrix in="noise" type="saturate" values="0" />
+  145 |           <feComponentTransfer><feFuncA type="table" tableValues="0 0.13" /></feComponentTransfer>
+  146 |         </filter>
+  147 |         <pattern id="asphalt" width="10" height="10" patternUnits="userSpaceOnUse">
+  148 |           <rect width="10" height="10" fill={reconstruction.scene.roadSurface === "Wet" ? "#252d34" : "#30343a"} />
+  149 |           <path d="M0 2 L10 0 M0 7 L10 5 M3 10 L10 8" stroke="#4b5054" strokeWidth="0.18" opacity="0.45" />
+  150 |         </pattern>
+  151 |         <radialGradient id="impactGlow">
+  152 |           <stop offset="0" stopColor="#e1454c" stopOpacity="0.85" />
+  153 |           <stop offset="0.35" stopColor="#e1454c" stopOpacity="0.28" />
+  154 |           <stop offset="1" stopColor="#e1454c" stopOpacity="0" />
+  155 |         </radialGradient>
+  156 |       </defs>
+  157 |       <rect width="100" height="100" fill="#1b241f" />
+  158 |       <rect width="100" height="100" filter={`url(#noise-${reconstruction.id})`} opacity="0.4" />
+  159 |       {usesGeneratedRoad(reconstruction.scene) && (
+  160 |         <RoadGeometry reconstruction={reconstruction} />
+  161 |       )}
+  162 |       <g opacity="0.85">
+  163 |         {showPaths && reconstruction.vehicles.map((participant) => (
+  164 |           <polyline
+  165 |             key={participant.id}
+  166 |             points={participant.pathPoints.map((item) => point(item.position)).join(" ")}
+  167 |             fill="none"
+  168 |             stroke={COLOURS[participant.colour] ?? "#4b83d1"}
+  169 |             strokeWidth="0.75"
+  170 |             strokeDasharray="2.3 1.7"
+  171 |             strokeLinecap="round"
+  172 |             strokeLinejoin="round"
+  173 |           />
+  174 |         ))}
+  175 |       </g>
+  176 |       <circle cx={reconstruction.collisionPoint.x} cy={reconstruction.collisionPoint.y} r="7.5" fill="url(#impactGlow)" />
+  177 |       <circle cx={reconstruction.collisionPoint.x} cy={reconstruction.collisionPoint.y} r="1.25" fill="#e1454c" stroke="#ffe5e5" strokeWidth="0.4" />
+  178 |       {reconstruction.vehicles.map((participant) => {
+  179 |         const state = getParticipantStateAtTime(participant, timeSeconds);
+  180 |         return (
+  181 |           <ParticipantGlyph
+  182 |             key={participant.id}
+  183 |             participant={participant}
+  184 |             position={state.position}
+  185 |             rotation={state.rotation}
+  186 |           />
+  187 |         );
+  188 |       })}
+  189 |       {evidence && (
+  190 |         <g transform={`translate(${evidence.position.x} ${evidence.position.y})`}>
+  191 |           <circle r="3.3" fill="#050914" stroke="#79a9f2" strokeWidth="0.65" />
+  192 |           <text y="1.05" textAnchor="middle" fontSize="2.8" fontWeight="700" fill="#dceaff">
+  193 |             E{evidence.evidenceNumber}
+  194 |           </text>
+  195 |         </g>
+  196 |       )}
+  197 |       <rect x="1.5" y="92.5" width="31" height="5.5" rx="1" fill="#050914" fillOpacity="0.82" stroke="#263650" strokeWidth="0.35" />
+  198 |       <text x="3.2" y="96" fontSize="2.3" fill="#aeb9c8">
+  199 |         {sceneEnvironmentLabel(reconstruction.scene)}
+  200 |       </text>
+  201 |     </svg>
+  202 |   );
+  203 | }
+  204 | 
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/ForensicScenePreview.tsx
+LINES: 178-188
+```text
+  178 |       {reconstruction.vehicles.map((participant) => {
+  179 |         const state = getParticipantStateAtTime(participant, timeSeconds);
+  180 |         return (
+  181 |           <ParticipantGlyph
+  182 |             key={participant.id}
+  183 |             participant={participant}
+  184 |             position={state.position}
+  185 |             rotation={state.rotation}
+  186 |           />
+  187 |         );
+  188 |       })}
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/components/reconstruction/Reconstruction3DViewer.tsx
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 19
+```ts
+import {  getParticipantPlaybackPathPoints,
+
+  getParticipantStateAtTime,
+  isPhysicsGeneratedPathPoint,} from "../../utils/reconstructionGeometry";
+```
+
+LINE: 26
+```ts
+import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 1044-1044
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(entry.participant, timeRef.current)
+```
+
+ANCESTOR FUNCTIONS:
+- <callback> · lines 1043-1087
+- animate · lines 1025-1147
+- <callback> · lines 714-1173
+- Reconstruction3DViewer · lines 635-1403
+
+FILE: src/components/reconstruction/Reconstruction3DViewer.tsx
+LINES: 1009-1079
+```text
+ 1009 |       const id = current?.userData.participantId as string | undefined;
+ 1010 |       if (id) onSelectRef.current(id);
+ 1011 |     };
+ 1012 |     renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+ 1013 | 
+ 1014 |     const resizeObserver = new ResizeObserver(() => {
+ 1015 |       const rect = mount.getBoundingClientRect();
+ 1016 |       renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false);
+ 1017 |       camera.aspect = Math.max(1, rect.width) / Math.max(1, rect.height);
+ 1018 |       camera.updateProjectionMatrix();
+ 1019 |     });
+ 1020 |     resizeObserver.observe(mount);
+ 1021 | 
+ 1022 |     let animationId = 0;
+ 1023 |     let previous = performance.now();
+ 1024 |     let lastUiUpdate = 0;
+ 1025 |     const animate = (now: number) => {
+ 1026 |       const delta = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+ 1027 |       previous = now;
+ 1028 | 
+ 1029 |       if (controlledWorkspace) {
+ 1030 |         timeRef.current =
+ 1031 |           workspaceTimeSourceRef?.current ?? workspaceTimeRef.current;
+ 1032 |       } else if (playingRef.current) {
+ 1033 |         timeRef.current = Math.min(
+ 1034 |           reconstruction.durationSeconds,
+ 1035 |           timeRef.current + delta * speedRef.current,
+ 1036 |         );
+ 1037 |         if (timeRef.current >= reconstruction.durationSeconds) {
+ 1038 |           playingRef.current = false;
+ 1039 |           setIsPlaying(false);
+ 1040 |         }
+ 1041 |       }
+ 1042 | 
+ 1043 |       participantEntries.forEach((entry) => {
+ 1044 |         const state = getParticipantStateAtTime(entry.participant, timeRef.current);
+ 1045 |         entry.holder.position.copy(worldPosition(state.position, width, height));
+ 1046 |         // Use the exact shared trajectory heading returned to the 2D view.
+ 1047 |         // The old 3D-only time sampling could disagree at Point 1 and caused
+ 1048 |         // a visible snap as playback began. Positive Three.js Y rotation maps
+ 1049 |         // screen-space clockwise headings onto the reconstruction ground plane.
+ 1050 |         entry.holder.rotation.set(
+ 1051 |           0,
+ 1052 |           reconstructionHeadingToThreeYawRadians(
+ 1053 |             state.rotation,
+ 1054 |           ),
+ 1055 |           0,
+ 1056 |         );
+ 1057 |         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
+ 1058 | 
+ 1059 |         const impact = impactByParticipant.get(entry.participant.id);
+ 1060 |         applyImpactPose(
+ 1061 |           entry,
+ 1062 |           timeRef.current,
+ 1063 |           impact?.time,
+ 1064 |           impact?.speed ??
+ 1065 |             entry.participant.estimatedSpeedKmh,
+ 1066 |           effectiveShowPhysics,
+ 1067 |         );
+ 1068 |         const potholeEffect = getParticipantPotholeEffect(
+ 1069 |           reconstruction,
+ 1070 |           entry.participant,
+ 1071 |           state.position,
+ 1072 |           state.speedKmh,
+ 1073 |           timeRef.current,
+ 1074 |         );
+ 1075 |         if (
+ 1076 |           effectiveShowPhysics &&
+ 1077 |           potholeEffect.active
+ 1078 |         ) {
+ 1079 |           entry.modelRoot.position.y += potholeEffect.verticalMetres;
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/components/reconstruction/Reconstruction3DViewer.tsx
+LINES: 1043-1087
+```text
+ 1043 |       participantEntries.forEach((entry) => {
+ 1044 |         const state = getParticipantStateAtTime(entry.participant, timeRef.current);
+ 1045 |         entry.holder.position.copy(worldPosition(state.position, width, height));
+ 1046 |         // Use the exact shared trajectory heading returned to the 2D view.
+ 1047 |         // The old 3D-only time sampling could disagree at Point 1 and caused
+ 1048 |         // a visible snap as playback began. Positive Three.js Y rotation maps
+ 1049 |         // screen-space clockwise headings onto the reconstruction ground plane.
+ 1050 |         entry.holder.rotation.set(
+ 1051 |           0,
+ 1052 |           reconstructionHeadingToThreeYawRadians(
+ 1053 |             state.rotation,
+ 1054 |           ),
+ 1055 |           0,
+ 1056 |         );
+ 1057 |         entry.label.visible = selectedRef.current === null || selectedRef.current === entry.participant.id;
+ 1058 | 
+ 1059 |         const impact = impactByParticipant.get(entry.participant.id);
+ 1060 |         applyImpactPose(
+ 1061 |           entry,
+ 1062 |           timeRef.current,
+ 1063 |           impact?.time,
+ 1064 |           impact?.speed ??
+ 1065 |             entry.participant.estimatedSpeedKmh,
+ 1066 |           effectiveShowPhysics,
+ 1067 |         );
+ 1068 |         const potholeEffect = getParticipantPotholeEffect(
+ 1069 |           reconstruction,
+ 1070 |           entry.participant,
+ 1071 |           state.position,
+ 1072 |           state.speedKmh,
+ 1073 |           timeRef.current,
+ 1074 |         );
+ 1075 |         if (
+ 1076 |           effectiveShowPhysics &&
+ 1077 |           potholeEffect.active
+ 1078 |         ) {
+ 1079 |           entry.modelRoot.position.y += potholeEffect.verticalMetres;
+ 1080 |           entry.modelRoot.rotation.x += THREE.MathUtils.degToRad(
+ 1081 |             potholeEffect.pitchDegrees,
+ 1082 |           );
+ 1083 |           entry.modelRoot.rotation.z += THREE.MathUtils.degToRad(
+ 1084 |             potholeEffect.rollDegrees,
+ 1085 |           );
+ 1086 |         }
+ 1087 |       });
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/utils/reconstructionCanvasRenderer.ts
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 8
+```ts
+import {
+  clamp,
+  getParticipantStateAtTime,
+  getReconstructionImpactEffectState,
+} from "./reconstructionGeometry";
+```
+
+LINE: 14
+```ts
+import { getReconstructionWorldDimensions } from "./reconstructionWorldScale";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 421-421
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(participant, timeSeconds)
+```
+
+ANCESTOR FUNCTIONS:
+- drawParticipant · lines 413-507
+
+FILE: src/utils/reconstructionCanvasRenderer.ts
+LINES: 386-456
+```text
+  386 |   }
+  387 | 
+  388 |   context.restore();
+  389 | }
+  390 | 
+  391 | function drawParticipantPath(
+  392 |   context: CanvasRenderingContext2D,
+  393 |   participant: ReconstructionVehicle,
+  394 |   width: number,
+  395 |   height: number,
+  396 | ): void {
+  397 |   if (participant.pathPoints.length < 2) return;
+  398 |   context.save();
+  399 |   context.strokeStyle = COLOURS[participant.colour] ?? "#2563eb";
+  400 |   context.lineWidth = 3;
+  401 |   context.globalAlpha = 0.52;
+  402 |   context.setLineDash([10, 8]);
+  403 |   drawSmoothPath(
+  404 |     context,
+  405 |     participant.pathPoints.map((point) => point.position),
+  406 |     width,
+  407 |     height,
+  408 |   );
+  409 |   context.stroke();
+  410 |   context.restore();
+  411 | }
+  412 | 
+  413 | function drawParticipant(
+  414 |   context: CanvasRenderingContext2D,
+  415 |   participant: ReconstructionVehicle,
+  416 |   timeSeconds: number,
+  417 |   width: number,
+  418 |   height: number,
+  419 |   scale: CanvasWorldScale,
+  420 | ): void {
+  421 |   const state = getParticipantStateAtTime(participant, timeSeconds);
+  422 |   const position = toCanvasPoint(state.position, width, height);
+  423 |   const colour = COLOURS[participant.colour] ?? "#2563eb";
+  424 | 
+  425 |   context.save();
+  426 |   context.translate(position.x, position.y);
+  427 |   context.rotate((state.rotation * Math.PI) / 180);
+  428 |   context.shadowColor = "rgba(0,0,0,0.4)";
+  429 |   context.shadowBlur = 8;
+  430 |   context.shadowOffsetY = 4;
+  431 | 
+  432 |   if (["Pedestrian", "Officer", "Witness"].includes(participant.type)) {
+  433 |     // The stick figure artwork spans roughly 50px. Treat that as a 1.7m
+  434 |     // person and scale it through the scene metre resolution.
+  435 |     const iconScale = clamp((1.7 * scale.pxPerMetre) / 50, 0.3, 2.4);
+  436 |     context.scale(iconScale, iconScale);
+  437 |     context.strokeStyle = colour;
+  438 |     context.fillStyle = colour;
+  439 |     context.lineWidth = 6;
+  440 |     context.beginPath();
+  441 |     context.arc(0, -13, 7, 0, Math.PI * 2);
+  442 |     context.fill();
+  443 |     context.beginPath();
+  444 |     context.moveTo(0, -5);
+  445 |     context.lineTo(0, 13);
+  446 |     context.moveTo(-10, 1);
+  447 |     context.lineTo(10, 1);
+  448 |     context.moveTo(0, 13);
+  449 |     context.lineTo(-8, 25);
+  450 |     context.moveTo(0, 13);
+  451 |     context.lineTo(8, 25);
+  452 |     context.stroke();
+  453 |   } else if (participant.type === "Bicycle") {
+  454 |     // The bicycle artwork spans roughly 48px for a 1.8m bicycle.
+  455 |     const iconScale = clamp((1.8 * scale.pxPerMetre) / 48, 0.3, 2.4);
+  456 |     context.scale(iconScale, iconScale);
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/utils/reconstructionCanvasRenderer.ts
+LINES: 413-468
+```text
+  413 | function drawParticipant(
+  414 |   context: CanvasRenderingContext2D,
+  415 |   participant: ReconstructionVehicle,
+  416 |   timeSeconds: number,
+  417 |   width: number,
+  418 |   height: number,
+  419 |   scale: CanvasWorldScale,
+  420 | ): void {
+  421 |   const state = getParticipantStateAtTime(participant, timeSeconds);
+  422 |   const position = toCanvasPoint(state.position, width, height);
+  423 |   const colour = COLOURS[participant.colour] ?? "#2563eb";
+  424 | 
+  425 |   context.save();
+  426 |   context.translate(position.x, position.y);
+  427 |   context.rotate((state.rotation * Math.PI) / 180);
+  428 |   context.shadowColor = "rgba(0,0,0,0.4)";
+  429 |   context.shadowBlur = 8;
+  430 |   context.shadowOffsetY = 4;
+  431 | 
+  432 |   if (["Pedestrian", "Officer", "Witness"].includes(participant.type)) {
+  433 |     // The stick figure artwork spans roughly 50px. Treat that as a 1.7m
+  434 |     // person and scale it through the scene metre resolution.
+  435 |     const iconScale = clamp((1.7 * scale.pxPerMetre) / 50, 0.3, 2.4);
+  436 |     context.scale(iconScale, iconScale);
+  437 |     context.strokeStyle = colour;
+  438 |     context.fillStyle = colour;
+  439 |     context.lineWidth = 6;
+  440 |     context.beginPath();
+  441 |     context.arc(0, -13, 7, 0, Math.PI * 2);
+  442 |     context.fill();
+  443 |     context.beginPath();
+  444 |     context.moveTo(0, -5);
+  445 |     context.lineTo(0, 13);
+  446 |     context.moveTo(-10, 1);
+  447 |     context.lineTo(10, 1);
+  448 |     context.moveTo(0, 13);
+  449 |     context.lineTo(-8, 25);
+  450 |     context.moveTo(0, 13);
+  451 |     context.lineTo(8, 25);
+  452 |     context.stroke();
+  453 |   } else if (participant.type === "Bicycle") {
+  454 |     // The bicycle artwork spans roughly 48px for a 1.8m bicycle.
+  455 |     const iconScale = clamp((1.8 * scale.pxPerMetre) / 48, 0.3, 2.4);
+  456 |     context.scale(iconScale, iconScale);
+  457 |     context.strokeStyle = colour;
+  458 |     context.lineWidth = 4;
+  459 |     context.beginPath();
+  460 |     context.arc(-14, 6, 10, 0, Math.PI * 2);
+  461 |     context.arc(14, 6, 10, 0, Math.PI * 2);
+  462 |     context.moveTo(-14, 6);
+  463 |     context.lineTo(0, -8);
+  464 |     context.lineTo(14, 6);
+  465 |     context.lineTo(-3, 6);
+  466 |     context.closePath();
+  467 |     context.stroke();
+  468 |   } else {
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+============================================================
+FILE: src/utils/reconstructionPlaybackDom.ts
+CALL COUNT: 1
+
+=== RELEVANT IMPORTS ===
+
+LINE: 5
+```ts
+import {
+  getParticipantStateAtTime,
+  getReconstructionImpactEffectState,
+} from "./reconstructionGeometry";
+```
+
+=== CALL 1 ===
+
+CALL LINES: 277-277
+ARGUMENT COUNT: 2
+```ts
+getParticipantStateAtTime(participant, timeSeconds)
+```
+
+ANCESTOR FUNCTIONS:
+- paintParticipant · lines 269-391
+
+FILE: src/utils/reconstructionPlaybackDom.ts
+LINES: 242-312
+```text
+  242 |   const burstDistance = 12 + effect.progress * 44 * effect.intensity;
+  243 | 
+  244 |   overlay.root.style.display = "block";
+  245 |   overlay.root.style.left = `${effect.position.x}%`;
+  246 |   overlay.root.style.top = `${effect.position.y}%`;
+  247 |   overlay.ring.style.width = `${ringSize}px`;
+  248 |   overlay.ring.style.height = `${ringSize}px`;
+  249 |   overlay.ring.style.opacity = String(fade * 0.9);
+  250 | 
+  251 |   const flashSize = 34 * effect.intensity;
+  252 |   overlay.flash.style.width = `${flashSize}px`;
+  253 |   overlay.flash.style.height = `${flashSize}px`;
+  254 |   overlay.flash.style.opacity = String(Math.max(0, 1 - effect.progress * 4));
+  255 |   overlay.flash.style.transform =
+  256 |     `translate(-50%, -50%) scale(${1 + effect.progress * 2})`;
+  257 |   overlay.label.style.opacity = String(Math.max(0, 1 - effect.progress * 2.2));
+  258 |   overlay.label.style.transform =
+  259 |     `translate(-50%, ${-54 - effect.progress * 18}px) scale(${1 + (1 - fade) * 0.15})`;
+  260 | 
+  261 |   overlay.sparks.forEach((spark, index) => {
+  262 |     const angle = index * (360 / overlay.sparks.length) + (index % 2) * 7;
+  263 |     spark.style.width = `${9 + (index % 4) * 5 + effect.progress * 22}px`;
+  264 |     spark.style.opacity = String(fade);
+  265 |     spark.style.transform = `rotate(${angle}deg) translateX(${burstDistance}px)`;
+  266 |   });
+  267 | }
+  268 | 
+  269 | function paintParticipant(
+  270 |   sceneRoot: HTMLElement,
+  271 |   reconstruction: AccidentReconstruction,
+  272 |   participant: ReconstructionVehicle,
+  273 |   participantIndex: number,
+  274 |   timeSeconds: number,
+  275 |   impactEffect: ReturnType<typeof getReconstructionImpactEffectState>,
+  276 | ): void {
+  277 |   const state = getParticipantStateAtTime(participant, timeSeconds);
+  278 |   const activePoint = participant.pathPoints.find(
+  279 |     (point) => point.id === state.activePointId,
+  280 |   );
+  281 |   const activeAction = activePoint?.action ?? "Cruise";
+  282 |   const pothole = getParticipantPotholeEffect(
+  283 |     reconstruction,
+  284 |     participant,
+  285 |     state.position,
+  286 |     state.speedKmh,
+  287 |     timeSeconds,
+  288 |   );
+  289 | 
+  290 |   const participantWasInImpact =
+  291 |     impactEffect.participantIds.includes(
+  292 |       participant.id,
+  293 |     );
+  294 | 
+  295 |   /*
+  296 |    * The collision trajectory already contains the physical displacement.
+  297 |    * Do not add a second screen-space translation shake to the body; that made
+  298 |    * participants appear to teleport around the solver path. Keep only a small,
+  299 |    * short angular body recoil while the separate impact overlay provides the
+  300 |    * visual flash.
+  301 |    */
+  302 |   const impactEnvelope =
+  303 |     impactEffect.active &&
+  304 |     participantWasInImpact
+  305 |       ? Math.max(
+  306 |           0,
+  307 |           1 -
+  308 |             impactEffect.progress /
+  309 |               0.34,
+  310 |         ) *
+  311 |         impactEffect.intensity
+  312 |       : 0;
+```
+
+=== ENCLOSING FUNCTION OPENING ===
+
+FILE: src/utils/reconstructionPlaybackDom.ts
+LINES: 269-324
+```text
+  269 | function paintParticipant(
+  270 |   sceneRoot: HTMLElement,
+  271 |   reconstruction: AccidentReconstruction,
+  272 |   participant: ReconstructionVehicle,
+  273 |   participantIndex: number,
+  274 |   timeSeconds: number,
+  275 |   impactEffect: ReturnType<typeof getReconstructionImpactEffectState>,
+  276 | ): void {
+  277 |   const state = getParticipantStateAtTime(participant, timeSeconds);
+  278 |   const activePoint = participant.pathPoints.find(
+  279 |     (point) => point.id === state.activePointId,
+  280 |   );
+  281 |   const activeAction = activePoint?.action ?? "Cruise";
+  282 |   const pothole = getParticipantPotholeEffect(
+  283 |     reconstruction,
+  284 |     participant,
+  285 |     state.position,
+  286 |     state.speedKmh,
+  287 |     timeSeconds,
+  288 |   );
+  289 | 
+  290 |   const participantWasInImpact =
+  291 |     impactEffect.participantIds.includes(
+  292 |       participant.id,
+  293 |     );
+  294 | 
+  295 |   /*
+  296 |    * The collision trajectory already contains the physical displacement.
+  297 |    * Do not add a second screen-space translation shake to the body; that made
+  298 |    * participants appear to teleport around the solver path. Keep only a small,
+  299 |    * short angular body recoil while the separate impact overlay provides the
+  300 |    * visual flash.
+  301 |    */
+  302 |   const impactEnvelope =
+  303 |     impactEffect.active &&
+  304 |     participantWasInImpact
+  305 |       ? Math.max(
+  306 |           0,
+  307 |           1 -
+  308 |             impactEffect.progress /
+  309 |               0.34,
+  310 |         ) *
+  311 |         impactEffect.intensity
+  312 |       : 0;
+  313 | 
+  314 |   const impactRotation =
+  315 |     Math.sin(
+  316 |       impactEffect.progress *
+  317 |         Math.PI *
+  318 |         3,
+  319 |     ) *
+  320 |     impactEnvelope *
+  321 |     1.25;
+  322 | 
+  323 |   const potholePhase =
+  324 |     timeSeconds * 25 +
+```
+
+=== RELEVANT EARLIER DECLARATIONS IN ENCLOSING FUNCTION ===
+
+(none detected)
+
+=== EXTRACTION SUMMARY ===
+
+Files scanned: 7
+Actual visual getParticipantStateAtTime calls: 9
