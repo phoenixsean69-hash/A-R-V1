@@ -1,3 +1,7 @@
+import {
+  normaliseMetricRouteTopology,
+} from "./reconstructionRouteTopology";
+
 import type {
   RealSceneGeometry,
   RealSceneLocalPoint,
@@ -1187,301 +1191,9 @@ function participantMinimumRoadWidth(type: ReconstructionVehicleType): number {
 
 
 /*
- * [RoadSafe:SpawnRouteDirectionGuardV1]
- *
- * Prevent generated participant routes from beginning in the opposite
- * direction from Point Z.
+ * Route direction, reversal, detour and collision-capture checks are now
+ * performed by reconstructionRouteTopology in physical metres.
  */
-function routePointAtDistance(
-  points: Point2[],
-  targetDistanceMetres: number,
-): Point2 {
-  if (points.length === 0) {
-    return {
-      x: 0,
-      y: 0,
-    };
-  }
-
-  if (points.length === 1) {
-    return {
-      ...points[0],
-    };
-  }
-
-  let travelled = 0;
-
-  for (
-    let index = 1;
-    index < points.length;
-    index += 1
-  ) {
-    const previous =
-      points[index - 1];
-
-    const current =
-      points[index];
-
-    const segmentLength =
-      distance(
-        previous,
-        current,
-      );
-
-    if (
-      travelled +
-        segmentLength >=
-      targetDistanceMetres
-    ) {
-      const progress =
-        segmentLength <
-        0.000001
-          ? 0
-          : clamp(
-              (
-                targetDistanceMetres -
-                travelled
-              ) /
-                segmentLength,
-              0,
-              1,
-            );
-
-      return {
-        x:
-          previous.x +
-          (
-            current.x -
-            previous.x
-          ) *
-            progress,
-        y:
-          previous.y +
-          (
-            current.y -
-            previous.y
-          ) *
-            progress,
-      };
-    }
-
-    travelled +=
-      segmentLength;
-  }
-
-  return {
-    ...points[
-      points.length - 1
-    ],
-  };
-}
-
-function routeStartsByMovingAwayFromImpact(
-  points: Point2[],
-  impactPoint: Point2,
-): boolean {
-  if (points.length < 2) {
-    return false;
-  }
-
-  const start =
-    points[0];
-
-  const initialDistance =
-    distance(
-      start,
-      impactPoint,
-    );
-
-  const lookAheadDistance =
-    clamp(
-      polylineLength(points) *
-        0.12,
-      4,
-      8,
-    );
-
-  const lookAhead =
-    routePointAtDistance(
-      points,
-      lookAheadDistance,
-    );
-
-  const lookAheadImpactDistance =
-    distance(
-      lookAhead,
-      impactPoint,
-    );
-
-  /*
-   * A tiny lateral movement is acceptable. Moving more than 0.75 metres
-   * farther from Point Z during the initial route is not.
-   */
-  return (
-    lookAheadImpactDistance >
-    initialDistance + 0.75
-  );
-}
-
-function removeInitialSpawnBacktracking(
-  points: Point2[],
-  impactPoint: Point2,
-): Point2[] {
-  if (points.length <= 2) {
-    return points;
-  }
-
-  const start =
-    points[0];
-
-  const stableLookAheadIndex =
-    points.findIndex(
-      (
-        point,
-        index,
-      ) =>
-        index > 0 &&
-        distance(
-          start,
-          point,
-        ) >= 5,
-    );
-
-  const anchorIndex =
-    stableLookAheadIndex >= 1
-      ? stableLookAheadIndex
-      : Math.min(
-          points.length - 1,
-          2,
-        );
-
-  const anchor =
-    points[anchorIndex];
-
-  const forwardDirection =
-    normalise(
-      subtract(
-        anchor,
-        start,
-      ),
-      subtract(
-        impactPoint,
-        start,
-      ),
-    );
-
-  const cleaned: Point2[] = [
-    {
-      ...start,
-    },
-  ];
-
-  let greatestForwardProgress = 0;
-
-  for (
-    let index = 1;
-    index <= anchorIndex;
-    index += 1
-  ) {
-    const point =
-      points[index];
-
-    const offset =
-      subtract(
-        point,
-        start,
-      );
-
-    const forwardProgress =
-      dot(
-        offset,
-        forwardDirection,
-      );
-
-    const currentImpactDistance =
-      distance(
-        point,
-        impactPoint,
-      );
-
-    const previousImpactDistance =
-      distance(
-        cleaned[
-          cleaned.length - 1
-        ],
-        impactPoint,
-      );
-
-    const travellingBackward =
-      forwardProgress <
-        greatestForwardProgress -
-          0.3 ||
-      currentImpactDistance >
-        previousImpactDistance +
-          0.75;
-
-    if (travellingBackward) {
-      continue;
-    }
-
-    if (
-      distance(
-        cleaned[
-          cleaned.length - 1
-        ],
-        point,
-      ) < 0.3
-    ) {
-      continue;
-    }
-
-    greatestForwardProgress =
-      Math.max(
-        greatestForwardProgress,
-        forwardProgress,
-      );
-
-    cleaned.push({
-      ...point,
-    });
-  }
-
-  for (
-    let index =
-      anchorIndex + 1;
-    index < points.length;
-    index += 1
-  ) {
-    const point =
-      points[index];
-
-    if (
-      distance(
-        cleaned[
-          cleaned.length - 1
-        ],
-        point,
-      ) >= 0.3
-    ) {
-      cleaned.push({
-        ...point,
-      });
-    }
-  }
-
-  if (cleaned.length < 2) {
-    return [
-      {
-        ...start,
-      },
-      {
-        ...impactPoint,
-      },
-    ];
-  }
-
-  return cleaned;
-}
 
 function evaluateRoute(
   route: RawRoadRoute,
@@ -1501,33 +1213,61 @@ function evaluateRoute(
     return null;
   }
 
-  const rounded = roundPolylineCorners(
-    route.points,
-    participantType,
-    speedKmh,
-    radiusScale,
-  );
-  const sampled = samplePolylineByDistance(
-    rounded,
-    participantSampleSpacing(participantType),
-  );
-  if (sampled.length < 3) return null;
-  // Route evaluation starts from the projection of Point 1 onto the road so
-  // containment and curvature checks reflect the on-road journey. The final
-  // authored route re-attaches the investigator's exact click as Point 1 and
-  // merges onto this projection (see createRoadAlignedParticipantRoute).
-  sampled[0] = { ...route.startProjectionPoint };
-  sampled[sampled.length - 1] = { ...impactLocal };
+  const rounded =
+    roundPolylineCorners(
+      route.points,
+      participantType,
+      speedKmh,
+      radiusScale,
+    );
+
+  const rawSampled =
+    samplePolylineByDistance(
+      rounded,
+      participantSampleSpacing(
+        participantType,
+      ),
+    );
 
   if (
-    routeStartsByMovingAwayFromImpact(
-      sampled,
-      impactLocal,
-    )
+    rawSampled.length < 3
   ) {
     return null;
   }
 
+  /*
+   * Candidate ranking must operate on a route that has already passed the
+   * complete metric topology invariant.
+   */
+  rawSampled[0] = {
+    ...route
+      .startProjectionPoint,
+  };
+
+  rawSampled[
+    rawSampled.length -
+      1
+  ] = {
+    ...impactLocal,
+  };
+
+  const topology =
+    normaliseMetricRouteTopology(
+      rawSampled,
+      impactLocal,
+      participantType,
+    );
+
+  if (
+    !topology.valid ||
+    topology.points.length <
+      3
+  ) {
+    return null;
+  }
+
+  const sampled =
+    topology.points;
 
   const coverage = containmentRatio(sampled, graph);
   const minimumRadius = minimumCurveRadius(sampled);
@@ -1954,14 +1694,10 @@ export function createRoadAlignedParticipantRoute({
         );
 
   /*
-   * [RoadSafe:TrimRouteAtCollision]
+   * [RoadSafe:MetricRouteTopologyAppliedV1]
    *
-   * Generated road samples can continue past the closest approach to the
-   * collision and only afterward snap back to Point Z. That makes the route
-   * appear to overshoot the impact point and return.
-   *
-   * Trim the generated route at the first closest-approach sample, then let
-   * the exact Point Z remain the final route endpoint.
+   * Validate the complete lane-offset route after merging the investigator's
+   * exact Point 1 position onto the generated road path.
    */
   const impactLocal =
     sceneToLocalMetres(
@@ -1969,41 +1705,35 @@ export function createRoadAlignedParticipantRoute({
       geometry,
     );
 
-  const routeDistancesToImpact =
-    routePoints.map((point) =>
-      distance(point, impactLocal),
+  const topology =
+    normaliseMetricRouteTopology(
+      routePoints,
+      impactLocal,
+      participantType,
     );
 
-  const minimumDistanceToImpact =
-    routeDistancesToImpact.reduce(
-      (best, current) =>
-        Math.min(best, current),
-      Number.POSITIVE_INFINITY,
-    );
+  if (
+    !topology.valid ||
+    topology.points.length <
+      2
+  ) {
+    lastRecommendation = {
+      available: false,
+      confidence:
+        selected.confidence,
+      candidateCount:
+        ranked.length,
+      reason:
+        topology.issues[0]
+          ?.message ??
+        "The selected route failed the physical topology checks.",
+    };
 
-  const nearestRouteIndex =
-    routeDistancesToImpact.findIndex(
-      (distanceToImpact) =>
-        distanceToImpact <=
-        minimumDistanceToImpact + 0.35,
-    );
-
-  if (nearestRouteIndex >= 1) {
-    routePoints =
-      routePoints.slice(
-        0,
-        nearestRouteIndex + 1,
-      );
+    return null;
   }
 
   routePoints =
-    removeInitialSpawnBacktracking(
-      routePoints,
-      sceneToLocalMetres(
-        impactPoint.position,
-        geometry,
-      ),
-    );
+    topology.points;
 
   const cumulative: number[] = [0];
   for (let index = 1; index < routePoints.length; index += 1) {
@@ -2091,6 +1821,79 @@ export function createRoadAlignedParticipantRoute({
     intermediatePoints,
     confidence: selected.confidence,
   };
+}
+
+/*
+ * [RoadSafe:ActiveMetricRouteStabiliserV1]
+ *
+ * Cleans persisted automatic-road anchors using the active extracted scene's
+ * real metre dimensions. Investigator-created anchors are not passed here.
+ */
+export function stabiliseAutomaticRoadMovementRoute(
+  route:
+    MovementPathPoint[],
+  collisionPosition:
+    ReconstructionPosition,
+  participantType:
+    ReconstructionVehicleType,
+): MovementPathPoint[] {
+  const geometry =
+    activeGeometry;
+
+  if (
+    !geometry ||
+    route.length < 2
+  ) {
+    return route;
+  }
+
+  const metricPoints =
+    route.map(
+      (point) =>
+        sceneToLocalMetres(
+          point.position,
+          geometry,
+        ),
+    );
+
+  const metricCollision =
+    sceneToLocalMetres(
+      collisionPosition,
+      geometry,
+    );
+
+  const topology =
+    normaliseMetricRouteTopology(
+      metricPoints,
+      metricCollision,
+      participantType,
+      {
+        appendImpactPoint:
+          false,
+      },
+    );
+
+  const retained =
+    topology
+      .keptSourceIndices
+      .filter(
+        (sourceIndex) =>
+          sourceIndex >= 0 &&
+          sourceIndex <
+            route.length,
+      )
+      .map(
+        (sourceIndex) =>
+          route[
+            sourceIndex
+          ],
+      );
+
+  return retained.length > 0
+    ? retained
+    : [
+        route[0],
+      ];
 }
 
 /**
