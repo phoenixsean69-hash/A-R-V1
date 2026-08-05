@@ -8,6 +8,11 @@ import type {
   SceneObjectType,
 } from "../types/reconstruction";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "./reconstructionRoadRouting";
+import {
+  getIntegratedKinematicDistanceProgress,
+  getSmoothKinematicSpeedKmh,
+} from "./reconstructionMotionKinematics";
+
 
 export interface ReconstructionImpactEffectState {
   active: boolean;
@@ -306,51 +311,21 @@ function getKinematicPositionProgress(
   end: MovementPathPoint,
   timeProgress: number,
 ): number {
-  const safeTimeProgress = clamp(
-    timeProgress,
-    0,
-    1,
-  );
-
   const startSpeed =
     start.action === "Stop"
       ? 0
-      : Math.max(0, start.speedKmh);
+      : start.speedKmh;
 
   const endSpeed =
     end.action === "Stop"
       ? 0
-      : Math.max(0, end.speedKmh);
+      : end.speedKmh;
 
-  const averageSpeed =
-    (startSpeed + endSpeed) / 2;
-
-  if (averageSpeed < 0.01) {
-    return smootherStep(safeTimeProgress);
-  }
-
-  /*
-   * Use a smoothstep velocity transition and integrate it analytically.
-   * This keeps acceleration at zero at both path-point boundaries, removing
-   * the visible speed pulse that linear speed interpolation creates.
-   */
-  const speedDifference = endSpeed - startSpeed;
-  const integratedSmoothStep =
-    safeTimeProgress *
-      safeTimeProgress *
-      safeTimeProgress -
-    0.5 *
-      safeTimeProgress *
-      safeTimeProgress *
-      safeTimeProgress *
-      safeTimeProgress;
-
-  const distanceFraction =
-    (startSpeed * safeTimeProgress +
-      speedDifference * integratedSmoothStep) /
-    averageSpeed;
-
-  return clamp(distanceFraction, 0, 1);
+  return getIntegratedKinematicDistanceProgress(
+    startSpeed,
+    endSpeed,
+    timeProgress,
+  );
 }
 
 export function sortMovementPathPoints(
@@ -1908,14 +1883,12 @@ export function getParticipantStateAtTime(
   const endSpeed =
     end.action === "Stop" ? 0 : end.speedKmh;
 
-  const interpolatedSpeed = Math.max(
-    0,
-    interpolate(
+  const interpolatedSpeed =
+    getSmoothKinematicSpeedKmh(
       start.speedKmh,
       endSpeed,
-      smoothStep(timeProgress),
-    ),
-  );
+      timeProgress,
+    );
 
   const activeAction =
     timeProgress < 0.5

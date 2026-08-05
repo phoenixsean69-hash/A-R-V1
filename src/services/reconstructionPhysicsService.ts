@@ -62,6 +62,10 @@ import {
   type PhysicsShapeDimensions,
 } from "./physicsCollisionGeometry";
 
+import {
+  resolveVelocitySampleWindow,
+} from "../utils/reconstructionMotionKinematics";
+
 interface Vector2 {
   x: number;
   y: number;
@@ -217,6 +221,12 @@ function participantWorldPositionAtTime(
   );
 }
 
+/*
+ * [RoadSafe:BoundarySafeImpactVelocityV1]
+ *
+ * The final authored impact pose uses a backward finite difference. Interior
+ * samples use a centred window and the route start uses a forward window.
+ */
 function participantVelocityAtTime(
   participant: ReconstructionVehicle,
   timeSeconds: number,
@@ -224,25 +234,116 @@ function participantVelocityAtTime(
   height: number,
   sampleSeconds: number,
 ): Vector2 {
-  const beforeTime = Math.max(0, timeSeconds - sampleSeconds);
-  const afterTime = Math.min(
-    Math.max(timeSeconds + sampleSeconds, beforeTime + 0.001),
-    Math.max(timeSeconds + sampleSeconds, participant.pathPoints.at(-1)?.timeSeconds ?? timeSeconds + sampleSeconds),
-  );
-  const before = participantWorldPositionAtTime(participant, beforeTime, width, height);
-  const after = participantWorldPositionAtTime(participant, afterTime, width, height);
-  const elapsed = Math.max(0.001, afterTime - beforeTime);
-  const sampled = {
-    x: (after.x - before.x) / elapsed,
-    y: (after.y - before.y) / elapsed,
-  };
-  if (magnitude(sampled) > 0.05) return sampled;
+  const authoredPoints =
+    sortMovementPathPoints(
+      participant.pathPoints,
+    ).filter(
+      (point) =>
+        !isPhysicsGeneratedPathPoint(
+          point,
+        ),
+    );
 
-  const state = getParticipantStateAtTime(participant, timeSeconds);
-  const speed = kmhToMps(state.speedKmh || participant.estimatedSpeedKmh);
+  const firstPathTime =
+    authoredPoints[0]
+      ?.timeSeconds ??
+    0;
+
+  const lastPathTime =
+    authoredPoints.at(-1)
+      ?.timeSeconds ??
+    firstPathTime;
+
+  const sampleWindow =
+    resolveVelocitySampleWindow(
+      timeSeconds,
+      sampleSeconds,
+      firstPathTime,
+      lastPathTime,
+    );
+
+  const before =
+    participantWorldPositionAtTime(
+      participant,
+      sampleWindow.beforeTimeSeconds,
+      width,
+      height,
+    );
+
+  const after =
+    participantWorldPositionAtTime(
+      participant,
+      sampleWindow.afterTimeSeconds,
+      width,
+      height,
+    );
+
+  const elapsed =
+    sampleWindow.afterTimeSeconds -
+    sampleWindow.beforeTimeSeconds;
+
+  if (
+    elapsed >
+    0.0001
+  ) {
+    const sampled = {
+      x:
+        (
+          after.x -
+          before.x
+        ) /
+        elapsed,
+
+      y:
+        (
+          after.y -
+          before.y
+        ) /
+        elapsed,
+    };
+
+    if (
+      magnitude(
+        sampled,
+      ) >
+      0.05
+    ) {
+      return sampled;
+    }
+  }
+
+  const state =
+    getParticipantStateAtTime(
+      participant,
+      timeSeconds,
+    );
+
+  const speed =
+    kmhToMps(
+      state.speedKmh ||
+      participant.estimatedSpeedKmh,
+    );
+
   return {
-    x: Math.cos((state.rotation * Math.PI) / 180) * speed,
-    y: Math.sin((state.rotation * Math.PI) / 180) * speed,
+    x:
+      Math.cos(
+        (
+          state.rotation *
+          Math.PI
+        ) /
+          180,
+      ) *
+      speed,
+
+    y:
+      Math.sin(
+        (
+          state.rotation *
+          Math.PI
+        ) /
+          180,
+      ) *
+      speed,
   };
 }
 
