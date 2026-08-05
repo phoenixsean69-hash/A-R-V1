@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "physics:verify": "node scripts/verify-phase0-foundation.mjs && tsc -p tsconfig.phase0.json",
-    "physics:verify:full": "node scripts/verify-phase0-foundation.mjs && npm run build"
+    "physics:verify:full": "node scripts/verify-phase0-foundation.mjs && npm run build",
+    "route:verify": "node scripts/verify-route-topology.mjs && tsc -p tsconfig.phase0.json"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
