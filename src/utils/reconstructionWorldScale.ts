@@ -8,7 +8,10 @@ export interface ReconstructionWorldDimensions {
 }
 
 export function getReconstructionWorldDimensions(
-  reconstruction: AccidentReconstruction,
+  reconstruction: Pick<
+    AccidentReconstruction,
+    "scene"
+  >,
 ): ReconstructionWorldDimensions {
   const extracted =
     reconstruction.scene.realSceneGeometry?.status === "ready"

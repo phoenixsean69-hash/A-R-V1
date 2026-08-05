@@ -376,3 +376,439 @@ export function resolveVelocitySampleWindow(
       "Central",
   };
 }
+
+
+/*
+ * [RoadSafe:MetricRouteTimingSolverV1]
+ *
+ * Converts editor coordinates to physical metres and reconciles the complete
+ * point-speed profile with the authoritative Point Z timestamp.
+ *
+ * A single global scale is applied to the entered point speeds. This preserves
+ * their relative acceleration/deceleration profile while ensuring that:
+ *
+ *   metric distance = integrated displayed speed × segment time
+ */
+export interface MetricSceneDimensions {
+  widthMetres: number;
+  heightMetres: number;
+}
+
+export interface MetricRouteTimingPoint {
+  position: {
+    x: number;
+    y: number;
+  };
+  speedKmh: number;
+  stopped?: boolean;
+}
+
+export interface MetricRouteTimingResult {
+  timesSeconds: number[];
+  speedsKmh: number[];
+  segmentLengthsMetres: number[];
+  naturalDurationSeconds: number;
+  targetDurationSeconds: number;
+  speedScale: number;
+  usedMetricDimensions: boolean;
+}
+
+function metricTimingRound(
+  value: number,
+): number {
+  return Number(
+    value.toFixed(4),
+  );
+}
+
+function normaliseMetricSceneDimensions(
+  dimensions:
+    MetricSceneDimensions |
+    undefined,
+): {
+  widthMetres: number;
+  heightMetres: number;
+  supplied: boolean;
+} {
+  const supplied =
+    Boolean(
+      dimensions &&
+      Number.isFinite(
+        dimensions.widthMetres,
+      ) &&
+      Number.isFinite(
+        dimensions.heightMetres,
+      ) &&
+      dimensions.widthMetres > 0 &&
+      dimensions.heightMetres > 0,
+    );
+
+  return {
+    widthMetres:
+      supplied
+        ? Math.max(
+            1,
+            dimensions
+              ?.widthMetres ??
+              100,
+          )
+        : 100,
+
+    heightMetres:
+      supplied
+        ? Math.max(
+            1,
+            dimensions
+              ?.heightMetres ??
+              100,
+          )
+        : 100,
+
+    supplied,
+  };
+}
+
+function sceneSegmentLengthMetres(
+  start:
+    MetricRouteTimingPoint,
+  end:
+    MetricRouteTimingPoint,
+  dimensions: {
+    widthMetres: number;
+    heightMetres: number;
+  },
+): number {
+  const horizontal =
+    (
+      end.position.x -
+      start.position.x
+    ) /
+    100 *
+    dimensions.widthMetres;
+
+  const vertical =
+    (
+      end.position.y -
+      start.position.y
+    ) /
+    100 *
+    dimensions.heightMetres;
+
+  return Math.hypot(
+    horizontal,
+    vertical,
+  );
+}
+
+function timingPointSpeedKmh(
+  point:
+    MetricRouteTimingPoint,
+  fallbackSpeedKmh: number,
+): number {
+  if (point.stopped) {
+    return 0;
+  }
+
+  const entered =
+    Number.isFinite(
+      point.speedKmh,
+    )
+      ? Math.max(
+          0,
+          point.speedKmh,
+        )
+      : 0;
+
+  if (entered >= 0.1) {
+    return entered;
+  }
+
+  return Math.max(
+    0.1,
+    Number.isFinite(
+      fallbackSpeedKmh,
+    )
+      ? fallbackSpeedKmh
+      : 1,
+  );
+}
+
+export function solveMetricRouteTiming(
+  points:
+    MetricRouteTimingPoint[],
+  targetDurationSeconds: number,
+  fallbackSpeedKmh: number,
+  dimensions?:
+    MetricSceneDimensions,
+): MetricRouteTimingResult {
+  const world =
+    normaliseMetricSceneDimensions(
+      dimensions,
+    );
+
+  const safeTarget =
+    Math.max(
+      0.1,
+      Number.isFinite(
+        targetDurationSeconds,
+      )
+        ? targetDurationSeconds
+        : 0.1,
+    );
+
+  if (points.length === 0) {
+    return {
+      timesSeconds: [],
+      speedsKmh: [],
+      segmentLengthsMetres: [],
+      naturalDurationSeconds: 0,
+      targetDurationSeconds:
+        metricTimingRound(
+          safeTarget,
+        ),
+      speedScale: 1,
+      usedMetricDimensions:
+        world.supplied,
+    };
+  }
+
+  if (points.length === 1) {
+    return {
+      timesSeconds: [0],
+      speedsKmh: [
+        metricTimingRound(
+          timingPointSpeedKmh(
+            points[0],
+            fallbackSpeedKmh,
+          ),
+        ),
+      ],
+      segmentLengthsMetres: [],
+      naturalDurationSeconds: 0,
+      targetDurationSeconds:
+        metricTimingRound(
+          safeTarget,
+        ),
+      speedScale: 1,
+      usedMetricDimensions:
+        world.supplied,
+    };
+  }
+
+  const baseSpeedsKmh =
+    points.map(
+      (point) =>
+        timingPointSpeedKmh(
+          point,
+          fallbackSpeedKmh,
+        ),
+    );
+
+  const segmentLengthsMetres =
+    points
+      .slice(
+        0,
+        -1,
+      )
+      .map(
+        (point, index) =>
+          sceneSegmentLengthMetres(
+            point,
+            points[index + 1],
+            world,
+          ),
+      );
+
+  const minimumMovingSpeedMps =
+    0.1 / 3.6;
+
+  const naturalSegmentDurations =
+    segmentLengthsMetres.map(
+      (
+        lengthMetres,
+        index,
+      ) => {
+        const averageSpeedMps =
+          Math.max(
+            minimumMovingSpeedMps,
+            (
+              baseSpeedsKmh[index] +
+              baseSpeedsKmh[index + 1]
+            ) /
+              2 /
+              3.6,
+          );
+
+        return (
+          lengthMetres /
+          averageSpeedMps
+        );
+      },
+    );
+
+  const naturalDurationSeconds =
+    naturalSegmentDurations.reduce(
+      (
+        sum,
+        duration,
+      ) =>
+        sum + duration,
+      0,
+    );
+
+  const speedScale =
+    naturalDurationSeconds >
+      0.000001
+      ? naturalDurationSeconds /
+        safeTarget
+      : 1;
+
+  const speedsKmh =
+    baseSpeedsKmh.map(
+      (speedKmh) =>
+        metricTimingRound(
+          speedKmh *
+          speedScale,
+        ),
+    );
+
+  const scaledSegmentDurations =
+    segmentLengthsMetres.map(
+      (
+        lengthMetres,
+        index,
+      ) => {
+        const averageSpeedMps =
+          Math.max(
+            minimumMovingSpeedMps,
+            (
+              speedsKmh[index] +
+              speedsKmh[index + 1]
+            ) /
+              2 /
+              3.6,
+          );
+
+        return (
+          lengthMetres /
+          averageSpeedMps
+        );
+      },
+    );
+
+  const scaledDurationTotal =
+    scaledSegmentDurations.reduce(
+      (
+        sum,
+        duration,
+      ) =>
+        sum + duration,
+      0,
+    );
+
+  const timesSeconds:
+    number[] = [0];
+
+  let accumulated = 0;
+
+  for (
+    let index = 0;
+    index <
+    scaledSegmentDurations.length;
+    index += 1
+  ) {
+    accumulated +=
+      scaledSegmentDurations[index];
+
+    const finalPoint =
+      index ===
+      scaledSegmentDurations.length -
+        1;
+
+    if (finalPoint) {
+      timesSeconds.push(
+        metricTimingRound(
+          safeTarget,
+        ),
+      );
+
+      continue;
+    }
+
+    const proportionalTime =
+      scaledDurationTotal >
+        0.000001
+        ? (
+            accumulated /
+            scaledDurationTotal
+          ) *
+          safeTarget
+        : (
+            (index + 1) /
+            (
+              points.length -
+              1
+            )
+          ) *
+          safeTarget;
+
+    const previousTime =
+      timesSeconds[
+        timesSeconds.length -
+        1
+      ];
+
+    const remainingPoints =
+      points.length -
+      (
+        index + 2
+      );
+
+    const maximumTime =
+      safeTarget -
+      remainingPoints *
+        0.0001;
+
+    timesSeconds.push(
+      metricTimingRound(
+        Math.min(
+          maximumTime,
+          Math.max(
+            previousTime +
+              0.0001,
+            proportionalTime,
+          ),
+        ),
+      ),
+    );
+  }
+
+  return {
+    timesSeconds,
+
+    speedsKmh,
+
+    segmentLengthsMetres:
+      segmentLengthsMetres.map(
+        metricTimingRound,
+      ),
+
+    naturalDurationSeconds:
+      metricTimingRound(
+        naturalDurationSeconds,
+      ),
+
+    targetDurationSeconds:
+      metricTimingRound(
+        safeTarget,
+      ),
+
+    speedScale:
+      metricTimingRound(
+        speedScale,
+      ),
+
+    usedMetricDimensions:
+      world.supplied,
+  };
+}

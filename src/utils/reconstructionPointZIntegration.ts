@@ -1,3 +1,4 @@
+import { getReconstructionWorldDimensions } from "./reconstructionWorldScale";
 import type {
   AccidentReconstruction,
   MovementPathPoint,
@@ -40,6 +41,10 @@ interface ParticipantFactoryOptions {
   collisionPosition:
     ReconstructionPosition;
   durationSeconds: number;
+  worldDimensions?: {
+    widthMetres: number;
+    heightMetres: number;
+  };
   createId:
     (prefix: string) => string;
   getDefaultSpeed: (
@@ -94,6 +99,7 @@ function normaliseParticipant(
     AccidentReconstruction,
     | "collisionPoint"
     | "durationSeconds"
+    | "scene"
   >,
   createId?:
     (prefix: string) => string,
@@ -116,6 +122,10 @@ function normaliseParticipant(
       participantType:
         participant.type,
       createId,
+      worldDimensions:
+        getReconstructionWorldDimensions(
+          reconstruction,
+        ),
     });
 
   return syncLegacyParticipantFields({
@@ -130,6 +140,7 @@ export function createParticipantAtConfirmedPosition({
   startPosition,
   collisionPosition,
   durationSeconds,
+  worldDimensions,
   createId,
   getDefaultSpeed,
   getDefaultRole,
@@ -146,6 +157,7 @@ export function createParticipantAtConfirmedPosition({
       speedKmh:
         estimatedSpeedKmh,
       participantType: type,
+      worldDimensions,
       createId,
     });
 
@@ -243,6 +255,10 @@ export function updateReconstructionCollisionPoint({
                   .estimatedSpeedKmh,
               participantType:
                 participant.type,
+              worldDimensions:
+                getReconstructionWorldDimensions(
+                  reconstruction,
+                ),
             }),
         }),
     );
@@ -335,6 +351,10 @@ export function updateParticipantAuthoredPoint({
                   .estimatedSpeedKmh,
               participantType:
                 participant.type,
+              worldDimensions:
+                getReconstructionWorldDimensions(
+                  reconstruction,
+                ),
             });
 
           return syncLegacyParticipantFields({
@@ -397,6 +417,10 @@ export function insertParticipantIntermediatePoint({
             participantType:
               participant.type,
             createId,
+            worldDimensions:
+              getReconstructionWorldDimensions(
+                reconstruction,
+              ),
           });
 
         const inserted =
@@ -407,6 +431,10 @@ export function insertParticipantIntermediatePoint({
               reconstruction
                 .durationSeconds,
             createId,
+            worldDimensions:
+              getReconstructionWorldDimensions(
+                reconstruction,
+              ),
           });
 
         insertedPointId =
@@ -493,6 +521,10 @@ export function deleteParticipantIntermediatePoint({
                     .estimatedSpeedKmh,
                 participantType:
                   participant.type,
+                worldDimensions:
+                  getReconstructionWorldDimensions(
+                    reconstruction,
+                  ),
               }),
           });
         },
@@ -965,6 +997,10 @@ export function replaceParticipantRouteFromDrawing({
               createId,
               impactTimeSeconds:
                 pointZTime,
+              worldDimensions:
+                getReconstructionWorldDimensions(
+                  reconstruction,
+                ),
             });
 
           let pathPoints = base;
@@ -989,6 +1025,10 @@ export function replaceParticipantRouteFromDrawing({
                     reconstruction
                       .durationSeconds,
                   createId,
+                  worldDimensions:
+                    getReconstructionWorldDimensions(
+                      reconstruction,
+                    ),
                 });
 
               pathPoints =
@@ -1027,6 +1067,10 @@ export function replaceParticipantRouteFromDrawing({
                 participantType:
                   participant.type,
                 createId,
+                worldDimensions:
+                  getReconstructionWorldDimensions(
+                    reconstruction,
+                  ),
               }),
           });
         },
@@ -1078,6 +1122,10 @@ export function changeParticipantApproachHeading({
                   .estimatedSpeedKmh,
               participantType:
                 participant.type,
+              worldDimensions:
+                getReconstructionWorldDimensions(
+                  reconstruction,
+                ),
             });
 
           const authored =
@@ -1176,6 +1224,10 @@ export function changeParticipantApproachHeading({
                     .estimatedSpeedKmh,
                 participantType:
                   participant.type,
+                worldDimensions:
+                  getReconstructionWorldDimensions(
+                    reconstruction,
+                  ),
               }),
           });
         },

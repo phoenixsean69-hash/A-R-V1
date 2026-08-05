@@ -1,3 +1,4 @@
+import { getReconstructionWorldDimensions } from "../utils/reconstructionWorldScale";
 import type {
   AccidentReconstruction,
   MovementPathPoint,
@@ -417,6 +418,10 @@ export function applyWalkingTrack(input: {
           durationSeconds: reconstruction.durationSeconds,
           speedKmh: participant.estimatedSpeedKmh,
           participantType: participant.type,
+          worldDimensions:
+            getReconstructionWorldDimensions(
+              reconstruction,
+            ),
         });
 
         return syncLegacyParticipantFields({
