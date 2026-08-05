@@ -418,7 +418,11 @@ function drawParticipant(
   height: number,
   scale: CanvasWorldScale,
 ): void {
-  const state = getParticipantStateAtTime(participant, timeSeconds);
+  const state = getParticipantStateAtTime(
+                  participant,
+                  timeSeconds,
+                  { widthMetres: Math.max(0.001, width / Math.max(0.001, scale.pxPerMetreX)), heightMetres: Math.max(0.001, height / Math.max(0.001, scale.pxPerMetreY)) },
+                );
   const position = toCanvasPoint(state.position, width, height);
   const colour = COLOURS[participant.colour] ?? "#2563eb";
 

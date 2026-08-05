@@ -91,9 +91,22 @@ export function RequireAuth() {
     );
   }
 
+  /*
+   * [RoadSafe:TypedPasswordPreferencesV1]
+   *
+   * Appwrite preferences allow application-defined fields, while the SDK's
+   * base Preferences type cannot infer RoadSafe's password-state fields.
+   */
+  const userPreferences =
+    auth.identity.user.prefs as
+      typeof auth.identity.user.prefs & {
+        mustChangePassword?: boolean;
+        passwordChangedAt?: string;
+      };
+
   const mustChangePassword =
-    auth.identity.user.prefs
-      ?.mustChangePassword === true;
+    userPreferences
+      .mustChangePassword === true;
 
   if (
     mustChangePassword &&

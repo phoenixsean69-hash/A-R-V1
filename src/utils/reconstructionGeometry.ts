@@ -11,6 +11,7 @@ import { AUTO_ROAD_CURVE_NOTE_MARKER } from "./reconstructionRoadRouting";
 import {
   getIntegratedKinematicDistanceProgress,
   getSmoothKinematicSpeedKmh,
+  type MetricSceneDimensions,
 } from "./reconstructionMotionKinematics";
 
 
@@ -307,6 +308,7 @@ function smootherStep(progress: number): number {
 }
 
 function getKinematicPositionProgress(
+  participant: ReconstructionVehicle,
   start: MovementPathPoint,
   end: MovementPathPoint,
   timeProgress: number,
@@ -314,12 +316,20 @@ function getKinematicPositionProgress(
   const startSpeed =
     start.action === "Stop"
       ? 0
-      : start.speedKmh;
+      : getCanonicalPlaybackSpeedKmh(
+          participant,
+          start.speedKmh,
+          start.action,
+        );
 
   const endSpeed =
     end.action === "Stop"
       ? 0
-      : end.speedKmh;
+      : getCanonicalPlaybackSpeedKmh(
+          participant,
+          end.speedKmh,
+          end.action,
+        );
 
   return getIntegratedKinematicDistanceProgress(
     startSpeed,
@@ -471,8 +481,125 @@ const participantPlaybackPathCache = new WeakMap<
 
 const participantMotionSplineCache = new WeakMap<
   MovementPathPoint[],
-  Map<ReconstructionVehicle["type"], SegmentMotionSpline[]>
+  Map<string, SegmentMotionSpline[]>
 >();
+
+/*
+ * [RoadSafe:CanonicalMetricPlaybackGeometryV1]
+ *
+ * Reconstruction positions remain stored as 0–100 scene coordinates, but
+ * travelled distance and trajectory heading are calculated in physical
+ * metres. This prevents non-square scenes from stretching curves, headings
+ * and physics input velocities.
+ */
+const DEFAULT_PLAYBACK_WORLD_DIMENSIONS:
+  MetricSceneDimensions = {
+    widthMetres: 100,
+    heightMetres: 100,
+  };
+
+function normalisePlaybackWorldDimensions(
+  worldDimensions?: MetricSceneDimensions,
+): MetricSceneDimensions {
+  const width =
+    worldDimensions?.widthMetres;
+
+  const height =
+    worldDimensions?.heightMetres;
+
+  return {
+    widthMetres:
+      Number.isFinite(width) &&
+      Number(width) > 0
+        ? Math.max(
+            0.001,
+            Number(width),
+          )
+        : DEFAULT_PLAYBACK_WORLD_DIMENSIONS.widthMetres,
+
+    heightMetres:
+      Number.isFinite(height) &&
+      Number(height) > 0
+        ? Math.max(
+            0.001,
+            Number(height),
+          )
+        : DEFAULT_PLAYBACK_WORLD_DIMENSIONS.heightMetres,
+  };
+}
+
+function sceneVectorToMetres(
+  vector: Vector2,
+  worldDimensions: MetricSceneDimensions,
+): Vector2 {
+  return {
+    x:
+      (vector.x / 100) *
+      worldDimensions.widthMetres,
+
+    y:
+      (vector.y / 100) *
+      worldDimensions.heightMetres,
+  };
+}
+
+function metricVectorBetween(
+  end: ReconstructionPosition,
+  start: ReconstructionPosition,
+  worldDimensions: MetricSceneDimensions,
+): Vector2 {
+  return sceneVectorToMetres(
+    subtractPositions(
+      end,
+      start,
+    ),
+    worldDimensions,
+  );
+}
+
+function metricDistanceBetween(
+  first: ReconstructionPosition,
+  second: ReconstructionPosition,
+  worldDimensions: MetricSceneDimensions,
+): number {
+  return vectorLength(
+    metricVectorBetween(
+      second,
+      first,
+      worldDimensions,
+    ),
+  );
+}
+
+function metricDirectionBetween(
+  end: ReconstructionPosition,
+  start: ReconstructionPosition,
+  worldDimensions: MetricSceneDimensions,
+  fallback: Vector2 = {
+    x: 1,
+    y: 0,
+  },
+): Vector2 {
+  return normaliseVector(
+    metricVectorBetween(
+      end,
+      start,
+      worldDimensions,
+    ),
+    fallback,
+  );
+}
+
+function metricSplineCacheKey(
+  participant: ReconstructionVehicle,
+  worldDimensions: MetricSceneDimensions,
+): string {
+  return [
+    participant.type,
+    worldDimensions.widthMetres.toPrecision(12),
+    worldDimensions.heightMetres.toPrecision(12),
+  ].join("|");
+}
 
 export function sanitiseParticipantPathPoints(
   points: MovementPathPoint[],
@@ -1052,12 +1179,22 @@ function createBezierArcLengthSamples(
   controlTwo: ReconstructionPosition,
   end: ReconstructionPosition,
   turnSeverityDegrees: number,
+  worldDimensions: MetricSceneDimensions,
 ): BezierArcLengthSample[] {
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
+
   const subdivisionCount = Math.round(
     interpolate(
       20,
       38,
-      clamp(turnSeverityDegrees / 120, 0, 1),
+      clamp(
+        turnSeverityDegrees / 120,
+        0,
+        1,
+      ),
     ),
   );
 
@@ -1076,19 +1213,24 @@ function createBezierArcLengthSamples(
     index <= subdivisionCount;
     index += 1
   ) {
-    const progress = index / subdivisionCount;
-    const position = cubicBezierPoint(
-      start,
-      controlOne,
-      controlTwo,
-      end,
-      progress,
-    );
+    const progress =
+      index / subdivisionCount;
 
-    cumulativeDistance += distanceBetween(
-      previous,
-      position,
-    );
+    const position =
+      cubicBezierPoint(
+        start,
+        controlOne,
+        controlTwo,
+        end,
+        progress,
+      );
+
+    cumulativeDistance +=
+      metricDistanceBetween(
+        previous,
+        position,
+        dimensions,
+      );
 
     samples.push({
       progress,
@@ -1162,39 +1304,64 @@ function getBezierProgressAtDistanceFraction(
 function getSmoothedBezierTangent(
   spline: SegmentMotionSpline,
   progress: number,
+  worldDimensions: MetricSceneDimensions,
 ): Vector2 {
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
+
   const sampleWindow =
-    spline.roadGraphControlled ? 0.025 : 0.018;
+    spline.roadGraphControlled
+      ? 0.025
+      : 0.018;
 
   const before = normaliseVector(
-    cubicBezierTangent(
-      spline.startPoint.position,
-      spline.controlOne,
-      spline.controlTwo,
-      spline.endPoint.position,
-      clamp(progress - sampleWindow, 0, 1),
+    sceneVectorToMetres(
+      cubicBezierTangent(
+        spline.startPoint.position,
+        spline.controlOne,
+        spline.controlTwo,
+        spline.endPoint.position,
+        clamp(
+          progress - sampleWindow,
+          0,
+          1,
+        ),
+      ),
+      dimensions,
     ),
     spline.segmentDirection,
   );
 
   const current = normaliseVector(
-    cubicBezierTangent(
-      spline.startPoint.position,
-      spline.controlOne,
-      spline.controlTwo,
-      spline.endPoint.position,
-      progress,
+    sceneVectorToMetres(
+      cubicBezierTangent(
+        spline.startPoint.position,
+        spline.controlOne,
+        spline.controlTwo,
+        spline.endPoint.position,
+        progress,
+      ),
+      dimensions,
     ),
     spline.segmentDirection,
   );
 
   const after = normaliseVector(
-    cubicBezierTangent(
-      spline.startPoint.position,
-      spline.controlOne,
-      spline.controlTwo,
-      spline.endPoint.position,
-      clamp(progress + sampleWindow, 0, 1),
+    sceneVectorToMetres(
+      cubicBezierTangent(
+        spline.startPoint.position,
+        spline.controlOne,
+        spline.controlTwo,
+        spline.endPoint.position,
+        clamp(
+          progress + sampleWindow,
+          0,
+          1,
+        ),
+      ),
+      dimensions,
     ),
     spline.segmentDirection,
   );
@@ -1205,6 +1372,7 @@ function getSmoothedBezierTangent(
         before.x * 0.2 +
         current.x * 0.6 +
         after.x * 0.2,
+
       y:
         before.y * 0.2 +
         current.y * 0.6 +
@@ -1218,13 +1386,29 @@ function createSegmentMotionSpline(
   participant: ReconstructionVehicle,
   points: MovementPathPoint[],
   segmentIndex: number,
+  worldDimensions: MetricSceneDimensions,
 ): SegmentMotionSpline {
-  const profile = getMotionProfile(participant);
-  const startPoint = points[segmentIndex];
-  const endPoint = points[segmentIndex + 1];
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
+
+  const profile =
+    getMotionProfile(participant);
+
+  const startPoint =
+    points[segmentIndex];
+
+  const endPoint =
+    points[segmentIndex + 1];
 
   const previousPoint =
-    points[Math.max(0, segmentIndex - 1)];
+    points[
+      Math.max(
+        0,
+        segmentIndex - 1,
+      )
+    ];
 
   const nextPoint =
     points[
@@ -1234,39 +1418,53 @@ function createSegmentMotionSpline(
       )
     ];
 
-  const segmentVector = subtractPositions(
-    endPoint.position,
-    startPoint.position,
-  );
-
-  const segmentLength = vectorLength(segmentVector);
-  const segmentDirection = normaliseVector(
-    segmentVector,
-    {
-      x: Math.cos(
-        degreesToRadians(startPoint.rotation),
-      ),
-      y: Math.sin(
-        degreesToRadians(startPoint.rotation),
-      ),
-    },
-  );
-
-  const incomingDirection = normaliseVector(
-    subtractPositions(
-      startPoint.position,
-      previousPoint.position,
-    ),
-    segmentDirection,
-  );
-
-  const outgoingDirection = normaliseVector(
-    subtractPositions(
-      nextPoint.position,
+  const segmentVector =
+    metricVectorBetween(
       endPoint.position,
-    ),
-    segmentDirection,
-  );
+      startPoint.position,
+      dimensions,
+    );
+
+  const segmentLength =
+    vectorLength(segmentVector);
+
+  const segmentDirection =
+    normaliseVector(
+      segmentVector,
+      {
+        x: Math.cos(
+          degreesToRadians(
+            startPoint.rotation,
+          ),
+        ),
+
+        y: Math.sin(
+          degreesToRadians(
+            startPoint.rotation,
+          ),
+        ),
+      },
+    );
+
+  const incomingDirection =
+    normaliseVector(
+      metricVectorBetween(
+        startPoint.position,
+        previousPoint.position,
+        dimensions,
+      ),
+      segmentDirection,
+    );
+
+  const outgoingDirection =
+    normaliseVector(
+      metricVectorBetween(
+        nextPoint.position,
+        endPoint.position,
+        dimensions,
+      ),
+      segmentDirection,
+    );
 
   let startTurnSeverityDegrees =
     angleDifferenceDegrees(
@@ -1284,26 +1482,30 @@ function createSegmentMotionSpline(
     startPoint.action === "Turn Left" ||
     startPoint.action === "Turn Right"
   ) {
-    startTurnSeverityDegrees = Math.max(
-      startTurnSeverityDegrees,
-      35,
-    );
+    startTurnSeverityDegrees =
+      Math.max(
+        startTurnSeverityDegrees,
+        35,
+      );
   }
 
   if (
     endPoint.action === "Turn Left" ||
     endPoint.action === "Turn Right"
   ) {
-    endTurnSeverityDegrees = Math.max(
-      endTurnSeverityDegrees,
-      35,
-    );
+    endTurnSeverityDegrees =
+      Math.max(
+        endTurnSeverityDegrees,
+        35,
+      );
   }
 
   const physicsControlled =
     isPhysicsGeneratedPathPoint(startPoint) ||
     isPhysicsGeneratedPathPoint(endPoint) ||
-    POST_IMPACT_ACTIONS.has(startPoint.action);
+    POST_IMPACT_ACTIONS.has(
+      startPoint.action,
+    );
 
   const roadGraphControlled =
     startPoint.notes?.includes(
@@ -1313,10 +1515,11 @@ function createSegmentMotionSpline(
       AUTO_ROAD_CURVE_NOTE_MARKER,
     ) === true;
 
-  const maximumTurnSeverity = Math.max(
-    startTurnSeverityDegrees,
-    endTurnSeverityDegrees,
-  );
+  const maximumTurnSeverity =
+    Math.max(
+      startTurnSeverityDegrees,
+      endTurnSeverityDegrees,
+    );
 
   const effectivelyStraight =
     maximumTurnSeverity <=
@@ -1332,11 +1535,6 @@ function createSegmentMotionSpline(
       action === "Swerve",
   );
 
-  /*
-   * Pointer-drawn routes contain tiny direction changes even when the
-   * investigator intended a straight approach. Treat those small changes as
-   * route noise instead of turning every segment into a Bézier curve.
-   */
   const routeWobbleTolerance =
     HUMAN_TYPES.has(participant.type)
       ? 9
@@ -1362,8 +1560,12 @@ function createSegmentMotionSpline(
       startPoint,
       endPoint,
       segmentDirection,
-      controlOne: startPoint.position,
-      controlTwo: endPoint.position,
+      controlOne:
+        startPoint.position,
+
+      controlTwo:
+        endPoint.position,
+
       arcLengthSamples: [
         {
           progress: 0,
@@ -1374,18 +1576,23 @@ function createSegmentMotionSpline(
           distance: segmentLength,
         },
       ],
+
       startTurnSeverityDegrees,
       endTurnSeverityDegrees,
     };
   }
 
-  const controls = getSmoothSegmentControls(
-    points.map((point) => point.position),
-    segmentIndex,
-    profile.curveTension,
-    roadGraphControlled,
-    maximumTurnSeverity,
-  );
+  const controls =
+    getSmoothSegmentControls(
+      points.map(
+        (point) =>
+          point.position,
+      ),
+      segmentIndex,
+      profile.curveTension,
+      roadGraphControlled,
+      maximumTurnSeverity,
+    );
 
   return {
     linear: false,
@@ -1394,8 +1601,13 @@ function createSegmentMotionSpline(
     startPoint,
     endPoint,
     segmentDirection,
-    controlOne: controls.controlOne,
-    controlTwo: controls.controlTwo,
+
+    controlOne:
+      controls.controlOne,
+
+    controlTwo:
+      controls.controlTwo,
+
     arcLengthSamples:
       createBezierArcLengthSamples(
         startPoint.position,
@@ -1403,7 +1615,9 @@ function createSegmentMotionSpline(
         controls.controlTwo,
         endPoint.position,
         maximumTurnSeverity,
+        dimensions,
       ),
+
     startTurnSeverityDegrees,
     endTurnSeverityDegrees,
   };
@@ -1412,43 +1626,99 @@ function createSegmentMotionSpline(
 function getParticipantMotionSplines(
   participant: ReconstructionVehicle,
   points: MovementPathPoint[],
+  worldDimensions?: MetricSceneDimensions,
 ): SegmentMotionSpline[] {
-  let typeCache =
-    participantMotionSplineCache.get(points);
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
 
-  if (!typeCache) {
-    typeCache = new Map();
+  let dimensionCache =
+    participantMotionSplineCache.get(
+      points,
+    );
+
+  if (!dimensionCache) {
+    dimensionCache =
+      new Map();
+
     participantMotionSplineCache.set(
       points,
-      typeCache,
+      dimensionCache,
     );
   }
 
-  const cached = typeCache.get(
-    participant.type,
-  );
+  const cacheKey =
+    metricSplineCacheKey(
+      participant,
+      dimensions,
+    );
+
+  const cached =
+    dimensionCache.get(
+      cacheKey,
+    );
 
   if (cached) {
     return cached;
   }
 
-  const splines = Array.from(
-    {
-      length: Math.max(
-        0,
-        points.length - 1,
-      ),
-    },
-    (_, index) =>
-      createSegmentMotionSpline(
-        participant,
-        points,
-        index,
-      ),
+  const splines =
+    Array.from(
+      {
+        length:
+          Math.max(
+            0,
+            points.length - 1,
+          ),
+      },
+      (_, index) =>
+        createSegmentMotionSpline(
+          participant,
+          points,
+          index,
+          dimensions,
+        ),
+    );
+
+  dimensionCache.set(
+    cacheKey,
+    splines,
   );
 
-  typeCache.set(participant.type, splines);
   return splines;
+}
+
+/*
+ * [RoadSafe:CanonicalMetricPlaybackSegmentLengthsV1]
+ *
+ * Provides authoring controls with the exact same metric spline lengths used
+ * by 2D, 3D, AR, exported frames and physics state sampling.
+ */
+export function getParticipantMetricPlaybackSegmentLengthsMetres(
+  participant: ReconstructionVehicle,
+  points: MovementPathPoint[],
+  worldDimensions?: MetricSceneDimensions,
+): number[] {
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
+
+  return getParticipantMotionSplines(
+    participant,
+    points,
+    dimensions,
+  ).map(
+    (spline) =>
+      Math.max(
+        0,
+        spline.arcLengthSamples[
+          spline.arcLengthSamples.length -
+            1
+        ]?.distance ?? 0,
+      ),
+  );
 }
 
 function getSegmentMotionGeometry(
@@ -1456,63 +1726,85 @@ function getSegmentMotionGeometry(
   points: MovementPathPoint[],
   segmentIndex: number,
   distanceProgress: number,
+  worldDimensions?: MetricSceneDimensions,
 ): SegmentMotionGeometry {
-  const splines = getParticipantMotionSplines(
-    participant,
-    points,
-  );
-
-  const spline = splines[segmentIndex];
-
-  if (!spline) {
-    const startPoint = points[segmentIndex];
-    const endPoint =
-      points[segmentIndex + 1] ?? startPoint;
-    const direction = normaliseVector(
-      subtractPositions(
-        endPoint.position,
-        startPoint.position,
-      ),
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
     );
 
+  const splines =
+    getParticipantMotionSplines(
+      participant,
+      points,
+      dimensions,
+    );
+
+  const spline =
+    splines[segmentIndex];
+
+  if (!spline) {
+    const startPoint =
+      points[segmentIndex];
+
+    const endPoint =
+      points[segmentIndex + 1] ??
+      startPoint;
+
+    const direction =
+      metricDirectionBetween(
+        endPoint.position,
+        startPoint.position,
+        dimensions,
+      );
+
     return {
-      position: startPoint.position,
-      tangent: direction,
-      turnSeverityDegrees: 0,
+      position:
+        startPoint.position,
+
+      tangent:
+        direction,
+
+      turnSeverityDegrees:
+        0,
     };
   }
 
-  const localTurnSeverity = interpolate(
-    spline.startTurnSeverityDegrees,
-    spline.endTurnSeverityDegrees,
-    smoothStep(distanceProgress),
-  );
+  const localTurnSeverity =
+    interpolate(
+      spline.startTurnSeverityDegrees,
+      spline.endTurnSeverityDegrees,
+      smoothStep(
+        distanceProgress,
+      ),
+    );
 
   if (spline.linear) {
     return {
       position: {
-        x: interpolate(
-          spline.startPoint.position.x,
-          spline.endPoint.position.x,
-          distanceProgress,
-        ),
-        y: interpolate(
-          spline.startPoint.position.y,
-          spline.endPoint.position.y,
-          distanceProgress,
-        ),
+        x:
+          interpolate(
+            spline.startPoint.position.x,
+            spline.endPoint.position.x,
+            distanceProgress,
+          ),
+
+        y:
+          interpolate(
+            spline.startPoint.position.y,
+            spline.endPoint.position.y,
+            distanceProgress,
+          ),
       },
-      tangent: spline.segmentDirection,
+
+      tangent:
+        spline.segmentDirection,
+
       turnSeverityDegrees:
         localTurnSeverity,
     };
   }
 
-  /*
-   * Convert travelled-distance progress into the matching cubic parameter.
-   * Equal time/distance increments therefore produce equal visual movement,
-   * even where the Bézier parameterisation is non-uniform.
-   */
   const curveProgress =
     getBezierProgressAtDistanceFraction(
       spline.arcLengthSamples,
@@ -1520,52 +1812,59 @@ function getSegmentMotionGeometry(
     );
 
   return {
-    position: cubicBezierPoint(
-      spline.startPoint.position,
-      spline.controlOne,
-      spline.controlTwo,
-      spline.endPoint.position,
-      curveProgress,
-    ),
-    tangent: getSmoothedBezierTangent(
-      spline,
-      curveProgress,
-    ),
+    position:
+      cubicBezierPoint(
+        spline.startPoint.position,
+        spline.controlOne,
+        spline.controlTwo,
+        spline.endPoint.position,
+        curveProgress,
+      ),
+
+    tangent:
+      getSmoothedBezierTangent(
+        spline,
+        curveProgress,
+        dimensions,
+      ),
+
     turnSeverityDegrees:
       localTurnSeverity,
   };
 }
 
-function getCornerAdjustedSpeed(
+function getCanonicalPlaybackSpeedKmh(
   participant: ReconstructionVehicle,
   requestedSpeedKmh: number,
-  turnSeverityDegrees: number,
   action: MovementAction,
 ): number {
-  const profile = getMotionProfile(participant);
-  let speed = Math.max(0, requestedSpeedKmh);
+  const profile =
+    getMotionProfile(participant);
 
+  let speed =
+    Math.max(
+      0,
+      requestedSpeedKmh,
+    );
+
+  /*
+   * A participant's returned speed must describe the same progress used to
+   * calculate its position. Corner losses are therefore not applied as a
+   * second display-only multiplier. Investigators express actual braking or
+   * corner speed changes through the authored point speeds and timestamps.
+   */
   if (
     profile.maximumWalkingSpeedKmh !== null &&
     action !== "Accelerate"
   ) {
-    speed = Math.min(
-      speed,
-      profile.maximumWalkingSpeedKmh,
-    );
+    speed =
+      Math.min(
+        speed,
+        profile.maximumWalkingSpeedKmh,
+      );
   }
 
-  const turnRatio = clamp(
-    turnSeverityDegrees / 120,
-    0,
-    1,
-  );
-
-  return Math.max(
-    0,
-    speed *
-      (1 - profile.cornerSpeedLoss * turnRatio),
-  );
+  return speed;
 }
 
 function applyHumanWalkingMotion(
@@ -1648,43 +1947,71 @@ function applyHumanWalkingMotion(
 export function getParticipantStateAtTime(
   participant: ReconstructionVehicle,
   currentTime: number,
+  worldDimensions?: MetricSceneDimensions,
 ): {
   position: ReconstructionPosition;
   rotation: number;
   speedKmh: number;
   activePointId: string;
 } {
-  const points = getParticipantPlaybackPathPoints(
-    participant,
-  );
+  const dimensions =
+    normalisePlaybackWorldDimensions(
+      worldDimensions,
+    );
+
+  const points =
+    getParticipantPlaybackPathPoints(
+      participant,
+    );
 
   if (points.length === 0) {
     return {
-      position: participant.startPosition,
-      rotation: participant.startRotation,
-      speedKmh: participant.estimatedSpeedKmh,
-      activePointId: "",
+      position:
+        participant.startPosition,
+
+      rotation:
+        participant.startRotation,
+
+      speedKmh:
+        participant.estimatedSpeedKmh,
+
+      activePointId:
+        "",
     };
   }
 
-  if (currentTime <= points[0].timeSeconds) {
-    const first = points[0];
-    const next = points[1] ?? first;
+  if (
+    currentTime <=
+    points[0].timeSeconds
+  ) {
+    const first =
+      points[0];
 
-    const fallbackTangent = normaliseVector(
-      subtractPositions(
+    const next =
+      points[1] ??
+      first;
+
+    const fallbackTangent =
+      metricDirectionBetween(
         next.position,
         first.position,
-      ),
-      {
-        x: Math.cos(
-          degreesToRadians(first.rotation),
-        ),
-        y: Math.sin(
-          degreesToRadians(first.rotation),
-        ),
-      },
-    );
+        dimensions,
+        {
+          x:
+            Math.cos(
+              degreesToRadians(
+                first.rotation,
+              ),
+            ),
+
+          y:
+            Math.sin(
+              degreesToRadians(
+                first.rotation,
+              ),
+            ),
+        },
+      );
 
     const tangent =
       points.length >= 2
@@ -1693,56 +2020,89 @@ export function getParticipantStateAtTime(
             points,
             0,
             0,
+            dimensions,
           ).tangent
         : fallbackTangent;
 
-    const heading = angleFromVector(tangent);
+    const heading =
+      angleFromVector(
+        tangent,
+      );
 
-    const speedKmh = getCornerAdjustedSpeed(
-      participant,
-      first.speedKmh,
-      0,
-      first.action,
-    );
+    const speedKmh =
+      first.action === "Stop"
+        ? 0
+        : getCanonicalPlaybackSpeedKmh(
+            participant,
+            first.speedKmh,
+            first.action,
+          );
 
-    const walkingMotion = applyHumanWalkingMotion(
-      participant,
-      first.position,
-      heading,
-      speedKmh,
-      currentTime,
-      first.action,
-      isPhysicsGeneratedPathPoint(first),
-    );
+    const walkingMotion =
+      applyHumanWalkingMotion(
+        participant,
+        first.position,
+        heading,
+        speedKmh,
+        currentTime,
+        first.action,
+        isPhysicsGeneratedPathPoint(
+          first,
+        ),
+      );
 
     return {
-      position: walkingMotion.position,
-      rotation: walkingMotion.rotation,
+      position:
+        walkingMotion.position,
+
+      rotation:
+        walkingMotion.rotation,
+
       speedKmh,
-      activePointId: first.id,
+
+      activePointId:
+        first.id,
     };
   }
 
-  const finalPoint = points[points.length - 1];
+  const finalPoint =
+    points[
+      points.length - 1
+    ];
 
-  if (currentTime >= finalPoint.timeSeconds) {
+  if (
+    currentTime >=
+    finalPoint.timeSeconds
+  ) {
     const previous =
-      points[Math.max(0, points.length - 2)];
+      points[
+        Math.max(
+          0,
+          points.length - 2,
+        )
+      ];
 
-    const fallbackTangent = normaliseVector(
-      subtractPositions(
+    const fallbackTangent =
+      metricDirectionBetween(
         finalPoint.position,
         previous.position,
-      ),
-      {
-        x: Math.cos(
-          degreesToRadians(finalPoint.rotation),
-        ),
-        y: Math.sin(
-          degreesToRadians(finalPoint.rotation),
-        ),
-      },
-    );
+        dimensions,
+        {
+          x:
+            Math.cos(
+              degreesToRadians(
+                finalPoint.rotation,
+              ),
+            ),
+
+          y:
+            Math.sin(
+              degreesToRadians(
+                finalPoint.rotation,
+              ),
+            ),
+        },
+      );
 
     const tangent =
       points.length >= 2
@@ -1751,111 +2111,154 @@ export function getParticipantStateAtTime(
             points,
             points.length - 2,
             1,
+            dimensions,
           ).tangent
         : fallbackTangent;
 
     const physicsControlled =
-      isPhysicsGeneratedPathPoint(finalPoint) ||
-      POST_IMPACT_ACTIONS.has(finalPoint.action);
+      isPhysicsGeneratedPathPoint(
+        finalPoint,
+      ) ||
+      POST_IMPACT_ACTIONS.has(
+        finalPoint.action,
+      );
 
-    const heading = physicsControlled
-      ? finalPoint.rotation
-      : angleFromVector(tangent);
+    const heading =
+      physicsControlled
+        ? finalPoint.rotation
+        : angleFromVector(
+            tangent,
+          );
 
     const speedKmh =
       finalPoint.action === "Stop"
         ? 0
-        : getCornerAdjustedSpeed(
+        : getCanonicalPlaybackSpeedKmh(
             participant,
             finalPoint.speedKmh,
-            0,
             finalPoint.action,
           );
 
-    const walkingMotion = applyHumanWalkingMotion(
-      participant,
-      finalPoint.position,
-      heading,
-      speedKmh,
-      currentTime,
-      finalPoint.action,
-      physicsControlled,
-    );
+    const walkingMotion =
+      applyHumanWalkingMotion(
+        participant,
+        finalPoint.position,
+        heading,
+        speedKmh,
+        currentTime,
+        finalPoint.action,
+        physicsControlled,
+      );
 
     return {
-      position: walkingMotion.position,
-      rotation: walkingMotion.rotation,
+      position:
+        walkingMotion.position,
+
+      rotation:
+        walkingMotion.rotation,
+
       speedKmh,
-      activePointId: finalPoint.id,
+
+      activePointId:
+        finalPoint.id,
     };
   }
 
-  const segmentIndex = points.findIndex(
-    (point, index) =>
-      index < points.length - 1 &&
-      currentTime >= point.timeSeconds &&
-      currentTime <=
-        points[index + 1].timeSeconds,
-  );
+  const segmentIndex =
+    points.findIndex(
+      (point, index) =>
+        index <
+          points.length - 1 &&
+        currentTime >=
+          point.timeSeconds &&
+        currentTime <=
+          points[index + 1]
+            .timeSeconds,
+    );
 
-  const safeIndex = Math.max(0, segmentIndex);
-  const start = points[safeIndex];
-  const end = points[safeIndex + 1];
+  const safeIndex =
+    Math.max(
+      0,
+      segmentIndex,
+    );
 
-  const duration = Math.max(
-    end.timeSeconds - start.timeSeconds,
-    0.001,
-  );
+  const start =
+    points[safeIndex];
 
-  const timeProgress = clamp(
-    (currentTime - start.timeSeconds) /
-      duration,
-    0,
-    1,
-  );
+  const end =
+    points[safeIndex + 1];
+
+  const duration =
+    Math.max(
+      end.timeSeconds -
+        start.timeSeconds,
+      0.001,
+    );
+
+  const timeProgress =
+    clamp(
+      (
+        currentTime -
+        start.timeSeconds
+      ) /
+        duration,
+      0,
+      1,
+    );
 
   const positionProgress =
     getKinematicPositionProgress(
+      participant,
       start,
       end,
       timeProgress,
     );
 
-  const geometry = getSegmentMotionGeometry(
-    participant,
-    points,
-    safeIndex,
-    positionProgress,
-  );
+  const geometry =
+    getSegmentMotionGeometry(
+      participant,
+      points,
+      safeIndex,
+      positionProgress,
+      dimensions,
+    );
 
   const physicsControlled =
-    isPhysicsGeneratedPathPoint(start) ||
-    isPhysicsGeneratedPathPoint(end) ||
-    POST_IMPACT_ACTIONS.has(start.action);
+    isPhysicsGeneratedPathPoint(
+      start,
+    ) ||
+    isPhysicsGeneratedPathPoint(
+      end,
+    ) ||
+    POST_IMPACT_ACTIONS.has(
+      start.action,
+    );
 
-  const pathHeading = angleFromVector(
-    geometry.tangent,
-  );
+  const pathHeading =
+    angleFromVector(
+      geometry.tangent,
+    );
 
-  const physicsRotation = interpolateAngle(
-    start.rotation,
-    end.rotation,
-    smootherStep(positionProgress),
-  );
+  const physicsRotation =
+    interpolateAngle(
+      start.rotation,
+      end.rotation,
+      smootherStep(
+        positionProgress,
+      ),
+    );
 
-  let rotation = physicsControlled
-    ? physicsRotation
-    : pathHeading;
+  let rotation =
+    physicsControlled
+      ? physicsRotation
+      : pathHeading;
 
-  /*
-   * Blend the first post-impact physics heading from the final guided-road
-   * tangent. The physics path still takes control immediately, but the visual
-   * body orientation no longer snaps on the exact transition frame.
-   */
   if (
     physicsControlled &&
     safeIndex > 0 &&
-    POST_IMPACT_ACTIONS.has(start.action) &&
+    POST_IMPACT_ACTIONS.has(
+      start.action,
+    ) &&
     positionProgress < 0.16
   ) {
     const previousGeometry =
@@ -1864,6 +2267,7 @@ export function getParticipantStateAtTime(
         points,
         safeIndex - 1,
         1,
+        dimensions,
       );
 
     const previousHeading =
@@ -1871,22 +2275,39 @@ export function getParticipantStateAtTime(
         previousGeometry.tangent,
       );
 
-    rotation = interpolateAngle(
-      previousHeading,
-      physicsRotation,
-      smootherStep(
-        positionProgress / 0.16,
-      ),
-    );
+    rotation =
+      interpolateAngle(
+        previousHeading,
+        physicsRotation,
+        smootherStep(
+          positionProgress /
+            0.16,
+        ),
+      );
   }
 
-  const endSpeed =
-    end.action === "Stop" ? 0 : end.speedKmh;
+  const canonicalStartSpeed =
+    start.action === "Stop"
+      ? 0
+      : getCanonicalPlaybackSpeedKmh(
+          participant,
+          start.speedKmh,
+          start.action,
+        );
 
-  const interpolatedSpeed =
+  const canonicalEndSpeed =
+    end.action === "Stop"
+      ? 0
+      : getCanonicalPlaybackSpeedKmh(
+          participant,
+          end.speedKmh,
+          end.action,
+        );
+
+  const speedKmh =
     getSmoothKinematicSpeedKmh(
-      start.speedKmh,
-      endSpeed,
+      canonicalStartSpeed,
+      canonicalEndSpeed,
       timeProgress,
     );
 
@@ -1895,27 +2316,26 @@ export function getParticipantStateAtTime(
       ? start.action
       : end.action;
 
-  const speedKmh = getCornerAdjustedSpeed(
-    participant,
-    interpolatedSpeed,
-    geometry.turnSeverityDegrees,
-    activeAction,
-  );
-
-  const walkingMotion = applyHumanWalkingMotion(
-    participant,
-    geometry.position,
-    rotation,
-    speedKmh,
-    currentTime,
-    activeAction,
-    physicsControlled,
-  );
+  const walkingMotion =
+    applyHumanWalkingMotion(
+      participant,
+      geometry.position,
+      rotation,
+      speedKmh,
+      currentTime,
+      activeAction,
+      physicsControlled,
+    );
 
   return {
-    position: walkingMotion.position,
-    rotation: walkingMotion.rotation,
+    position:
+      walkingMotion.position,
+
+    rotation:
+      walkingMotion.rotation,
+
     speedKmh,
+
     activePointId:
       timeProgress < 0.5
         ? start.id

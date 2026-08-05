@@ -9,7 +9,6 @@ import {
 import {
   AlertTriangle,
   ArrowLeft,
-  ScanLine,
 } from "lucide-react";
 
 import ARReconstructionViewer from "../components/reconstruction/ar/ARReconstructionViewer";

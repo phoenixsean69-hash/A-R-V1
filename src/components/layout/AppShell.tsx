@@ -19,7 +19,6 @@ import {
   ClipboardList,
   FileText,
   FolderKanban,
-  Home,
   LogOut,
   Map,
   Menu,
@@ -38,7 +37,21 @@ import {
 } from "../../types/auth";
 import { usesGeneratedRoad } from "../../types/reconstruction";
 
-const sharedNavItems = [
+/*
+ * [RoadSafe:TypedShellNavigationV1]
+ *
+ * Both station and field navigation use one explicit item shape. Only root
+ * destinations need React Router's optional exact-match flag.
+ */
+interface AppNavigationItem {
+  to: string;
+  label: string;
+  icon: typeof Building2;
+  end?: boolean;
+}
+
+const sharedNavItems:
+  AppNavigationItem[] = [
   {
     to: "/cases",
     label: "Cases",
@@ -213,7 +226,8 @@ export default function AppShell() {
     ? "/station"
     : "/field";
 
-  const navItems = useMemo(
+  const navItems =
+    useMemo<AppNavigationItem[]>(
     () =>
       stationClient
         ? [

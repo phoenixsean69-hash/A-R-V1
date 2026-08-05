@@ -540,6 +540,8 @@ export function solveMetricRouteTiming(
   fallbackSpeedKmh: number,
   dimensions?:
     MetricSceneDimensions,
+  segmentLengthsMetresOverride?:
+    readonly number[],
 ): MetricRouteTimingResult {
   const world =
     normaliseMetricSceneDimensions(
@@ -604,20 +606,44 @@ export function solveMetricRouteTiming(
         ),
     );
 
+  /*
+   * [RoadSafe:CanonicalSplineLengthTimingOverrideV1]
+   *
+   * Step 3B2 playback may supply the exact metric lengths of its smoothed
+   * Bézier segments. Existing callers continue using straight metric segment
+   * lengths when no valid override is supplied.
+   */
+  const validLengthOverride =
+    segmentLengthsMetresOverride?.length ===
+      points.length - 1 &&
+    segmentLengthsMetresOverride.every(
+      (length) =>
+        Number.isFinite(length) &&
+        length >= 0,
+    );
+
   const segmentLengthsMetres =
-    points
-      .slice(
-        0,
-        -1,
-      )
-      .map(
-        (point, index) =>
-          sceneSegmentLengthMetres(
-            point,
-            points[index + 1],
-            world,
-          ),
-      );
+    validLengthOverride
+      ? segmentLengthsMetresOverride.map(
+          (length) =>
+            Math.max(
+              0,
+              Number(length),
+            ),
+        )
+      : points
+          .slice(
+            0,
+            -1,
+          )
+          .map(
+            (point, index) =>
+              sceneSegmentLengthMetres(
+                point,
+                points[index + 1],
+                world,
+              ),
+          );
 
   const minimumMovingSpeedMps =
     0.1 / 3.6;

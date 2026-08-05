@@ -7,6 +7,7 @@ import {
   type ReconstructionVehicle,
 } from "../../types/reconstruction";
 import { getParticipantStateAtTime } from "../../utils/reconstructionGeometry";
+import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
 
 interface ForensicScenePreviewProps {
   reconstruction: AccidentReconstruction;
@@ -176,7 +177,11 @@ export default function ForensicScenePreview({
       <circle cx={reconstruction.collisionPoint.x} cy={reconstruction.collisionPoint.y} r="7.5" fill="url(#impactGlow)" />
       <circle cx={reconstruction.collisionPoint.x} cy={reconstruction.collisionPoint.y} r="1.25" fill="#e1454c" stroke="#ffe5e5" strokeWidth="0.4" />
       {reconstruction.vehicles.map((participant) => {
-        const state = getParticipantStateAtTime(participant, timeSeconds);
+        const state = getParticipantStateAtTime(
+                        participant,
+                        timeSeconds,
+                        getReconstructionWorldDimensions(reconstruction),
+                      );
         return (
           <ParticipantGlyph
             key={participant.id}

@@ -1041,7 +1041,11 @@ function Reconstruction3DViewer({
       }
 
       participantEntries.forEach((entry) => {
-        const state = getParticipantStateAtTime(entry.participant, timeRef.current);
+        const state = getParticipantStateAtTime(
+                        entry.participant,
+                        timeRef.current,
+                        { widthMetres: width, heightMetres: height },
+                      );
         entry.holder.position.copy(worldPosition(state.position, width, height));
         // Use the exact shared trajectory heading returned to the 2D view.
         // The old 3D-only time sampling could disagree at Point 1 and caused

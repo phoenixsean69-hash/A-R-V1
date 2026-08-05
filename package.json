@@ -12,7 +12,10 @@
     "physics:verify:full": "node scripts/verify-phase0-foundation.mjs && npm run build",
     "route:verify": "node scripts/verify-route-topology.mjs && tsc -p tsconfig.phase0.json",
     "motion:verify": "node scripts/verify-motion-kinematics.mjs && tsc -p tsconfig.phase0.json",
-    "timing:verify": "node scripts/verify-metric-route-timing.mjs && tsc -p tsconfig.phase0.json"
+    "timing:verify": "node scripts/verify-metric-route-timing.mjs && tsc -p tsconfig.phase0.json",
+    "playback-core:verify": "node scripts/verify-phase0-canonical-metric-playback-core.mjs && tsc -p tsconfig.phase0.json",
+    "playback-views:verify": "node scripts/verify-phase0-step3b2b-visual-playback.mjs && tsc -p tsconfig.phase0.json",
+    "playback-authoring:verify": "node scripts/verify-phase0-step3b2c-canonical-speed-authoring.mjs && tsc -p tsconfig.phase0.json"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

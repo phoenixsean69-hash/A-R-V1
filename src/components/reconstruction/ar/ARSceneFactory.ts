@@ -1493,6 +1493,7 @@ export function createARReconstructionScene({
           getParticipantStateAtTime(
             entry.participant,
             timeSeconds,
+            { widthMetres: width, heightMetres: height },
           );
 
         entry.holder.position.copy(

@@ -6,6 +6,7 @@ import {
   getParticipantStateAtTime,
   getReconstructionImpactEffectState,
 } from "./reconstructionGeometry";
+import { getReconstructionWorldDimensions } from "./reconstructionWorldScale";
 import { getParticipantPotholeEffect } from "./reconstructionSurfaceEffects";
 
 interface PlaybackDomFrameOptions {
@@ -274,7 +275,11 @@ function paintParticipant(
   timeSeconds: number,
   impactEffect: ReturnType<typeof getReconstructionImpactEffectState>,
 ): void {
-  const state = getParticipantStateAtTime(participant, timeSeconds);
+  const state = getParticipantStateAtTime(
+                  participant,
+                  timeSeconds,
+                  getReconstructionWorldDimensions(reconstruction),
+                );
   const activePoint = participant.pathPoints.find(
     (point) => point.id === state.activePointId,
   );

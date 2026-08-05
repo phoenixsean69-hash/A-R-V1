@@ -9,6 +9,7 @@ import type {
 
 import RoadSceneEnvironment from "../reconstruction/RoadSceneEnvironment";
 import { getParticipantStateAtTime } from "../../utils/reconstructionGeometry";
+import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
 
 interface FieldSceneLivePreviewProps {
   reconstruction: AccidentReconstruction;
@@ -174,7 +175,11 @@ export default function FieldSceneLivePreview({
           ))}
 
         {reconstruction.vehicles.map((participant) => {
-          const state = getParticipantStateAtTime(participant, currentTimeSeconds);
+          const state = getParticipantStateAtTime(
+                          participant,
+                          currentTimeSeconds,
+                          getReconstructionWorldDimensions(reconstruction),
+                        );
           return (
             <div
               key={`${participant.id}-field-position`}

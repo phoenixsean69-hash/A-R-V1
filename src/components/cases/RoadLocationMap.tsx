@@ -1460,7 +1460,10 @@ const RoadLocationMap = forwardRef<
             : 6,
         minZoom: 4,
         maxZoom: 20,
-        preserveDrawingBuffer: true,
+        canvasContextAttributes: {
+          preserveDrawingBuffer:
+            true,
+        },
         attributionControl: false,
       });
 

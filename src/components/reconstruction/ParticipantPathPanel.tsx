@@ -30,12 +30,18 @@ import type {
 
 import {
   getInvestigatorPathPoints,
+  getParticipantMetricPlaybackSegmentLengthsMetres,
   getPhysicsPathPoints,
   isObservedRestPoint,
   isPhysicsCalculatedRestPoint,
   isPhysicsGeneratedPathPoint,
   sanitiseParticipantPathPoints,
 } from "../../utils/reconstructionGeometry";
+
+import {
+  solveMetricRouteTiming,
+  type MetricSceneDimensions,
+} from "../../utils/reconstructionMotionKinematics";
 
 import {
   canDeleteRoutePoint,
@@ -49,9 +55,16 @@ import {
   isPointZLocked,
 } from "../../utils/pointZRouteUi";
 
+interface ParticipantSpeedPlan {
+  estimatedSpeedKmh: number;
+  pathPoints: MovementPathPoint[];
+  requiredDurationSeconds: number;
+}
+
 interface ParticipantPathPanelProps {
   participant: ReconstructionVehicle;
   durationSeconds: number;
+  worldDimensions: MetricSceneDimensions;
   sceneObjects: ReconstructionSceneObject[];
   selectedPointId: string | null;
 
@@ -61,6 +74,10 @@ interface ParticipantPathPanelProps {
 
   onParticipantChange: (
     updates: Partial<ReconstructionVehicle>,
+  ) => void;
+
+  onApplySpeedPlan: (
+    plan: ParticipantSpeedPlan,
   ) => void;
 
   onPointChange: (
@@ -291,10 +308,12 @@ export default function ParticipantPathPanel(
   const {
     participant,
     durationSeconds,
+    worldDimensions,
     sceneObjects,
     selectedPointId,
     onSelectPoint,
     onParticipantChange,
+    onApplySpeedPlan,
     onPointChange,
     onAddPoint,
     onDeletePoint,
@@ -1134,6 +1153,14 @@ export default function ParticipantPathPanel(
       physicsPoints.length,
     ]);
 
+    /*
+   * [RoadSafe:CanonicalMetricSpeedAuthoringV1]
+   *
+   * Exact participant speed is now solved against the same metric Bézier
+   * lengths used by every playback view. The reconstruction duration expands
+   * atomically when a slower route needs more time, so Point Z never becomes
+   * unsaveable by falling outside the timeline.
+   */
   const applyParticipantSpeed =
     useCallback(
       (requestedSpeed: number) => {
@@ -1157,61 +1184,163 @@ export default function ParticipantPathPanel(
             speedLimit,
           );
 
-        const previousSpeed =
-          Math.max(
-            0.1,
-            participant.estimatedSpeedKmh ||
-              investigatorPoints.find(
-                (point) =>
-                  point.speedKmh > 0,
-              )?.speedKmh ||
-              nextSpeed,
+        if (
+          investigatorPoints.length <
+          2
+        ) {
+          setRouteMessage(
+            "Point 1 and Point Z are required before route speed can be recalculated.",
           );
 
-        const timingScale =
-          previousSpeed / nextSpeed;
+          setSpeedDraft(
+            formatSpeedValue(
+              participant.estimatedSpeedKmh,
+            ),
+          );
+
+          return;
+        }
+
+        const speedAdjustedPoints =
+          investigatorPoints.map(
+            (point) => ({
+              ...point,
+
+              speedKmh:
+                point.action === "Stop"
+                  ? 0
+                  : nextSpeed,
+            }),
+          );
+
+        const segmentLengthsMetres =
+          getParticipantMetricPlaybackSegmentLengthsMetres(
+            {
+              ...participant,
+              pathPoints:
+                speedAdjustedPoints,
+            },
+            speedAdjustedPoints,
+            worldDimensions,
+          );
+
+        const timingInput =
+          speedAdjustedPoints.map(
+            (point) => ({
+              position:
+                point.position,
+
+              speedKmh:
+                point.speedKmh,
+
+              stopped:
+                point.action ===
+                "Stop",
+            }),
+          );
+
+        /*
+         * First obtain the route's natural duration at the requested speed.
+         * Then solve again using that duration so speedScale remains one and
+         * the entered speed is not silently changed.
+         */
+        const naturalTiming =
+          solveMetricRouteTiming(
+            timingInput,
+            1,
+            nextSpeed,
+            worldDimensions,
+            segmentLengthsMetres,
+          );
+
+        const targetTravelDuration =
+          Math.max(
+            0.1,
+            naturalTiming
+              .naturalDurationSeconds,
+          );
+
+        const timing =
+          solveMetricRouteTiming(
+            timingInput,
+            targetTravelDuration,
+            nextSpeed,
+            worldDimensions,
+            segmentLengthsMetres,
+          );
 
         const firstTime =
           investigatorPoints[0]
             ?.timeSeconds ?? 0;
 
         const updatedPathPoints =
-          investigatorPoints.map(
-            (point, index) => {
-              const elapsed = Math.max(
-                0,
-                point.timeSeconds -
-                  firstTime,
-              );
+          speedAdjustedPoints.map(
+            (point, index) => ({
+              ...point,
 
-              return {
-                ...point,
-                timeSeconds:
-                  index === 0
-                    ? firstTime
-                    : Number(
-                        (
-                          firstTime +
-                          elapsed *
-                            timingScale
-                        ).toFixed(2),
-                      ),
-                speedKmh:
-                  point.action ===
-                  "Stop"
-                    ? 0
-                    : nextSpeed,
-              };
-            },
+              timeSeconds:
+                Number(
+                  (
+                    firstTime +
+                    (
+                      timing
+                        .timesSeconds[
+                          index
+                        ] ?? 0
+                    )
+                  ).toFixed(4),
+                ),
+
+              /*
+               * The solver determines timing. Preserve the investigator's
+               * exact requested speed rather than exposing tiny scale changes
+               * caused only by four-decimal timing precision.
+               */
+              speedKmh:
+                point.action === "Stop"
+                  ? 0
+                  : nextSpeed,
+            }),
           );
 
-        invalidatePhysicsBeforeStructureChange();
+        const previousImpactTime =
+          investigatorPoints[
+            investigatorPoints.length -
+              1
+          ]?.timeSeconds ??
+          firstTime;
 
-        onParticipantChange({
+        const existingPostImpactWindow =
+          Math.max(
+            0.05,
+            durationSeconds -
+              previousImpactTime,
+          );
+
+        const finalTime =
+          updatedPathPoints[
+            updatedPathPoints.length -
+              1
+          ]?.timeSeconds ??
+          firstTime;
+
+        const requiredDurationSeconds =
+          Number(
+            Math.max(
+              durationSeconds,
+              finalTime +
+                existingPostImpactWindow,
+            ).toFixed(4),
+          );
+
+        onApplySpeedPlan({
           estimatedSpeedKmh:
             nextSpeed,
+
           pathPoints:
             updatedPathPoints,
+
+          requiredDurationSeconds,
         });
 
         setSpeedDraft(
@@ -1220,25 +1349,23 @@ export default function ParticipantPathPanel(
           ),
         );
 
-        const finalTime =
-          updatedPathPoints[
-            updatedPathPoints.length - 1
-          ]?.timeSeconds ?? 0;
+        const timelineExpanded =
+          requiredDurationSeconds >
+          durationSeconds + 0.0001;
 
         setRouteMessage(
-          finalTime > durationSeconds
-            ? `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h. The route timing was recalculated to ${finalTime.toFixed(1)}s, so the current ${durationSeconds.toFixed(1)}s timeline will show only the physically reachable part of the route.`
-            : `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h. Every authored movement point and its timing were recalculated for playback.`,
+          timelineExpanded
+            ? `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h using calibrated metric curve timing. Point Z is reached at ${finalTime.toFixed(2)}s and the timeline expanded to ${requiredDurationSeconds.toFixed(2)}s to preserve post-impact playback.`
+            : `${participant.name} now travels at ${formatSpeedValue(nextSpeed)} km/h using the same calibrated metric curve timing as 2D, 3D, AR and physics.`,
         );
       },
       [
         durationSeconds,
         investigatorPoints,
-        invalidatePhysicsBeforeStructureChange,
-        onParticipantChange,
-        participant.estimatedSpeedKmh,
-        participant.name,
+        onApplySpeedPlan,
+        participant,
         speedLimit,
+        worldDimensions,
       ],
     );
 
@@ -2145,7 +2272,7 @@ export default function ParticipantPathPanel(
               Exact participant speed
             </h3>
             <p className="roadsafe-route-inspector__description">
-              This updates the participant&apos;s authored route speed and recalculates route timing. Entering 1 km/h makes this participant move at 1 km/h during playback.
+              This applies the exact entered speed using calibrated metric curve length. The timeline expands automatically when required so Point Z and post-impact playback remain valid.
             </p>
           </div>
 

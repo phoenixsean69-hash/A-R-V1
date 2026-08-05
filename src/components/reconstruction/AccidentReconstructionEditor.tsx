@@ -1297,7 +1297,11 @@ export default function AccidentReconstructionEditor({
   const selectedParticipantState = useMemo(
     () =>
       selectedParticipant
-        ? getParticipantStateAtTime(selectedParticipant, currentTime)
+        ? getParticipantStateAtTime(
+            selectedParticipant,
+            currentTime,
+            getReconstructionWorldDimensions(reconstruction),
+          )
         : null,
     [currentTime, selectedParticipant],
   );
@@ -4041,7 +4045,11 @@ export default function AccidentReconstructionEditor({
                 })}
 
               {reconstruction.vehicles.map((participant, participantIndex) => {
-                const state = getParticipantStateAtTime(participant, currentTime);
+                const state = getParticipantStateAtTime(
+                                participant,
+                                currentTime,
+                                getReconstructionWorldDimensions(reconstruction),
+                              );
                 const pathPoints = sortMovementPathPoints(participant.pathPoints);
                 const { path, skidPath } = getParticipantPathGeometry(participant);
                 const activeAction = pathPoints.find((point) => point.id === state.activePointId)?.action;
@@ -4309,9 +4317,10 @@ export default function AccidentReconstructionEditor({
                   ) : (
                     reconstruction.vehicles.map((participant) => {
                       const participantState = getParticipantStateAtTime(
-                        participant,
-                        currentTime,
-                      );
+                                                 participant,
+                                                 currentTime,
+                                                 getReconstructionWorldDimensions(reconstruction),
+                                               );
 
                       return (
                         <button
@@ -4501,10 +4510,44 @@ export default function AccidentReconstructionEditor({
                       <ParticipantPathPanel
                         participant={selectedParticipant}
                         durationSeconds={reconstruction.durationSeconds}
+                      worldDimensions={getReconstructionWorldDimensions(reconstruction)}
                         sceneObjects={reconstruction.sceneObjects}
                         selectedPointId={selectedPathPointId}
                         onSelectPoint={setSelectedPathPointId}
-                        onParticipantChange={(updates) =>
+                        onApplySpeedPlan={({
+                        estimatedSpeedKmh,
+                        pathPoints,
+                        requiredDurationSeconds,
+                      }) => {
+                        setReconstruction(
+                          (current) => ({
+                            ...current,
+
+                            durationSeconds:
+                              Math.max(
+                                current.durationSeconds,
+                                requiredDurationSeconds,
+                              ),
+
+                            lastPhysicsSimulation:
+                              undefined,
+
+                            vehicles:
+                              current.vehicles.map(
+                                (candidate) =>
+                                  candidate.id ===
+                                  selectedParticipant.id
+                                    ? syncLegacyParticipantFields({
+                                        ...candidate,
+                                        estimatedSpeedKmh,
+                                        pathPoints,
+                                      })
+                                    : candidate,
+                              ),
+                          }),
+                        );
+                      }}
+                      onParticipantChange={(updates) =>
                           updateParticipant(selectedParticipant.id, updates)
                         }
                         onPointChange={(pointId, updates) =>

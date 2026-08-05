@@ -215,7 +215,14 @@ function participantWorldPositionAtTime(
   height: number,
 ): Vector2 {
   return worldPosition(
-    getParticipantStateAtTime(participant, timeSeconds).position,
+    getParticipantStateAtTime(
+      participant,
+      timeSeconds,
+      {
+        widthMetres: width,
+        heightMetres: height,
+      },
+    ).position,
     width,
     height,
   );
@@ -316,6 +323,10 @@ function participantVelocityAtTime(
     getParticipantStateAtTime(
       participant,
       timeSeconds,
+      {
+        widthMetres: width,
+        heightMetres: height,
+      },
     );
 
   const speed =
@@ -397,10 +408,26 @@ function participantPoseAtTime(
   width: number,
   height: number,
 ): PhysicsPose2D {
-  const state = getParticipantStateAtTime(participant, timeSeconds);
+  const state =
+    getParticipantStateAtTime(
+      participant,
+      timeSeconds,
+      {
+        widthMetres: width,
+        heightMetres: height,
+      },
+    );
+
   return {
-    position: worldPosition(state.position, width, height),
-    rotationDegrees: state.rotation,
+    position:
+      worldPosition(
+        state.position,
+        width,
+        height,
+      ),
+
+    rotationDegrees:
+      state.rotation,
   };
 }
 
@@ -2211,7 +2238,15 @@ export function applyPhysicsSimulation(
   const bodies: SimulationBody[] = participants.map((participant) => {
     const profile = resolveParticipantPhysicsProfile(participant);
     const authoredImpact = getImpactPoint(participant);
-    const state = getParticipantStateAtTime(participant, impactTime);
+    const state =
+      getParticipantStateAtTime(
+        participant,
+        impactTime,
+        {
+          widthMetres: width,
+          heightMetres: height,
+        },
+      );
     const position = participantWorldPositionAtTime(
       participant,
       impactTime,

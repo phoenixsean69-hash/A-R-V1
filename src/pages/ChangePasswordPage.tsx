@@ -63,9 +63,26 @@ export default function ChangePasswordPage() {
     return <Navigate to="/login" replace />;
   }
 
+  /*
+   * [RoadSafe:StablePasswordChangeIdentityV1]
+   *
+   * Capture the narrowed authenticated identity before creating the async
+   * submit closure. This prevents the mutable auth context property from
+   * becoming nullable again inside that closure.
+   */
+  const identity =
+    auth.identity;
+
+  const userPreferences =
+    identity.user.prefs as
+      typeof identity.user.prefs & {
+        mustChangePassword?: boolean;
+        passwordChangedAt?: string;
+      };
+
   const mustChangePassword =
-    auth.identity.user.prefs
-      ?.mustChangePassword === true;
+    userPreferences
+      .mustChangePassword === true;
 
   const submit = async (
     event: FormEvent<HTMLFormElement>,
@@ -116,7 +133,7 @@ export default function ChangePasswordPage() {
 
       await account.updatePrefs({
         prefs: {
-          ...auth.identity.user.prefs,
+          ...userPreferences,
           mustChangePassword: false,
           passwordChangedAt:
             new Date().toISOString(),
