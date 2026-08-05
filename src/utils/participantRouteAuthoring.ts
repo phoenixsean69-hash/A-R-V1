@@ -1,3 +1,7 @@
+import {
+  solveMetricRouteTiming,
+  type MetricSceneDimensions,
+} from "./reconstructionMotionKinematics";
 import type {
   MovementAction,
   MovementPathPoint,
@@ -75,6 +79,7 @@ export interface NormalisePointZRouteOptions {
   durationSeconds: number;
   speedKmh: number;
   participantType: ReconstructionVehicleType;
+  worldDimensions?: MetricSceneDimensions;
   createId?: (prefix: string) => string;
 }
 
@@ -84,6 +89,7 @@ export interface CreateLockedParticipantRouteOptions {
   durationSeconds: number;
   speedKmh: number;
   participantType: ReconstructionVehicleType;
+  worldDimensions?: MetricSceneDimensions;
   createId: (prefix: string) => string;
   impactTimeSeconds?: number;
 }
@@ -92,6 +98,7 @@ export interface InsertProgressiveRoutePointOptions {
   pathPoints: MovementPathPoint[];
   selectedPointId: string | null;
   durationSeconds: number;
+  worldDimensions?: MetricSceneDimensions;
   createId: (prefix: string) => string;
 }
 
@@ -490,9 +497,19 @@ function alignAuthoredOnlyToTangents(
   );
 }
 
+/*
+ * [RoadSafe:MetricAuthoredRouteTimingV1]
+ *
+ * Point Z time remains authoritative so all participants can share one
+ * collision instant. Point speeds are scaled together so the entered relative
+ * speed profile, physical distance and authored timestamps agree.
+ */
 function redistributeAuthoredTimes(
   authored: MovementPathPoint[],
   durationSeconds: number,
+  fallbackSpeedKmh: number,
+  worldDimensions?:
+    MetricSceneDimensions,
 ): MovementPathPoint[] {
   if (authored.length <= 1) {
     return authored;
@@ -502,78 +519,63 @@ function redistributeAuthoredTimes(
     authored.length - 1;
 
   const existingImpactTime =
-    authored[finalIndex].timeSeconds;
+    authored[finalIndex]
+      .timeSeconds;
 
-  const impactTimeSeconds = clamp(
-    Number.isFinite(
-      existingImpactTime,
-    )
-      ? existingImpactTime
-      : durationSeconds * 0.55,
-    0.1,
-    Math.max(
+  const impactTimeSeconds =
+    clamp(
+      Number.isFinite(
+        existingImpactTime,
+      )
+        ? existingImpactTime
+        : durationSeconds * 0.55,
       0.1,
-      durationSeconds - 0.05,
-    ),
-  );
-
-  const segmentLengths = authored
-    .slice(0, -1)
-    .map(
-      (point, index) =>
-        distance(
-          point.position,
-          authored[index + 1]
-            .position,
-        ),
+      Math.max(
+        0.1,
+        durationSeconds - 0.05,
+      ),
     );
 
-  const totalLength =
-    segmentLengths.reduce(
-      (sum, value) =>
-        sum + value,
-      0,
-    );
+  const timing =
+    solveMetricRouteTiming(
+      authored.map(
+        (point) => ({
+          position:
+            point.position,
 
-  let travelled = 0;
+          speedKmh:
+            point.speedKmh,
+
+          stopped:
+            point.action ===
+            "Stop",
+        }),
+      ),
+      impactTimeSeconds,
+      fallbackSpeedKmh,
+      worldDimensions,
+    );
 
   return authored.map(
-    (point, index) => {
-      if (index === 0) {
-        return {
-          ...point,
-          timeSeconds: 0,
-        };
-      }
+    (point, index) => ({
+      ...point,
 
-      if (index === finalIndex) {
-        return {
-          ...point,
-          timeSeconds:
-            impactTimeSeconds,
-        };
-      }
-
-      travelled +=
-        segmentLengths[
-          index - 1
-        ] ?? 0;
-
-      const progress =
-        totalLength > 0.000001
-          ? travelled / totalLength
-          : index / finalIndex;
-
-      return {
-        ...point,
-        timeSeconds: Number(
-          (
-            impactTimeSeconds *
-            progress
-          ).toFixed(3),
+      timeSeconds:
+        timing.timesSeconds[index] ??
+        (
+          index === finalIndex
+            ? impactTimeSeconds
+            : point.timeSeconds
         ),
-      };
-    },
+
+      speedKmh:
+        point.action === "Stop"
+          ? 0
+          : (
+              timing.speedsKmh[index] ??
+              point.speedKmh
+            ),
+    }),
   );
 }
 
@@ -1353,6 +1355,7 @@ export function createLockedParticipantRoute({
   durationSeconds,
   speedKmh,
   participantType,
+  worldDimensions,
   createId,
   impactTimeSeconds,
 }: CreateLockedParticipantRouteOptions): MovementPathPoint[] {
@@ -1450,6 +1453,8 @@ export function createLockedParticipantRoute({
         collisionTerminated,
       ),
       durationSeconds,
+      speedKmh,
+      worldDimensions,
     ),
   );
 }
@@ -1460,6 +1465,7 @@ export function normalisePointZRoute({
   durationSeconds,
   speedKmh,
   participantType,
+  worldDimensions,
   createId = defaultCreateId,
 }: NormalisePointZRouteOptions): MovementPathPoint[] {
   const physicsPoints = pathPoints
@@ -1524,6 +1530,7 @@ export function normalisePointZRoute({
             ?.speedKmh ??
           speedKmh,
         participantType,
+        worldDimensions,
         createId,
       }),
       ...physicsPoints,
@@ -1669,6 +1676,8 @@ export function normalisePointZRoute({
           collisionTerminatedRoute,
         ),
         durationSeconds,
+        speedKmh,
+        worldDimensions,
       ),
     );
 
@@ -1789,6 +1798,7 @@ export function createProgressiveParticipantRoute({
   durationSeconds,
   speedKmh,
   participantType,
+  worldDimensions,
   createId,
 }: {
   startPosition: ReconstructionPosition;
@@ -1796,6 +1806,7 @@ export function createProgressiveParticipantRoute({
   durationSeconds: number;
   speedKmh: number;
   participantType: ReconstructionVehicleType;
+  worldDimensions?: MetricSceneDimensions;
   createId: (prefix: string) => string;
   pointCount?: number;
 }): MovementPathPoint[] {
@@ -1806,6 +1817,7 @@ export function createProgressiveParticipantRoute({
     durationSeconds,
     speedKmh,
     participantType,
+    worldDimensions,
     createId,
   });
 }
@@ -1814,6 +1826,7 @@ export function insertProgressiveRoutePoint({
   pathPoints,
   selectedPointId,
   durationSeconds,
+  worldDimensions,
   createId,
 }: InsertProgressiveRoutePointOptions): {
   pathPoints: MovementPathPoint[];
@@ -1974,6 +1987,10 @@ export function insertProgressiveRoutePoint({
           nextAuthored,
         ),
         durationSeconds,
+        authored[0]
+          ?.speedKmh ??
+          1,
+        worldDimensions,
       ),
     );
 
@@ -2042,6 +2059,7 @@ export function applySafeAuthoredPointUpdate({
   durationSeconds,
   speedKmh,
   participantType,
+  worldDimensions,
   createId = defaultCreateId,
 }: {
   pathPoints: MovementPathPoint[];
@@ -2053,6 +2071,8 @@ export function applySafeAuthoredPointUpdate({
   speedKmh: number;
   participantType:
     ReconstructionVehicleType;
+  worldDimensions?:
+    MetricSceneDimensions;
   createId?:
     (prefix: string) => string;
 }): MovementPathPoint[] {
@@ -2179,6 +2199,7 @@ export function applySafeAuthoredPointUpdate({
     durationSeconds,
     speedKmh,
     participantType,
+    worldDimensions,
     createId,
   });
 }
@@ -2189,6 +2210,7 @@ export function updatePointZPosition({
   durationSeconds,
   speedKmh,
   participantType,
+  worldDimensions,
   createId = defaultCreateId,
 }: Omit<
   NormalisePointZRouteOptions,
@@ -2203,6 +2225,7 @@ export function updatePointZPosition({
     durationSeconds,
     speedKmh,
     participantType,
+    worldDimensions,
     createId,
   });
 }
@@ -2210,10 +2233,13 @@ export function updatePointZPosition({
 export function setParticipantImpactPoint({
   pathPoints,
   durationSeconds,
+  worldDimensions,
 }: {
   pathPoints: MovementPathPoint[];
   pointId: string;
   durationSeconds: number;
+  worldDimensions?:
+    MetricSceneDimensions;
 }): MovementPathPoint[] {
   const authored = pathPoints
     .filter(
@@ -2309,6 +2335,10 @@ export function setParticipantImpactPoint({
           protectedAuthored,
         ),
         durationSeconds,
+        protectedAuthored[0]
+          ?.speedKmh ??
+          1,
+        worldDimensions,
       ),
     ),
     ...physics,

@@ -1,3 +1,4 @@
+import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
 import {
   useCallback,
   useEffect,
@@ -1139,6 +1140,10 @@ export default function AccidentReconstructionEditor({
               speedKmh: participant.estimatedSpeedKmh,
               participantType: participant.type,
               createId,
+              worldDimensions:
+                getReconstructionWorldDimensions(
+                  nextCandidate,
+                ),
             }),
           }),
         ),
@@ -1639,6 +1644,10 @@ export default function AccidentReconstructionEditor({
                 speedKmh: updated.estimatedSpeedKmh,
                 participantType: updated.type,
                 createId,
+                worldDimensions:
+                  getReconstructionWorldDimensions(
+                    current,
+                  ),
               });
 
               return syncLegacyParticipantFields({
@@ -1863,6 +1872,10 @@ export default function AccidentReconstructionEditor({
         getDefaultSpeed,
         getDefaultRole,
         isHumanParticipant,
+        worldDimensions:
+          getReconstructionWorldDimensions(
+            reconstruction,
+          ),
       });
 
       setReconstruction((current) => ({
@@ -1932,6 +1945,10 @@ export default function AccidentReconstructionEditor({
           getDefaultSpeed,
           getDefaultRole,
           isHumanParticipant,
+          worldDimensions:
+            getReconstructionWorldDimensions(
+              reconstruction,
+            ),
         });
         const pointOne = participant.pathPoints[0];
 
@@ -3142,6 +3159,10 @@ export default function AccidentReconstructionEditor({
           speedKmh: participant.estimatedSpeedKmh,
           participantType: participant.type,
           createId,
+          worldDimensions:
+            getReconstructionWorldDimensions(
+              current,
+            ),
         });
 
         return syncLegacyParticipantFields({ ...participant, pathPoints });
