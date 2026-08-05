@@ -483,6 +483,84 @@ export interface CollisionKinematicsSummary {
   participants: ParticipantCollisionKinematics[];
 }
 
+/*
+ * [RoadSafe:CanonicalImpactResponseDataV1]
+ *
+ * One participant-specific, solver-derived impact record shared by 3D, AR,
+ * reports and later visual-response controllers.
+ */
+export type ParticipantImpactResponseClass =
+  | "Rigid Vehicle"
+  | "Two Wheeler"
+  | "Human Body";
+
+export type ParticipantImpactContactZone =
+  | "Front"
+  | "Rear"
+  | "Left Side"
+  | "Right Side"
+  | "Centre";
+
+export interface ParticipantImpactResponse {
+  schemaVersion:
+    "RoadSafe Impact Response V1";
+
+  collisionEventId: string;
+  participantId: string;
+  participantType:
+    ReconstructionEntityType;
+
+  timeSeconds: number;
+  responseClass:
+    ParticipantImpactResponseClass;
+
+  contactPoint:
+    ReconstructionPosition;
+
+  impactPosition:
+    ReconstructionPosition;
+
+  contactZone:
+    ParticipantImpactContactZone;
+
+  /**
+   * Collision-manifold normal directed toward this participant's response.
+   */
+  participantNormal:
+    PhysicsVector2D;
+
+  /**
+   * Direction of the participant's complete normal + friction impulse.
+   */
+  impulseDirection:
+    PhysicsVector2D;
+
+  impulseNs:
+    PhysicsVector2D;
+
+  impulseMagnitudeNs: number;
+
+  incomingVelocityMps:
+    PhysicsVector2D;
+
+  outgoingVelocityMps:
+    PhysicsVector2D;
+
+  deltaVelocityMps:
+    PhysicsVector2D;
+
+  deltaVMetresPerSecond: number;
+
+  angularVelocityChangeDegreesPerSecond:
+    number;
+
+  outcome:
+    CollisionKinematicOutcome;
+
+  relativeImpactSpeedKmh: number;
+  estimatedEnergyKj: number;
+}
+
 export interface PhysicsCollisionEvent {
   id: string;
   timeSeconds: number;
@@ -499,6 +577,14 @@ export interface PhysicsCollisionEvent {
   estimatedEnergyKj: number;
   estimatedAverageForceRangeKn: PhysicsForceRange;
   angularVelocityChangesDegPerSecond: Record<string, number>;
+
+  /**
+   * Optional for compatibility with reconstructions saved before Response V1.
+   * Every newly calculated collision event supplies this array.
+   */
+  impactResponses?:
+    ParticipantImpactResponse[];
+
   kinematics?: CollisionKinematicsSummary;
 }
 

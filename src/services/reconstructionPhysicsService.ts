@@ -36,6 +36,7 @@ import {
   syncLegacyParticipantFields,
 } from "../utils/reconstructionGeometry";
 import { getReconstructionWorldDimensions } from "../utils/reconstructionWorldScale";
+import { createParticipantImpactResponses } from "../utils/reconstructionImpactResponse";
 
 import {
   angleBetweenDegrees,
@@ -117,6 +118,10 @@ interface SimulationBody {
 
 interface CollisionParticipantChange {
   participantId: string;
+
+  participantType:
+    ReconstructionVehicle["type"];
+
   massKg: number;
   momentOfInertiaKgM2: number;
   impactPosition: Vector2;
@@ -1288,6 +1293,8 @@ function resolveParticipantCollision(
     participantChanges: [
       {
         participantId: left.participant.id,
+        participantType:
+          left.participant.type,
         massKg: left.profile.massKg,
         momentOfInertiaKgM2: bodyMomentOfInertia(left),
         impactPosition: { ...left.position },
@@ -1301,6 +1308,8 @@ function resolveParticipantCollision(
       },
       {
         participantId: right.participant.id,
+        participantType:
+          right.participant.type,
         massKg: right.profile.massKg,
         momentOfInertiaKgM2: bodyMomentOfInertia(right),
         impactPosition: { ...right.position },
@@ -1444,6 +1453,8 @@ function resolveStaticObjectCollision(
     participantChanges: [
       {
         participantId: body.participant.id,
+        participantType:
+          body.participant.type,
         massKg: body.profile.massKg,
         momentOfInertiaKgM2: bodyMomentOfInertia(body),
         impactPosition: { ...body.position },
@@ -1811,6 +1822,80 @@ function createPhysicsCollisionEvent(input: {
     height: input.height,
   });
 
+  /*
+   * [RoadSafe:CanonicalImpactResponseEventV1]
+   *
+   * Preserve the exact solver result before any viewer-specific animation is
+   * applied. Old saved events remain valid because impactResponses is optional.
+   */
+  const impactResponses =
+    createParticipantImpactResponses({
+      collisionEventId:
+        input.id,
+
+      timeSeconds:
+        quantiseSimulationTime(
+          input.timeSeconds,
+        ),
+
+      participantIds:
+        input.participantIds,
+
+      contactPoint:
+        input.contactPoint,
+
+      collisionNormal:
+        input.normal,
+
+      relativeImpactSpeedKmh:
+        input.result
+          .relativeSpeedKmh,
+
+      estimatedEnergyKj:
+        input.result
+          .impactEnergyKj,
+
+      widthMetres:
+        input.width,
+
+      heightMetres:
+        input.height,
+
+      changes:
+        input.result
+          .participantChanges
+          .map(
+            (change) => ({
+              participantId:
+                change.participantId,
+
+              participantType:
+                change.participantType,
+
+              impactPositionMetres:
+                change.impactPosition,
+
+              incomingVelocityMps:
+                change.incomingVelocity,
+
+              outgoingVelocityMps:
+                change.outgoingVelocity,
+
+              impulseNs:
+                change.impulseNs,
+
+              angularVelocityChangeDegreesPerSecond:
+                change
+                  .outgoingAngularVelocityDegreesPerSecond -
+                change
+                  .incomingAngularVelocityDegreesPerSecond,
+
+              outcome:
+                change.outcome,
+            }),
+          ),
+    });
+
   return {
     id: input.id,
     timeSeconds: input.timeSeconds,
@@ -1847,6 +1932,7 @@ function createPhysicsCollisionEvent(input: {
       kinematics.estimatedAverageForceRangeKn,
     angularVelocityChangesDegPerSecond:
       input.result.angularVelocityChangesDegPerSecond,
+    impactResponses,
     kinematics,
   };
 }
