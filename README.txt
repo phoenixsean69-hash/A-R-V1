@@ -1,43 +1,45 @@
-RoadSafe AR — BLENDER PROPERTIES PANEL V2
-===========================================
+RoadSafe AR — BLENDER RIGHT PROPERTIES PANEL V3
+=================================================
 
-V1's structural audit passed but the full project build failed.
-V2 deliberately removes the risky React restructuring.
+This version intentionally abandons the V1/V2 TSX approach.
 
-V2 DOES:
-- add one class to the existing 3D inspector;
-- add one passive Blender-style icon rail;
-- apply a high-specificity stylesheet to the EXISTING controls.
+V3 changes ONE ALREADY-LOADED CSS FILE ONLY:
 
-V2 DOES NOT:
-- add React state;
-- wrap conditionals;
-- add scroll handlers;
-- alter participant state;
-- alter physics;
-- alter timeline/playback;
-- alter model assetId/model integration.
+  src/styles/blenderColorGuard.css
 
-INSTALL
--------
-Extract into:
-C:\Users\nooklyweb\Desktop\A-R-V1
+It does not:
+- edit AccidentReconstructionEditor.tsx
+- add imports
+- add React state
+- add JSX
+- touch models
+- touch physics
+- touch timeline/playback
+- run npm build
 
-Run:
-cd C:\Users\nooklyweb\Desktop\A-R-V1
-node .\install-blender-properties-panel-v2.mjs
+Why this is safer:
+main.tsx already globally imports blenderColorGuard.css. The existing 3D panel
+already contains all the controls needed. V3 simply changes their layout.
 
-The installer runs npm run build.
+Install:
+  cd C:\Users\nooklyweb\Desktop\A-R-V1
+  node .\install-blender-right-panel-v3.mjs
 
-If the build fails:
-1. it restores the previous files;
-2. it keeps the full compiler output at:
-   .roadsafe-ui-backup\blender-properties-v2-build.log
+Then:
+  npm run dev
 
-START
------
-npm run dev
+Visual changes:
+- fixed Blender-like right panel width
+- dark property-editor background
+- narrow vertical icon rail
+- orange active rail marker
+- compact participant property table
+- compact input fields
+- compact 4-mode camera row
+- compact layers rows
+- compact physics telemetry
+- Blender-like disclosure headers
+- tight separators rather than big cards
 
-ROLLBACK
---------
-node .\revoke-blender-properties-panel-v2.mjs
+Rollback:
+  node .\revoke-blender-right-panel-v3.mjs
