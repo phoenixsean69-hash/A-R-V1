@@ -62,8 +62,7 @@ import {
   getParticipantAssetsForType,
 } from "../../engine/assets/participantAssetCatalog";
 
-import ReconstructionTimelineDock from "./ReconstructionTimelineDock";
-import ReconstructionNodeEditor from "./ReconstructionNodeEditor";
+import ReconstructionBottomDock from "./ReconstructionBottomDock";
 import ReconstructionRecorder from "../footage/ReconstructionRecorder";
 import FieldPlacementPanel from "../fieldPlacement/FieldPlacementPanel";
 import EvidenceMarkerLayer from "./EvidenceMarkerLayer";
@@ -897,8 +896,7 @@ export default function AccidentReconstructionEditor({
   const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("2D");
   const [activeWorkspaceTool, setActiveWorkspaceTool] =
     useState<WorkspaceTool>("Select");
-  const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(true);
-  const [nodeEditorOpen, setNodeEditorOpen] = useState(true);
+  const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
   const [workspacePropertiesOpen, setWorkspacePropertiesOpen] = useState(true);
   const [cameraCycleToken, setCameraCycleToken] = useState(0);
   const [workspaceCameraMode, setWorkspaceCameraMode] =
@@ -3442,23 +3440,30 @@ export default function AccidentReconstructionEditor({
 
           <button
             type="button"
-            onClick={() => {
-              setActiveReconstructionView("2D");
-              setWorkspaceSettingsOpen((value) => !value);
-            }}
-            className="reconstruction-workspace__button"
+            onClick={() =>
+              setWorkspaceSettingsOpen(
+                (value) => !value,
+              )
+            }
+            className={`reconstruction-workspace__button ${
+              workspaceSettingsOpen ? "is-active" : ""
+            }`}
+            aria-pressed={workspaceSettingsOpen}
           >
             Panels
           </button>
 
                     <button
             type="button"
-            onClick={() => setNodeEditorOpen((value) => !value)}
-            className={`reconstruction-workspace__button ${
-              nodeEditorOpen ? "is-active" : ""
-            }`}
-            aria-label="Toggle reconstruction nodes"
-            aria-pressed={nodeEditorOpen}
+            onClick={() =>
+              window.dispatchEvent(
+                new Event(
+                  "roadsafe:nodes-open",
+                ),
+              )
+            }
+            className="reconstruction-workspace__button"
+            aria-label="Open reconstruction nodes"
           >
             <Layers3 size={14} />
             Nodes
@@ -3467,7 +3472,6 @@ export default function AccidentReconstructionEditor({
 <button
             type="button"
             onClick={() => {
-              setActiveReconstructionView("2D");
               setWorkspaceSettingsOpen(true);
               window.requestAnimationFrame(() => {
                 sceneObjectPaletteRef.current?.scrollIntoView({
@@ -3567,7 +3571,7 @@ export default function AccidentReconstructionEditor({
               </Suspense>
             </div>
 
-            {workspacePropertiesOpen ? (
+            {workspaceRightPanelHost && workspacePropertiesOpen ? createPortal(
               <aside className="reconstruction-workspace__properties reconstruction-workspace__context-panel reconstruction-workspace__blender-properties">
                 <nav
                   className="reconstruction-workspace__blender-properties-tabs"
@@ -3918,8 +3922,9 @@ export default function AccidentReconstructionEditor({
                     )}
                   </div>
                 </div>
-              </aside>
-            ) : (
+              </aside>,
+                workspaceRightPanelHost,
+              ) : (
               <button
                 type="button"
                 className="reconstruction-workspace__inspector-tab"
@@ -3940,7 +3945,7 @@ export default function AccidentReconstructionEditor({
                 : ""
             }`}
           >
-            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#494949] bg-[#292929] px-4 py-3">
+            <div className="reconstruction-workspace__legacy-scene-toolbar flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#494949] bg-[#292929] px-4 py-3">
               <div>
                 <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">
                   Reconstruction Scene
@@ -5164,21 +5169,109 @@ export default function AccidentReconstructionEditor({
             ),
             workspaceRightPanelHost,
           )}
+{workspaceRightPanelHost &&
+          workspaceSettingsOpen &&
+          createPortal(
+            <aside
+              className="reconstruction-workspace__aux-inspector"
+              aria-label="Workspace and investigation properties"
+            >
+              <header className="reconstruction-workspace__aux-inspector-header">
+                <div>
+                  <span>Properties</span>
+                  <strong>Workspace & Investigation</strong>
+                </div>
 
-        <ReconstructionNodeEditor
-          reconstruction={reconstruction}
-          currentTime={currentTime}
-          activeView={activeReconstructionView}
-          open={nodeEditorOpen}
-          selectedParticipantId={selectedParticipantId}
-          selectedSceneObjectId={selectedSceneObjectId}
-          onToggle={() => setNodeEditorOpen((value) => !value)}
-          onSelectParticipant={(participantId) =>
-            handleSelectParticipant(participantId)
-          }
-          onSelectSceneObject={handleSelectSceneObject}
-        />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setWorkspaceSettingsOpen(false)
+                  }
+                  aria-label="Close workspace properties"
+                  title="Close workspace properties"
+                >
+                  <X size={14} />
+                </button>
+              </header>
 
+              <div className="reconstruction-workspace__aux-inspector-tools">
+                <div
+                  className="reconstruction-workspace__aux-basemap"
+                  aria-label="2D basemap"
+                >
+                  {(
+                    [
+                      "Diagram",
+                      "Street",
+                      "Satellite",
+                    ] as ReconstructionBasemapMode[]
+                  ).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      className={
+                        basemapMode === mode
+                          ? "is-active"
+                          : ""
+                      }
+                      aria-pressed={
+                        basemapMode === mode
+                      }
+                      onClick={() =>
+                        setBasemapMode(mode)
+                      }
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="reconstruction-workspace__aux-actions">
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    disabled={!historyAvailability.canUndo}
+                  >
+                    Undo
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRedo}
+                    disabled={!historyAvailability.canRedo}
+                  >
+                    Redo
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!selectedParticipantId}
+                    onClick={() => {
+                      setActiveReconstructionView("2D");
+
+                      setRouteDrawingParticipantId(
+                        (current) =>
+                          current
+                            ? null
+                            : selectedParticipantId,
+                      );
+                    }}
+                  >
+                    {routeDrawingParticipantId
+                      ? "Cancel Route"
+                      : "Draw Route"}
+                  </button>
+                </div>
+
+                <div className="reconstruction-workspace__aux-legend">
+                  <span>Start</span>
+                  <span>Brake</span>
+                  <span>Turn / Swerve</span>
+                  <span>Impact</span>
+                </div>
+              </div>
+
+              <div className="reconstruction-workspace__aux-inspector-content">
 <section
           className={`reconstruction-workspace__workspace-panels ${
             workspaceSettingsOpen ? "is-open" : ""
@@ -5616,6 +5709,12 @@ export default function AccidentReconstructionEditor({
           </details>
         </div>
 
+
+              </div>
+            </aside>,
+            workspaceRightPanelHost,
+          )}
+
         {activeInvestigationDetail && (
           <div
             className="reconstruction-detail-modal"
@@ -5746,11 +5845,17 @@ export default function AccidentReconstructionEditor({
           />
         )}
       </div>
-      <ReconstructionTimelineDock
+      <ReconstructionBottomDock
         reconstruction={reconstruction}
         currentTime={currentTime}
         isPlaying={isPlaying}
         playbackSpeed={playbackSpeed}
+        activeView={activeReconstructionView}
+        selectedParticipantId={selectedParticipantId}
+        selectedSceneObjectId={selectedSceneObjectId}
+        onSelectParticipant={(participantId) =>
+          handleSelectParticipant(participantId)
+        }
         onReset={handleReset}
         onPlayPause={handlePlayPause}
         onStepBackward={() => {
