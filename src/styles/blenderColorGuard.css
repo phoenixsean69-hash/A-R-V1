@@ -118,181 +118,201 @@ input[type="range"],
   color: var(--roadsafe-ui-text) !important;
 }
 
-/* [RoadSafe:BlenderRightPropertiesV3:start] */
+/* [RoadSafe:ReconstructionBlenderPropertiesV4:start] */
 
-/*
- * RoadSafe AR — Blender-like 3D Properties editor.
- *
- * CSS ONLY.
- * Targets the existing 3D inspector DOM. No TSX/React/state changes.
- */
+.reconstruction-workspace__stage-grid--3d {
+  grid-template-columns:
+    minmax(0, 1fr)
+    326px !important;
+}
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties {
-  --rs-bp-bg: #292929;
-  --rs-bp-bg-deep: #202020;
-  --rs-bp-bg-soft: #303030;
-  --rs-bp-bg-hover: #373737;
-  --rs-bp-border: #171717;
-  --rs-bp-border-soft: #424242;
-  --rs-bp-text: #d6d6d6;
-  --rs-bp-muted: #929292;
-  --rs-bp-orange: #e8872d;
-  --rs-bp-rail: 38px;
+.reconstruction-workspace__blender-properties {
+  width: 326px !important;
+  min-width: 326px !important;
+  max-width: 326px !important;
+  height: 100% !important;
+  min-height: 0 !important;
 
-  position: relative !important;
-  width: 342px !important;
-  min-width: 342px !important;
-  max-width: 342px !important;
+  display: grid !important;
+  grid-template-columns:
+    34px minmax(0, 1fr) !important;
+
   overflow: hidden !important;
 
   border: 0 !important;
-  border-left: 1px solid var(--rs-bp-border) !important;
+  border-left:
+    1px solid #151515 !important;
   border-radius: 0 !important;
 
-  background: var(--rs-bp-bg) !important;
-  color: var(--rs-bp-text) !important;
+  background: #292929 !important;
+  color: #d5d5d5 !important;
 
   box-shadow:
-    inset 1px 0 0 rgba(255,255,255,.025),
-    -3px 0 13px rgba(0,0,0,.16) !important;
+    inset 1px 0 0 rgba(255,255,255,.025) !important;
 }
 
-/*
- * Blender-style property icon rail.
- * This is intentionally presentation-only in V3.
- */
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties::before {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 15 !important;
-  inset: 0 auto 0 0 !important;
-  width: var(--rs-bp-rail) !important;
-  pointer-events: none !important;
+/* ------------------------------------------------------------------------- */
+/* Real Blender-like properties tab rail                                    */
+/* ------------------------------------------------------------------------- */
 
-  border-right: 1px solid var(--rs-bp-border) !important;
+.reconstruction-workspace__blender-properties-tabs {
+  min-width: 0 !important;
+  height: 100% !important;
 
-  background-color: #242424 !important;
-  background-repeat: no-repeat !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
 
-  /*
-   * Five simple editor-category glyphs:
-   * participant, camera, layers, physics, scene.
-   */
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23b8b8b8' stroke-width='1.7'%3E%3Ccircle cx='12' cy='12' r='4.4'/%3E%3Cpath d='M12 2.8v4M12 17.2v4M2.8 12h4M17.2 12h4'/%3E%3C/g%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%239b9b9b' stroke-width='1.7'%3E%3Crect x='4' y='7' width='13' height='10' rx='2'/%3E%3Cpath d='M17 10l4-2v8l-4-2z'/%3E%3C/g%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%239b9b9b' stroke-width='1.7' stroke-linejoin='round'%3E%3Cpath d='M12 4l8 4-8 4-8-4z'/%3E%3Cpath d='M4 12l8 4 8-4M4 16l8 4 8-4'/%3E%3C/g%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%239b9b9b' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' d='M3 13h4l2-7 4 12 2-7h6'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%239b9b9b' stroke-width='1.7'%3E%3Crect x='5' y='4' width='14' height='16' rx='1.5'/%3E%3Cpath d='M8 8h8M8 12h8M8 16h5'/%3E%3C/g%3E%3C/svg%3E") !important;
+  padding: 5px 0 !important;
 
-  background-size:
-    19px 19px,
-    18px 18px,
-    18px 18px,
-    18px 18px,
-    18px 18px !important;
+  border-right:
+    1px solid #161616 !important;
 
-  background-position:
-    center 54px,
-    center 94px,
-    center 134px,
-    center 174px,
-    center 214px !important;
+  background: #232323 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 16 !important;
-  left: 0 !important;
-  top: 45px !important;
-  width: 2px !important;
-  height: 31px !important;
-  pointer-events: none !important;
+.reconstruction-workspace__blender-properties-tabs
+  button {
+  position: relative !important;
 
-  background: var(--rs-bp-orange) !important;
-  box-shadow: 1px 0 0 rgba(232,135,45,.22) !important;
-}
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
 
-/* ---------------------------------------------------------------------- */
-/* Header                                                                 */
-/* ---------------------------------------------------------------------- */
+  display: grid !important;
+  place-items: center !important;
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header {
-  min-height: 38px !important;
-  height: 38px !important;
-
-  padding:
-    5px 7px 5px
-    calc(var(--rs-bp-rail) + 9px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
 
   border: 0 !important;
+  border-left:
+    2px solid transparent !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  color: #8f8f8f !important;
+
+  box-shadow: none !important;
+
+  transform: none !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button:hover {
+  background: #303030 !important;
+  color: #d7d7d7 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button.is-active,
+.reconstruction-workspace__blender-properties-tabs
+  button[aria-pressed="true"] {
+  border-left-color:
+    #e8872d !important;
+
+  background: #343434 !important;
+  color: #ededed !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button.is-active::after,
+.reconstruction-workspace__blender-properties-tabs
+  button[aria-pressed="true"]::after {
+  content: "" !important;
+
+  position: absolute !important;
+  right: -1px !important;
+  top: 5px !important;
+  bottom: 5px !important;
+
+  width: 1px !important;
+
+  background: #343434 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Main editor                                                               */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-editor {
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-workspace__blender-properties-header {
+  min-height: 40px !important;
+  height: 40px !important;
+
+  flex: 0 0 40px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 8px !important;
+
+  padding: 5px 7px 5px 9px !important;
+
   border-bottom:
-    1px solid var(--rs-bp-border) !important;
+    1px solid #171717 !important;
 
   background:
     linear-gradient(
       180deg,
       #343434 0%,
-      #2b2b2b 100%
+      #2c2c2c 100%
     ) !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.035),
-    inset 0 -1px 0 rgba(0,0,0,.34) !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header
-  > div:first-child {
+.reconstruction-workspace__blender-properties-header
+  > div {
   min-width: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 2px !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header
-  p {
-  margin: 0 !important;
-
-  color: #dedede !important;
-
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  line-height: 1.05 !important;
-  letter-spacing: .015em !important;
-  text-transform: none !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header
+.reconstruction-workspace__blender-properties-header
   span {
-  display: block !important;
-  max-width: 222px !important;
-  margin-top: 3px !important;
+  color: #8f8f8f !important;
+
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  strong {
+  max-width: 220px !important;
 
   overflow: hidden !important;
 
-  color: #929292 !important;
+  color: #dadada !important;
 
-  font-size: 10px !important;
-  font-weight: 500 !important;
-  line-height: 1 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
 
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header
-  button {
+.reconstruction-workspace__blender-properties-header
+  > button {
   width: 23px !important;
   min-width: 23px !important;
   height: 23px !important;
@@ -305,146 +325,155 @@ input[type="range"],
   border-radius: 2px !important;
 
   background: transparent !important;
-  color: #aaa !important;
+  color: #a7a7a7 !important;
 
-  font-size: 16px !important;
-  line-height: 1 !important;
+  font-size: 15px !important;
 
   box-shadow: none !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__panel-header
-  button:hover {
+.reconstruction-workspace__blender-properties-header
+  > button:hover {
   border-color: #4b4b4b !important;
-  background: #3b3b3b !important;
+  background: #3a3a3a !important;
   color: #fff !important;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Scrollable content                                                     */
-/* ---------------------------------------------------------------------- */
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__context-scroll {
-  height:
-    calc(100% - 38px) !important;
+.reconstruction-workspace__blender-properties-content {
   min-height: 0 !important;
-
-  padding:
-    0 0 0 var(--rs-bp-rail) !important;
+  flex: 1 1 auto !important;
 
   overflow-x: hidden !important;
   overflow-y: auto !important;
 
-  background: var(--rs-bp-bg) !important;
+  padding: 3px 0 12px !important;
+
+  background: #292929 !important;
 
   scrollbar-width: thin !important;
   scrollbar-color:
-    #555 #242424 !important;
+    #555 #232323 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__context-scroll::-webkit-scrollbar {
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar {
   width: 9px !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-track {
-  background: #242424 !important;
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar-track {
+  background: #232323 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb {
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar-thumb {
   border:
-    2px solid #242424 !important;
+    2px solid #232323 !important;
   border-radius: 2px !important;
+
   background: #555 !important;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Participant properties                                                */
-/* ---------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+/* Blender disclosure panels                                                */
+/* ------------------------------------------------------------------------- */
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-scroll
-  > .reconstruction-workspace__property-list:first-child {
-  position: relative !important;
-  display: grid !important;
-
-  gap: 0 !important;
-
+.reconstruction-workspace__blender-properties-section {
   margin: 0 !important;
-  padding: 32px 9px 6px !important;
+  padding: 0 !important;
 
   border: 0 !important;
   border-bottom:
-    1px solid var(--rs-bp-border) !important;
+    1px solid #181818 !important;
+  border-radius: 0 !important;
 
-  background: var(--rs-bp-bg) !important;
+  background: #292929 !important;
+
+  box-shadow: none !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-scroll
-  > .reconstruction-workspace__property-list:first-child::before {
-  content: "▾  Participant" !important;
+.reconstruction-workspace__blender-properties-section
+  > summary {
+  position: relative !important;
 
-  position: absolute !important;
-  inset: 0 0 auto 0 !important;
+  min-height: 27px !important;
 
-  height: 27px !important;
   display: flex !important;
   align-items: center !important;
 
-  padding: 0 8px !important;
+  padding:
+    4px 7px 4px 20px !important;
 
+  border: 0 !important;
   border-bottom:
     1px solid #1d1d1d !important;
 
   background:
     linear-gradient(
       180deg,
-      #333 0%,
+      #333333 0%,
       #2e2e2e 100%
     ) !important;
 
-  color: #cfcfcf !important;
+  color: #cccccc !important;
 
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 650 !important;
-  letter-spacing: .01em !important;
+  line-height: 1 !important;
+
+  cursor: pointer !important;
+
+  list-style: none !important;
 }
 
-/* All property/value rows. */
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list {
+.reconstruction-workspace__blender-properties-section
+  > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary::before {
+  content: "▸" !important;
+
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+
+  color: #9c9c9c !important;
+
+  font-size: 9px !important;
+
+  transform:
+    translateY(-50%) !important;
+}
+
+.reconstruction-workspace__blender-properties-section[open]
+  > summary::before {
+  content: "▾" !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary:hover {
+  background: #353535 !important;
+  color: #ededed !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Property rows                                                            */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-rows {
   display: grid !important;
 
   gap: 0 !important;
 
-  margin: 0 !important;
-  padding: 4px 9px 2px !important;
+  padding: 4px 8px 7px !important;
 
-  background: transparent !important;
+  background: #292929 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > label,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > div {
-  min-height: 30px !important;
+  min-height: 29px !important;
 
   display: grid !important;
   grid-template-columns:
@@ -453,7 +482,6 @@ input[type="range"],
 
   gap: 7px !important;
 
-  margin: 0 !important;
   padding: 2px 0 !important;
 
   border: 0 !important;
@@ -466,448 +494,809 @@ input[type="range"],
   box-shadow: none !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > label:last-child,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > div:last-child {
   border-bottom: 0 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > label
   > span,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   > div
   > span {
-  color: var(--rs-bp-muted) !important;
+  color: #979797 !important;
 
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 500 !important;
-  line-height: 1.1 !important;
+  line-height: 1.05 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
   strong {
   min-width: 0 !important;
+
   overflow: hidden !important;
 
-  color: #d9d9d9 !important;
+  color: #d6d6d6 !important;
 
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
 
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
-  input,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]),
+.reconstruction-workspace__blender-properties-rows
   select {
   width: 100% !important;
   min-width: 0 !important;
 
-  height: 27px !important;
-  min-height: 27px !important;
+  height: 25px !important;
+  min-height: 25px !important;
 
-  padding: 2px 7px !important;
+  padding: 2px 6px !important;
 
   border:
-    1px solid #484848 !important;
+    1px solid #494949 !important;
   border-radius: 3px !important;
-  outline: 0 !important;
 
-  background: var(--rs-bp-bg-deep) !important;
-  color: #dedede !important;
+  background: #202020 !important;
+  color: #dcdcdc !important;
 
-  font-size: 11.5px !important;
+  font-size: 10.5px !important;
   font-weight: 500 !important;
 
   box-shadow:
-    inset 0 1px 2px rgba(0,0,0,.35) !important;
+    inset 0 1px 2px rgba(0,0,0,.42) !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
-  input:hover,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]):hover,
+.reconstruction-workspace__blender-properties-rows
   select:hover {
-  border-color: #595959 !important;
+  border-color: #5b5b5b !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
-  input:focus,
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__property-list
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]):focus,
+.reconstruction-workspace__blender-properties-rows
   select:focus {
   border-color:
-    var(--rs-bp-orange) !important;
+    #e8872d !important;
+
+  outline: 0 !important;
 
   box-shadow:
-    0 0 0 1px rgba(232,135,45,.11),
-    inset 0 1px 2px rgba(0,0,0,.35) !important;
+    0 0 0 1px rgba(232,135,45,.12),
+    inset 0 1px 2px rgba(0,0,0,.42) !important;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Blender disclosure sections                                           */
-/* ---------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+/* Compact checkbox list                                                    */
+/* ------------------------------------------------------------------------- */
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-section {
-  margin: 0 !important;
-
-  padding: 0 0 6px !important;
-
-  border: 0 !important;
-  border-bottom:
-    1px solid var(--rs-bp-border) !important;
-  border-radius: 0 !important;
-
-  background: var(--rs-bp-bg) !important;
-
-  box-shadow: none !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-title {
-  min-height: 27px !important;
-
-  display: flex !important;
-  align-items: center !important;
-
-  gap: 6px !important;
-
-  margin: 0 !important;
-  padding: 5px 8px !important;
-
-  border: 0 !important;
-  border-bottom:
-    1px solid #1d1d1d !important;
-
-  background:
-    linear-gradient(
-      180deg,
-      #333 0%,
-      #2e2e2e 100%
-    ) !important;
-
-  color: #cfcfcf !important;
-
-  font-size: 11px !important;
-  font-weight: 650 !important;
-  line-height: 1 !important;
-  letter-spacing: .01em !important;
-  text-transform: none !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-title::before {
-  content: "▾" !important;
-  flex: 0 0 auto !important;
-
-  color: #9d9d9d !important;
-
-  font-size: 9px !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__context-title
-  svg {
-  width: 12px !important;
-  height: 12px !important;
-
-  color: #b9b9b9 !important;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Camera                                                                 */
-/* ---------------------------------------------------------------------- */
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__segmented-grid {
-  display: grid !important;
-  grid-template-columns:
-    repeat(4, minmax(0,1fr)) !important;
-
-  gap: 1px !important;
-
-  margin: 5px 8px 0 !important;
-  padding: 1px !important;
-
-  border:
-    1px solid var(--rs-bp-border) !important;
-  border-radius: 3px !important;
-
-  background: var(--rs-bp-bg-deep) !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__segmented-grid
-  button {
-  min-width: 0 !important;
-
-  height: 27px !important;
-  min-height: 27px !important;
-
-  padding: 2px 3px !important;
-
-  border:
-    1px solid #454545 !important;
-  border-radius: 2px !important;
-
-  background:
-    linear-gradient(
-      180deg,
-      #3b3b3b,
-      #303030
-    ) !important;
-
-  color: #bdbdbd !important;
-
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  line-height: 1 !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.035) !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__segmented-grid
-  button:hover {
-  background: #414141 !important;
-  color: #fff !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__segmented-grid
-  button.is-active {
-  border-color: #5a5a5a !important;
-
-  background: #3a3a3a !important;
-  color: #fff !important;
-
-  box-shadow:
-    inset 0 -2px 0 var(--rs-bp-orange),
-    inset 0 1px 0 rgba(255,255,255,.035) !important;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Layers                                                                 */
-/* ---------------------------------------------------------------------- */
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__layer-list {
+.reconstruction-workspace__blender-properties-checks {
   display: grid !important;
 
   gap: 0 !important;
 
-  margin: 5px 8px 0 !important;
-  padding: 0 !important;
+  padding: 4px 8px 7px !important;
 
-  border:
-    1px solid #242424 !important;
-  border-radius: 2px !important;
-
-  background: #2b2b2b !important;
+  background: #292929 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__layer-list
+.reconstruction-workspace__blender-properties-checks
   label {
-  min-height: 28px !important;
+  min-height: 27px !important;
 
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
 
-  gap: 8px !important;
+  gap: 7px !important;
 
-  margin: 0 !important;
-  padding: 3px 7px !important;
+  padding: 2px 4px !important;
 
-  border: 0 !important;
   border-bottom:
-    1px solid #222 !important;
-  border-radius: 0 !important;
-
-  background: transparent !important;
-  color: #c7c7c7 !important;
-
-  font-size: 11px !important;
-  font-weight: 500 !important;
-
-  box-shadow: none !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__layer-list
-  label:last-child {
-  border-bottom: 0 !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__layer-list
-  label:hover {
-  background: #343434 !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__layer-list
-  input[type="checkbox"] {
-  width: 15px !important;
-  min-width: 15px !important;
-  height: 15px !important;
-
-  accent-color:
-    var(--rs-bp-orange) !important;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Physics telemetry                                                      */
-/* ---------------------------------------------------------------------- */
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__telemetry-grid {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-
-  gap: 0 !important;
-
-  margin: 5px 8px 0 !important;
-  padding: 0 !important;
-
-  border:
     1px solid #242424 !important;
-  border-radius: 2px !important;
 
-  background: transparent !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__telemetry-grid
-  > div {
-  min-height: 28px !important;
-
-  display: grid !important;
-  grid-template-columns:
-    1fr auto !important;
-  align-items: center !important;
-
-  gap: 8px !important;
-
-  padding: 3px 7px !important;
-
-  border: 0 !important;
-  border-bottom:
-    1px solid #222 !important;
-  border-radius: 0 !important;
-
-  background: #2b2b2b !important;
-
-  box-shadow: none !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__telemetry-grid
-  > div:last-child {
-  border-bottom: 0 !important;
-}
-
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__telemetry-grid
-  span {
-  color: var(--rs-bp-muted) !important;
+  color: #c4c4c4 !important;
 
   font-size: 10.5px !important;
   font-weight: 500 !important;
 }
 
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__telemetry-grid
-  strong {
-  color: #d8d8d8 !important;
-
-  font-size: 11px !important;
-  font-weight: 600 !important;
+.reconstruction-workspace__blender-properties-checks
+  label:last-child {
+  border-bottom: 0 !important;
 }
 
-/* Empty properties state. */
-.reconstruction-workspace__stage-grid--3d
-  .reconstruction-workspace__properties
-  .reconstruction-workspace__empty-properties {
-  margin: 6px 8px !important;
-  padding: 9px !important;
+.reconstruction-workspace__blender-properties-checks
+  label:hover {
+  background: #323232 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks
+  input {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+
+  margin: 0 !important;
+
+  accent-color:
+    #e8872d !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Empty state                                                              */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-empty {
+  margin: 7px !important;
+  padding: 10px !important;
 
   border:
-    1px dashed #484848 !important;
+    1px dashed #464646 !important;
   border-radius: 2px !important;
 
   background: #272727 !important;
-  color: #999 !important;
+  color: #969696 !important;
 
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   line-height: 1.4 !important;
 }
 
-/* Responsive squeeze. */
 @media (max-width: 1180px) {
-  .reconstruction-workspace__stage-grid--3d
-    .reconstruction-workspace__properties {
-    width: 320px !important;
-    min-width: 320px !important;
-    max-width: 320px !important;
+  .reconstruction-workspace__stage-grid--3d {
+    grid-template-columns:
+      minmax(0, 1fr)
+      304px !important;
   }
 
-  .reconstruction-workspace__stage-grid--3d
-    .reconstruction-workspace__properties
-    .reconstruction-workspace__property-list
+  .reconstruction-workspace__blender-properties {
+    width: 304px !important;
+    min-width: 304px !important;
+    max-width: 304px !important;
+  }
+
+  .reconstruction-workspace__blender-properties-rows
     > label,
-  .reconstruction-workspace__stage-grid--3d
-    .reconstruction-workspace__properties
-    .reconstruction-workspace__property-list
+  .reconstruction-workspace__blender-properties-rows
     > div {
     grid-template-columns:
-      74px minmax(0,1fr) !important;
+      72px minmax(0, 1fr) !important;
   }
 }
 
-/* [RoadSafe:BlenderRightPropertiesV3:end] */
+/* [RoadSafe:ReconstructionBlenderPropertiesV4:end] */
+
+/* [RoadSafe:BlenderProperties2DARV5:start] */
+
+/*
+ * Shared Blender Properties architecture for 2D + AR.
+ * 3D V4 uses the same structural class names.
+ */
+
+.reconstruction-workspace__blender-properties {
+  --rs-props-bg: #292929;
+  --rs-props-deep: #202020;
+  --rs-props-header: #2e2e2e;
+  --rs-props-raised: #383838;
+  --rs-props-hover: #414141;
+  --rs-props-border: #171717;
+  --rs-props-border-soft: #414141;
+  --rs-props-text: #d8d8d8;
+  --rs-props-muted: #969696;
+  --rs-props-accent: #e8872d;
+
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  color: var(--rs-props-text) !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs {
+  min-width: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 5px 0 !important;
+  border-right: 1px solid var(--rs-props-border) !important;
+  background: #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button {
+  position: relative !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #8e8e8e !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button:hover {
+  background: #303030 !important;
+  color: #d7d7d7 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button.is-active,
+.reconstruction-workspace__blender-properties-tabs button[aria-pressed="true"] {
+  border-left-color: var(--rs-props-accent) !important;
+  background: #343434 !important;
+  color: #ededed !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-editor {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-header {
+  min-height: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 5px 7px 5px 9px !important;
+  border-bottom: 1px solid var(--rs-props-border) !important;
+  background: linear-gradient(180deg, #343434 0%, #2c2c2c 100%) !important;
+}
+
+.reconstruction-workspace__blender-properties-header > div {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.reconstruction-workspace__blender-properties-header span {
+  color: #8f8f8f !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.reconstruction-workspace__blender-properties-header strong {
+  max-width: 220px !important;
+  overflow: hidden !important;
+  color: #dadada !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-header > button {
+  width: 23px !important;
+  min-width: 23px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #a7a7a7 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-header-count {
+  min-width: 22px !important;
+  height: 20px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 5px !important;
+  border: 1px solid #484848 !important;
+  border-radius: 2px !important;
+  background: #303030 !important;
+  color: #bcbcbc !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-workspace__blender-properties-content {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 3px 0 12px !important;
+  background: var(--rs-props-bg) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #555 #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #181818 !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary {
+  position: relative !important;
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 4px 7px 4px 20px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #1d1d1d !important;
+  background: linear-gradient(180deg, #333 0%, #2e2e2e 100%) !important;
+  color: #ccc !important;
+  font-size: 10.5px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary::before {
+  content: "▸" !important;
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+  color: #9c9c9c !important;
+  font-size: 9px !important;
+  transform: translateY(-50%) !important;
+}
+
+.reconstruction-workspace__blender-properties-section[open] > summary::before {
+  content: "▾" !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary:hover {
+  background: #353535 !important;
+  color: #ededed !important;
+}
+
+.reconstruction-workspace__blender-properties-rows {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 4px 8px 7px !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label,
+.reconstruction-workspace__blender-properties-rows > div {
+  min-height: 29px !important;
+  display: grid !important;
+  grid-template-columns: 82px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 2px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #242424 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label:last-child,
+.reconstruction-workspace__blender-properties-rows > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label > span,
+.reconstruction-workspace__blender-properties-rows > div > span {
+  color: var(--rs-props-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.05 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: #d6d6d6 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-rows input:not([type="checkbox"]):not([type="range"]),
+.reconstruction-workspace__blender-properties-rows select,
+.reconstruction-workspace__blender-properties-add select {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  padding: 2px 6px !important;
+  border: 1px solid #494949 !important;
+  border-radius: 3px !important;
+  background: var(--rs-props-deep) !important;
+  color: #dcdcdc !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.42) !important;
+}
+
+.reconstruction-workspace__blender-properties-range-row > div {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.reconstruction-workspace__blender-properties-range-row input[type="range"] {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.reconstruction-workspace__blender-properties-checks {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 4px 8px 7px !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label {
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 2px 4px !important;
+  border-bottom: 1px solid #242424 !important;
+  color: #c4c4c4 !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label:hover {
+  background: #323232 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks input {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  margin: 0 !important;
+  accent-color: var(--rs-props-accent) !important;
+}
+
+.reconstruction-workspace__blender-properties-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  padding: 6px 8px 8px !important;
+}
+
+.reconstruction-workspace__blender-properties-actions button {
+  min-height: 26px !important;
+  padding: 3px 7px !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-properties-add {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 54px !important;
+  gap: 5px !important;
+  padding: 6px 8px !important;
+  border-bottom: 1px solid #242424 !important;
+}
+
+.reconstruction-workspace__blender-properties-add button {
+  min-height: 25px !important;
+  padding: 2px 5px !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-participant-list {
+  display: grid !important;
+  gap: 1px !important;
+  padding: 3px 4px 6px !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button {
+  min-height: 37px !important;
+  display: grid !important;
+  grid-template-columns: 12px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 4px 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #c7c7c7 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button:hover {
+  background: #333 !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button.is-active {
+  border-color: #555 !important;
+  background: #363636 !important;
+  box-shadow: inset 2px 0 0 var(--rs-props-accent) !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy strong {
+  overflow: hidden !important;
+  color: #d6d6d6 !important;
+  font-size: 10.5px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy small,
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-points {
+  color: #898989 !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-workspace__blender-properties-empty {
+  margin: 7px !important;
+  padding: 10px !important;
+  border: 1px dashed #464646 !important;
+  border-radius: 2px !important;
+  background: #272727 !important;
+  color: #969696 !important;
+  font-size: 10.5px !important;
+  line-height: 1.4 !important;
+}
+
+.reconstruction-workspace__blender-properties-delete {
+  width: calc(100% - 16px) !important;
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  margin: 7px 8px !important;
+  border-color: #5b303b !important;
+  background: #2d1c21 !important;
+  color: #d5a5af !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-properties-embedded {
+  min-width: 0 !important;
+  padding: 4px 6px 7px !important;
+}
+
+.reconstruction-workspace__blender-properties-embedded > * {
+  max-width: 100% !important;
+}
+
+.reconstruction-workspace__blender-properties--2d-v5 {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  border: 0 !important;
+  background: var(--rs-props-bg) !important;
+}
+
+/* AR-specific docking */
+.roadsafe-ar-blender-properties {
+  position: absolute !important;
+  z-index: 45 !important;
+  top: 58px !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+  border-left: 1px solid #151515 !important;
+  box-shadow: -4px 0 15px rgba(0,0,0,.24) !important;
+  pointer-events: auto !important;
+}
+
+.roadsafe-ar-properties-reopen {
+  position: absolute !important;
+  z-index: 46 !important;
+  top: 66px !important;
+  right: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+
+.roadsafe-ar-blender-properties__status,
+.roadsafe-ar-blender-properties__error {
+  margin: 0 !important;
+  padding: 8px !important;
+  color: #aaa !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-ar-blender-properties__error {
+  margin: 0 7px 5px !important;
+  border: 1px solid #713646 !important;
+  background: #321722 !important;
+  color: #e0a4b0 !important;
+}
+
+@media (max-width: 760px) {
+  .roadsafe-ar-blender-properties {
+    top: 54px !important;
+    width: min(86vw, 300px) !important;
+    min-width: 0 !important;
+    max-width: 300px !important;
+  }
+
+  .roadsafe-ar-blender-properties
+    .reconstruction-workspace__blender-properties-rows
+    > label,
+  .roadsafe-ar-blender-properties
+    .reconstruction-workspace__blender-properties-rows
+    > div {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+  }
+}
+
+/* [RoadSafe:BlenderProperties2DARV5:end] */
+
+/* [RoadSafe:2DPropertiesTopFillV1:start] */
+
+/*
+ * The legacy 2D workstation stylesheet forces .shell-inspector to flex.
+ * That rule is more specific than the shared Blender Properties grid and
+ * causes the 100%-height icon rail to push the editor below it.
+ *
+ * This override restores the intended Blender two-column layout:
+ *
+ *   [ rail ][ properties editor ]
+ *
+ * Both start at the TOP and fill the same vertical row.
+ */
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties.reconstruction-workspace__blender-properties--2d-v5 {
+  display: grid !important;
+  grid-template-columns:
+    34px minmax(0, 1fr) !important;
+  grid-template-rows:
+    minmax(0, 1fr) !important;
+
+  align-items: stretch !important;
+  align-content: stretch !important;
+  justify-items: stretch !important;
+  justify-content: stretch !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  overflow: hidden !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background: #292929 !important;
+}
+
+/* Rail begins at row 1 / column 1, not as a full-height flex item above editor. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > .reconstruction-workspace__blender-properties-tabs {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+
+  align-self: stretch !important;
+  justify-self: stretch !important;
+
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+
+  height: 100% !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+}
+
+/* Editor begins at TOP beside the rail and fills the full available height. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > .reconstruction-workspace__blender-properties-editor {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+
+  align-self: stretch !important;
+  justify-self: stretch !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+
+  overflow: hidden !important;
+}
+
+/* Header must stay at the TOP; content gets the remaining vertical space. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  .reconstruction-workspace__blender-properties-header {
+  position: relative !important;
+  top: auto !important;
+
+  flex: 0 0 40px !important;
+
+  width: 100% !important;
+
+  margin: 0 !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  .reconstruction-workspace__blender-properties-content {
+  flex: 1 1 auto !important;
+
+  width: 100% !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* Avoid any legacy inspector child spacing creating an artificial top gap. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > :first-child,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > :nth-child(2) {
+  margin-top: 0 !important;
+}
+
+/* [RoadSafe:2DPropertiesTopFillV1:end] */

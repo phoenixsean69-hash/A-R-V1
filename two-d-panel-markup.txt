@@ -1,0 +1,695 @@
+<aside
+                className="roadsafe-inspector workstation-panel workstation-panel--right roadsafe-reconstruction-inspector reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel reconstruction-workspace__shell-inspector reconstruction-workspace__blender-properties reconstruction-workspace__blender-properties--2d-v5 is-docked is-open"
+                aria-label="2D reconstruction properties"
+              >
+                <nav
+                  className="reconstruction-workspace__blender-properties-tabs"
+                  aria-label="2D reconstruction property categories"
+                >
+                  {(
+                    [
+                      ["participants", "Participants", Activity],
+                      ["selection", "Selection", Crosshair],
+                      ["motion", "Motion", Move],
+                      ["scene", "Scene", ClipboardList],
+                    ] as const
+                  ).map(([tab, label, Icon]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      title={label}
+                      aria-label={label}
+                      aria-pressed={workspace2DPropertiesTab === tab}
+                      className={
+                        workspace2DPropertiesTab === tab
+                          ? "is-active"
+                          : ""
+                      }
+                      onClick={() => setWorkspace2DPropertiesTab(tab)}
+                    >
+                      <Icon size={15} />
+                    </button>
+                  ))}
+                </nav>
+
+                <div className="reconstruction-workspace__blender-properties-editor">
+                  <header className="reconstruction-workspace__blender-properties-header">
+                    <div>
+                      <span>2D Properties</span>
+                      <strong>
+                        {workspace2DPropertiesTab === "participants"
+                          ? `${reconstruction.vehicles.length} participant(s)`
+                          : workspace2DPropertiesTab === "selection"
+                            ? selectedSceneObject?.label ??
+                              selectedParticipant?.name ??
+                              "No selection"
+                            : workspace2DPropertiesTab === "motion"
+                              ? selectedParticipant?.name ?? "Motion"
+                              : "Scene and basemap"}
+                      </strong>
+                    </div>
+
+                    <span className="reconstruction-workspace__blender-properties-header-count">
+                      {reconstruction.vehicles.length}
+                    </span>
+                  </header>
+
+                  <div className="reconstruction-workspace__blender-properties-content">
+                    {workspace2DPropertiesTab === "participants" && (
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Participants</summary>
+
+                        <div className="reconstruction-workspace__blender-properties-add">
+                          <select
+                            value={newParticipantType}
+                            onChange={(event) =>
+                              setNewParticipantType(
+                                event.target.value as ReconstructionVehicleType,
+                              )
+                            }
+                            aria-label="Participant type"
+                          >
+                            {PARTICIPANT_TYPES.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={handleAddParticipant}
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        <div className="reconstruction-workspace__blender-participant-list">
+                          {reconstruction.vehicles.length === 0 ? (
+                            <div className="reconstruction-workspace__blender-properties-empty">
+                              Add the first participant to begin plotting the reconstruction.
+                            </div>
+                          ) : (
+                            reconstruction.vehicles.map((participant) => {
+                              const participantState =
+                                getParticipantStateAtTime(
+                                  participant,
+                                  currentTime,
+                                  getReconstructionWorldDimensions(
+                                    reconstruction,
+                                  ),
+                                );
+
+                              return (
+                                <button
+                                  key={participant.id}
+                                  type="button"
+                                  onClick={() => {
+                                    handleSelectParticipant(
+                                      participant.id,
+                                    );
+                                    setWorkspace2DPropertiesTab(
+                                      "selection",
+                                    );
+                                  }}
+                                  className={
+                                    selectedParticipantId === participant.id
+                                      ? "is-active"
+                                      : ""
+                                  }
+                                >
+                                  <span
+                                    className="reconstruction-workspace__participant-swatch"
+                                    style={{
+                                      backgroundColor:
+                                        getParticipantColour(
+                                          participant.colour,
+                                        ),
+                                    }}
+                                  />
+
+                                  <span className="reconstruction-workspace__participant-copy">
+                                    <strong>
+                                      {participant.name}
+                                    </strong>
+                                    <small>
+                                      {getParticipantAssetDefinition(
+                                        participant,
+                                      ).shortLabel}{" "}
+                                      ·{" "}
+                                      {participantState.speedKmh.toFixed(
+                                        1,
+                                      )}{" "}
+                                      km/h
+                                    </small>
+                                  </span>
+
+                                  <span className="reconstruction-workspace__participant-points">
+                                    {getVisibleParticipantControlPoints(
+                                      participant.pathPoints,
+                                    ).length}{" "}
+                                    pts
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </details>
+                    )}
+
+                    {workspace2DPropertiesTab === "selection" && (
+                      <>
+                        {selectedSceneObject ? (
+                          <details
+                            open
+                            className="reconstruction-workspace__blender-properties-section"
+                          >
+                            <summary>Scene Object</summary>
+
+                            <div className="reconstruction-workspace__blender-properties-embedded">
+                              <SceneObjectSettingsPanel
+                                object={selectedSceneObject}
+                                tracing={
+                                  traceToolObjectId ===
+                                  selectedSceneObject.id
+                                }
+                                onChange={(updates) =>
+                                  updateSceneObject(
+                                    selectedSceneObject.id,
+                                    updates,
+                                  )
+                                }
+                                onDelete={handleDeleteSceneObject}
+                                onDuplicate={handleDuplicateSceneObject}
+                                onPlaceWithGps={
+                                  handlePlaceSelectedSceneObjectWithGps
+                                }
+                                onBeginTrace={() => {
+                                  setTraceToolObjectId(
+                                    selectedSceneObject.id,
+                                  );
+                                  setActiveSceneObjectType(
+                                    null,
+                                  );
+                                }}
+                                onCancelTrace={() =>
+                                  setTraceToolObjectId(
+                                    null,
+                                  )
+                                }
+                                onClearTrace={() =>
+                                  updateSceneObject(
+                                    selectedSceneObject.id,
+                                    {
+                                      tracePoints: [],
+                                    },
+                                  )
+                                }
+                              />
+                            </div>
+                          </details>
+                        ) : !selectedParticipant ||
+                          !selectedParticipantState ? (
+                          <div className="reconstruction-workspace__blender-properties-empty">
+                            Select a participant or scene object on the 2D reconstruction.
+                          </div>
+                        ) : (
+                          <>
+                            <details
+                              open
+                              className="reconstruction-workspace__blender-properties-section"
+                            >
+                              <summary>Participant</summary>
+
+                              <div className="reconstruction-workspace__blender-properties-rows">
+                                <label>
+                                  <span>Name</span>
+                                  <input
+                                    value={selectedParticipant.name}
+                                    onChange={(event) =>
+                                      updateParticipant(
+                                        selectedParticipant.id,
+                                        {
+                                          name:
+                                            event.target.value,
+                                        },
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  <span>Type</span>
+                                  <select
+                                    value={selectedParticipant.type}
+                                    onChange={(event) =>
+                                      handleParticipantTypeChange(
+                                        selectedParticipant,
+                                        event.target
+                                          .value as ReconstructionVehicleType,
+                                      )
+                                    }
+                                  >
+                                    {PARTICIPANT_TYPES.map(
+                                      (type) => (
+                                        <option
+                                          key={type}
+                                          value={type}
+                                        >
+                                          {type}
+                                        </option>
+                                      ),
+                                    )}
+                                  </select>
+                                </label>
+
+                                <label>
+                                  <span>Model</span>
+                                  <select
+                                    value={
+                                      selectedParticipant.assetId ??
+                                      getDefaultParticipantAssetId(
+                                        selectedParticipant.type,
+                                      )
+                                    }
+                                    onChange={(event) =>
+                                      updateParticipant(
+                                        selectedParticipant.id,
+                                        {
+                                          assetId:
+                                            event.target
+                                              .value as ReconstructionParticipantAssetId,
+                                        },
+                                      )
+                                    }
+                                  >
+                                    {getParticipantAssetsForType(
+                                      selectedParticipant.type,
+                                    ).map((asset) => (
+                                      <option
+                                        key={asset.id}
+                                        value={asset.id}
+                                      >
+                                        {asset.shortLabel}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+
+                                <label>
+                                  <span>Colour</span>
+                                  <select
+                                    value={
+                                      selectedParticipant.colour
+                                    }
+                                    onChange={(event) =>
+                                      updateParticipant(
+                                        selectedParticipant.id,
+                                        {
+                                          colour:
+                                            event.target
+                                              .value as ReconstructionVehicleColour,
+                                        },
+                                      )
+                                    }
+                                  >
+                                    {PARTICIPANT_COLOURS.map(
+                                      (colour) => (
+                                        <option
+                                          key={colour}
+                                          value={colour}
+                                        >
+                                          {colour}
+                                        </option>
+                                      ),
+                                    )}
+                                  </select>
+                                </label>
+                              </div>
+                            </details>
+
+                            <details
+                              open
+                              className="reconstruction-workspace__blender-properties-section"
+                            >
+                              <summary>Transform</summary>
+
+                              <div className="reconstruction-workspace__blender-properties-rows">
+                                <div>
+                                  <span>Position X</span>
+                                  <strong>
+                                    {selectedParticipantState.position.x.toFixed(
+                                      2,
+                                    )}
+                                  </strong>
+                                </div>
+
+                                <div>
+                                  <span>Position Y</span>
+                                  <strong>
+                                    {selectedParticipantState.position.y.toFixed(
+                                      2,
+                                    )}
+                                  </strong>
+                                </div>
+
+                                <label>
+                                  <span>Heading</span>
+                                  <input
+                                    type="number"
+                                    value={Math.round(
+                                      selectedParticipantState.rotation,
+                                    )}
+                                    onChange={(event) =>
+                                      updatePathPoint(
+                                        selectedParticipant.id,
+                                        selectedParticipantState.activePointId,
+                                        {
+                                          rotation: Number(
+                                            event.target.value,
+                                          ),
+                                        },
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <div>
+                                  <span>Speed</span>
+                                  <strong>
+                                    {selectedParticipantState.speedKmh.toFixed(
+                                      1,
+                                    )}{" "}
+                                    km/h
+                                  </strong>
+                                </div>
+                              </div>
+                            </details>
+                          </>
+                        )}
+                      </>
+                    )}
+
+                    {workspace2DPropertiesTab === "motion" && (
+                      <>
+                        {!selectedParticipant ? (
+                          <div className="reconstruction-workspace__blender-properties-empty">
+                            Select a participant to edit motion and route controls.
+                          </div>
+                        ) : (
+                          <>
+                            <details
+                              open
+                              className="reconstruction-workspace__blender-properties-section"
+                            >
+                              <summary>Default Motion</summary>
+
+                              <div className="reconstruction-workspace__blender-properties-rows">
+                                <label className="reconstruction-workspace__blender-properties-range-row">
+                                  <span>Speed</span>
+                                  <div>
+                                    <input
+                                      type="range"
+                                      min={0}
+                                      max={getMaximumSpeed(
+                                        selectedParticipant.type,
+                                      )}
+                                      step={
+                                        isHumanParticipant(
+                                          selectedParticipant.type,
+                                        )
+                                          ? 1
+                                          : 5
+                                      }
+                                      value={
+                                        selectedParticipant.estimatedSpeedKmh
+                                      }
+                                      onChange={(event) =>
+                                        updateParticipant(
+                                          selectedParticipant.id,
+                                          {
+                                            estimatedSpeedKmh:
+                                              Number(
+                                                event.target.value,
+                                              ),
+                                          },
+                                        )
+                                      }
+                                    />
+                                    <strong>
+                                      {
+                                        selectedParticipant.estimatedSpeedKmh
+                                      }{" "}
+                                      km/h
+                                    </strong>
+                                  </div>
+                                </label>
+                              </div>
+                            </details>
+
+                            <details
+                              open
+                              className="reconstruction-workspace__blender-properties-section"
+                            >
+                              <summary>Route and Movement</summary>
+
+                              <div className="reconstruction-workspace__blender-properties-embedded reconstruction-workspace__blender-properties-route">
+                                <ParticipantPathPanel
+                                  participant={selectedParticipant}
+                                  durationSeconds={
+                                    reconstruction.durationSeconds
+                                  }
+                                  worldDimensions={getReconstructionWorldDimensions(
+                                    reconstruction,
+                                  )}
+                                  sceneObjects={
+                                    reconstruction.sceneObjects
+                                  }
+                                  selectedPointId={
+                                    selectedPathPointId
+                                  }
+                                  onSelectPoint={
+                                    setSelectedPathPointId
+                                  }
+                                  onApplySpeedPlan={({
+                                    estimatedSpeedKmh,
+                                    pathPoints,
+                                    requiredDurationSeconds,
+                                  }) => {
+                                    setReconstruction(
+                                      (current) => ({
+                                        ...current,
+                                        durationSeconds:
+                                          Math.max(
+                                            current.durationSeconds,
+                                            requiredDurationSeconds,
+                                          ),
+                                        lastPhysicsSimulation:
+                                          undefined,
+                                        vehicles:
+                                          current.vehicles.map(
+                                            (candidate) =>
+                                              candidate.id ===
+                                              selectedParticipant.id
+                                                ? syncLegacyParticipantFields(
+                                                    {
+                                                      ...candidate,
+                                                      estimatedSpeedKmh,
+                                                      pathPoints,
+                                                    },
+                                                  )
+                                                : candidate,
+                                          ),
+                                      }),
+                                    );
+                                  }}
+                                  onParticipantChange={(
+                                    updates,
+                                  ) =>
+                                    updateParticipant(
+                                      selectedParticipant.id,
+                                      updates,
+                                    )
+                                  }
+                                  onPointChange={(
+                                    pointId,
+                                    updates,
+                                  ) =>
+                                    updatePathPoint(
+                                      selectedParticipant.id,
+                                      pointId,
+                                      updates,
+                                    )
+                                  }
+                                  onAddPoint={
+                                    handleAddPathPoint
+                                  }
+                                  onDeletePoint={
+                                    handleDeletePathPoint
+                                  }
+                                  onPlacePointWithGps={
+                                    handlePlaceParticipantPointWithGps
+                                  }
+                                  onJumpToTime={(time) => {
+                                    setIsPlaying(false);
+                                    setCurrentTime(time);
+                                  }}
+                                  onHeadingChange={
+                                    handleParticipantHeadingChange
+                                  }
+                                />
+                              </div>
+                            </details>
+
+                            <button
+                              type="button"
+                              onClick={handleDeleteParticipant}
+                              className="reconstruction-workspace__blender-properties-delete"
+                            >
+                              <X size={13} />
+                              Delete participant
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+
+                    {workspace2DPropertiesTab === "scene" && (
+                      <>
+                        <details
+                          open
+                          className="reconstruction-workspace__blender-properties-section"
+                        >
+                          <summary>2D View</summary>
+
+                          <div className="reconstruction-workspace__blender-properties-rows">
+                            <label>
+                              <span>Basemap</span>
+                              <select
+                                value={basemapMode}
+                                onChange={(event) =>
+                                  setBasemapMode(
+                                    event.target
+                                      .value as ReconstructionBasemapMode,
+                                  )
+                                }
+                              >
+                                <option value="Diagram">
+                                  Diagram
+                                </option>
+                                <option value="Street">
+                                  Street
+                                </option>
+                                <option value="Satellite">
+                                  Satellite
+                                </option>
+                              </select>
+                            </label>
+
+                            <div>
+                              <span>Width</span>
+                              <strong>
+                                {
+                                  reconstruction.scene
+                                    .sceneWidthMetres
+                                }{" "}
+                                m
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Height</span>
+                              <strong>
+                                {
+                                  reconstruction.scene
+                                    .sceneHeightMetres
+                                }{" "}
+                                m
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Calibration</span>
+                              <strong>
+                                {reconstruction.fieldCalibration
+                                  ? "Field calibrated"
+                                  : "Local diagram"}
+                              </strong>
+                            </div>
+                          </div>
+                        </details>
+
+                        <details
+                          open
+                          className="reconstruction-workspace__blender-properties-section"
+                        >
+                          <summary>Environment</summary>
+
+                          <div className="reconstruction-workspace__blender-properties-rows">
+                            <div>
+                              <span>Weather</span>
+                              <strong>
+                                {reconstruction.scene.weather}
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Surface</span>
+                              <strong>
+                                {
+                                  reconstruction.scene
+                                    .roadSurface
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Visibility</span>
+                              <strong>
+                                {
+                                  reconstruction.scene
+                                    .visibility
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Objects</span>
+                              <strong>
+                                {
+                                  reconstruction.sceneObjects
+                                    .length
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Evidence</span>
+                              <strong>
+                                {
+                                  reconstruction.evidenceRecords
+                                    .length
+                                }
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Measurements</span>
+                              <strong>
+                                {
+                                  reconstruction.measurements
+                                    .length
+                                }
+                              </strong>
+                            </div>
+                          </div>
+                        </details>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </aside>

@@ -12,7 +12,6 @@ import {
   Compass,
   Crosshair,
   Eye,
-  Gauge,
   Layers3,
   LocateFixed,
   Lock,
@@ -23,9 +22,7 @@ import {
   RotateCcw,
   ScanLine,
   Smartphone,
-  Square,
   Unlock,
-  Video,
   X,
 } from "../../icons/materialIcons";
 import * as THREE from "three";
@@ -130,6 +127,12 @@ interface PlacementPose {
   position: THREE.Vector3;
   quaternion: THREE.Quaternion;
 }
+
+type ARPropertiesTab =
+  | "alignment"
+  | "layers"
+  | "playback"
+  | "session";
 
 const DEFAULT_LAYERS: ARLayerVisibility = {
   paths: true,
@@ -525,6 +528,12 @@ export default function ARReconstructionViewer({
     setSessionActive,
   ] =
     useState(false);
+
+  const [arPropertiesOpen, setARPropertiesOpen] =
+    useState(true);
+
+  const [arPropertiesTab, setARPropertiesTab] =
+    useState<ARPropertiesTab>("alignment");
 
   useEffect(() => {
     calibrationStageRef.current =
@@ -2122,6 +2131,540 @@ export default function ARReconstructionViewer({
 
       {sessionActive && (
         <>
+{arPropertiesOpen ? (
+            <aside
+              className="roadsafe-ar-blender-properties reconstruction-workspace__blender-properties"
+              aria-label="AR reconstruction properties"
+            >
+              <nav
+                className="reconstruction-workspace__blender-properties-tabs"
+                aria-label="AR property categories"
+              >
+                {(
+                  [
+                    ["alignment", "Alignment", Compass],
+                    ["layers", "Layers", Layers3],
+                    ["playback", "Playback", Play],
+                    ["session", "Session", Smartphone],
+                  ] as const
+                ).map(([tab, label, Icon]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    title={label}
+                    aria-label={label}
+                    aria-pressed={arPropertiesTab === tab}
+                    className={
+                      arPropertiesTab === tab
+                        ? "is-active"
+                        : ""
+                    }
+                    onClick={() => setARPropertiesTab(tab)}
+                  >
+                    <Icon size={15} />
+                  </button>
+                ))}
+              </nav>
+
+              <div className="reconstruction-workspace__blender-properties-editor">
+                <header className="reconstruction-workspace__blender-properties-header">
+                  <div>
+                    <span>AR Properties</span>
+                    <strong>
+                      {arPropertiesTab === "alignment"
+                        ? "Real-road alignment"
+                        : arPropertiesTab === "layers"
+                          ? "Scene visibility"
+                          : arPropertiesTab === "playback"
+                            ? "Reconstruction playback"
+                            : "AR session"}
+                    </strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setARPropertiesOpen(false)}
+                    aria-label="Hide AR properties"
+                    title="Hide properties"
+                  >
+                    ×
+                  </button>
+                </header>
+
+                <div className="reconstruction-workspace__blender-properties-content">
+                  {arPropertiesTab === "alignment" && (
+                    <>
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Placement</summary>
+
+                        <div className="reconstruction-workspace__blender-properties-rows">
+                          <div>
+                            <span>Mode</span>
+                            <strong>
+                              {mode === "immersive-ar"
+                                ? "Immersive AR"
+                                : mode === "camera-overlay"
+                                  ? "Camera overlay"
+                                  : mode === "desktop-preview"
+                                    ? "Desktop preview"
+                                    : "Not started"}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Stage</span>
+                            <strong>{calibrationStage}</strong>
+                          </div>
+
+                          <label className="reconstruction-workspace__blender-properties-range-row">
+                            <span>Heading</span>
+                            <div>
+                              <input
+                                type="range"
+                                min="-180"
+                                max="180"
+                                step="1"
+                                value={heading}
+                                onChange={(event) =>
+                                  setHeading(
+                                    Number(
+                                      event.target.value,
+                                    ),
+                                  )
+                                }
+                              />
+                              <strong>
+                                {Math.round(
+                                  normaliseHeading(
+                                    heading,
+                                  ),
+                                )}
+                                °
+                              </strong>
+                            </div>
+                          </label>
+
+                          <label className="reconstruction-workspace__blender-properties-range-row">
+                            <span>Scale</span>
+                            <div>
+                              <input
+                                type="range"
+                                min={
+                                  mode === "camera-overlay"
+                                    ? "0.2"
+                                    : "0.5"
+                                }
+                                max="2"
+                                step="0.02"
+                                value={sceneScale}
+                                onChange={(event) =>
+                                  setSceneScale(
+                                    Number(
+                                      event.target.value,
+                                    ),
+                                  )
+                                }
+                              />
+                              <strong>
+                                {sceneScale.toFixed(2)}
+                              </strong>
+                            </div>
+                          </label>
+
+                          <label className="reconstruction-workspace__blender-properties-range-row">
+                            <span>Ground</span>
+                            <div>
+                              <input
+                                type="range"
+                                min="-1.5"
+                                max="1.5"
+                                step="0.02"
+                                value={groundOffset}
+                                onChange={(event) =>
+                                  setGroundOffset(
+                                    Number(
+                                      event.target.value,
+                                    ),
+                                  )
+                                }
+                              />
+                              <strong>
+                                {groundOffset.toFixed(2)} m
+                              </strong>
+                            </div>
+                          </label>
+
+                          <div>
+                            <span>Compass</span>
+                            <strong>
+                              {deviceHeading !== undefined
+                                ? `${Math.round(
+                                    deviceHeading,
+                                  )}°`
+                                : "Unavailable"}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>GPS</span>
+                            <strong>
+                              {location
+                                ? `±${Math.round(
+                                    location.accuracyMetres,
+                                  )} m`
+                                : "Unavailable"}
+                            </strong>
+                          </div>
+                        </div>
+                      </details>
+
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Calibration Actions</summary>
+
+                        <div className="reconstruction-workspace__blender-properties-actions">
+                          {calibrationStage === "scan" && (
+                            <button
+                              type="button"
+                              className="ui-button-primary"
+                              onClick={placeAtLatestHit}
+                            >
+                              <LocateFixed size={13} />
+                              Place collision origin
+                            </button>
+                          )}
+
+                          {deviceHeading !== undefined && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setHeading(
+                                  normaliseHeading(
+                                    deviceHeading,
+                                  ),
+                                )
+                              }
+                            >
+                              <Compass size={13} />
+                              Use compass
+                            </button>
+                          )}
+
+                          {calibrationStage === "heading" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={resetPlacement}
+                              >
+                                <RefreshCw size={13} />
+                                Replace origin
+                              </button>
+
+                              <button
+                                type="button"
+                                className="ui-button-primary"
+                                onClick={lockAlignment}
+                              >
+                                <Lock size={13} />
+                                Lock AR scene
+                              </button>
+                            </>
+                          )}
+
+                          {calibrationStage === "locked" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCalibrationStage(
+                                  "heading",
+                                );
+                                setIsPlaying(false);
+                                playingRef.current =
+                                  false;
+                              }}
+                            >
+                              <Unlock size={13} />
+                              Recalibrate
+                            </button>
+                          )}
+                        </div>
+                      </details>
+                    </>
+                  )}
+
+                  {arPropertiesTab === "layers" && (
+                    <details
+                      open
+                      className="reconstruction-workspace__blender-properties-section"
+                    >
+                      <summary>Viewport Overlays</summary>
+
+                      <div className="reconstruction-workspace__blender-properties-checks">
+                        {(
+                          [
+                            ["paths", "Participant paths"],
+                            ["objects", "Scene objects"],
+                            ["evidence", "Evidence"],
+                            ["collisionPoint", "Collision point"],
+                            ["roadGuide", "Road guide"],
+                            ["physicsEffects", "Physics effects"],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <label key={key}>
+                            <input
+                              type="checkbox"
+                              checked={layers[key]}
+                              onChange={() =>
+                                toggleLayer(key)
+                              }
+                            />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+
+                  {arPropertiesTab === "playback" && (
+                    <>
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Transport</summary>
+
+                        <div className="reconstruction-workspace__blender-properties-actions reconstruction-workspace__blender-properties-actions--transport">
+                          <button
+                            type="button"
+                            disabled={!playbackReady}
+                            onClick={() =>
+                              setIsPlaying(
+                                (current) =>
+                                  !current,
+                              )
+                            }
+                          >
+                            {isPlaying ? (
+                              <Pause size={13} />
+                            ) : (
+                              <Play size={13} />
+                            )}
+                            {isPlaying
+                              ? "Pause"
+                              : "Play"}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={!playbackReady}
+                            onClick={restartPlayback}
+                          >
+                            <RotateCcw size={13} />
+                            Restart
+                          </button>
+                        </div>
+
+                        <div className="reconstruction-workspace__blender-properties-rows">
+                          <label className="reconstruction-workspace__blender-properties-range-row">
+                            <span>Time</span>
+                            <div>
+                              <input
+                                type="range"
+                                min="0"
+                                max={Math.max(
+                                  0.1,
+                                  reconstruction.durationSeconds,
+                                )}
+                                step="0.02"
+                                value={displayTime}
+                                disabled={!playbackReady}
+                                onChange={(event) => {
+                                  const value =
+                                    clamp(
+                                      Number(
+                                        event.target.value,
+                                      ),
+                                      0,
+                                      reconstruction.durationSeconds,
+                                    );
+
+                                  timeRef.current =
+                                    value;
+
+                                  setDisplayTime(
+                                    value,
+                                  );
+
+                                  setIsPlaying(
+                                    false,
+                                  );
+
+                                  playingRef.current =
+                                    false;
+                                }}
+                              />
+
+                              <strong>
+                                {formatTime(
+                                  displayTime,
+                                )}
+                              </strong>
+                            </div>
+                          </label>
+
+                          <label>
+                            <span>Speed</span>
+                            <select
+                              value={playbackSpeed}
+                              disabled={!playbackReady}
+                              onChange={(event) =>
+                                setPlaybackSpeed(
+                                  Number(
+                                    event.target.value,
+                                  ),
+                                )
+                              }
+                            >
+                              <option value="0.25">
+                                0.25×
+                              </option>
+                              <option value="0.5">
+                                0.5×
+                              </option>
+                              <option value="1">
+                                1×
+                              </option>
+                              <option value="2">
+                                2×
+                              </option>
+                            </select>
+                          </label>
+
+                          <div>
+                            <span>Duration</span>
+                            <strong>
+                              {formatTime(
+                                reconstruction.durationSeconds,
+                              )}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Status</span>
+                            <strong>
+                              {playbackReady
+                                ? isPlaying
+                                  ? "Playing"
+                                  : "Ready"
+                                : "Lock alignment first"}
+                            </strong>
+                          </div>
+                        </div>
+                      </details>
+                    </>
+                  )}
+
+                  {arPropertiesTab === "session" && (
+                    <>
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Session</summary>
+
+                        <div className="reconstruction-workspace__blender-properties-rows">
+                          <div>
+                            <span>Case</span>
+                            <strong>{caseNumber}</strong>
+                          </div>
+
+                          <div>
+                            <span>Support</span>
+                            <strong>{supportLabel}</strong>
+                          </div>
+
+                          <div>
+                            <span>Mode</span>
+                            <strong>
+                              {mode ?? "Not started"}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Calibration</span>
+                            <strong>
+                              {calibrationStage}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Models</span>
+                            <strong>
+                              {assets.total > 0
+                                ? `${assets.loaded}/${assets.total}`
+                                : "—"}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Fallbacks</span>
+                            <strong>
+                              {assets.failed}
+                            </strong>
+                          </div>
+                        </div>
+                      </details>
+
+                      <details
+                        open
+                        className="reconstruction-workspace__blender-properties-section"
+                      >
+                        <summary>Status</summary>
+
+                        <p className="roadsafe-ar-blender-properties__status">
+                          {statusMessage}
+                        </p>
+
+                        {error && (
+                          <p className="roadsafe-ar-blender-properties__error">
+                            {error}
+                          </p>
+                        )}
+
+                        <div className="reconstruction-workspace__blender-properties-actions">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void endActiveSession()
+                            }
+                          >
+                            <X size={13} />
+                            End AR session
+                          </button>
+                        </div>
+                      </details>
+                    </>
+                  )}
+                </div>
+              </div>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className="roadsafe-ar-properties-reopen"
+              title="Show AR properties"
+              aria-label="Show AR properties"
+              onClick={() => setARPropertiesOpen(true)}
+            >
+              <Layers3 size={16} />
+            </button>
+          )}
+
           <header className="pointer-events-none absolute inset-x-0 top-0 z-30 p-3">
             <div className="pointer-events-auto mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 rounded-md border border-white/15 bg-[#303030] px-3 py-2 backdrop-blur-md">
               <div className="min-w-0">
@@ -2183,358 +2726,6 @@ export default function ARReconstructionViewer({
                   <LocateFixed size={14} />
                   Place collision origin
                 </button>
-              </section>
-            </div>
-          )}
-
-          {calibrationStage ===
-            "heading" && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3">
-              <section className="pointer-events-auto mx-auto max-w-2xl rounded-md border border-[#494949] bg-[#303030] p-4 backdrop-blur-md">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#c4c4c4]">
-                      Calibrate real-road alignment
-                    </p>
-                    <p className="mt-1 text-[9px] leading-4 text-slate-400">
-                      Rotate the routes along the real carriageway, correct the
-                      ground height, then lock the scene.
-                    </p>
-                  </div>
-
-                  <Unlock
-                    className="shrink-0 text-[#f4c56a]"
-                    size={18}
-                  />
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <label className="min-w-0">
-                    <span className="flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Compass size={11} />
-                        Heading
-                      </span>
-                      {Math.round(
-                        normaliseHeading(
-                          heading,
-                        ),
-                      )}
-                      °
-                    </span>
-
-                    <input
-                      type="range"
-                      min="-180"
-                      max="180"
-                      step="1"
-                      value={heading}
-                      onChange={(event) =>
-                        setHeading(
-                          Number(
-                            event.target.value,
-                          ),
-                        )
-                      }
-                      className="mt-2 w-full"
-                    />
-                  </label>
-
-                  <label className="min-w-0">
-                    <span className="flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Gauge size={11} />
-                        Scale
-                      </span>
-                      {sceneScale.toFixed(
-                        2,
-                      )}
-                    </span>
-
-                    <input
-                      type="range"
-                      min={
-                        mode ===
-                        "camera-overlay"
-                          ? "0.2"
-                          : "0.5"
-                      }
-                      max="2"
-                      step="0.02"
-                      value={sceneScale}
-                      onChange={(event) =>
-                        setSceneScale(
-                          Number(
-                            event.target.value,
-                          ),
-                        )
-                      }
-                      className="mt-2 w-full"
-                    />
-                  </label>
-
-                  <label className="min-w-0">
-                    <span className="flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <LocateFixed size={11} />
-                        Height
-                      </span>
-                      {groundOffset.toFixed(
-                        2,
-                      )}{" "}
-                      m
-                    </span>
-
-                    <input
-                      type="range"
-                      min="-1.5"
-                      max="1.5"
-                      step="0.02"
-                      value={groundOffset}
-                      onChange={(event) =>
-                        setGroundOffset(
-                          Number(
-                            event.target.value,
-                          ),
-                        )
-                      }
-                      className="mt-2 w-full"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {deviceHeading !==
-                    undefined && (
-                    <button
-                      type="button"
-                      className="ui-button"
-                      onClick={() =>
-                        setHeading(
-                          normaliseHeading(
-                            deviceHeading,
-                          ),
-                        )
-                      }
-                    >
-                      <Compass size={13} />
-                      Use compass{" "}
-                      {Math.round(
-                        deviceHeading,
-                      )}
-                      °
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="ui-button"
-                    onClick={resetPlacement}
-                  >
-                    <RefreshCw size={13} />
-                    Replace origin
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ui-button-primary ml-auto"
-                    onClick={lockAlignment}
-                  >
-                    <Lock size={13} />
-                    Lock AR scene
-                  </button>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {playbackReady && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3">
-              <section className="pointer-events-auto mx-auto max-w-4xl rounded-md border border-white/15 bg-[#303030] p-3 backdrop-blur-md">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    className="ui-icon-button h-9 w-9 bg-[#303030]"
-                    title={
-                      isPlaying
-                        ? "Pause"
-                        : "Play"
-                    }
-                    onClick={() =>
-                      setIsPlaying(
-                        (current) =>
-                          !current,
-                      )
-                    }
-                  >
-                    {isPlaying ? (
-                      <Pause size={15} />
-                    ) : (
-                      <Play size={15} />
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ui-icon-button h-9 w-9"
-                    title="Restart"
-                    onClick={restartPlayback}
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-
-                  <span className="min-w-[88px] font-mono text-[10px] text-slate-300">
-                    {formatTime(
-                      displayTime,
-                    )}{" "}
-                    /{" "}
-                    {formatTime(
-                      reconstruction.durationSeconds,
-                    )}
-                  </span>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max={Math.max(
-                      0.1,
-                      reconstruction.durationSeconds,
-                    )}
-                    step="0.02"
-                    value={displayTime}
-                    onChange={(event) => {
-                      const value =
-                        clamp(
-                          Number(
-                            event.target.value,
-                          ),
-                          0,
-                          reconstruction.durationSeconds,
-                        );
-
-                      timeRef.current =
-                        value;
-
-                      setDisplayTime(
-                        value,
-                      );
-
-                      setIsPlaying(
-                        false,
-                      );
-
-                      playingRef.current =
-                        false;
-                    }}
-                    className="min-w-[160px] flex-1"
-                  />
-
-                  <select
-                    value={playbackSpeed}
-                    onChange={(event) =>
-                      setPlaybackSpeed(
-                        Number(
-                          event.target.value,
-                        ),
-                      )
-                    }
-                    className="ui-input h-9 w-[82px] py-1"
-                  >
-                    <option value="0.25">
-                      0.25×
-                    </option>
-                    <option value="0.5">
-                      0.5×
-                    </option>
-                    <option value="1">
-                      1×
-                    </option>
-                    <option value="2">
-                      2×
-                    </option>
-                  </select>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
-                  {(
-                    [
-                      [
-                        "paths",
-                        "Paths",
-                        Layers3,
-                      ],
-                      [
-                        "objects",
-                        "Objects",
-                        Square,
-                      ],
-                      [
-                        "evidence",
-                        "Evidence",
-                        Video,
-                      ],
-                      [
-                        "collisionPoint",
-                        "Collision",
-                        Crosshair,
-                      ],
-                      [
-                        "roadGuide",
-                        "Road guide",
-                        ScanLine,
-                      ],
-                      [
-                        "physicsEffects",
-                        "Physics",
-                        Gauge,
-                      ],
-                    ] as const
-                  ).map(
-                    ([
-                      key,
-                      label,
-                      Icon,
-                    ]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        className={
-                          layers[key]
-                            ? "ui-button-primary py-1.5"
-                            : "ui-button py-1.5"
-                        }
-                        onClick={() =>
-                          toggleLayer(
-                            key,
-                          )
-                        }
-                      >
-                        <Icon size={12} />
-                        {label}
-                      </button>
-                    ),
-                  )}
-
-                  <button
-                    type="button"
-                    className="ui-button ml-auto py-1.5"
-                    onClick={() => {
-                      setCalibrationStage(
-                        "heading",
-                      );
-
-                      setIsPlaying(
-                        false,
-                      );
-
-                      playingRef.current =
-                        false;
-                    }}
-                  >
-                    <Unlock size={12} />
-                    Recalibrate
-                  </button>
-                </div>
               </section>
             </div>
           )}

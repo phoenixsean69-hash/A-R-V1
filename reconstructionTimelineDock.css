@@ -1,0 +1,664 @@
+/*
+ * RoadSafe AR — independent screen Timeline editor.
+ *
+ * This component is deliberately NOT part of AccidentReconstructionEditor's
+ * scrolling document layout.
+ */
+
+:root {
+  --rs-screen-timeline-height: 184px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* AppShell integration                                                      */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * The dock spans from the navigation edge through BOTH:
+ *   - centre reconstruction workspace
+ *   - right Properties host
+ */
+.reconstruction-screen-timeline-dock {
+  position: fixed !important;
+
+  z-index: 120 !important;
+
+  left:
+    var(
+      --js-navigation-width,
+      68px
+    ) !important;
+
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: auto !important;
+
+  min-width: 0 !important;
+  min-height: 28px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  border: 0 !important;
+  border-top:
+    1px solid #111111 !important;
+
+  border-radius: 0 !important;
+
+  background: #202020 !important;
+
+  color: #d8d8d8 !important;
+
+  box-shadow:
+    0 -5px 18px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+.roadsafe-workstation.is-navigation-collapsed
+  .reconstruction-screen-timeline-dock {
+  left:
+    var(
+      --js-navigation-collapsed-width,
+      68px
+    ) !important;
+}
+
+/*
+ * Critical screen split.
+ *
+ * These are siblings in AppShell. Both stop ABOVE the fixed Timeline.
+ */
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  > .roadsafe-center,
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  > .roadsafe-workspace-context-slot {
+  height:
+    calc(
+      100dvh -
+      var(--rs-screen-timeline-height)
+    ) !important;
+
+  max-height:
+    calc(
+      100dvh -
+      var(--rs-screen-timeline-height)
+    ) !important;
+
+  min-height: 0 !important;
+}
+
+/* Centre editor cannot continue underneath the timeline. */
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  > .roadsafe-center {
+  overflow: hidden !important;
+}
+
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .roadsafe-workspace-main.is-editor,
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .roadsafe-page-stage.is-editor,
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .reconstruction-workspace {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+}
+
+/*
+ * The actual reconstruction body may scroll its Nodes / case panels INSIDE
+ * the upper editor, while Timeline stays independently attached to the screen.
+ */
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .reconstruction-workspace {
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+}
+
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .reconstruction-workspace
+  > .reconstruction-workspace__header {
+  flex: 0 0 auto !important;
+}
+
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  .reconstruction-workspace
+  > .reconstruction-workspace__body {
+  flex: 1 1 auto !important;
+
+  min-height: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/*
+ * Right Blender Properties editor is hosted in roadsafe-workspace-context-slot.
+ * Its own height must fill the shortened host and never continue under Timeline.
+ */
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  > .roadsafe-workspace-context-slot:not(:empty) {
+  top: 0 !important;
+
+  overflow: hidden !important;
+}
+
+.roadsafe-workstation.has-reconstruction-screen-timeline
+  > .roadsafe-workspace-context-slot:not(:empty)
+  > * {
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Divider                                                                   */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-screen-timeline-dock__resize {
+  position: absolute !important;
+
+  z-index: 5 !important;
+
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+
+  height: 6px !important;
+
+  cursor: ns-resize !important;
+  touch-action: none !important;
+
+  background: transparent !important;
+}
+
+.reconstruction-screen-timeline-dock__resize::after {
+  content: "" !important;
+
+  position: absolute !important;
+
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+
+  height: 1px !important;
+
+  background: #4a4a4a !important;
+}
+
+.reconstruction-screen-timeline-dock__resize:hover::after {
+  height: 2px !important;
+
+  background: #e8872d !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Timeline editor header                                                    */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-screen-timeline-dock__header {
+  flex: 0 0 28px !important;
+
+  min-height: 28px !important;
+  height: 28px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 8px !important;
+
+  padding: 4px 7px !important;
+
+  border-bottom:
+    1px solid #171717 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #353535,
+      #2c2c2c
+    ) !important;
+}
+
+.reconstruction-screen-timeline-dock__identity {
+  min-width: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 7px !important;
+
+  overflow: hidden !important;
+}
+
+.reconstruction-screen-timeline-dock__identity
+  svg {
+  flex: 0 0 auto !important;
+
+  color: #a8a8a8 !important;
+}
+
+.reconstruction-screen-timeline-dock__identity
+  strong {
+  flex: 0 0 auto !important;
+
+  color: #d8d8d8 !important;
+
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+.reconstruction-screen-timeline-dock__identity
+  span {
+  overflow: hidden !important;
+
+  color: #858585 !important;
+
+  font-size: 9px !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-screen-timeline-dock__header-tools {
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 6px !important;
+}
+
+.reconstruction-screen-timeline-dock__header-tools
+  > strong {
+  color: #c4c4c4 !important;
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace !important;
+
+  font-size: 9px !important;
+}
+
+.reconstruction-screen-timeline-dock__header-tools
+  button {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  padding: 0 !important;
+
+  border:
+    1px solid #484848 !important;
+  border-radius: 2px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #3b3b3b,
+      #303030
+    ) !important;
+
+  color: #b9b9b9 !important;
+
+  box-shadow: none !important;
+}
+
+.reconstruction-screen-timeline-dock.is-collapsed
+  .reconstruction-screen-timeline-dock__header-tools
+  button
+  svg {
+  transform:
+    rotate(180deg) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Body / transport                                                          */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-screen-timeline-dock__body {
+  flex: 1 1 auto !important;
+
+  min-height: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  background: #202020 !important;
+}
+
+.reconstruction-screen-timeline-dock__transport {
+  flex: 0 0 31px !important;
+
+  min-height: 31px !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 8px !important;
+
+  padding: 3px 7px !important;
+
+  border-bottom:
+    1px solid #171717 !important;
+
+  background: #2b2b2b !important;
+}
+
+.reconstruction-screen-timeline-dock__transport-buttons {
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 2px !important;
+}
+
+.reconstruction-screen-timeline-dock__transport-buttons
+  button {
+  min-width: 25px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 4px !important;
+
+  padding: 2px 5px !important;
+
+  border:
+    1px solid #484848 !important;
+  border-radius: 2px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #3b3b3b,
+      #303030
+    ) !important;
+
+  color: #bdbdbd !important;
+
+  font-size: 9px !important;
+  font-weight: 600 !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.reconstruction-screen-timeline-dock__transport-buttons
+  button:hover {
+  background: #414141 !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-screen-timeline-dock__transport-buttons
+  button.is-play {
+  min-width: 58px !important;
+
+  border-left:
+    2px solid #e8872d !important;
+}
+
+.reconstruction-screen-timeline-dock__clock {
+  display: flex !important;
+  align-items: baseline !important;
+
+  gap: 3px !important;
+
+  white-space: nowrap !important;
+}
+
+.reconstruction-screen-timeline-dock__clock
+  strong {
+  color: #dedede !important;
+
+  font-size: 9.5px !important;
+}
+
+.reconstruction-screen-timeline-dock__clock
+  span {
+  color: #818181 !important;
+
+  font-size: 8.5px !important;
+}
+
+.reconstruction-screen-timeline-dock__summary {
+  min-width: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 9px !important;
+
+  overflow: hidden !important;
+
+  color: #8f8f8f !important;
+
+  font-size: 8.5px !important;
+
+  white-space: nowrap !important;
+}
+
+.reconstruction-screen-timeline-dock__summary
+  span {
+  display: inline-flex !important;
+  align-items: center !important;
+
+  gap: 4px !important;
+}
+
+.reconstruction-screen-timeline-dock__speed {
+  margin-left: auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 5px !important;
+
+  white-space: nowrap !important;
+}
+
+.reconstruction-screen-timeline-dock__speed
+  > span {
+  color: #8f8f8f !important;
+
+  font-size: 8.5px !important;
+}
+
+.reconstruction-screen-timeline-dock__speed
+  select {
+  width: 64px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+
+  padding: 1px 4px !important;
+
+  border:
+    1px solid #484848 !important;
+  border-radius: 2px !important;
+
+  background: #202020 !important;
+  color: #d0d0d0 !important;
+
+  font-size: 9px !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* AccidentTimeline compact dock treatment                                   */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-screen-timeline-dock__timeline {
+  flex: 1 1 auto !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  overflow: hidden !important;
+
+  background: #202020 !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: #202020 !important;
+
+  box-shadow: none !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__header {
+  flex: 0 0 27px !important;
+
+  min-height: 27px !important;
+  height: 27px !important;
+
+  padding: 2px 6px !important;
+
+  border: 0 !important;
+  border-bottom:
+    1px solid #171717 !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__eyebrow,
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__header
+  > div:first-child
+  > p:last-child {
+  display: none !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__header
+  h2 {
+  margin: 0 !important;
+
+  color: #cdcdcd !important;
+
+  font-size: 9.5px !important;
+  font-weight: 650 !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__actions {
+  gap: 3px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__actions
+  button {
+  min-height: 22px !important;
+  height: 22px !important;
+
+  padding: 1px 5px !important;
+
+  font-size: 8.5px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__scrubber {
+  display: none !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__viewport {
+  flex: 1 1 auto !important;
+
+  min-height: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  background: #202020 !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__label,
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__track {
+  min-height: 30px !important;
+  height: 30px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__label--ruler,
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__ruler {
+  min-height: 23px !important;
+  height: 23px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__label {
+  padding: 2px 6px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__label
+  strong {
+  font-size: 9px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__label
+  small {
+  font-size: 8px !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__inspector {
+  max-height: 58px !important;
+
+  padding: 3px 6px !important;
+
+  border-top:
+    1px solid #171717 !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-screen-timeline-dock
+  .reconstruction-timeline__inspector:has(
+    .reconstruction-timeline__empty
+  ) {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .reconstruction-screen-timeline-dock__summary {
+    display: none !important;
+  }
+
+  .reconstruction-screen-timeline-dock__identity
+    span {
+    display: none !important;
+  }
+}

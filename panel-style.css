@@ -1,0 +1,557 @@
+
+/* [RoadSafe:ReconstructionBlenderPropertiesV4:start] */
+
+.reconstruction-workspace__stage-grid--3d {
+  grid-template-columns:
+    minmax(0, 1fr)
+    326px !important;
+}
+
+.reconstruction-workspace__blender-properties {
+  width: 326px !important;
+  min-width: 326px !important;
+  max-width: 326px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+
+  display: grid !important;
+  grid-template-columns:
+    34px minmax(0, 1fr) !important;
+
+  overflow: hidden !important;
+
+  border: 0 !important;
+  border-left:
+    1px solid #151515 !important;
+  border-radius: 0 !important;
+
+  background: #292929 !important;
+  color: #d5d5d5 !important;
+
+  box-shadow:
+    inset 1px 0 0 rgba(255,255,255,.025) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Real Blender-like properties tab rail                                    */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-tabs {
+  min-width: 0 !important;
+  height: 100% !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+
+  padding: 5px 0 !important;
+
+  border-right:
+    1px solid #161616 !important;
+
+  background: #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button {
+  position: relative !important;
+
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-left:
+    2px solid transparent !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  color: #8f8f8f !important;
+
+  box-shadow: none !important;
+
+  transform: none !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button:hover {
+  background: #303030 !important;
+  color: #d7d7d7 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button.is-active,
+.reconstruction-workspace__blender-properties-tabs
+  button[aria-pressed="true"] {
+  border-left-color:
+    #e8872d !important;
+
+  background: #343434 !important;
+  color: #ededed !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs
+  button.is-active::after,
+.reconstruction-workspace__blender-properties-tabs
+  button[aria-pressed="true"]::after {
+  content: "" !important;
+
+  position: absolute !important;
+  right: -1px !important;
+  top: 5px !important;
+  bottom: 5px !important;
+
+  width: 1px !important;
+
+  background: #343434 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Main editor                                                               */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-editor {
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-workspace__blender-properties-header {
+  min-height: 40px !important;
+  height: 40px !important;
+
+  flex: 0 0 40px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 8px !important;
+
+  padding: 5px 7px 5px 9px !important;
+
+  border-bottom:
+    1px solid #171717 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #343434 0%,
+      #2c2c2c 100%
+    ) !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  > div {
+  min-width: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 2px !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  span {
+  color: #8f8f8f !important;
+
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  strong {
+  max-width: 220px !important;
+
+  overflow: hidden !important;
+
+  color: #dadada !important;
+
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  > button {
+  width: 23px !important;
+  min-width: 23px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+
+  padding: 0 !important;
+
+  border:
+    1px solid transparent !important;
+  border-radius: 2px !important;
+
+  background: transparent !important;
+  color: #a7a7a7 !important;
+
+  font-size: 15px !important;
+
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-header
+  > button:hover {
+  border-color: #4b4b4b !important;
+  background: #3a3a3a !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace__blender-properties-content {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  padding: 3px 0 12px !important;
+
+  background: #292929 !important;
+
+  scrollbar-width: thin !important;
+  scrollbar-color:
+    #555 #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar {
+  width: 9px !important;
+}
+
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar-track {
+  background: #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-content::-webkit-scrollbar-thumb {
+  border:
+    2px solid #232323 !important;
+  border-radius: 2px !important;
+
+  background: #555 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Blender disclosure panels                                                */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-section {
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-bottom:
+    1px solid #181818 !important;
+  border-radius: 0 !important;
+
+  background: #292929 !important;
+
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary {
+  position: relative !important;
+
+  min-height: 27px !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  padding:
+    4px 7px 4px 20px !important;
+
+  border: 0 !important;
+  border-bottom:
+    1px solid #1d1d1d !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #333333 0%,
+      #2e2e2e 100%
+    ) !important;
+
+  color: #cccccc !important;
+
+  font-size: 10.5px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+
+  cursor: pointer !important;
+
+  list-style: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary::before {
+  content: "▸" !important;
+
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+
+  color: #9c9c9c !important;
+
+  font-size: 9px !important;
+
+  transform:
+    translateY(-50%) !important;
+}
+
+.reconstruction-workspace__blender-properties-section[open]
+  > summary::before {
+  content: "▾" !important;
+}
+
+.reconstruction-workspace__blender-properties-section
+  > summary:hover {
+  background: #353535 !important;
+  color: #ededed !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Property rows                                                            */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-rows {
+  display: grid !important;
+
+  gap: 0 !important;
+
+  padding: 4px 8px 7px !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  > label,
+.reconstruction-workspace__blender-properties-rows
+  > div {
+  min-height: 29px !important;
+
+  display: grid !important;
+  grid-template-columns:
+    82px minmax(0, 1fr) !important;
+  align-items: center !important;
+
+  gap: 7px !important;
+
+  padding: 2px 0 !important;
+
+  border: 0 !important;
+  border-bottom:
+    1px solid #242424 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  > label:last-child,
+.reconstruction-workspace__blender-properties-rows
+  > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  > label
+  > span,
+.reconstruction-workspace__blender-properties-rows
+  > div
+  > span {
+  color: #979797 !important;
+
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.05 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  strong {
+  min-width: 0 !important;
+
+  overflow: hidden !important;
+
+  color: #d6d6d6 !important;
+
+  font-size: 11px !important;
+  font-weight: 600 !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]),
+.reconstruction-workspace__blender-properties-rows
+  select {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  height: 25px !important;
+  min-height: 25px !important;
+
+  padding: 2px 6px !important;
+
+  border:
+    1px solid #494949 !important;
+  border-radius: 3px !important;
+
+  background: #202020 !important;
+  color: #dcdcdc !important;
+
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.42) !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]):hover,
+.reconstruction-workspace__blender-properties-rows
+  select:hover {
+  border-color: #5b5b5b !important;
+}
+
+.reconstruction-workspace__blender-properties-rows
+  input:not([type="checkbox"]):focus,
+.reconstruction-workspace__blender-properties-rows
+  select:focus {
+  border-color:
+    #e8872d !important;
+
+  outline: 0 !important;
+
+  box-shadow:
+    0 0 0 1px rgba(232,135,45,.12),
+    inset 0 1px 2px rgba(0,0,0,.42) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Compact checkbox list                                                    */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-checks {
+  display: grid !important;
+
+  gap: 0 !important;
+
+  padding: 4px 8px 7px !important;
+
+  background: #292929 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks
+  label {
+  min-height: 27px !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 7px !important;
+
+  padding: 2px 4px !important;
+
+  border-bottom:
+    1px solid #242424 !important;
+
+  color: #c4c4c4 !important;
+
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks
+  label:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks
+  label:hover {
+  background: #323232 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks
+  input {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+
+  margin: 0 !important;
+
+  accent-color:
+    #e8872d !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Empty state                                                              */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__blender-properties-empty {
+  margin: 7px !important;
+  padding: 10px !important;
+
+  border:
+    1px dashed #464646 !important;
+  border-radius: 2px !important;
+
+  background: #272727 !important;
+  color: #969696 !important;
+
+  font-size: 10.5px !important;
+  line-height: 1.4 !important;
+}
+
+@media (max-width: 1180px) {
+  .reconstruction-workspace__stage-grid--3d {
+    grid-template-columns:
+      minmax(0, 1fr)
+      304px !important;
+  }
+
+  .reconstruction-workspace__blender-properties {
+    width: 304px !important;
+    min-width: 304px !important;
+    max-width: 304px !important;
+  }
+
+  .reconstruction-workspace__blender-properties-rows
+    > label,
+  .reconstruction-workspace__blender-properties-rows
+    > div {
+    grid-template-columns:
+      72px minmax(0, 1fr) !important;
+  }
+}
+
+/* [RoadSafe:ReconstructionBlenderPropertiesV4:end] */

@@ -1,45 +1,81 @@
-RoadSafe AR — BLENDER RIGHT PROPERTIES PANEL V3
-=================================================
+RoadSafe AR — SCREEN TIMELINE CENTRE-WIDTH FIX V1
+====================================================
 
-This version intentionally abandons the V1/V2 TSX approach.
+PROBLEM
+-------
+The standalone Screen Timeline component finally docked correctly to the
+bottom, but it used:
 
-V3 changes ONE ALREADY-LOADED CSS FILE ONLY:
+  right: 0
 
-  src/styles/blenderColorGuard.css
+so it continued underneath the right Properties panel.
 
-It does not:
-- edit AccidentReconstructionEditor.tsx
-- add imports
-- add React state
-- add JSX
-- touch models
-- touch physics
-- touch timeline/playback
-- run npm build
+The Timeline therefore occupied territory belonging to Properties.
 
-Why this is safer:
-main.tsx already globally imports blenderColorGuard.css. The existing 3D panel
-already contains all the controls needed. V3 simply changes their layout.
+CORRECT LAYOUT
+--------------
 
-Install:
-  cd C:\Users\nooklyweb\Desktop\A-R-V1
-  node .\install-blender-right-panel-v3.mjs
+  NAV |          CENTRE WORKSPACE          | PROPERTIES
+      |                                    |
+      |          2D / 3D / Nodes           |
+      |                                    |
+      |------------------------------------|
+      |          TIMELINE                  |
+      |------------------------------------|
+
+The Timeline belongs ONLY to the centre workspace width.
+
+FIX
+---
+ReconstructionTimelineDock now measures the actual:
+
+  .roadsafe-workspace-context-slot
+
+using getBoundingClientRect + ResizeObserver.
+
+It writes:
+
+  --rs-screen-properties-width
+
+to the RoadSafe shell.
+
+Timeline CSS becomes:
+
+  left: navigation width
+  right: var(--rs-screen-properties-width)
+  bottom: 0
+
+So its right edge always stops exactly at the left edge of Properties.
+
+If the Properties panel width changes, Timeline automatically follows.
+
+VERTICAL FIX
+------------
+Previously V5 shortened BOTH:
+- roadsafe-center
+- roadsafe-workspace-context-slot
+
+above the Timeline.
+
+That was necessary only while Timeline extended beneath Properties.
+
+Now:
+- centre workspace stops above Timeline;
+- Properties keeps its full 100dvh height.
+
+INSTALL
+-------
+cd C:\Users\nooklyweb\Desktop\A-R-V1
+
+node .\install-screen-timeline-center-width-fix-v1.mjs
 
 Then:
-  npm run dev
 
-Visual changes:
-- fixed Blender-like right panel width
-- dark property-editor background
-- narrow vertical icon rail
-- orange active rail marker
-- compact participant property table
-- compact input fields
-- compact 4-mode camera row
-- compact layers rows
-- compact physics telemetry
-- Blender-like disclosure headers
-- tight separators rather than big cards
+npm run dev
 
-Rollback:
-  node .\revoke-blender-right-panel-v3.mjs
+Optional:
+npm run build
+
+ROLLBACK
+--------
+node .\revoke-screen-timeline-center-width-fix-v1.mjs

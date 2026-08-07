@@ -1,0 +1,125 @@
+/* [RoadSafe:2DPropertiesTopFillV1:start] */
+
+/*
+ * The legacy 2D workstation stylesheet forces .shell-inspector to flex.
+ * That rule is more specific than the shared Blender Properties grid and
+ * causes the 100%-height icon rail to push the editor below it.
+ *
+ * This override restores the intended Blender two-column layout:
+ *
+ *   [ rail ][ properties editor ]
+ *
+ * Both start at the TOP and fill the same vertical row.
+ */
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties.reconstruction-workspace__blender-properties--2d-v5 {
+  display: grid !important;
+  grid-template-columns:
+    34px minmax(0, 1fr) !important;
+  grid-template-rows:
+    minmax(0, 1fr) !important;
+
+  align-items: stretch !important;
+  align-content: stretch !important;
+  justify-items: stretch !important;
+  justify-content: stretch !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  overflow: hidden !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background: #292929 !important;
+}
+
+/* Rail begins at row 1 / column 1, not as a full-height flex item above editor. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > .reconstruction-workspace__blender-properties-tabs {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+
+  align-self: stretch !important;
+  justify-self: stretch !important;
+
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+
+  height: 100% !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+}
+
+/* Editor begins at TOP beside the rail and fills the full available height. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > .reconstruction-workspace__blender-properties-editor {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+
+  align-self: stretch !important;
+  justify-self: stretch !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+
+  overflow: hidden !important;
+}
+
+/* Header must stay at the TOP; content gets the remaining vertical space. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  .reconstruction-workspace__blender-properties-header {
+  position: relative !important;
+  top: auto !important;
+
+  flex: 0 0 40px !important;
+
+  width: 100% !important;
+
+  margin: 0 !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  .reconstruction-workspace__blender-properties-content {
+  flex: 1 1 auto !important;
+
+  width: 100% !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* Avoid any legacy inspector child spacing creating an artificial top gap. */
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > :first-child,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector.reconstruction-workspace__blender-properties
+  > :nth-child(2) {
+  margin-top: 0 !important;
+}
+
+/* [RoadSafe:2DPropertiesTopFillV1:end] */

@@ -1,0 +1,499 @@
+/* [RoadSafe:BlenderProperties2DARV5:start] */
+
+/*
+ * Shared Blender Properties architecture for 2D + AR.
+ * 3D V4 uses the same structural class names.
+ */
+
+.reconstruction-workspace__blender-properties {
+  --rs-props-bg: #292929;
+  --rs-props-deep: #202020;
+  --rs-props-header: #2e2e2e;
+  --rs-props-raised: #383838;
+  --rs-props-hover: #414141;
+  --rs-props-border: #171717;
+  --rs-props-border-soft: #414141;
+  --rs-props-text: #d8d8d8;
+  --rs-props-muted: #969696;
+  --rs-props-accent: #e8872d;
+
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  color: var(--rs-props-text) !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs {
+  min-width: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 5px 0 !important;
+  border-right: 1px solid var(--rs-props-border) !important;
+  background: #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button {
+  position: relative !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #8e8e8e !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button:hover {
+  background: #303030 !important;
+  color: #d7d7d7 !important;
+}
+
+.reconstruction-workspace__blender-properties-tabs button.is-active,
+.reconstruction-workspace__blender-properties-tabs button[aria-pressed="true"] {
+  border-left-color: var(--rs-props-accent) !important;
+  background: #343434 !important;
+  color: #ededed !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-editor {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-header {
+  min-height: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 5px 7px 5px 9px !important;
+  border-bottom: 1px solid var(--rs-props-border) !important;
+  background: linear-gradient(180deg, #343434 0%, #2c2c2c 100%) !important;
+}
+
+.reconstruction-workspace__blender-properties-header > div {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.reconstruction-workspace__blender-properties-header span {
+  color: #8f8f8f !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.reconstruction-workspace__blender-properties-header strong {
+  max-width: 220px !important;
+  overflow: hidden !important;
+  color: #dadada !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-header > button {
+  width: 23px !important;
+  min-width: 23px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #a7a7a7 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-header-count {
+  min-width: 22px !important;
+  height: 20px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 5px !important;
+  border: 1px solid #484848 !important;
+  border-radius: 2px !important;
+  background: #303030 !important;
+  color: #bcbcbc !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-workspace__blender-properties-content {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 3px 0 12px !important;
+  background: var(--rs-props-bg) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #555 #232323 !important;
+}
+
+.reconstruction-workspace__blender-properties-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #181818 !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary {
+  position: relative !important;
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 4px 7px 4px 20px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #1d1d1d !important;
+  background: linear-gradient(180deg, #333 0%, #2e2e2e 100%) !important;
+  color: #ccc !important;
+  font-size: 10.5px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary::before {
+  content: "▸" !important;
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+  color: #9c9c9c !important;
+  font-size: 9px !important;
+  transform: translateY(-50%) !important;
+}
+
+.reconstruction-workspace__blender-properties-section[open] > summary::before {
+  content: "▾" !important;
+}
+
+.reconstruction-workspace__blender-properties-section > summary:hover {
+  background: #353535 !important;
+  color: #ededed !important;
+}
+
+.reconstruction-workspace__blender-properties-rows {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 4px 8px 7px !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label,
+.reconstruction-workspace__blender-properties-rows > div {
+  min-height: 29px !important;
+  display: grid !important;
+  grid-template-columns: 82px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 2px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #242424 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label:last-child,
+.reconstruction-workspace__blender-properties-rows > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows > label > span,
+.reconstruction-workspace__blender-properties-rows > div > span {
+  color: var(--rs-props-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.05 !important;
+}
+
+.reconstruction-workspace__blender-properties-rows strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: #d6d6d6 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-properties-rows input:not([type="checkbox"]):not([type="range"]),
+.reconstruction-workspace__blender-properties-rows select,
+.reconstruction-workspace__blender-properties-add select {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  padding: 2px 6px !important;
+  border: 1px solid #494949 !important;
+  border-radius: 3px !important;
+  background: var(--rs-props-deep) !important;
+  color: #dcdcdc !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.42) !important;
+}
+
+.reconstruction-workspace__blender-properties-range-row > div {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.reconstruction-workspace__blender-properties-range-row input[type="range"] {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.reconstruction-workspace__blender-properties-checks {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 4px 8px 7px !important;
+  background: var(--rs-props-bg) !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label {
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 2px 4px !important;
+  border-bottom: 1px solid #242424 !important;
+  color: #c4c4c4 !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks label:hover {
+  background: #323232 !important;
+}
+
+.reconstruction-workspace__blender-properties-checks input {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  margin: 0 !important;
+  accent-color: var(--rs-props-accent) !important;
+}
+
+.reconstruction-workspace__blender-properties-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  padding: 6px 8px 8px !important;
+}
+
+.reconstruction-workspace__blender-properties-actions button {
+  min-height: 26px !important;
+  padding: 3px 7px !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-properties-add {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 54px !important;
+  gap: 5px !important;
+  padding: 6px 8px !important;
+  border-bottom: 1px solid #242424 !important;
+}
+
+.reconstruction-workspace__blender-properties-add button {
+  min-height: 25px !important;
+  padding: 2px 5px !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-participant-list {
+  display: grid !important;
+  gap: 1px !important;
+  padding: 3px 4px 6px !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button {
+  min-height: 37px !important;
+  display: grid !important;
+  grid-template-columns: 12px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 4px 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #c7c7c7 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button:hover {
+  background: #333 !important;
+}
+
+.reconstruction-workspace__blender-participant-list > button.is-active {
+  border-color: #555 !important;
+  background: #363636 !important;
+  box-shadow: inset 2px 0 0 var(--rs-props-accent) !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy strong {
+  overflow: hidden !important;
+  color: #d6d6d6 !important;
+  font-size: 10.5px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-copy small,
+.reconstruction-workspace__blender-participant-list .reconstruction-workspace__participant-points {
+  color: #898989 !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-workspace__blender-properties-empty {
+  margin: 7px !important;
+  padding: 10px !important;
+  border: 1px dashed #464646 !important;
+  border-radius: 2px !important;
+  background: #272727 !important;
+  color: #969696 !important;
+  font-size: 10.5px !important;
+  line-height: 1.4 !important;
+}
+
+.reconstruction-workspace__blender-properties-delete {
+  width: calc(100% - 16px) !important;
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  margin: 7px 8px !important;
+  border-color: #5b303b !important;
+  background: #2d1c21 !important;
+  color: #d5a5af !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-workspace__blender-properties-embedded {
+  min-width: 0 !important;
+  padding: 4px 6px 7px !important;
+}
+
+.reconstruction-workspace__blender-properties-embedded > * {
+  max-width: 100% !important;
+}
+
+.reconstruction-workspace__blender-properties--2d-v5 {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  border: 0 !important;
+  background: var(--rs-props-bg) !important;
+}
+
+/* AR-specific docking */
+.roadsafe-ar-blender-properties {
+  position: absolute !important;
+  z-index: 45 !important;
+  top: 58px !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+  border-left: 1px solid #151515 !important;
+  box-shadow: -4px 0 15px rgba(0,0,0,.24) !important;
+  pointer-events: auto !important;
+}
+
+.roadsafe-ar-properties-reopen {
+  position: absolute !important;
+  z-index: 46 !important;
+  top: 66px !important;
+  right: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+
+.roadsafe-ar-blender-properties__status,
+.roadsafe-ar-blender-properties__error {
+  margin: 0 !important;
+  padding: 8px !important;
+  color: #aaa !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-ar-blender-properties__error {
+  margin: 0 7px 5px !important;
+  border: 1px solid #713646 !important;
+  background: #321722 !important;
+  color: #e0a4b0 !important;
+}
+
+@media (max-width: 760px) {
+  .roadsafe-ar-blender-properties {
+    top: 54px !important;
+    width: min(86vw, 300px) !important;
+    min-width: 0 !important;
+    max-width: 300px !important;
+  }
+
+  .roadsafe-ar-blender-properties
+    .reconstruction-workspace__blender-properties-rows
+    > label,
+  .roadsafe-ar-blender-properties
+    .reconstruction-workspace__blender-properties-rows
+    > div {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+  }
+}
+
+/* [RoadSafe:BlenderProperties2DARV5:end] */
