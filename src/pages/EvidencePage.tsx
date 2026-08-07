@@ -55,7 +55,7 @@ export default function EvidencePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-[#18243f] p-4 md:grid-cols-[1fr_240px]">
+        <div className="grid gap-3 border-b border-[#494949] p-4 md:grid-cols-[1fr_240px]">
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={15} />
             <input
@@ -95,7 +95,7 @@ export default function EvidencePage() {
                 <button
                   type="button"
                   onClick={() => setSelectedId(item.id)}
-                  className="relative block h-48 w-full overflow-hidden bg-[#070c16] text-left"
+                  className="relative block h-48 w-full overflow-hidden bg-[#303030] text-left"
                 >
                   {photo?.thumbnailDataUrl || photo?.dataUrl ? (
                     <img
@@ -113,7 +113,7 @@ export default function EvidencePage() {
                     />
                   )}
                   <span className="absolute left-3 top-3 ui-badge">E{String(item.evidence.evidenceNumber).padStart(2, "0")}</span>
-                  <span className="absolute bottom-3 right-3 rounded border border-[#2d456d] bg-[#060a13]/90 px-2 py-1 text-[8px] font-semibold text-slate-300">
+                  <span className="absolute bottom-3 right-3 rounded border border-[#494949] bg-[#303030] px-2 py-1 text-[8px] font-semibold text-slate-300">
                     {photo ? `${item.photos.length} photo${item.photos.length === 1 ? "" : "s"}` : "Scene marker"}
                   </span>
                 </button>
@@ -128,7 +128,7 @@ export default function EvidencePage() {
                   <p className="mt-3 line-clamp-2 min-h-8 text-[9px] leading-4 text-slate-600">
                     {item.evidence.description || item.evidence.notes || "No description recorded."}
                   </p>
-                  <div className="mt-3 flex items-center gap-2 border-t border-[#202020] pt-3 text-[9px] text-slate-500">
+                  <div className="mt-3 flex items-center gap-2 border-t border-[#494949] pt-3 text-[9px] text-slate-500">
                     <MapPin size={12} />
                     <span className="truncate">{item.accidentCase?.location || item.reconstruction.title}</span>
                   </div>
@@ -147,7 +147,7 @@ export default function EvidencePage() {
               <button className="ui-button" onClick={() => setSelectedId(null)}>Close</button>
             </div>
             <div className="grid gap-4 p-4 lg:grid-cols-[1.4fr_.8fr]">
-              <div className="overflow-hidden rounded-md border border-[#1d2c4b] bg-[#050914]">
+              <div className="overflow-hidden rounded-md border border-[#494949] bg-[#303030]">
                 {selected.photos[0]?.dataUrl || selected.photos[0]?.thumbnailDataUrl ? (
                   <img src={selected.photos[0].dataUrl || selected.photos[0].thumbnailDataUrl} alt={selected.evidence.title} className="max-h-[62vh] w-full object-contain" />
                 ) : (
@@ -155,7 +155,7 @@ export default function EvidencePage() {
                 )}
               </div>
               <aside className="space-y-4">
-                <div className="rounded-md border border-[#1a2946] bg-[#0a1121] p-4">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-4">
                   <h3 className="ui-panel-title">Evidence details</h3>
                   <dl className="mt-4 space-y-3 text-[10px]">
                     {[
@@ -168,7 +168,7 @@ export default function EvidencePage() {
                     ].map(([label, value]) => <div key={label} className="flex justify-between gap-4"><dt className="text-slate-600">{label}</dt><dd className="text-right text-slate-300">{value}</dd></div>)}
                   </dl>
                 </div>
-                <div className="rounded-md border border-[#1a2946] bg-[#0a1121] p-4">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-4">
                   <h3 className="ui-panel-title">Investigator notes</h3>
                   <p className="mt-3 whitespace-pre-wrap text-[10px] leading-5 text-slate-400">{selected.evidence.description || selected.evidence.notes || "No notes recorded."}</p>
                 </div>

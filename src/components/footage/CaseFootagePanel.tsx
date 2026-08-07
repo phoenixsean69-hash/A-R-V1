@@ -110,7 +110,7 @@ export default function CaseFootagePanel({
     <section className="ui-panel min-w-0 overflow-hidden">
       <div className="ui-panel-header min-w-0 gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#81b2fa]">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
             <Video size={17} strokeWidth={1.8} />
           </div>
 
@@ -125,7 +125,7 @@ export default function CaseFootagePanel({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded border border-[#284a7b] bg-[#112241] px-2 py-1 font-mono text-[9px] font-bold text-[#8ebcff]">
+          <span className="rounded border border-[#494949] bg-[#303030] px-2 py-1 font-mono text-[9px] font-bold text-[#c4c4c4]">
             {footage.length}
           </span>
 
@@ -139,7 +139,7 @@ export default function CaseFootagePanel({
 
       {compact && (
         <div
-          className={`grid gap-2 border-b border-[#18243f] p-3 ${
+          className={`grid gap-2 border-b border-[#494949] p-3 ${
             showAllLink ? "grid-cols-2" : "grid-cols-1"
           }`}
         >
@@ -151,7 +151,7 @@ export default function CaseFootagePanel({
         <div
           className={`mx-3 mt-3 rounded-md border px-3 py-2 text-[9px] font-semibold leading-4 ${
             notice.tone === "success"
-              ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+              ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
               : "border-[#713646] bg-[#321722] text-[#e28b9d]"
           }`}
         >
@@ -162,11 +162,11 @@ export default function CaseFootagePanel({
       {footage.length === 0 ? (
         <div className={compact ? "p-3" : "p-4"}>
           <div
-            className={`rounded-md border border-dashed border-[#29446f] bg-[#070d1a] text-center ${
+            className={`rounded-md border border-dashed border-[#494949] bg-[#303030] text-center ${
               compact ? "px-4 py-6" : "px-6 py-10"
             }`}
           >
-            <div className="mx-auto grid h-10 w-10 place-items-center rounded-md border border-[#1d3155] bg-[#08142c] text-[#6f9ddd]">
+            <div className="mx-auto grid h-10 w-10 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#6f9ddd]">
               <Film size={18} strokeWidth={1.7} />
             </div>
             <p className="mt-3 text-[10px] font-bold text-slate-300">
@@ -190,10 +190,10 @@ export default function CaseFootagePanel({
             compact ? (
               <article
                 key={record.id}
-                className="min-w-0 overflow-hidden rounded-md border border-[#1a2946] bg-[#070d1a]"
+                className="min-w-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030]"
               >
                 <div className="flex min-w-0">
-                  <div className="relative h-[88px] w-[108px] shrink-0 overflow-hidden border-r border-[#1a2946] bg-[#030714]">
+                  <div className="relative h-[88px] w-[108px] shrink-0 overflow-hidden border-r border-[#494949] bg-[#303030]">
                     {record.thumbnailDataUrl ? (
                       <img
                         src={record.thumbnailDataUrl}
@@ -208,10 +208,10 @@ export default function CaseFootagePanel({
 
                     <Link
                       to={`/cases/${accidentCase.id}/footage/${record.id}`}
-                      className="absolute inset-0 grid place-items-center bg-[#020611]/20 transition-colors hover:bg-[#020611]/50"
+                      className="absolute inset-0 grid place-items-center bg-[#303030] transition-colors hover:bg-[#303030]"
                       aria-label={`Play ${record.title}`}
                     >
-                      <span className="grid h-8 w-8 place-items-center rounded-full border border-white/20 bg-[#071124]/90 text-white shadow-xl">
+                      <span className="grid h-8 w-8 place-items-center rounded-full border border-white/20 bg-[#303030] text-white shadow-xl">
                         <Play
                           size={13}
                           strokeWidth={2}
@@ -222,7 +222,7 @@ export default function CaseFootagePanel({
                     </Link>
 
                     {record.isPrimary && (
-                      <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded border border-[#315b91] bg-[#0b1b38]/95 px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.08em] text-[#8ebcff]">
+                      <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded border border-[#494949] bg-[#303030] px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.08em] text-[#c4c4c4]">
                         <Star size={7} fill="currentColor" />
                         Primary
                       </span>
@@ -255,10 +255,10 @@ export default function CaseFootagePanel({
                   </div>
                 </div>
 
-                <div className="grid min-w-0 grid-cols-2 gap-1.5 border-t border-[#1a2946] p-2">
+                <div className="grid min-w-0 grid-cols-2 gap-1.5 border-t border-[#494949] p-2">
                   <Link
                     to={`/cases/${accidentCase.id}/footage/${record.id}`}
-                    className={`${compactActionClass} border-[#162f52] bg-[#163a73] text-white hover:bg-[#1b4789]`}
+                    className={`${compactActionClass} border-[#494949] bg-[#303030] text-white hover:bg-[#303030]`}
                   >
                     <Play size={10} fill="currentColor" />
                     Play
@@ -279,7 +279,7 @@ export default function CaseFootagePanel({
                         });
                       }
                     }}
-                    className={`${compactActionClass} border-[#29446f] bg-[#111b35] text-slate-300 hover:bg-[#152445]`}
+                    className={`${compactActionClass} border-[#494949] bg-[#303030] text-slate-300 hover:bg-[#303030]`}
                   >
                     <Download size={10} />
                     Download
@@ -299,13 +299,13 @@ export default function CaseFootagePanel({
                         );
                         refresh("Primary reconstruction footage updated.");
                       }}
-                      className={`${compactActionClass} border-[#315b91] bg-[#0b1b38] text-[#8ebcff] hover:bg-[#10264b]`}
+                      className={`${compactActionClass} border-[#494949] bg-[#303030] text-[#c4c4c4] hover:bg-[#303030]`}
                     >
                       <Star size={10} />
                       Primary
                     </button>
                   ) : (
-                    <span className={`${compactActionClass} border-[#28645e] bg-[#0d2928] text-[#8ed6ca]`}>
+                    <span className={`${compactActionClass} border-[#494949] bg-[#303030] text-[#c4c4c4]`}>
                       <Star size={10} fill="currentColor" />
                       Selected
                     </span>
@@ -333,9 +333,9 @@ export default function CaseFootagePanel({
             ) : (
               <article
                 key={record.id}
-                className="min-w-0 overflow-hidden rounded-md border border-[#1a2946] bg-[#070d1a]"
+                className="min-w-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030]"
               >
-                <div className="relative aspect-video overflow-hidden bg-[#030714]">
+                <div className="relative aspect-video overflow-hidden bg-[#303030]">
                   {record.thumbnailDataUrl ? (
                     <img
                       src={record.thumbnailDataUrl}
@@ -358,7 +358,7 @@ export default function CaseFootagePanel({
                   )}
 
                   {record.isPrimary && (
-                    <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded border border-[#315b91] bg-[#0b1b38]/95 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-[#8ebcff]">
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded border border-[#494949] bg-[#303030] px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-[#c4c4c4]">
                       <Star size={9} fill="currentColor" />
                       Primary evidence
                     </span>
@@ -366,10 +366,10 @@ export default function CaseFootagePanel({
 
                   <Link
                     to={`/cases/${accidentCase.id}/footage/${record.id}`}
-                    className="absolute inset-0 grid place-items-center bg-[#020611]/20 transition-colors hover:bg-[#020611]/55"
+                    className="absolute inset-0 grid place-items-center bg-[#303030] transition-colors hover:bg-[#303030]"
                     aria-label={`Play ${record.title}`}
                   >
-                    <span className="grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-[#071124]/90 text-white shadow-2xl">
+                    <span className="grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-[#303030] text-white shadow-2xl">
                       <Play
                         size={18}
                         strokeWidth={2}
@@ -395,7 +395,7 @@ export default function CaseFootagePanel({
                       </p>
                     </div>
 
-                    <span className="shrink-0 rounded border border-[#1d3155] bg-[#08142c] px-2 py-1 text-[7px] font-bold text-[#7fa8df]">
+                    <span className="shrink-0 rounded border border-[#494949] bg-[#303030] px-2 py-1 text-[7px] font-bold text-[#c4c4c4]">
                       {record.width}×{record.height}
                     </span>
                   </div>
@@ -451,7 +451,7 @@ export default function CaseFootagePanel({
                           );
                           refresh("Primary reconstruction footage updated.");
                         }}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-md border border-[#315b91] bg-[#0b1b38] px-2.5 py-1.5 text-[9px] font-bold text-[#8ebcff] transition-colors hover:bg-[#10264b]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-md border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[9px] font-bold text-[#c4c4c4] transition-colors hover:bg-[#303030]"
                       >
                         <Star size={11} />
                         Make primary

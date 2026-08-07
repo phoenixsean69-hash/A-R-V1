@@ -92,10 +92,10 @@ function roleBadgeClass(
   }
 
   if (role === "supervisor") {
-    return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+    return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
   }
 
-  return "border-[#315b91] bg-[#0b1b38] text-[#8ebcff]";
+  return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
 }
 
 export default function OfficerManagementPage() {
@@ -537,14 +537,14 @@ export default function OfficerManagementPage() {
   return (
     <div className="mx-auto min-w-0 max-w-[1500px] space-y-3">
       <section className="ui-panel overflow-hidden">
-        <header className="flex min-w-0 flex-wrap items-start justify-between gap-4 border-b border-[#18243f] p-5">
+        <header className="flex min-w-0 flex-wrap items-start justify-between gap-4 border-b border-[#494949] p-5">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <UserCog size={21} />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
                 Station administration
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">
@@ -614,11 +614,11 @@ export default function OfficerManagementPage() {
               return (
                 <div
                   key={String(label)}
-                  className="rounded-md border border-[#18243f] bg-[#070d1a] p-3"
+                  className="rounded-md border border-[#494949] bg-[#303030] p-3"
                 >
                   <MetricIcon
                     size={15}
-                    className="text-[#8ebcff]"
+                    className="text-[#c4c4c4]"
                   />
                   <p className="mt-3 text-[8px] font-bold uppercase tracking-[0.09em] text-slate-600">
                     {String(label)}
@@ -835,15 +835,15 @@ export default function OfficerManagementPage() {
           </header>
 
           <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.7fr)]">
-            <div className="rounded-md border border-[#7b622a] bg-[#130f08] p-4">
-              <p className="text-[8px] font-bold uppercase tracking-[0.09em] text-[#8d7545]">
+            <div className="rounded-md border border-[#7b622a] bg-[#303030] p-4">
+              <p className="text-[8px] font-bold uppercase tracking-[0.09em] text-[#c4c4c4]">
                 Login email
               </p>
               <p className="mt-2 break-all font-mono text-[11px] font-bold text-slate-200">
                 {credential.officer.email}
               </p>
 
-              <p className="mt-4 text-[8px] font-bold uppercase tracking-[0.09em] text-[#8d7545]">
+              <p className="mt-4 text-[8px] font-bold uppercase tracking-[0.09em] text-[#c4c4c4]">
                 Temporary password
               </p>
               <p className="mt-2 break-all font-mono text-sm font-black tracking-[0.06em] text-[#f0d48d]">
@@ -885,7 +885,7 @@ export default function OfficerManagementPage() {
           className={`rounded-md border px-3 py-2.5 text-[10px] leading-5 ${
             error
               ? "border-[#713646] bg-[#321722] text-[#e28b9d]"
-              : "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+              : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
           }`}
         >
           {error || message}
@@ -893,7 +893,7 @@ export default function OfficerManagementPage() {
       )}
 
       <section className="ui-panel overflow-hidden">
-        <div className="flex min-w-0 flex-wrap items-center gap-3 border-b border-[#18243f] p-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3 border-b border-[#494949] p-3">
           <label className="relative min-w-[230px] flex-1">
             <Search
               size={14}
@@ -962,7 +962,7 @@ export default function OfficerManagementPage() {
             <div className="text-center">
               <Loader2
                 size={24}
-                className="mx-auto animate-spin text-[#8ebcff]"
+                className="mx-auto animate-spin text-[#c4c4c4]"
               />
               <p className="mt-3 text-[10px] text-slate-500">
                 Loading station officers…
@@ -1002,7 +1002,7 @@ export default function OfficerManagementPage() {
                     className="grid min-w-0 gap-3 p-4 xl:grid-cols-[minmax(250px,1.2fr)_minmax(180px,0.8fr)_minmax(220px,0.8fr)_auto]"
                   >
                     <div className="flex min-w-0 items-start gap-3">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#284b7e] bg-[#102344] text-[10px] font-black text-[#9bc1ff]">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[10px] font-black text-[#9bc1ff]">
                         {initials(
                           officer.name,
                         )}
@@ -1014,7 +1014,7 @@ export default function OfficerManagementPage() {
                             {officer.name}
                           </h3>
                           {isSelf && (
-                            <span className="rounded border border-[#315b91] bg-[#0b1b38] px-1.5 py-0.5 text-[7px] font-black uppercase text-[#8ebcff]">
+                            <span className="rounded border border-[#494949] bg-[#303030] px-1.5 py-0.5 text-[7px] font-black uppercase text-[#c4c4c4]">
                               You
                             </span>
                           )}
@@ -1052,7 +1052,7 @@ export default function OfficerManagementPage() {
                           className={`mt-1 text-[9px] font-bold ${
                             officer.status ===
                             "active"
-                              ? "text-[#8ed6ca]"
+                              ? "text-[#c4c4c4]"
                               : "text-[#e28b9d]"
                           }`}
                         >

@@ -49,7 +49,7 @@ export default function FootagePage() {
       </section>
 
       {message && (
-        <div className="rounded-md border border-[#2a4b75] bg-[#0d1a31] px-4 py-3 text-[10px] text-[#9fc4ff]">
+        <div className="rounded-md border border-[#494949] bg-[#303030] px-4 py-3 text-[10px] text-[#9fc4ff]">
           {message}
         </div>
       )}
@@ -81,7 +81,7 @@ export default function FootagePage() {
               </div>
             )}
             {selected && (
-              <div className="grid gap-3 border-t border-[#18243f] p-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 border-t border-[#494949] p-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   ["Duration", `${selected.durationSeconds.toFixed(1)} s`],
                   ["Resolution", `${selected.width} × ${selected.height}`],
@@ -104,17 +104,17 @@ export default function FootagePage() {
                 const accidentCase = AccidentCaseService.getById(record.caseId);
                 const active = record.id === selected?.id;
                 return (
-                  <article key={record.id} className={active ? "bg-[#101a31]" : "bg-transparent"}>
+                  <article key={record.id} className={active ? "bg-[#303030]" : "bg-transparent"}>
                     <button
                       type="button"
                       onClick={() => setSelectedId(record.id)}
                       className="flex w-full gap-3 p-3 text-left hover:bg-[#383838]"
                     >
-                      <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md border border-[#1d2c4b] bg-[#060a13]">
+                      <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030]">
                         {record.thumbnailDataUrl ? (
                           <img src={record.thumbnailDataUrl} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          <div className="grid h-full place-items-center"><Play size={19} className="text-[#78aafb]" /></div>
+                          <div className="grid h-full place-items-center"><Play size={19} className="text-[#c4c4c4]" /></div>
                         )}
                         <span className="absolute bottom-1 right-1 rounded bg-black/75 px-1.5 py-0.5 text-[7px] text-white">{record.durationSeconds.toFixed(1)}s</span>
                       </div>

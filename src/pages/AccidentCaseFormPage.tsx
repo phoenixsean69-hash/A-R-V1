@@ -46,7 +46,7 @@ export default function AccidentCaseFormPage() {
       <div className={existing ? "mx-auto max-w-4xl" : "mx-auto max-w-7xl"}>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#c4c4c4]">
               RoadSafe AR
             </p>
             <h1 className="mt-2 text-3xl font-black text-slate-950">

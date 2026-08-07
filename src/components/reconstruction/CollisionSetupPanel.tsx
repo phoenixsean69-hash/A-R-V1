@@ -185,7 +185,7 @@ export default function CollisionSetupPanel({
               type="button"
               onClick={derive}
               disabled={impactCount === 0 || setup.locked}
-              className="rounded-sm border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-800 hover:bg-indigo-100 disabled:bg-gray-100 disabled:text-gray-400"
+              className="rounded-sm border border-[#494949] bg-[#303030] px-4 py-2.5 text-sm font-black text-[#c4c4c4] hover:bg-[#303030] disabled:bg-gray-100 disabled:text-gray-400"
             >
               Derive from Impact Points
             </button>

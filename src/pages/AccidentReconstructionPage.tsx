@@ -120,8 +120,8 @@ export default function AccidentReconstructionPage() {
     return (
       <div className="flex min-h-[calc(100vh-32px)] items-center justify-center p-4">
         <section className="ui-panel w-full max-w-lg overflow-hidden text-center">
-          <div className="border-b border-[#18243f] p-6">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+          <div className="border-b border-[#494949] p-6">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <Orbit size={23} strokeWidth={1.8} />
             </div>
             <h1 className="mt-4 text-lg font-bold text-slate-100">
@@ -132,7 +132,7 @@ export default function AccidentReconstructionPage() {
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 p-4 text-[9px] font-semibold text-[#8ebcff]">
+          <div className="flex items-center justify-center gap-2 p-4 text-[9px] font-semibold text-[#c4c4c4]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-[#80ACFF]" />
             Loading the last selected scene
           </div>
@@ -142,16 +142,16 @@ export default function AccidentReconstructionPage() {
   }
 
   return (
-    <div className="min-h-screen min-w-0 bg-[#030714] p-3 sm:p-4 lg:p-5">
+    <div className="min-h-screen min-w-0 bg-[#303030] p-3 sm:p-4 lg:p-5">
       <div className="mx-auto min-w-0 max-w-[1400px] space-y-3">
         <header className="ui-panel flex min-w-0 flex-wrap items-center justify-between gap-4 p-4">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <Orbit size={21} strokeWidth={1.8} />
             </div>
 
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
                 Reconstruction workspace
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">
@@ -209,7 +209,7 @@ export default function AccidentReconstructionPage() {
                   </p>
                 </div>
 
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#284a7b] bg-[#112241] text-[#8ebcff]">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
                   <Icon size={15} strokeWidth={1.8} />
                 </span>
               </div>
@@ -242,8 +242,8 @@ export default function AccidentReconstructionPage() {
 
           {cases.length === 0 ? (
             <div className="p-5">
-              <div className="rounded-md border border-dashed border-[#29446f] bg-[#070d1a] px-5 py-12 text-center">
-                <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+              <div className="rounded-md border border-dashed border-[#494949] bg-[#303030] px-5 py-12 text-center">
+                <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
                   <Orbit size={20} />
                 </div>
                 <h2 className="mt-4 text-sm font-bold text-slate-300">
@@ -276,12 +276,12 @@ export default function AccidentReconstructionPage() {
                 return (
                   <article
                     key={record.id}
-                    className="min-w-0 overflow-hidden rounded-md border border-[#1a2946] bg-[#070d1a] transition-colors hover:border-[#29446f]"
+                    className="min-w-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030] transition-colors hover:border-[#494949]"
                   >
-                    <div className="min-w-0 border-b border-[#18243f] p-4">
+                    <div className="min-w-0 border-b border-[#494949] p-4">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#80ACFF]">
+                          <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#c4c4c4]">
                             {record.caseNumber}
                           </p>
                           <h3
@@ -320,7 +320,7 @@ export default function AccidentReconstructionPage() {
                       ].map(([label, value]) => (
                         <div
                           key={label}
-                          className="min-w-0 rounded-md border border-[#182849] bg-[#050b17] px-2 py-2 text-center"
+                          className="min-w-0 rounded-md border border-[#494949] bg-[#303030] px-2 py-2 text-center"
                         >
                           <p className="font-mono text-[11px] font-bold text-slate-300">
                             {value}
@@ -332,7 +332,7 @@ export default function AccidentReconstructionPage() {
                       ))}
                     </div>
 
-                    <div className="flex min-w-0 items-center justify-between gap-3 border-t border-[#18243f] px-3 py-3">
+                    <div className="flex min-w-0 items-center justify-between gap-3 border-t border-[#494949] px-3 py-3">
                       <div className="min-w-0">
                         <p className="truncate text-[8px] font-bold uppercase tracking-[0.08em] text-slate-600">
                           Reconstruction
@@ -340,7 +340,7 @@ export default function AccidentReconstructionPage() {
                         <p
                           className={`mt-1 truncate text-[9px] font-semibold ${
                             stats.hasReconstruction
-                              ? "text-[#8ed6ca]"
+                              ? "text-[#c4c4c4]"
                               : "text-[#d9bd78]"
                           }`}
                         >

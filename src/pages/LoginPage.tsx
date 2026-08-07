@@ -86,11 +86,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030714] p-4 text-slate-200 sm:p-6">
+    <div className="min-h-screen bg-[#303030] p-4 text-slate-200 sm:p-6">
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl items-center gap-4 lg:grid-cols-[minmax(0,1fr)_430px]">
         <section className="hidden min-w-0 p-8 lg:block">
           <div className="flex items-center gap-4">
-            <div className="grid h-14 w-14 place-items-center rounded-md border border-[#3765a3] bg-[#08142c] text-[#8ebcff]">
+            <div className="grid h-14 w-14 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <ShieldCheck
                 size={30}
                 strokeWidth={1.7}
@@ -120,10 +120,10 @@ export default function LoginPage() {
           </p>
 
           <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
-            <article className="rounded-md border border-[#1d3155] bg-[#070d1a] p-4">
+            <article className="rounded-md border border-[#494949] bg-[#303030] p-4">
               <RadioTower
                 size={18}
-                className="text-[#8ebcff]"
+                className="text-[#c4c4c4]"
               />
               <h2 className="mt-3 text-sm font-bold text-slate-200">
                 Field Client
@@ -134,10 +134,10 @@ export default function LoginPage() {
               </p>
             </article>
 
-            <article className="rounded-md border border-[#1d3155] bg-[#070d1a] p-4">
+            <article className="rounded-md border border-[#494949] bg-[#303030] p-4">
               <ShieldCheck
                 size={18}
-                className="text-[#8ed6ca]"
+                className="text-[#c4c4c4]"
               />
               <h2 className="mt-3 text-sm font-bold text-slate-200">
                 Station Client
@@ -151,8 +151,8 @@ export default function LoginPage() {
         </section>
 
         <section className="ui-panel min-w-0 overflow-hidden">
-          <header className="border-b border-[#18243f] p-5 sm:p-6">
-            <div className="grid h-11 w-11 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+          <header className="border-b border-[#494949] p-5 sm:p-6">
+            <div className="grid h-11 w-11 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <LockKeyhole size={20} />
             </div>
             <h2 className="mt-4 text-xl font-bold text-slate-100">
@@ -209,7 +209,7 @@ export default function LoginPage() {
                       (current) => !current,
                     )
                   }
-                  className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded text-slate-500 hover:bg-[#10182d] hover:text-slate-200"
+                  className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded text-slate-500 hover:bg-[#303030] hover:text-slate-200"
                   aria-label={
                     showPassword
                       ? "Hide password"

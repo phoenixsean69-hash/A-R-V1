@@ -81,9 +81,9 @@ class ReconstructionErrorBoundary extends Component<
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030714] p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#303030] p-4">
         <div className="ui-panel w-full max-w-3xl overflow-hidden">
-          <div className="border-b border-[#18243f] p-5 text-center">
+          <div className="border-b border-[#494949] p-5 text-center">
             <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
               <AlertTriangle
                 size={20}
@@ -105,12 +105,12 @@ class ReconstructionErrorBoundary extends Component<
             </p>
           </div>
 
-          <pre className="m-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-[#713646] bg-[#180b12] p-4 text-[10px] leading-5 text-[#e28b9d]">
+          <pre className="m-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-[#713646] bg-[#303030] p-4 text-[10px] leading-5 text-[#e28b9d]">
             {this.state.error.message ||
               "Unknown reconstruction editor error"}
           </pre>
 
-          <div className="flex flex-wrap justify-center gap-3 border-t border-[#18243f] p-4">
+          <div className="flex flex-wrap justify-center gap-3 border-t border-[#494949] p-4">
             <button
               type="button"
               onClick={() =>
@@ -330,9 +330,9 @@ export default function CaseReconstructionPage() {
     !caseId
   ) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030714] p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#303030] p-4">
         <section className="ui-panel w-full max-w-2xl overflow-hidden text-center">
-          <div className="border-b border-[#18243f] p-6">
+          <div className="border-b border-[#494949] p-6">
             <div className="mx-auto grid h-11 w-11 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
               <AlertTriangle
                 size={20}

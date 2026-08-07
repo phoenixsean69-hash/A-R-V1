@@ -34,7 +34,7 @@ export default function EvidenceMarkerLayer({
           onPointerDown={(event) => onPointerDown(event, record.id)}
           className={`absolute z-[41] flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-amber-500 text-[11px] font-black text-gray-950 shadow-lg ${
             selectedEvidenceId === record.id
-              ? "ring-4 ring-cyan-300/50"
+              ? "ring-4 ring-[#e8872d]"
               : ""
           }`}
           style={{

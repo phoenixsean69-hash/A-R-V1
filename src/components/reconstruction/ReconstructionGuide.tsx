@@ -1,10 +1,10 @@
 export default function ReconstructionGuide() {
   return (
-    <details className="mt-5 overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm">
-      <summary className="cursor-pointer list-none bg-gradient-to-r from-blue-950 via-indigo-900 to-violet-900 px-5 py-4 text-white marker:hidden">
+    <details className="mt-5 overflow-hidden rounded-2xl border border-[#494949] bg-white shadow-sm">
+      <summary className="cursor-pointer list-none bg-gradient-to-r from-[#303030] via-[#303030] to-[#303030] px-5 py-4 text-white marker:hidden">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-200">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c4c4c4]">
               Collapsible README
             </p>
             <h2 className="mt-1 text-lg font-black">

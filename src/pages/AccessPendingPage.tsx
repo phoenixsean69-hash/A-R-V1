@@ -24,9 +24,9 @@ export default function AccessPendingPage() {
     auth.status === "loading";
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[#030714] p-5 text-slate-200">
+    <div className="grid min-h-screen place-items-center bg-[#303030] p-5 text-slate-200">
       <section className="ui-panel w-full max-w-xl overflow-hidden text-center">
-        <div className="border-b border-[#18243f] p-6">
+        <div className="border-b border-[#494949] p-6">
           <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#6d5523] bg-[#241d10] text-[#d9bd78]">
             <Clock3 size={22} />
           </div>
@@ -42,7 +42,7 @@ export default function AccessPendingPage() {
         </div>
 
         <div className="space-y-3 p-5 text-left">
-          <div className="rounded-md border border-[#1a2946] bg-[#070d1a] p-3">
+          <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
             <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-600">
               Account
             </p>

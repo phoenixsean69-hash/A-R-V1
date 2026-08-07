@@ -49,15 +49,15 @@ export default function PhysicsControlsPanel({
   const summary = reconstruction.lastPhysicsSimulation;
 
   return (
-    <section className="mt-5 overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm">
-      <div className="border-b border-violet-100 bg-blue-950 p-5 text-white">
+    <section className="mt-5 overflow-hidden rounded-2xl border border-[#494949] bg-white shadow-sm">
+      <div className="border-b border-[#494949] bg-[#303030] p-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c4c4c4]">
               Premium deterministic simulation
             </p>
             <h2 className="mt-1 text-xl font-black">Physics & Kinematics</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-violet-100">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c4c4c4]">
               Use participant mass, approach speed, restitution, road friction and nearby hazards to calculate post-impact movement, impulse, energy, force estimates and rebound distance. Internal physics samples drive playback but never appear as investigator-created route points.
             </p>
           </div>
@@ -66,7 +66,7 @@ export default function PhysicsControlsPanel({
             type="button"
             onClick={onRunPhysics}
             disabled={!settings.enabled || reconstruction.vehicles.length === 0}
-            className="rounded-sm bg-white px-5 py-3 text-sm font-black text-blue-900 shadow transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+            className="rounded-sm bg-white px-5 py-3 text-sm font-black text-[#c4c4c4] shadow transition hover:bg-[#303030] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
           >
             Run Physics & Calculate Kinematics
           </button>
@@ -88,10 +88,10 @@ export default function PhysicsControlsPanel({
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-sm border border-violet-200 bg-violet-50 p-4">
+          <label className="flex items-center justify-between rounded-sm border border-[#494949] bg-[#303030] p-4">
             <div>
-              <p className="text-sm font-black text-blue-900">Simulate before playback</p>
-              <p className="mt-1 text-xs text-blue-900">
+              <p className="text-sm font-black text-[#c4c4c4]">Simulate before playback</p>
+              <p className="mt-1 text-xs text-[#c4c4c4]">
                 Synchronize participants at the collision point and rebuild the impact response whenever playback starts from 0s.
               </p>
             </div>
@@ -364,9 +364,9 @@ export default function PhysicsControlsPanel({
           </div>
 
           {summary && (
-            <div className="rounded-sm border border-violet-200 bg-violet-50 p-4">
-              <h3 className="font-black text-violet-950">Last simulation</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-violet-900 sm:grid-cols-4">
+            <div className="rounded-sm border border-[#494949] bg-[#303030] p-4">
+              <h3 className="font-black text-[#c4c4c4]">Last simulation</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-[#c4c4c4] sm:grid-cols-4">
                 <p><strong>Participant collisions:</strong><br />{summary.participantCollisions}</p>
                 <p><strong>Solver energy loss:</strong><br />{Number(summary.estimatedImpactEnergyKj ?? 0).toFixed(1)} kJ</p>
                 <p><strong>Impact time:</strong><br />{Number(summary.primaryImpactTimeSeconds ?? reconstruction.durationSeconds / 2).toFixed(2)}s</p>

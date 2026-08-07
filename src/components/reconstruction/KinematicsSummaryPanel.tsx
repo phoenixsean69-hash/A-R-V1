@@ -65,22 +65,22 @@ export default function KinematicsSummaryPanel({
   participants,
 }: KinematicsSummaryPanelProps) {
   return (
-    <section className="rounded-sm border border-blue-200 bg-blue-50/60 p-4">
+    <section className="rounded-sm border border-[#494949] bg-[#303030] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#c4c4c4]">
             Collision kinematics
           </p>
-          <h3 className="mt-1 text-lg font-black text-blue-950">
+          <h3 className="mt-1 text-lg font-black text-[#c4c4c4]">
             Real-contact energy, impulse and rebound
           </h3>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-blue-900/75">
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#c4c4c4]">
             Values are calculated at the actual collision frame. Force is shown as
             an estimated range because it depends on the assumed contact duration.
           </p>
         </div>
 
-        <span className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-black text-blue-900">
+        <span className="rounded-full border border-[#494949] bg-white px-3 py-1 text-xs font-black text-[#c4c4c4]">
           {kinematics.outcome}
         </span>
       </div>
@@ -112,7 +112,7 @@ export default function KinematicsSummaryPanel({
         />
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-sm border border-blue-100 bg-white">
+      <div className="mt-4 overflow-x-auto rounded-sm border border-[#494949] bg-white">
         <table className="min-w-[1040px] w-full border-collapse text-left text-xs">
           <thead className="bg-slate-950 text-white">
             <tr>
@@ -192,7 +192,7 @@ export default function KinematicsSummaryPanel({
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 font-black text-blue-900">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#303030] px-2 py-1 font-black text-[#c4c4c4]">
                     <RotateCcw size={12} />
                     {participant.outcome}
                   </span>

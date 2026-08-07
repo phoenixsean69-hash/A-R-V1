@@ -70,7 +70,7 @@ export default function HeatmapFilterPanel({
         </div>
 
         {activeFilterCount > 0 && (
-          <span className="shrink-0 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-700">
+          <span className="shrink-0 rounded-full bg-[#303030] px-2.5 py-1 text-xs font-bold text-[#c4c4c4]">
             {activeFilterCount} active
           </span>
         )}
@@ -124,7 +124,7 @@ export default function HeatmapFilterPanel({
               className={`w-full rounded-lg border px-2 py-2 text-xs text-gray-700 outline-none transition focus:ring-2 ${
                 invalidDateRange
                   ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                  : "border-gray-300 focus:border-purple-500 focus:ring-purple-100"
+                  : "border-gray-300 focus:border-[#494949] focus:ring-[#e8872d]"
               }`}
             />
           </label>
@@ -154,7 +154,7 @@ export default function HeatmapFilterPanel({
               className={`w-full rounded-lg border px-2 py-2 text-xs text-gray-700 outline-none transition focus:ring-2 ${
                 invalidDateRange
                   ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                  : "border-gray-300 focus:border-purple-500 focus:ring-purple-100"
+                  : "border-gray-300 focus:border-[#494949] focus:ring-[#e8872d]"
               }`}
             />
           </label>
@@ -182,7 +182,7 @@ export default function HeatmapFilterPanel({
                   .value as HeatmapSeverityFilter,
             })
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-[#494949] focus:ring-2 focus:ring-[#e8872d]"
         >
           <option value="All">
             All severities
@@ -216,7 +216,7 @@ export default function HeatmapFilterPanel({
                 event.target.value,
             })
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-[#494949] focus:ring-2 focus:ring-[#e8872d]"
         >
           <option value="All">
             All weather conditions
@@ -249,7 +249,7 @@ export default function HeatmapFilterPanel({
                 event.target.value,
             })
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-[#494949] focus:ring-2 focus:ring-[#e8872d]"
         >
           <option value="All">
             All accident causes
@@ -268,13 +268,13 @@ export default function HeatmapFilterPanel({
         </select>
       </label>
 
-      <div className="mt-4 rounded-lg border border-purple-100 bg-purple-50 p-3">
-        <p className="text-sm font-bold text-purple-900">
+      <div className="mt-4 rounded-lg border border-[#494949] bg-[#303030] p-3">
+        <p className="text-sm font-bold text-[#c4c4c4]">
           {filteredAccidentCount} of{" "}
           {totalAccidentCount} records
         </p>
 
-        <p className="mt-1 text-xs leading-4 text-purple-700">
+        <p className="mt-1 text-xs leading-4 text-[#c4c4c4]">
           These accident records are currently contributing to the heatmap.
         </p>
       </div>

@@ -37,9 +37,9 @@ function MetricCard({
   tone = "default",
 }: MetricCardProps) {
   const toneClasses = {
-    default: "border-[#1a2946] bg-[#070d1a]",
+    default: "border-[#494949] bg-[#303030]",
     danger: "border-[#713646] bg-[#21101a]",
-    warning: "border-[#6d5523] bg-[#1c180e]",
+    warning: "border-[#6d5523] bg-[#303030]",
   } as const;
 
   return (
@@ -66,7 +66,7 @@ function getRiskClasses(riskLevel: "Low" | "Medium" | "High"): string {
     case "Medium":
       return "border-[#6d5523] bg-[#241d10] text-[#d9bd78]";
     case "Low":
-      return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
   }
 }
 
@@ -77,7 +77,7 @@ function getPriorityClasses(priority: RecommendationPriority): string {
     case "Medium":
       return "border-[#6d5523] bg-[#241d10] text-[#d9bd78]";
     case "Low":
-      return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
   }
 }
 
@@ -88,7 +88,7 @@ function getSeverityClasses(severity: string): string {
     case "Serious":
       return "border-[#6d5523] bg-[#241d10] text-[#d9bd78]";
     default:
-      return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
   }
 }
 
@@ -119,9 +119,9 @@ function BreakdownChart({
   const nonEmptyItems = items.filter((item) => item.count > 0);
 
   return (
-    <section className="min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+    <section className="min-w-0 rounded-md border border-[#494949] bg-[#303030] p-4">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="text-[#7facf0]" aria-hidden="true">
+        <span className="text-[#c4c4c4]" aria-hidden="true">
           {icon}
         </span>
         <h3 className="truncate text-[10px] font-bold text-slate-300">
@@ -144,7 +144,7 @@ function BreakdownChart({
                 </span>
               </div>
 
-              <div className="h-1.5 overflow-hidden rounded-full border border-[#182849] bg-[#040918]">
+              <div className="h-1.5 overflow-hidden rounded-full border border-[#494949] bg-[#303030]">
                 <div
                   className="h-full rounded-full bg-[#80ACFF]"
                   style={{
@@ -189,7 +189,7 @@ export default function JunctionAnalysisModal({
     return (
       <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4">
         <div className="ui-panel w-full max-w-md overflow-hidden text-center">
-          <div className="border-b border-[#18243f] p-5">
+          <div className="border-b border-[#494949] p-5">
             <div className="mx-auto grid h-10 w-10 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
               <AlertTriangle size={18} strokeWidth={1.8} />
             </div>
@@ -224,10 +224,10 @@ export default function JunctionAnalysisModal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="flex max-h-[94vh] min-w-0 w-full max-w-6xl flex-col overflow-hidden rounded-md border border-[#1d3155] bg-[#050b17] shadow-[0_24px_70px_rgba(0,0,0,.5)]">
-        <header className="flex min-w-0 items-start justify-between gap-4 border-b border-[#182849] bg-[#070d1a] px-4 py-4 sm:px-5">
+      <div className="flex max-h-[94vh] min-w-0 w-full max-w-6xl flex-col overflow-hidden rounded-md border border-[#494949] bg-[#303030] shadow-[0_24px_70px_rgba(0,0,0,.5)]">
+        <header className="flex min-w-0 items-start justify-between gap-4 border-b border-[#494949] bg-[#303030] px-4 py-4 sm:px-5">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#81b2fa]">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <Crosshair size={18} strokeWidth={1.8} />
             </div>
 
@@ -300,7 +300,7 @@ export default function JunctionAnalysisModal({
             {analysis.severityBreakdown.map((item) => (
               <div
                 key={item.label}
-                className="min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] p-3"
+                className="min-w-0 rounded-md border border-[#494949] bg-[#303030] p-3"
               >
                 <div className="flex min-w-0 items-center justify-between gap-2">
                   <span
@@ -325,12 +325,12 @@ export default function JunctionAnalysisModal({
             ))}
           </section>
 
-          <section className="mt-3 min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+          <section className="mt-3 min-w-0 rounded-md border border-[#494949] bg-[#303030] p-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <BarChart3
                 size={15}
                 strokeWidth={1.8}
-                className="shrink-0 text-[#7facf0]"
+                className="shrink-0 text-[#c4c4c4]"
               />
               <div className="min-w-0">
                 <h3 className="truncate text-[10px] font-bold text-slate-300">
@@ -357,9 +357,9 @@ export default function JunctionAnalysisModal({
                       {month.monthLabel}
                     </span>
 
-                    <div className="h-5 min-w-0 overflow-hidden rounded-md border border-[#182849] bg-[#040918]">
+                    <div className="h-5 min-w-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030]">
                       <div
-                        className="flex h-full items-center rounded-sm bg-[#173c78] px-2 font-mono text-[7px] font-bold text-white"
+                        className="flex h-full items-center rounded-sm bg-[#303030] px-2 font-mono text-[7px] font-bold text-white"
                         style={{
                           width: `${Math.max(
                             (month.accidents / maximumMonthlyAccidents) * 100,
@@ -398,12 +398,12 @@ export default function JunctionAnalysisModal({
             />
           </div>
 
-          <section className="mt-3 min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+          <section className="mt-3 min-w-0 rounded-md border border-[#494949] bg-[#303030] p-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <CalendarClock
                 size={15}
                 strokeWidth={1.8}
-                className="shrink-0 text-[#7facf0]"
+                className="shrink-0 text-[#c4c4c4]"
               />
               <h3 className="truncate text-[10px] font-bold text-slate-300">
                 High-risk times of day
@@ -414,7 +414,7 @@ export default function JunctionAnalysisModal({
               {analysis.timeOfDayBreakdown.map((period) => (
                 <div
                   key={period.label}
-                  className="min-w-0 rounded-md border border-[#1a2946] bg-[#050b17] p-3"
+                  className="min-w-0 rounded-md border border-[#494949] bg-[#303030] p-3"
                 >
                   <p className="truncate text-[9px] font-bold text-slate-300">
                     {period.label}
@@ -422,7 +422,7 @@ export default function JunctionAnalysisModal({
                   <p className="mt-1 truncate text-[7px] text-slate-600">
                     {period.timeRange}
                   </p>
-                  <p className="mt-3 font-mono text-lg font-bold text-[#8ebcff]">
+                  <p className="mt-3 font-mono text-lg font-bold text-[#c4c4c4]">
                     {period.count}
                   </p>
                   <p className="mt-0.5 text-[7px] text-slate-600">
@@ -455,7 +455,7 @@ export default function JunctionAnalysisModal({
               {analysis.recommendations.map((recommendation) => (
                 <article
                   key={recommendation.id}
-                  className="min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] p-4"
+                  className="min-w-0 rounded-md border border-[#494949] bg-[#303030] p-4"
                 >
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <h4 className="min-w-0 text-[10px] font-bold leading-4 text-slate-300">
@@ -490,8 +490,8 @@ export default function JunctionAnalysisModal({
             </div>
           </section>
 
-          <section className="mt-3 min-w-0 overflow-hidden rounded-md border border-[#1a2946] bg-[#070d1a]">
-            <div className="flex min-w-0 items-center gap-2.5 border-b border-[#18243f] px-4 py-3">
+          <section className="mt-3 min-w-0 overflow-hidden rounded-md border border-[#494949] bg-[#303030]">
+            <div className="flex min-w-0 items-center gap-2.5 border-b border-[#494949] px-4 py-3">
               <ShieldAlert
                 size={15}
                 strokeWidth={1.8}
@@ -514,7 +514,7 @@ export default function JunctionAnalysisModal({
             ) : (
               <div className="max-w-full overflow-x-auto">
                 <table className="min-w-[760px] w-full text-left text-[8px]">
-                  <thead className="border-b border-[#18243f] bg-[#050b17]">
+                  <thead className="border-b border-[#494949] bg-[#303030]">
                     <tr className="text-slate-600">
                       {[
                         "Date",
@@ -538,7 +538,7 @@ export default function JunctionAnalysisModal({
                     {analysis.recentAccidents.map((accident) => (
                       <tr
                         key={accident.id}
-                        className="transition-colors hover:bg-[#0a1325]"
+                        className="transition-colors hover:bg-[#303030]"
                       >
                         <td className="whitespace-nowrap px-4 py-3 text-slate-400">
                           {formatDate(accident.date)}

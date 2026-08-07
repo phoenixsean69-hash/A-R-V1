@@ -61,7 +61,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {message && <div className="border-b border-[#18243f] bg-[#0d1a31] px-4 py-3 text-[10px] text-[#9fc4ff]">{message}</div>}
+        {message && <div className="border-b border-[#494949] bg-[#303030] px-4 py-3 text-[10px] text-[#9fc4ff]">{message}</div>}
 
         {reports.length === 0 ? (
           <div className="p-12 text-center">
@@ -94,7 +94,7 @@ export default function ReportsPage() {
                       <p className="font-semibold text-slate-300">{report.title}</p>
                       <p className="mt-1 text-[9px] text-slate-600">{report.reconstruction ? `${report.reconstruction.vehicles.length} participant(s) · ${report.reconstruction.evidenceRecords.length} evidence record(s)` : "No reconstruction linked"}</p>
                     </td>
-                    <td className="px-4 py-3"><Link to={`/cases/${report.accidentCase.id}`} className="font-semibold text-[#80ACFF]">{report.accidentCase.caseNumber}</Link><p className="mt-1 text-slate-500">{report.accidentCase.location}</p></td>
+                    <td className="px-4 py-3"><Link to={`/cases/${report.accidentCase.id}`} className="font-semibold text-[#c4c4c4]">{report.accidentCase.caseNumber}</Link><p className="mt-1 text-slate-500">{report.accidentCase.location}</p></td>
                     <td className="px-4 py-3 text-slate-500">{formatDate(report.generatedAt)}</td>
                     <td className="px-4 py-3 text-slate-400">{report.accidentCase.investigatingOfficer || "Not recorded"}</td>
                     <td className="px-4 py-3">
@@ -139,7 +139,7 @@ export default function ReportsPage() {
           <article className="ui-panel p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">Selected report</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">Selected report</p>
                 <h2 className="mt-2 text-lg font-semibold text-slate-200">{selected.accidentCase.caseNumber}</h2>
                 <p className="mt-1 text-[10px] text-slate-500">{selected.accidentCase.title}</p>
               </div>
@@ -151,7 +151,7 @@ export default function ReportsPage() {
                 ["Participants", selected.reconstruction?.vehicles.length ?? 0],
                 ["Evidence", selected.reconstruction?.evidenceRecords.length ?? 0],
                 ["Measurements", selected.reconstruction?.measurements.length ?? 0],
-              ].map(([label, value]) => <div key={label} className="rounded-md border border-[#1a2946] bg-[#0a1121] p-3"><p className="text-lg font-bold text-slate-200">{value}</p><p className="mt-1 text-[8px] uppercase tracking-wide text-slate-600">{label}</p></div>)}
+              ].map(([label, value]) => <div key={label} className="rounded-md border border-[#494949] bg-[#303030] p-3"><p className="text-lg font-bold text-slate-200">{value}</p><p className="mt-1 text-[8px] uppercase tracking-wide text-slate-600">{label}</p></div>)}
             </div>
           </article>
           <aside className="ui-panel p-4">

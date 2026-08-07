@@ -13,10 +13,10 @@
   --js-border-default: #4a4a4a;
   --js-border-strong: #5d5d5d;
 
-  --js-blue-muted: #80ACFF;
-  --js-blue-active: #80ACFF;
-  --js-blue-selected: #80ACFF;
-  --js-blue-soft-bg: #303b47;
+  --js-blue-muted: #e8872d;
+  --js-blue-active: #e8872d;
+  --js-blue-selected: #383838;
+  --js-blue-soft-bg: #303030;
 
   --js-text-primary: #dedede;
   --js-text-secondary: #c2c2c2;
@@ -2122,14 +2122,10 @@ textarea:focus {
 
 /* [RoadSafe:CanonicalBlenderBlueV1] */
 :root {
-  --js-blue-muted: #80ACFF;
-  --js-blue-active: #80ACFF;
-  --js-blue-selected: #80ACFF;
-  --js-blue-soft-bg: color-mix(
-    in srgb,
-    #80ACFF 18%,
-    #303030
-  );
+  --js-blue-muted: #e8872d;
+  --js-blue-active: #e8872d;
+  --js-blue-selected: #383838;
+  --js-blue-soft-bg: #303030;
 
   --blender-blue: #80ACFF;
   --blender-blue-dark: #80ACFF;

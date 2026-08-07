@@ -490,7 +490,7 @@ export default function GoogleRoadLocationMap({
               onClick={() => setMapType(type)}
               className={`px-2.5 py-2 text-[10px] font-black ${
                 mapType === type
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#303030] text-white"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
@@ -519,7 +519,7 @@ export default function GoogleRoadLocationMap({
           <button
             type="button"
             onClick={useMapCentre}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#303030] px-3 py-2 text-xs font-black text-white hover:bg-[#303030]"
           >
             <Crosshair size={14} /> Use Centre
           </button>

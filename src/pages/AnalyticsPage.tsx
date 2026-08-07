@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metricCards.map(([label, value, Icon, note]) => (
           <article key={label} className="ui-panel flex items-center gap-3 p-4">
-            <div className="grid h-10 w-10 place-items-center rounded-md border border-[#29446f] bg-[#0d1930] text-[#85b2f6]"><Icon size={18} strokeWidth={1.5} /></div>
+            <div className="grid h-10 w-10 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]"><Icon size={18} strokeWidth={1.5} /></div>
             <div><p className="text-[8px] font-bold uppercase tracking-[0.12em] text-slate-600">{label}</p><p className="mt-1 text-xl font-bold text-slate-200">{value}</p><p className="mt-1 text-[8px] text-slate-600">{note}</p></div>
           </article>
         ))}
@@ -205,5 +205,5 @@ function ChartPanel({ title, subtitle, children }: { title: string; subtitle: st
 }
 
 function EmptyChart({ text }: { text: string }) {
-  return <div className="grid h-full place-items-center rounded-md border border-dashed border-[#243451] text-center text-[10px] text-slate-600">{text}</div>;
+  return <div className="grid h-full place-items-center rounded-md border border-dashed border-[#494949] text-center text-[10px] text-slate-600">{text}</div>;
 }

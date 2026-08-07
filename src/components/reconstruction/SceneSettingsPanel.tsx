@@ -77,7 +77,7 @@ function SettingSelect<T extends string>({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#494949]"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -167,8 +167,8 @@ export default function SceneSettingsPanel({
         />
 
         {groundOnly && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-blue-800">
-            <strong className="block text-sm text-blue-950">
+          <div className="rounded-xl border border-[#494949] bg-[#303030] p-4 text-xs leading-5 text-[#c4c4c4]">
+            <strong className="block text-sm text-[#c4c4c4]">
               No road will be generated
             </strong>
             The real coordinate, north orientation, scale, terrain and GPS field
@@ -265,7 +265,7 @@ export default function SceneSettingsPanel({
                       ),
                     })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#494949]"
                 />
                 <span className="text-xs font-semibold text-gray-500">km/h</span>
               </div>
@@ -360,7 +360,7 @@ export default function SceneSettingsPanel({
                     onChange={(event) =>
                       onChange({ terrainAreaMetres: Number(event.target.value) })
                     }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#494949]"
                   >
                     <option value={500}>500 m × 500 m</option>
                     <option value={1000}>1 km × 1 km</option>

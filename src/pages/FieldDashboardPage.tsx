@@ -48,13 +48,13 @@ export default function FieldDashboardPage() {
   return (
     <div className="mx-auto min-w-0 max-w-6xl space-y-3">
       <section className="ui-panel overflow-hidden">
-        <div className="flex min-w-0 flex-wrap items-start justify-between gap-4 border-b border-[#18243f] p-5">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-4 border-b border-[#494949] p-5">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
               <RadioTower size={21} />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
                 Field Client
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">
@@ -68,7 +68,7 @@ export default function FieldDashboardPage() {
             </div>
           </div>
 
-          <span className="inline-flex items-center gap-2 rounded border border-[#28645e] bg-[#0d2928] px-3 py-2 text-[9px] font-bold text-[#8ed6ca]">
+          <span className="inline-flex items-center gap-2 rounded border border-[#494949] bg-[#303030] px-3 py-2 text-[9px] font-bold text-[#c4c4c4]">
             <ShieldCheck size={13} />
             {auth.identity?.stationTeam?.name ??
               "Station assignment pending"}
@@ -89,8 +89,8 @@ export default function FieldDashboardPage() {
                 to={to}
                 className={`min-w-0 rounded-md border p-4 transition-colors ${
                   primary
-                    ? "border-[#162f52] bg-[#122d59] hover:bg-[#173a70]"
-                    : "border-[#1a2946] bg-[#070d1a] hover:border-[#29446f] hover:bg-[#0a1325]"
+                    ? "border-[#494949] bg-[#303030] hover:bg-[#303030]"
+                    : "border-[#494949] bg-[#303030] hover:border-[#494949] hover:bg-[#303030]"
                 }`}
               >
                 <Icon
@@ -98,7 +98,7 @@ export default function FieldDashboardPage() {
                   className={
                     primary
                       ? "text-white"
-                      : "text-[#8ebcff]"
+                      : "text-[#c4c4c4]"
                   }
                 />
                 <h2 className="mt-3 text-sm font-bold text-slate-100">
@@ -118,7 +118,7 @@ export default function FieldDashboardPage() {
           <div className="flex items-center gap-2">
             <Camera
               size={15}
-              className="text-[#8ebcff]"
+              className="text-[#c4c4c4]"
             />
             <h2 className="ui-panel-title">
               Current field assignment
@@ -127,7 +127,7 @@ export default function FieldDashboardPage() {
 
           {activeCase ? (
             <div className="mt-4">
-              <p className="text-[10px] font-bold text-[#8ebcff]">
+              <p className="text-[10px] font-bold text-[#c4c4c4]">
                 {activeCase.caseNumber}
               </p>
               <h3 className="mt-1 text-base font-bold text-slate-100">
@@ -144,7 +144,7 @@ export default function FieldDashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="mt-4 rounded-md border border-dashed border-[#29446f] bg-[#050b17] p-6 text-center">
+            <div className="mt-4 rounded-md border border-dashed border-[#494949] bg-[#303030] p-6 text-center">
               <p className="text-[10px] font-bold text-slate-300">
                 No active local case
               </p>
@@ -170,7 +170,7 @@ export default function FieldDashboardPage() {
                 key={item}
                 className="flex items-start gap-3"
               >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] font-mono text-[8px] font-bold text-[#8ebcff]">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] font-mono text-[8px] font-bold text-[#c4c4c4]">
                   {String(index + 1).padStart(
                     2,
                     "0",

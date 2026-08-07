@@ -1095,7 +1095,7 @@ function Reconstruction3DViewer({
     >
       {!workspaceMode && (
         <div
-          className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#171717] bg-[#292929] ${
+          className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#494949] bg-[#292929] ${
             compact ? "px-3 py-2" : "px-4 py-3"
           }`}
         >
@@ -1157,7 +1157,7 @@ function Reconstruction3DViewer({
       )}
 
       <div
-        className={`relative min-h-0 w-full flex-1 bg-[#030711] ${
+        className={`relative min-h-0 w-full flex-1 bg-[#303030] ${
           expanded ? "flex-1" : ""
         }`}
         style={
@@ -1178,14 +1178,14 @@ function Reconstruction3DViewer({
             {isPlaying ? "Pause" : "Play"}
           </button>
         )}
-        <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#29446f] bg-[#050a16]/88 px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
+        <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
           {getReconstructionWorldDimensions(reconstruction).source} Ãƒâ€šÃ‚Â· {effectiveCameraMode}
         </div>
-        <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#29446f] bg-[#050a16]/85 px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
+        <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
           {visibleTime.toFixed(1)}s
         </div>
         <div
-          className="pointer-events-none absolute bottom-3 left-3 max-w-[65%] rounded border border-[#1b3153] bg-[#050a16]/85 px-2.5 py-1.5 text-[8px] text-slate-400 backdrop-blur"
+          className="pointer-events-none absolute bottom-3 left-3 max-w-[65%] rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[8px] text-slate-400 backdrop-blur"
           title={THIRD_PARTY_3D_ASSET_NOTICE}
         >
           {assetStatus.total > 0 && assetStatus.loaded < assetStatus.total
@@ -1198,7 +1198,7 @@ function Reconstruction3DViewer({
 
       {!workspaceMode && (
         <div
-          className={`border-t border-[#171717] bg-[#292929] ${
+          className={`border-t border-[#494949] bg-[#292929] ${
             compact ? "px-3 py-2" : "p-4"
           }`}
         >

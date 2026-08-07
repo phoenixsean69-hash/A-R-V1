@@ -63,6 +63,7 @@ import {
 import { getSceneObjectCatalogItem } from "../../data/sceneObjectCatalog";
 
 import AccidentTimeline from "./AccidentTimeline";
+import ReconstructionNodeEditor from "./ReconstructionNodeEditor";
 import ReconstructionRecorder from "../footage/ReconstructionRecorder";
 import FieldPlacementPanel from "../fieldPlacement/FieldPlacementPanel";
 import EvidenceMarkerLayer from "./EvidenceMarkerLayer";
@@ -657,7 +658,7 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
   const colour = getParticipantColour(participant.colour);
   const glow = selected ? "drop-shadow-[0_0_8px_rgba(96,165,250,0.95)]" : "drop-shadow-[0_3px_5px_rgba(0,0,0,0.45)]";
   const label = (
-    <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded border border-[#23395d] bg-[#050914]/90 px-1.5 py-0.5 text-[7px] font-semibold text-slate-200 shadow-lg">
+    <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded border border-[#494949] bg-[#303030] px-1.5 py-0.5 text-[7px] font-semibold text-slate-200 shadow-lg">
       {participant.name}
     </span>
   );
@@ -995,6 +996,7 @@ export default function AccidentReconstructionEditor({
   const [activeWorkspaceTool, setActiveWorkspaceTool] =
     useState<WorkspaceTool>("Select");
   const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(true);
+  const [nodeEditorOpen, setNodeEditorOpen] = useState(true);
   const [workspacePropertiesOpen, setWorkspacePropertiesOpen] = useState(true);
   const [cameraCycleToken, setCameraCycleToken] = useState(0);
   const [workspaceCameraMode, setWorkspaceCameraMode] =
@@ -3507,7 +3509,20 @@ export default function AccidentReconstructionEditor({
             Panels
           </button>
 
-          <button
+                    <button
+            type="button"
+            onClick={() => setNodeEditorOpen((value) => !value)}
+            className={`reconstruction-workspace__button ${
+              nodeEditorOpen ? "is-active" : ""
+            }`}
+            aria-label="Toggle reconstruction nodes"
+            aria-pressed={nodeEditorOpen}
+          >
+            <Layers3 size={14} />
+            Nodes
+          </button>
+
+<button
             type="button"
             onClick={() => {
               setActiveReconstructionView("2D");
@@ -3799,7 +3814,7 @@ export default function AccidentReconstructionEditor({
                 : ""
             }`}
           >
-            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#171717] bg-[#292929] px-4 py-3">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#494949] bg-[#292929] px-4 py-3">
               <div>
                 <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">
                   Reconstruction Scene
@@ -3810,13 +3825,13 @@ export default function AccidentReconstructionEditor({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600">
-                <div className="flex rounded-md border border-[#1d2c4b] bg-[#070c18] p-1">
+                <div className="flex rounded-md border border-[#494949] bg-[#303030] p-1">
                   {(["Diagram", "Street", "Satellite"] as ReconstructionBasemapMode[]).map((mode) => (
                     <button
                       key={mode}
                       type="button"
                       onClick={() => setBasemapMode(mode)}
-                      className={`rounded px-2.5 py-1.5 text-[9px] font-bold ${basemapMode === mode ? "bg-[#173c78] text-white" : "text-slate-500 hover:bg-[#10182d] hover:text-slate-200"}`}
+                      className={`rounded px-2.5 py-1.5 text-[9px] font-bold ${basemapMode === mode ? "bg-[#303030] text-white" : "text-slate-500 hover:bg-[#303030] hover:text-slate-200"}`}
                     >
                       {mode}
                     </button>
@@ -3838,7 +3853,7 @@ export default function AccidentReconstructionEditor({
                 <span className="rounded-full bg-amber-100 px-2 py-1 font-bold text-amber-700">
                   Brake
                 </span>
-                <span className="rounded-full bg-cyan-100 px-2 py-1 font-bold text-cyan-700">
+                <span className="rounded-full bg-[#303030] px-2 py-1 font-bold text-[#c4c4c4]">
                   Turn / Swerve
                 </span>
                 <span className="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
@@ -3909,7 +3924,7 @@ export default function AccidentReconstructionEditor({
               </div>
 
               {routeDrawingParticipantId && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-[95] -translate-x-1/2 rounded-full bg-cyan-800 px-4 py-2 text-xs font-black text-white shadow-lg">
+                <div className="pointer-events-none absolute left-1/2 top-4 z-[95] -translate-x-1/2 rounded-full bg-[#303030] px-4 py-2 text-xs font-black text-white shadow-lg">
                   Hold and draw the complete route; release to create editable points through the collision
                 </div>
               )}
@@ -3964,7 +3979,7 @@ export default function AccidentReconstructionEditor({
               <ImpactEffectOverlay effect={impactEffect} />
 
               {measurementToolActive && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-blue-800 px-4 py-2 text-xs font-bold text-white shadow-lg">
+                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-[#303030] px-4 py-2 text-xs font-bold text-white shadow-lg">
                   {measurementDraftStart
                     ? "Click the measurement end point"
                     : "Click the measurement start point"}
@@ -3978,13 +3993,13 @@ export default function AccidentReconstructionEditor({
               )}
 
               {activeSceneObjectType && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-lg">
+                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-[#303030] px-4 py-2 text-xs font-bold text-white shadow-lg">
                   Click to place: {activeSceneObjectType}
                 </div>
               )}
 
               {traceToolObjectId && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-purple-700 px-4 py-2 text-xs font-bold text-white shadow-lg">
+                <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-[#303030] px-4 py-2 text-xs font-bold text-white shadow-lg">
                   Hold and drag to trace a curved {selectedSceneObject?.type}
                 </div>
               )}
@@ -4050,7 +4065,7 @@ export default function AccidentReconstructionEditor({
                           });
                         }
                       }}
-                      className="absolute z-30 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-purple-500 shadow"
+                      className="absolute z-30 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#303030] shadow"
                       style={{ left: `${point.x}%`, top: `${point.y}%` }}
                       title={`Curve point ${pointIndex + 1}`}
                     />
@@ -4214,7 +4229,7 @@ export default function AccidentReconstructionEditor({
                         }}
                         className={`absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[9px] font-black text-white shadow ${
                           selectedPathPointId === point.id
-                            ? "ring-4 ring-blue-300/60"
+                            ? "ring-4 ring-[#e8872d]"
                             : ""
                         }`}
                         style={{
@@ -4742,7 +4757,21 @@ export default function AccidentReconstructionEditor({
           />
         </div>
 
-        <section
+                <ReconstructionNodeEditor
+          reconstruction={reconstruction}
+          currentTime={currentTime}
+          activeView={activeReconstructionView}
+          open={nodeEditorOpen}
+          selectedParticipantId={selectedParticipantId}
+          selectedSceneObjectId={selectedSceneObjectId}
+          onToggle={() => setNodeEditorOpen((value) => !value)}
+          onSelectParticipant={(participantId) =>
+            handleSelectParticipant(participantId)
+          }
+          onSelectSceneObject={handleSelectSceneObject}
+        />
+
+<section
           className={`reconstruction-workspace__workspace-panels ${
             workspaceSettingsOpen ? "is-open" : ""
           }`}

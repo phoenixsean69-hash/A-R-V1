@@ -33,8 +33,8 @@ export default function CaseCompletionChecklist({
           <div
             className={`grid h-9 w-9 shrink-0 place-items-center rounded-md border ${
               completion.complete
-                ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
-                : "border-[#315b91] bg-[#0b1b38] text-[#81b2fa]"
+                ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
+                : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
             }`}
           >
             <ClipboardCheck size={17} strokeWidth={1.8} />
@@ -52,7 +52,7 @@ export default function CaseCompletionChecklist({
           <span
             className={`hidden items-center gap-1.5 rounded border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.08em] sm:inline-flex ${
               completion.complete
-                ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+                ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
                 : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
             }`}
           >
@@ -67,8 +67,8 @@ export default function CaseCompletionChecklist({
           <span
             className={`min-w-[50px] rounded-md border px-2.5 py-1.5 text-center font-mono text-[11px] font-bold ${
               completion.complete
-                ? "border-[#28645e] bg-[#0d2928] text-[#9ae0d4]"
-                : "border-[#315b91] bg-[#0b1b38] text-[#8ebcff]"
+                ? "border-[#494949] bg-[#303030] text-[#9ae0d4]"
+                : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
             }`}
           >
             {percentage}%
@@ -79,7 +79,7 @@ export default function CaseCompletionChecklist({
       <div className={compact ? "p-3" : "p-4"}>
         {!compact && (
           <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-md border border-[#1a2946] bg-[#070d1a] px-3 py-2.5">
+            <div className="rounded-md border border-[#494949] bg-[#303030] px-3 py-2.5">
               <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-600">
                 Completed
               </p>
@@ -93,14 +93,14 @@ export default function CaseCompletionChecklist({
               </div>
             </div>
 
-            <div className="rounded-md border border-[#1a2946] bg-[#070d1a] px-3 py-2.5">
+            <div className="rounded-md border border-[#494949] bg-[#303030] px-3 py-2.5">
               <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-600">
                 Remaining
               </p>
               <div className="mt-1.5 flex items-end gap-1.5">
                 <span
                   className={`font-mono text-lg font-bold leading-none ${
-                    remainingCount === 0 ? "text-[#8ed6ca]" : "text-[#d9bd78]"
+                    remainingCount === 0 ? "text-[#c4c4c4]" : "text-[#d9bd78]"
                   }`}
                 >
                   {remainingCount}
@@ -111,13 +111,13 @@ export default function CaseCompletionChecklist({
               </div>
             </div>
 
-            <div className="rounded-md border border-[#1a2946] bg-[#070d1a] px-3 py-2.5">
+            <div className="rounded-md border border-[#494949] bg-[#303030] px-3 py-2.5">
               <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-600">
                 Case readiness
               </p>
               <p
                 className={`mt-1.5 text-[10px] font-bold ${
-                  completion.complete ? "text-[#8ed6ca]" : "text-[#8ebcff]"
+                  completion.complete ? "text-[#c4c4c4]" : "text-[#c4c4c4]"
                 }`}
               >
                 {completion.complete
@@ -139,7 +139,7 @@ export default function CaseCompletionChecklist({
           </div>
 
           <div
-            className="mt-2 h-1.5 overflow-hidden rounded-full border border-[#182849] bg-[#040918]"
+            className="mt-2 h-1.5 overflow-hidden rounded-full border border-[#494949] bg-[#303030]"
             role="progressbar"
             aria-label="Case completion progress"
             aria-valuemin={0}
@@ -167,7 +167,7 @@ export default function CaseCompletionChecklist({
               key={check.key}
               className={`group relative overflow-hidden rounded-md border px-3 py-3 transition-colors duration-150 ${
                 check.complete
-                  ? "border-[#1f4b49] bg-[linear-gradient(135deg,#081918_0%,#091321_74%)] hover:border-[#2d6863]"
+                  ? "border-[#494949] bg-[linear-gradient(135deg,#081918_0%,#091321_74%)] hover:border-[#494949]"
                   : "border-[#4d4023] bg-[linear-gradient(135deg,#18150d_0%,#091321_74%)] hover:border-[#705c2b]"
               }`}
             >
@@ -182,7 +182,7 @@ export default function CaseCompletionChecklist({
                 <div
                   className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border ${
                     check.complete
-                      ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+                      ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
                       : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
                   }`}
                   aria-hidden="true"
@@ -208,7 +208,7 @@ export default function CaseCompletionChecklist({
                     <span
                       className={`rounded border px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.08em] ${
                         check.complete
-                          ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+                          ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
                           : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
                       }`}
                     >
@@ -228,7 +228,7 @@ export default function CaseCompletionChecklist({
         </div>
 
         {!completion.complete && !compact && (
-          <div className="mt-3 flex items-start gap-2 rounded-md border border-[#3e3420] bg-[#17140c] px-3 py-2.5">
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-[#494949] bg-[#303030] px-3 py-2.5">
             <AlertCircle
               size={13}
               strokeWidth={1.8}

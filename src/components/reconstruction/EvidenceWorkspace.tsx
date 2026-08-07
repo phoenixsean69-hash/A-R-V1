@@ -486,7 +486,7 @@ export function EvidenceWorkspacePanel({
                 <button
                   type="button"
                   onClick={() => onBeginEvidencePlacement(selectedEvidence.id)}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  className="rounded-lg bg-[#303030] px-4 py-2 text-sm font-semibold text-white hover:bg-[#303030]"
                 >
                   {activeEvidencePlacementId === selectedEvidence.id
                     ? "Click the scene…"
@@ -525,7 +525,7 @@ export function EvidenceWorkspacePanel({
                 <button
                   type="button"
                   onClick={onBeginMeasurement}
-                  className="rounded-lg bg-blue-800 px-3 py-2 text-xs font-bold text-white hover:bg-blue-800"
+                  className="rounded-lg bg-[#303030] px-3 py-2 text-xs font-bold text-white hover:bg-[#303030]"
                 >
                   {measurementToolActive
                     ? measurementDraftStarted
@@ -553,7 +553,7 @@ export function EvidenceWorkspacePanel({
                   onClick={() => onSelectMeasurement(measurement.id)}
                   className={`w-full rounded-xl border p-3 text-left ${
                     selectedMeasurementId === measurement.id
-                      ? "border-sky-500 bg-sky-50"
+                      ? "border-[#494949] bg-[#303030]"
                       : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
@@ -608,9 +608,9 @@ export function EvidenceWorkspacePanel({
                 </select>
               </label>
 
-              <div className="rounded-xl bg-sky-50 p-3">
-                <p className="text-xs font-semibold text-blue-800">Calculated length</p>
-                <p className="mt-1 text-2xl font-black text-sky-950">
+              <div className="rounded-xl bg-[#303030] p-3">
+                <p className="text-xs font-semibold text-[#c4c4c4]">Calculated length</p>
+                <p className="mt-1 text-2xl font-black text-[#c4c4c4]">
                   {selectedMeasurement.distanceMetres.toFixed(2)} m
                 </p>
               </div>
@@ -791,7 +791,7 @@ export function EvidenceWorkspacePanel({
               </p>
             </div>
 
-            <label className="cursor-pointer rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+            <label className="cursor-pointer rounded-lg bg-[#303030] px-4 py-2 text-sm font-semibold text-white hover:bg-[#303030]">
               Upload Photos
               <input
                 type="file"

@@ -27,7 +27,7 @@ export default function AccidentCasePage() {
     return (
       <div className="ui-panel mx-auto max-w-3xl p-10 text-center">
         <h1 className="text-2xl font-black text-slate-900">Case not found</h1>
-        <Link to="/cases" className="mt-5 inline-block font-bold text-blue-700">
+        <Link to="/cases" className="mt-5 inline-block font-bold text-[#c4c4c4]">
           Return to cases
         </Link>
       </div>
@@ -55,7 +55,7 @@ export default function AccidentCasePage() {
         <header className="ui-panel flex flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-[10px] font-bold tracking-[0.08em] text-[#80ACFF]">
+              <p className="text-[10px] font-bold tracking-[0.08em] text-[#c4c4c4]">
                 {record.caseNumber}
               </p>
               <CaseStatusBadge status={record.status} />

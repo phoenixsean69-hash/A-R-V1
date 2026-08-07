@@ -81,7 +81,7 @@ export default function MeasurementLayer({
                   onSelect(measurement.id);
                 }}
                 className={`absolute z-[37] -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-[10px] font-black text-white shadow-lg ${
-                  selected ? "ring-4 ring-cyan-300/40" : ""
+                  selected ? "ring-4 ring-[#e8872d]" : ""
                 }`}
                 style={{
                   left: `${midpoint.x}%`,
@@ -101,7 +101,7 @@ export default function MeasurementLayer({
                     onPointerDown={(event) =>
                       onEndpointPointerDown(event, measurement.id, "start")
                     }
-                    className="absolute z-[38] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-800 shadow"
+                    className="absolute z-[38] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#303030] shadow"
                     style={{
                       left: `${measurement.start.x}%`,
                       top: `${measurement.start.y}%`,

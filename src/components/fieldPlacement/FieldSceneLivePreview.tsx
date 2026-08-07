@@ -90,7 +90,7 @@ export default function FieldSceneLivePreview({
     <section className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 bg-slate-900 px-4 py-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c4c4c4]">
             Calibrated reconstruction
           </p>
           <h3 className="text-sm font-black text-white">Live 2D placement preview</h3>
@@ -220,7 +220,7 @@ export default function FieldSceneLivePreview({
               top: `${liveScenePosition.y}%`,
             }}
           >
-            <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-blue-800 text-[8px] font-black text-white shadow-xl">
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-[#303030] text-[8px] font-black text-white shadow-xl">
               GPS
             </span>
           </div>

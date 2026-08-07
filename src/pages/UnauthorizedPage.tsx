@@ -8,7 +8,7 @@ export default function UnauthorizedPage() {
   return (
     <div className="grid min-h-[calc(100vh-68px)] place-items-center p-5">
       <section className="ui-panel w-full max-w-lg overflow-hidden text-center">
-        <div className="border-b border-[#18243f] p-6">
+        <div className="border-b border-[#494949] p-6">
           <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#713646] bg-[#321722] text-[#e28b9d]">
             <ShieldX size={22} />
           </div>

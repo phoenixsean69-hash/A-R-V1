@@ -27,7 +27,7 @@ export default function FootagePlaybackPage() {
       <div className="min-h-screen bg-slate-100 p-8">
         <div className="mx-auto max-w-3xl rounded-2xl bg-white p-10 text-center shadow-sm">
           <h1 className="text-2xl font-black text-slate-900">Footage not found</h1>
-          <Link to={caseId ? `/cases/${caseId}/footage` : "/cases"} className="mt-5 inline-block font-bold text-blue-700">
+          <Link to={caseId ? `/cases/${caseId}/footage` : "/cases"} className="mt-5 inline-block font-bold text-[#c4c4c4]">
             Return to footage library
           </Link>
         </div>
@@ -73,7 +73,7 @@ export default function FootagePlaybackPage() {
 
           <aside className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
             {footage.isPrimary && (
-              <span className="inline-flex rounded-full bg-indigo-600 px-3 py-1 text-xs font-black uppercase tracking-wide">
+              <span className="inline-flex rounded-full bg-[#303030] px-3 py-1 text-xs font-black uppercase tracking-wide">
                 Primary Footage
               </span>
             )}
@@ -114,7 +114,7 @@ export default function FootagePlaybackPage() {
                   setMessage(error instanceof Error ? error.message : "Download failed.");
                 }
               }}
-              className="w-full rounded-sm bg-blue-600 px-4 py-3 text-sm font-black text-white"
+              className="w-full rounded-sm bg-[#303030] px-4 py-3 text-sm font-black text-white"
             >
               Download Footage
             </button>
@@ -128,7 +128,7 @@ export default function FootagePlaybackPage() {
                   setVersion((current) => current + 1);
                   setMessage("This recording is now the primary case footage.");
                 }}
-                className="w-full rounded-sm border border-indigo-500 bg-indigo-950 px-4 py-3 text-sm font-black text-indigo-200"
+                className="w-full rounded-sm border border-[#494949] bg-[#303030] px-4 py-3 text-sm font-black text-[#c4c4c4]"
               >
                 Mark as Primary
               </button>

@@ -208,13 +208,13 @@ function getButtonClasses(stage: RecorderStage): string {
       return "border-[#713646] bg-[#9f2942] text-white hover:bg-[#b12f4b]";
     case "saving":
     case "preparing":
-      return "border-[#315b91] bg-[#0b1b38] text-[#8ebcff]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
     case "saved":
-      return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
     case "error":
       return "border-[#713646] bg-[#321722] text-[#e28b9d] hover:bg-[#3b1b28]";
     case "idle":
-      return "border-[#162f52] bg-[#163a73] text-white hover:bg-[#1b4789]";
+      return "border-[#494949] bg-[#303030] text-white hover:bg-[#303030]";
   }
 }
 
@@ -930,10 +930,10 @@ export default function ReconstructionRecorder({
               : stage === "armed"
                 ? "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
                 : stage === "saved"
-                  ? "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+                  ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
                   : stage === "error"
                     ? "border-[#713646] bg-[#321722] text-[#e28b9d]"
-                    : "border-[#315b91] bg-[#0b1b38] text-[#8ebcff]"
+                    : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
           }`}
           title={statusMessage}
         >

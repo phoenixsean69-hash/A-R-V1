@@ -61,7 +61,7 @@ function FootagePlayerSource({
   if (loading) {
     return (
       <div
-        className={`flex aspect-video items-center justify-center rounded-md border border-[#1d2c4b] bg-[#050914] text-sm font-bold text-white ${className}`}
+        className={`flex aspect-video items-center justify-center rounded-md border border-[#494949] bg-[#303030] text-sm font-bold text-white ${className}`}
       >
         Loading reconstruction footage…
       </div>
@@ -87,7 +87,7 @@ function FootagePlayerSource({
       onError={() => setErrorMessage(
         `This browser could not decode ${footage.mimeType || "the saved video format"}. Download the recording to preserve the original file.`,
       )}
-      className={`aspect-video w-full rounded-md border border-[#1d2c4b] bg-black ${className}`}
+      className={`aspect-video w-full rounded-md border border-[#494949] bg-black ${className}`}
     >
       <source src={objectUrl} type={footage.mimeType || "video/webm"} />
       Your browser does not support HTML video playback.

@@ -166,7 +166,7 @@ export default function AccidentCasesPage() {
       <section className="ui-panel min-w-0 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#1d2c4b] bg-[#292929] text-[#80ACFF]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#494949] bg-[#292929] text-[#c4c4c4]">
               {caseSync.status === "error" ? (
                 <AlertTriangle size={16} />
               ) : caseSync.status === "loading" ||
@@ -275,7 +275,7 @@ export default function AccidentCasesPage() {
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="flex rounded-md border border-[#1d2c4b] bg-[#292929] p-1">
+            <div className="flex rounded-md border border-[#494949] bg-[#292929] p-1">
               <button
                 type="button"
                 className={
@@ -307,7 +307,7 @@ export default function AccidentCasesPage() {
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-3 border-b border-[#18243f] p-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="grid min-w-0 gap-3 border-b border-[#494949] p-4 md:grid-cols-[minmax(0,1fr)_220px]">
           <label className="relative min-w-0">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
@@ -398,7 +398,7 @@ export default function AccidentCasesPage() {
                       <td className="min-w-0 px-3 py-3">
                         <Link
                           to={`/cases/${record.id}`}
-                          className="block truncate font-semibold text-[#80ACFF] hover:text-white"
+                          className="block truncate font-semibold text-[#c4c4c4] hover:text-white"
                           title={record.caseNumber}
                         >
                           {record.caseNumber}
@@ -554,11 +554,11 @@ export default function AccidentCasesPage() {
               return (
                 <article
                   key={record.id}
-                  className="min-w-0 rounded-md border border-[#1a2946] bg-[#0a1121] p-4"
+                  className="min-w-0 rounded-md border border-[#494949] bg-[#303030] p-4"
                 >
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-[10px] font-bold text-[#80ACFF]">
+                      <p className="truncate text-[10px] font-bold text-[#c4c4c4]">
                         {record.caseNumber}
                       </p>
                       <h3 className="mt-1 truncate text-sm font-semibold text-slate-200">
@@ -572,7 +572,7 @@ export default function AccidentCasesPage() {
                     {record.location}
                   </p>
 
-                  <div className="mt-4 grid grid-cols-4 gap-2 border-y border-[#202020] py-3 text-center">
+                  <div className="mt-4 grid grid-cols-4 gap-2 border-y border-[#494949] py-3 text-center">
                     {[
                       ["P", stats.participantCount],
                       ["E", stats.evidenceCount],

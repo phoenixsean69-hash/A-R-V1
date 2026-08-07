@@ -156,10 +156,10 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[#030714] p-5 text-slate-200">
+    <div className="grid min-h-screen place-items-center bg-[#303030] p-5 text-slate-200">
       <section className="ui-panel w-full max-w-xl overflow-hidden">
-        <header className="border-b border-[#18243f] p-6 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+        <header className="border-b border-[#494949] p-6 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
             <KeyRound size={22} />
           </div>
 
@@ -262,7 +262,7 @@ export default function ChangePasswordPage() {
               : "Show passwords"}
           </button>
 
-          <div className="rounded-md border border-[#1d3155] bg-[#071124] p-3">
+          <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
             <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-600">
               Password requirements
             </p>

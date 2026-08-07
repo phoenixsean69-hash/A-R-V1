@@ -135,7 +135,7 @@ export default function ForensicScenePreview({
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid slice"
-      className={`block h-full w-full bg-[#11161c] ${className}`}
+      className={`block h-full w-full bg-[#303030] ${className}`}
       role="img"
       aria-label={`${reconstruction.title} scene preview`}
     >

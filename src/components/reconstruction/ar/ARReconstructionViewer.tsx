@@ -1948,7 +1948,7 @@ export default function ARReconstructionViewer({
   return (
     <div
       ref={containerRef}
-      className="relative h-[100dvh] min-h-[620px] w-full overflow-hidden bg-[#02050c]"
+      className="roadsafe-ar-workstation relative h-[100dvh] min-h-[620px] w-full overflow-hidden"
     >
       <video
         ref={videoRef}
@@ -1968,17 +1968,17 @@ export default function ARReconstructionViewer({
       />
 
       {!sessionActive && (
-        <div className="absolute inset-0 z-20 overflow-y-auto bg-[#030714]/95 p-4">
+        <div className="absolute inset-0 z-20 overflow-y-auto bg-[#303030] p-4">
           <div className="mx-auto flex min-h-full max-w-3xl items-center justify-center">
             <section className="ui-panel w-full overflow-hidden">
-              <div className="border-b border-[#18243f] p-5">
+              <div className="border-b border-[#494949] p-5">
                 <div className="flex items-start gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#8ebcff]">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
                     <ScanLine size={21} />
                   </span>
 
                   <div className="min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
                       RoadSafe field AR
                     </p>
 
@@ -1996,9 +1996,9 @@ export default function ARReconstructionViewer({
               </div>
 
               <div className="grid gap-3 p-4 md:grid-cols-3">
-                <article className="rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+                <article className="rounded-md border border-[#494949] bg-[#303030] p-4">
                   <Smartphone
-                    className="text-[#8ebcff]"
+                    className="text-[#c4c4c4]"
                     size={18}
                   />
                   <p className="mt-3 text-[10px] font-bold text-slate-200">
@@ -2009,9 +2009,9 @@ export default function ARReconstructionViewer({
                   </p>
                 </article>
 
-                <article className="rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+                <article className="rounded-md border border-[#494949] bg-[#303030] p-4">
                   <MapPin
-                    className="text-[#8ed6ca]"
+                    className="text-[#c4c4c4]"
                     size={18}
                   />
                   <p className="mt-3 text-[10px] font-bold text-slate-200">
@@ -2028,7 +2028,7 @@ export default function ARReconstructionViewer({
                   </p>
                 </article>
 
-                <article className="rounded-md border border-[#1a2946] bg-[#070d1a] p-4">
+                <article className="rounded-md border border-[#494949] bg-[#303030] p-4">
                   <Layers3
                     className="text-[#f4c56a]"
                     size={18}
@@ -2045,14 +2045,14 @@ export default function ARReconstructionViewer({
               </div>
 
               {savedAlignment && (
-                <div className="mx-4 rounded-md border border-[#285c50] bg-[#071c19] p-3">
+                <div className="mx-4 rounded-md border border-[#494949] bg-[#303030] p-3">
                   <div className="flex items-start gap-2">
                     <CheckCircle2
-                      className="mt-0.5 shrink-0 text-[#8ed6ca]"
+                      className="mt-0.5 shrink-0 text-[#c4c4c4]"
                       size={14}
                     />
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#8ed6ca]">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#c4c4c4]">
                         Saved calibration found
                       </p>
                       <p className="mt-1 text-[9px] leading-4 text-[#6f9f96]">
@@ -2123,9 +2123,9 @@ export default function ARReconstructionViewer({
       {sessionActive && (
         <>
           <header className="pointer-events-none absolute inset-x-0 top-0 z-30 p-3">
-            <div className="pointer-events-auto mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 rounded-md border border-white/15 bg-[#030714]/82 px-3 py-2 backdrop-blur-md">
+            <div className="pointer-events-auto mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 rounded-md border border-white/15 bg-[#303030] px-3 py-2 backdrop-blur-md">
               <div className="min-w-0">
-                <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#8ebcff]">
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#c4c4c4]">
                   {caseNumber} · {caseTitle}
                 </p>
                 <p className="mt-1 max-w-2xl truncate text-[8px] text-slate-400">
@@ -2145,7 +2145,7 @@ export default function ARReconstructionViewer({
 
                 <button
                   type="button"
-                  className="ui-icon-button h-8 w-8 bg-[#07101d]/90"
+                  className="ui-icon-button h-8 w-8 bg-[#303030]"
                   title="End AR session"
                   onClick={() =>
                     void endActiveSession()
@@ -2160,7 +2160,7 @@ export default function ARReconstructionViewer({
           {calibrationStage ===
             "scan" && (
             <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 px-4">
-              <section className="pointer-events-auto mx-auto max-w-md rounded-md border border-[#315b91] bg-[#061225]/88 p-4 text-center backdrop-blur-md">
+              <section className="pointer-events-auto mx-auto max-w-md rounded-md border border-[#494949] bg-[#303030] p-4 text-center backdrop-blur-md">
                 <Crosshair
                   className="mx-auto text-[#5eead4]"
                   size={24}
@@ -2190,10 +2190,10 @@ export default function ARReconstructionViewer({
           {calibrationStage ===
             "heading" && (
             <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3">
-              <section className="pointer-events-auto mx-auto max-w-2xl rounded-md border border-[#315b91] bg-[#061225]/90 p-4 backdrop-blur-md">
+              <section className="pointer-events-auto mx-auto max-w-2xl rounded-md border border-[#494949] bg-[#303030] p-4 backdrop-blur-md">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#8ebcff]">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#c4c4c4]">
                       Calibrate real-road alignment
                     </p>
                     <p className="mt-1 text-[9px] leading-4 text-slate-400">
@@ -2350,11 +2350,11 @@ export default function ARReconstructionViewer({
 
           {playbackReady && (
             <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3">
-              <section className="pointer-events-auto mx-auto max-w-4xl rounded-md border border-white/15 bg-[#030714]/88 p-3 backdrop-blur-md">
+              <section className="pointer-events-auto mx-auto max-w-4xl rounded-md border border-white/15 bg-[#303030] p-3 backdrop-blur-md">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    className="ui-icon-button h-9 w-9 bg-[#0b1b38]"
+                    className="ui-icon-button h-9 w-9 bg-[#303030]"
                     title={
                       isPlaying
                         ? "Pause"
@@ -2553,7 +2553,7 @@ export default function ARReconstructionViewer({
 
       {support ===
         "unsupported" && (
-        <div className="absolute inset-0 z-40 grid place-items-center bg-[#030714] p-4">
+        <div className="absolute inset-0 z-40 grid place-items-center bg-[#303030] p-4">
           <div className="ui-panel max-w-lg p-6 text-center">
             <AlertTriangle
               className="mx-auto text-[#e28b9d]"

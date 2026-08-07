@@ -49,12 +49,12 @@ function ObjectShape({ object }: { object: ReconstructionSceneObject }) {
 
     case "Puddle":
       return (
-        <div className="h-8 w-16 rounded-[50%] border border-blue-100/70 bg-blue-400/55 shadow-inner" />
+        <div className="h-8 w-16 rounded-[50%] border border-[#494949] bg-[#303030] shadow-inner" />
       );
 
     case "Oil Spill":
       return (
-        <div className="h-9 w-16 rounded-[55%_45%_60%_40%] border border-purple-300 bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900 opacity-90" />
+        <div className="h-9 w-16 rounded-[55%_45%_60%_40%] border border-[#494949] bg-gradient-to-r from-slate-950 via-[#303030] to-slate-900 opacity-90" />
       );
 
     case "Skid Mark":
@@ -183,7 +183,7 @@ function ObjectShape({ object }: { object: ReconstructionSceneObject }) {
 
     case "Measurement Point":
       return (
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-cyan-300 text-2xl font-black text-cyan-200">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#494949] text-2xl font-black text-[#c4c4c4]">
           ⊕
         </div>
       );
@@ -197,7 +197,7 @@ function ObjectShape({ object }: { object: ReconstructionSceneObject }) {
 
     case "Witness Viewpoint":
       return (
-        <div className="rounded-full border-2 border-white bg-indigo-600 px-3 py-2 text-xs font-black text-white shadow">
+        <div className="rounded-full border-2 border-white bg-[#303030] px-3 py-2 text-xs font-black text-white shadow">
           VIEW →
         </div>
       );
@@ -319,7 +319,7 @@ export default function SceneObjectRenderer({
       <ObjectShape object={object} />
 
       {selected && (
-        <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[10px] font-black text-white shadow">
+        <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#303030] text-[10px] font-black text-white shadow">
           ✓
         </span>
       )}

@@ -37,10 +37,10 @@ interface MetricCardProps {
 }
 
 const metricToneClasses = {
-  blue: "border-[#284a7b] bg-[#0b172c] text-[#8ebcff]",
-  amber: "border-[#6d5523] bg-[#1c180e] text-[#d9bd78]",
+  blue: "border-[#494949] bg-[#303030] text-[#c4c4c4]",
+  amber: "border-[#6d5523] bg-[#303030] text-[#d9bd78]",
   red: "border-[#713646] bg-[#21101a] text-[#e28b9d]",
-  green: "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]",
+  green: "border-[#494949] bg-[#303030] text-[#c4c4c4]",
 } as const;
 
 function MetricCard({
@@ -157,7 +157,7 @@ function getRiskClasses(riskLevel: "Low" | "Medium" | "High"): string {
     case "Medium":
       return "border-[#6d5523] bg-[#241d10] text-[#d9bd78]";
     case "Low":
-      return "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]";
+      return "border-[#494949] bg-[#303030] text-[#c4c4c4]";
   }
 }
 
@@ -287,9 +287,9 @@ export default function SceneMapPage() {
 
       <div className="grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="ui-panel min-w-0 overflow-hidden">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#18243f] px-4 py-3">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#494949] px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] text-[#81b2fa]">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] text-[#c4c4c4]">
                 <Map size={17} strokeWidth={1.8} />
               </div>
 
@@ -304,7 +304,7 @@ export default function SceneMapPage() {
             </div>
 
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded border border-[#284a7b] bg-[#112241] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.08em] text-[#8ebcff]">
+              <span className="inline-flex items-center gap-1.5 rounded border border-[#494949] bg-[#303030] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.08em] text-[#c4c4c4]">
                 <Activity size={10} strokeWidth={2} />
                 {mode === "markers" ? "Junction markers" : "Accident heatmap"}
               </span>
@@ -319,7 +319,7 @@ export default function SceneMapPage() {
             </div>
           </div>
 
-          <div className="relative h-[clamp(540px,calc(100vh-275px),850px)] min-w-0 overflow-hidden bg-[#030714]">
+          <div className="relative h-[clamp(540px,calc(100vh-275px),850px)] min-w-0 overflow-hidden bg-[#303030]">
             <AccidentMap
               visualizationMode={mode}
               onVisualizationModeChange={setMode}
@@ -336,7 +336,7 @@ export default function SceneMapPage() {
                 <SlidersHorizontal
                   size={15}
                   strokeWidth={1.8}
-                  className="shrink-0 text-[#7facf0]"
+                  className="shrink-0 text-[#c4c4c4]"
                 />
                 <div className="min-w-0">
                   <h2 className="ui-panel-title truncate">
@@ -348,7 +348,7 @@ export default function SceneMapPage() {
                 </div>
               </div>
 
-              <span className="shrink-0 rounded border border-[#284a7b] bg-[#112241] px-2 py-1 font-mono text-[8px] font-bold text-[#8ebcff]">
+              <span className="shrink-0 rounded border border-[#494949] bg-[#303030] px-2 py-1 font-mono text-[8px] font-bold text-[#c4c4c4]">
                 {filteredAccidents.length}
               </span>
             </div>
@@ -500,10 +500,10 @@ export default function SceneMapPage() {
               {allJunctionsWithRisk.slice(0, 5).map((item, index) => (
                 <article
                   key={item.junction.id}
-                  className="min-w-0 rounded-md border border-[#1a2946] bg-[#070d1a] px-3 py-3"
+                  className="min-w-0 rounded-md border border-[#494949] bg-[#303030] px-3 py-3"
                 >
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#315b91] bg-[#0b1b38] font-mono text-[8px] font-bold text-[#8ebcff]">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#494949] bg-[#303030] font-mono text-[8px] font-bold text-[#c4c4c4]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
 
@@ -538,7 +538,7 @@ export default function SceneMapPage() {
                         ].map(([label, value]) => (
                           <div
                             key={label}
-                            className="min-w-0 rounded border border-[#182849] bg-[#050b17] px-1.5 py-1.5 text-center"
+                            className="min-w-0 rounded border border-[#494949] bg-[#303030] px-1.5 py-1.5 text-center"
                           >
                             <p className="truncate font-mono text-[8px] font-bold text-slate-300">
                               {value}
@@ -562,7 +562,7 @@ export default function SceneMapPage() {
                 <CalendarDays
                   size={15}
                   strokeWidth={1.8}
-                  className="shrink-0 text-[#7facf0]"
+                  className="shrink-0 text-[#c4c4c4]"
                 />
                 <div className="min-w-0">
                   <h2 className="ui-panel-title truncate">
@@ -577,7 +577,7 @@ export default function SceneMapPage() {
 
             {recentAccidents.length === 0 ? (
               <div className="p-3">
-                <div className="rounded-md border border-dashed border-[#29446f] bg-[#070d1a] px-4 py-6 text-center">
+                <div className="rounded-md border border-dashed border-[#494949] bg-[#303030] px-4 py-6 text-center">
                   <p className="text-[9px] font-bold text-slate-400">
                     No matching incidents
                   </p>
@@ -594,7 +594,7 @@ export default function SceneMapPage() {
                   return (
                     <article
                       key={accident.id}
-                      className="min-w-0 px-3 py-3 transition-colors hover:bg-[#0a1325]"
+                      className="min-w-0 px-3 py-3 transition-colors hover:bg-[#303030]"
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -615,7 +615,7 @@ export default function SceneMapPage() {
                               ? "border-[#713646] bg-[#321722] text-[#e28b9d]"
                               : accident.severity === "Serious"
                                 ? "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
-                                : "border-[#28645e] bg-[#0d2928] text-[#8ed6ca]"
+                                : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
                           }`}
                         >
                           {accident.severity}
@@ -638,7 +638,7 @@ export default function SceneMapPage() {
             )}
           </section>
 
-          <section className="rounded-md border border-[#3e3420] bg-[#17140c] px-3 py-3">
+          <section className="rounded-md border border-[#494949] bg-[#303030] px-3 py-3">
             <div className="flex items-start gap-2.5">
               <Crosshair
                 size={13}

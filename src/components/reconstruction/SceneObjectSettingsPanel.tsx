@@ -74,7 +74,7 @@ export default function SceneObjectSettingsPanel({
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#c4c4c4]">
             Scene object
           </p>
           <h2 className="mt-1 text-lg font-bold text-gray-900">
@@ -82,7 +82,7 @@ export default function SceneObjectSettingsPanel({
           </h2>
         </div>
 
-        <span className="rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-bold text-purple-700">
+        <span className="rounded-full bg-[#303030] px-2.5 py-1 text-[11px] font-bold text-[#c4c4c4]">
           {object.category}
         </span>
       </div>
@@ -93,7 +93,7 @@ export default function SceneObjectSettingsPanel({
           <input
             value={object.label}
             onChange={(event) => onChange({ label: event.target.value })}
-            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#494949]"
           />
         </label>
 
@@ -106,7 +106,7 @@ export default function SceneObjectSettingsPanel({
                 severity: event.target.value as SceneObjectSeverity,
               })
             }
-            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#494949]"
           >
             {SEVERITY_OPTIONS.map((severity) => (
               <option key={severity} value={severity}>
@@ -221,17 +221,17 @@ export default function SceneObjectSettingsPanel({
         )}
 
         {traceable && (
-          <div className="rounded-sm border border-purple-200 bg-purple-50 p-4">
+          <div className="rounded-sm border border-[#494949] bg-[#303030] p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-bold text-purple-900">Curved trace</p>
-                <p className="mt-1 text-xs leading-5 text-purple-700">
+                <p className="font-bold text-[#c4c4c4]">Curved trace</p>
+                <p className="mt-1 text-xs leading-5 text-[#c4c4c4]">
                   Draw a freehand curved route directly on the road. The saved
                   points can be moved afterwards.
                 </p>
               </div>
 
-              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-purple-700">
+              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-[#c4c4c4]">
                 {object.tracePoints?.length ?? 0} pts
               </span>
             </div>
@@ -243,7 +243,7 @@ export default function SceneObjectSettingsPanel({
                 className={`rounded-lg px-3 py-2 text-xs font-bold text-white ${
                   tracing
                     ? "bg-red-600 hover:bg-red-700"
-                    : "bg-purple-600 hover:bg-purple-700"
+                    : "bg-[#303030] hover:bg-[#303030]"
                 }`}
               >
                 {tracing ? "Cancel tracing" : "Draw / Redraw"}
@@ -253,7 +253,7 @@ export default function SceneObjectSettingsPanel({
                 type="button"
                 onClick={onClearTrace}
                 disabled={(object.tracePoints?.length ?? 0) === 0}
-                className="rounded-lg border border-purple-300 bg-white px-3 py-2 text-xs font-bold text-purple-700 hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-[#494949] bg-white px-3 py-2 text-xs font-bold text-[#c4c4c4] hover:bg-[#303030] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear trace
               </button>
@@ -261,7 +261,7 @@ export default function SceneObjectSettingsPanel({
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <label>
-                <span className="text-xs font-medium text-purple-900">
+                <span className="text-xs font-medium text-[#c4c4c4]">
                   Trace style
                 </span>
                 <select
@@ -271,7 +271,7 @@ export default function SceneObjectSettingsPanel({
                       traceStyle: event.target.value as SceneTraceStyle,
                     })
                   }
-                  className="mt-1 w-full rounded-lg border border-purple-200 bg-white px-2 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-[#494949] bg-white px-2 py-2 text-sm"
                 >
                   <option value="Single">Single</option>
                   <option value="Double">Double</option>
@@ -279,7 +279,7 @@ export default function SceneObjectSettingsPanel({
               </label>
 
               <label>
-                <span className="text-xs font-medium text-purple-900">
+                <span className="text-xs font-medium text-[#c4c4c4]">
                   Width
                 </span>
                 <input
@@ -291,13 +291,13 @@ export default function SceneObjectSettingsPanel({
                   onChange={(event) =>
                     onChange({ traceWidth: Number(event.target.value) })
                   }
-                  className="mt-1 w-full rounded-lg border border-purple-200 bg-white px-2 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-[#494949] bg-white px-2 py-2 text-sm"
                 />
               </label>
             </div>
 
             <label className="mt-3 block">
-              <span className="text-xs font-medium text-purple-900">
+              <span className="text-xs font-medium text-[#c4c4c4]">
                 Curve smoothing: {Math.round((object.traceSmoothing ?? 0.85) * 100)}%
               </span>
               <input
@@ -337,13 +337,13 @@ export default function SceneObjectSettingsPanel({
           </label>
         </div>
 
-        <div className="rounded-sm border border-blue-200 bg-blue-50 p-4">
+        <div className="rounded-sm border border-[#494949] bg-[#303030] p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-black text-blue-950">
+              <p className="text-sm font-black text-[#c4c4c4]">
                 Participant interaction
               </p>
-              <p className="mt-1 text-xs leading-5 text-blue-800">
+              <p className="mt-1 text-xs leading-5 text-[#c4c4c4]">
                 {interactionDescription}
               </p>
             </div>
@@ -363,7 +363,7 @@ export default function SceneObjectSettingsPanel({
             />
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-blue-900">
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-[#c4c4c4]">
             <span>
               Mode: <strong>{resolvedPhysics.collidable ? "Solid contact" : resolvedPhysics.enabled ? "Surface / hazard" : "Reference only"}</strong>
             </span>
@@ -380,7 +380,7 @@ export default function SceneObjectSettingsPanel({
             onChange={(event) => onChange({ notes: event.target.value })}
             rows={4}
             placeholder="Measurements, condition, source of evidence, or officer observations..."
-            className="mt-1.5 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-purple-500"
+            className="mt-1.5 w-full resize-none rounded-sm border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#494949]"
           />
         </label>
 
@@ -462,7 +462,7 @@ export default function SceneObjectSettingsPanel({
           <button
             type="button"
             onClick={onDuplicate}
-            className="rounded-sm border border-purple-300 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-100"
+            className="rounded-sm border border-[#494949] bg-[#303030] px-4 py-3 text-sm font-semibold text-[#c4c4c4] hover:bg-[#303030]"
           >
             Duplicate
           </button>

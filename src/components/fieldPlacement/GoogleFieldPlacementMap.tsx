@@ -577,7 +577,7 @@ export default function GoogleFieldPlacementMap({
               onClick={() => setMapType(type)}
               className={`px-2.5 py-2 text-[10px] font-black ${
                 mapType === type
-                  ? "bg-sky-500 text-slate-950"
+                  ? "bg-[#303030] text-slate-950"
                   : "text-slate-300 hover:bg-slate-800"
               }`}
             >
@@ -617,9 +617,9 @@ export default function GoogleFieldPlacementMap({
             )}
             <div className="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[80%] rounded-xl bg-slate-950/90 px-3 py-2 text-[10px] font-bold text-slate-200 shadow-lg backdrop-blur-sm">
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span><b className="text-sky-400">●</b> Officer</span>
+                <span><b className="text-[#c4c4c4]">●</b> Officer</span>
                 <span><b className="text-amber-400">━</b> Raw capture</span>
-                <span><b className="text-sky-500">━</b> Processed geometry</span>
+                <span><b className="text-[#c4c4c4]">━</b> Processed geometry</span>
                 <span><b className="text-slate-400">●</b> Rejected sample</span>
               </div>
               {(maxZoomMessage || searchLabel) && (
@@ -656,7 +656,7 @@ export default function GoogleFieldPlacementMap({
             }}
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-black ${
               followOfficer
-                ? "border-sky-400 bg-sky-500 text-slate-950"
+                ? "border-[#494949] bg-[#303030] text-slate-950"
                 : "border-slate-600 bg-slate-800 text-slate-200"
             }`}
           >

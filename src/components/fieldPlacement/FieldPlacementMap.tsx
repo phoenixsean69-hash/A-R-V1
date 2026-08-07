@@ -363,7 +363,7 @@ export default function FieldPlacementMap({
       if (!currentMarkerRef.current) {
         const element = document.createElement("div");
         element.className =
-          "h-5 w-5 rounded-full border-[3px] border-white bg-blue-800 shadow-lg";
+          "h-5 w-5 rounded-full border-[3px] border-white bg-[#303030] shadow-lg";
         currentMarkerRef.current = new maplibregl.Marker({ element })
           .setLngLat([current.longitude, current.latitude])
           .addTo(map);
@@ -465,7 +465,7 @@ export default function FieldPlacementMap({
     <section className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-900 px-4 py-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#c4c4c4]">
             Real-world field map
           </p>
           <h3 className="text-sm font-black text-white">
@@ -481,7 +481,7 @@ export default function FieldPlacementMap({
             }}
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-black ${
               followOfficer
-                ? "border-sky-400 bg-sky-500 text-slate-950"
+                ? "border-[#494949] bg-[#303030] text-slate-950"
                 : "border-slate-600 bg-slate-800 text-slate-200"
             }`}
             title="Keep the map centred on the officer. Manual panning turns this off."
@@ -533,9 +533,9 @@ export default function FieldPlacementMap({
         <div ref={containerRef} className="h-[390px] w-full" />
         <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-xl bg-slate-950/90 px-3 py-2 text-[10px] font-bold text-slate-200 shadow-lg backdrop-blur-sm">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span><b className="text-sky-400">●</b> Officer</span>
+            <span><b className="text-[#c4c4c4]">●</b> Officer</span>
             <span><b className="text-amber-400">━</b> Raw capture</span>
-            <span><b className="text-sky-500">━</b> Processed geometry</span>
+            <span><b className="text-[#c4c4c4]">━</b> Processed geometry</span>
             <span><b className="text-slate-400">●</b> Rejected sample</span>
           </div>
         </div>

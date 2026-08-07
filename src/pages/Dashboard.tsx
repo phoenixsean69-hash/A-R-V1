@@ -361,7 +361,7 @@ export default function Dashboard() {
               </div>
 
               <div className="dashboard-material-stat-content">
-                <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-[#7fa7d0]">
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
                   {label}
                 </p>
 
@@ -369,7 +369,7 @@ export default function Dashboard() {
                   {value}
                 </p>
 
-                <p className="mt-1 truncate text-[9px] text-[#80ACFF]">
+                <p className="mt-1 truncate text-[9px] text-[#c4c4c4]">
                   {note}
                 </p>
               </div>
@@ -411,7 +411,7 @@ export default function Dashboard() {
 
             <Link
               to="/cases"
-              className="text-[10px] font-semibold text-[#80ACFF]"
+              className="text-[10px] font-semibold text-[#c4c4c4]"
             >
               View all
             </Link>
@@ -453,7 +453,7 @@ export default function Dashboard() {
                     {record.location}
                   </span>
 
-                  <span className="text-[#80ACFF]">
+                  <span className="text-[#c4c4c4]">
                     {record.status}
                   </span>
                 </Link>
@@ -544,7 +544,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                <div className="mt-3 rounded-md border border-[#171717] bg-[#303030] px-2 py-2">
+                <div className="mt-3 rounded-md border border-[#494949] bg-[#303030] px-2 py-2">
                   <svg
                     viewBox="0 0 100 40"
                     className="h-28 w-full"
@@ -616,32 +616,32 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[9px]">
-                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
+                  <div className="rounded-md border border-[#494949] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Peak month</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsPeak?.label ?? "N/A"}
                     </p>
-                    <p className="mt-1 text-[#80ACFF]">
+                    <p className="mt-1 text-[#c4c4c4]">
                       {analyticsPeak?.total ?? 0} records
                     </p>
                   </div>
 
-                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
+                  <div className="rounded-md border border-[#494949] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Average</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsAverage}
                     </p>
-                    <p className="mt-1 text-[#80ACFF]">
+                    <p className="mt-1 text-[#c4c4c4]">
                       per month
                     </p>
                   </div>
 
-                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
+                  <div className="rounded-md border border-[#494949] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Latest</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsLatest}
                     </p>
-                    <p className="mt-1 text-[#80ACFF]">
+                    <p className="mt-1 text-[#c4c4c4]">
                       current month
                     </p>
                   </div>
@@ -673,7 +673,7 @@ export default function Dashboard() {
           {activeCase ? (
             <div className="flex flex-1 flex-col p-4">
               <div>
-                <p className="text-[10px] font-bold text-[#80ACFF]">
+                <p className="text-[10px] font-bold text-[#c4c4c4]">
                   {activeCase.caseNumber}
                 </p>
 
@@ -688,7 +688,7 @@ export default function Dashboard() {
               </div>
 
               <dl className="mt-5 grid grid-cols-2 gap-3 text-[10px]">
-                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Accident date
                   </dt>
@@ -698,7 +698,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Officer
                   </dt>
@@ -709,7 +709,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Police station
                   </dt>
@@ -720,7 +720,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
+                <div className="rounded-md border border-[#494949] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Reconstruction
                   </dt>
@@ -815,7 +815,7 @@ export default function Dashboard() {
           </div>
 
           {previewReconstruction && (
-            <div className="flex items-center justify-between gap-3 border-t border-[#171717] bg-[#292929] px-4 py-2.5 text-[9px]">
+            <div className="flex items-center justify-between gap-3 border-t border-[#494949] bg-[#292929] px-4 py-2.5 text-[9px]">
               <span className="text-slate-500">
                 {participantCount} participant
                 {participantCount === 1 ? "" : "s"} ·{" "}
@@ -825,7 +825,7 @@ export default function Dashboard() {
 
               <Link
                 to={reconstructionLink}
-                className="font-semibold text-[#80ACFF]"
+                className="font-semibold text-[#c4c4c4]"
               >
                 Open reconstruction
               </Link>
@@ -844,7 +844,7 @@ export default function Dashboard() {
             {previewReconstruction && (
               <Link
                 to={reconstructionLink}
-                className="text-[9px] font-semibold text-[#80ACFF]"
+                className="text-[9px] font-semibold text-[#c4c4c4]"
               >
                 Edit
               </Link>
@@ -868,9 +868,9 @@ export default function Dashboard() {
                 return (
                   <div
                     key={participant.id}
-                    className="flex items-center gap-3 rounded-md border border-[#171717] bg-[#303030] p-3"
+                    className="flex items-center gap-3 rounded-md border border-[#494949] bg-[#303030] p-3"
                   >
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[#80ACFF]">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[#c4c4c4]">
                       <ParticipantIcon
                         type={participant.type}
                       />
@@ -894,7 +894,7 @@ export default function Dashboard() {
                         points
                       </p>
 
-                      <p className="mt-1 truncate text-[8px] text-[#80ACFF]">
+                      <p className="mt-1 truncate text-[8px] text-[#c4c4c4]">
                         {actions || "No movement actions"}
                       </p>
                     </div>
@@ -932,7 +932,7 @@ export default function Dashboard() {
 
             <Link
               to="/evidence"
-              className="text-[9px] font-semibold text-[#80ACFF]"
+              className="text-[9px] font-semibold text-[#c4c4c4]"
             >
               View all
             </Link>
@@ -946,7 +946,7 @@ export default function Dashboard() {
                   key={item.id}
                   className="flex items-center gap-3 py-3"
                 >
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[9px] font-semibold text-[#80ACFF]">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[9px] font-semibold text-[#c4c4c4]">
                     E{item.evidenceNumber}
                   </div>
 

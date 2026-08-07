@@ -174,7 +174,7 @@ function TrafficControls({ settings }: { settings: RoadSceneSettings }) {
         {positions.map((style, index) => (
           <div key={index} className="absolute z-[4]" style={style}>
             <span className="absolute left-1/2 top-4 h-8 w-[2px] -translate-x-1/2 bg-[#3a3f43]" />
-            <div className="relative flex h-8 w-3 flex-col items-center justify-around rounded-sm border border-black bg-[#171a1d] p-[2px] shadow-lg">
+            <div className="relative flex h-8 w-3 flex-col items-center justify-around rounded-sm border border-black bg-[#303030] p-[2px] shadow-lg">
               <span className="h-2 w-2 rounded-full bg-red-600/80" />
               <span className="h-2 w-2 rounded-full bg-amber-500/50" />
               <span className="h-2 w-2 rounded-full bg-emerald-600/45" />
@@ -205,7 +205,7 @@ function Roundabout({ width, settings }: { width: number; settings: RoadSceneSet
     <>
       <RoadStrip orientation="horizontal" width={width} settings={settings} />
       <RoadStrip orientation="vertical" width={width} settings={settings} />
-      <div className="absolute left-1/2 top-1/2 z-[2] h-[39%] w-[39%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[13px] border-[#30343a] shadow-[0_0_0_5px_#71767b,inset_0_0_20px_rgba(0,0,0,.45)]" style={{ background: groundTexture(settings), backgroundSize: "10px 10px,12px 12px,auto" }}>
+      <div className="absolute left-1/2 top-1/2 z-[2] h-[39%] w-[39%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[13px] border-[#494949] shadow-[0_0_0_5px_#71767b,inset_0_0_20px_rgba(0,0,0,.45)]" style={{ background: groundTexture(settings), backgroundSize: "10px 10px,12px 12px,auto" }}>
         <div className="absolute inset-[20%] rounded-full border border-[#536158] bg-[#253229] shadow-inner" />
       </div>
     </>
@@ -237,7 +237,7 @@ function WeatherOverlay({ settings }: { settings: RoadSceneSettings }) {
       {settings.weather === "Rain" && <div className="pointer-events-none absolute inset-0 z-40 opacity-25" style={{ background: "repeating-linear-gradient(112deg,transparent 0 15px,rgba(190,214,228,.75) 15px 16px,transparent 16px 31px)" }} />}
       {settings.weather === "Fog" && <div className="pointer-events-none absolute inset-0 z-40 bg-slate-200/28 backdrop-blur-[1px]" />}
       {settings.weather === "Dust" && <div className="pointer-events-none absolute inset-0 z-40 bg-[#9b8058]/18" />}
-      {night && <div className="pointer-events-none absolute inset-0 z-30 bg-[#030816]/45 mix-blend-multiply" />}
+      {night && <div className="pointer-events-none absolute inset-0 z-30 bg-[#303030] mix-blend-multiply" />}
       {settings.visibility === "Reduced" && <div className="pointer-events-none absolute inset-0 z-40 bg-slate-200/12" />}
       {settings.visibility === "Poor" && <div className="pointer-events-none absolute inset-0 z-40 bg-slate-200/28" />}
     </>
@@ -334,15 +334,15 @@ export default function RoadSceneEnvironment({ settings }: RoadSceneEnvironmentP
       )}
 
       {generatedRoad && settings.roadSurface === "Wet" && (
-        <div className="absolute inset-0 z-[2] bg-sky-100/5 mix-blend-screen" />
+        <div className="absolute inset-0 z-[2] bg-[#303030] mix-blend-screen" />
       )}
 
-      <div className="absolute bottom-3 left-3 z-20 rounded-md border border-white/10 bg-[#05080e]/75 px-3 py-2 text-[9px] font-semibold text-slate-200 backdrop-blur-sm">
+      <div className="absolute bottom-3 left-3 z-20 rounded-md border border-white/10 bg-[#303030] px-3 py-2 text-[9px] font-semibold text-slate-200 backdrop-blur-sm">
         {sceneEnvironmentLabel(settings)}
       </div>
 
       {!generatedRoad && (
-        <div className="absolute left-3 top-3 z-20 rounded-md border border-sky-300/20 bg-[#07111d]/82 px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-sky-100 backdrop-blur-sm">
+        <div className="absolute left-3 top-3 z-20 rounded-md border border-[#494949] bg-[#303030] px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-[#c4c4c4] backdrop-blur-sm">
           Real-location ground scene · no generated road
         </div>
       )}

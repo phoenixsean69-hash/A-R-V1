@@ -16,7 +16,7 @@ type UnitSystem = "Metric" | "Imperial";
 const severityStyles: Record<ValidationSeverity, string> = {
   Critical: "border-red-200 bg-red-50 text-red-900",
   Warning: "border-amber-200 bg-amber-50 text-amber-950",
-  Advisory: "border-sky-200 bg-sky-50 text-sky-950",
+  Advisory: "border-[#494949] bg-[#303030] text-[#c4c4c4]",
 };
 
 function ReconstructionValidationPanel({
@@ -43,7 +43,7 @@ function ReconstructionValidationPanel({
 
   return (
     <section className="mt-5 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
-      <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-cyan-900 p-5 text-white">
+      <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-[#303030] p-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200">Phase 2 · non-destructive audit</p>
@@ -118,7 +118,7 @@ function ReconstructionValidationPanel({
                     <div><dt className="text-gray-500">Peak deceleration</dt><dd className="mt-1 font-black text-gray-900">{metrics.maximumDecelerationMps2.toFixed(1)} m/s²</dd></div>
                   </dl>
                   {metrics.estimatedPreBrakeSpeedKmh !== null && (
-                    <p className="mt-4 rounded-lg bg-cyan-50 p-3 text-xs text-cyan-950"><strong>Skid-based pre-brake estimate:</strong> {formatSpeed(metrics.estimatedPreBrakeSpeedKmh)} under the selected friction assumption.</p>
+                    <p className="mt-4 rounded-lg bg-[#303030] p-3 text-xs text-[#c4c4c4]"><strong>Skid-based pre-brake estimate:</strong> {formatSpeed(metrics.estimatedPreBrakeSpeedKmh)} under the selected friction assumption.</p>
                   )}
                 </article>
               ))}

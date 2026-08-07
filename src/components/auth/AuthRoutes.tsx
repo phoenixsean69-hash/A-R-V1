@@ -10,10 +10,10 @@ import type { RoadSafeRole } from "../../types/auth";
 
 function LoadingScreen() {
   return (
-    <div className="grid min-h-screen place-items-center bg-[#030714] p-5 text-slate-200">
+    <div className="grid min-h-screen place-items-center bg-[#303030] p-5 text-slate-200">
       <section className="ui-panel w-full max-w-md overflow-hidden text-center">
-        <div className="border-b border-[#18243f] p-6">
-          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#284a7b] border-t-[#8ebcff]" />
+        <div className="border-b border-[#494949] p-6">
+          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#494949] border-t-[#8ebcff]" />
           <h1 className="mt-4 text-base font-bold text-slate-100">
             Opening RoadSafe AR
           </h1>
@@ -32,9 +32,9 @@ function ConfigurationScreen({
   message: string;
 }) {
   return (
-    <div className="grid min-h-screen place-items-center bg-[#030714] p-5 text-slate-200">
+    <div className="grid min-h-screen place-items-center bg-[#303030] p-5 text-slate-200">
       <section className="ui-panel w-full max-w-xl overflow-hidden">
-        <div className="border-b border-[#18243f] p-6 text-center">
+        <div className="border-b border-[#494949] p-6 text-center">
           <h1 className="text-lg font-bold text-slate-100">
             Appwrite setup required
           </h1>
@@ -44,10 +44,10 @@ function ConfigurationScreen({
         </div>
 
         <div className="space-y-2 p-5">
-          <code className="block rounded-md border border-[#1d3155] bg-[#050b17] px-3 py-2 text-[10px] text-[#8ebcff]">
+          <code className="block rounded-md border border-[#494949] bg-[#303030] px-3 py-2 text-[10px] text-[#c4c4c4]">
             VITE_APPWRITE_ENDPOINT
           </code>
-          <code className="block rounded-md border border-[#1d3155] bg-[#050b17] px-3 py-2 text-[10px] text-[#8ebcff]">
+          <code className="block rounded-md border border-[#494949] bg-[#303030] px-3 py-2 text-[10px] text-[#c4c4c4]">
             VITE_APPWRITE_PROJECT_ID
           </code>
         </div>

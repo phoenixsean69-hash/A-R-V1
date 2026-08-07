@@ -488,10 +488,10 @@ export default function RealSceneGeometryLayer({
         />
       </svg>
 
-      <div className="absolute bottom-3 left-3 rounded-md border border-sky-300/25 bg-[#050914]/82 px-3 py-2 text-[8px] font-black uppercase tracking-[0.15em] text-sky-100 backdrop-blur-sm">
+      <div className="absolute bottom-3 left-3 rounded-md border border-[#494949] bg-[#303030] px-3 py-2 text-[8px] font-black uppercase tracking-[0.15em] text-[#c4c4c4] backdrop-blur-sm">
         Exact selected area · {geometry.sceneWidthMetres.toFixed(1)} × {geometry.sceneHeightMetres.toFixed(1)} m
       </div>
-      <div className="absolute bottom-3 right-3 rounded-md border border-white/10 bg-[#050914]/75 px-3 py-2 text-[8px] font-semibold text-slate-200 backdrop-blur-sm">
+      <div className="absolute bottom-3 right-3 rounded-md border border-white/10 bg-[#303030] px-3 py-2 text-[8px] font-semibold text-slate-200 backdrop-blur-sm">
         {geometry.buildings.length} buildings · {vegetation.length} vegetation · {geometry.attribution}
       </div>
     </div>

@@ -70,37 +70,37 @@ function ReconstructionScenarioWorkspace({ reconstruction, onLoadScenario }: Rec
   };
 
   return (
-    <section className="mt-5 overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-sm">
-      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-950 p-5 text-white">
+    <section className="mt-5 overflow-hidden rounded-2xl border border-[#494949] bg-white shadow-sm">
+      <div className="bg-gradient-to-r from-slate-950 via-[#303030] to-[#303030] p-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-200">Alternative hypotheses</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c4c4c4]">Alternative hypotheses</p>
             <h2 className="mt-1 text-xl font-black">Scenario Comparison Workspace</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100">Preserve the working reconstruction, test alternatives, link assumptions to evidence and document why a scenario was accepted or rejected.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c4c4c4]">Preserve the working reconstruction, test alternatives, link assumptions to evidence and document why a scenario was accepted or rejected.</p>
           </div>
           <div className="flex min-w-[280px] gap-2">
-            <input value={newScenarioName} onChange={(event) => setNewScenarioName(event.target.value)} placeholder={`Scenario ${String.fromCharCode(65 + scenarios.length)}`} className="min-w-0 flex-1 rounded-sm border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-indigo-300" />
+            <input value={newScenarioName} onChange={(event) => setNewScenarioName(event.target.value)} placeholder={`Scenario ${String.fromCharCode(65 + scenarios.length)}`} className="min-w-0 flex-1 rounded-sm border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-[#c4c4c4]" />
             <button type="button" onClick={() => {
               const created = ReconstructionScenarioService.create(reconstruction, newScenarioName || `Scenario ${String.fromCharCode(65 + scenarios.length)}`);
               setSelectedScenarioId(created.id);
               setNewScenarioName("");
               refresh();
-            }} className="rounded-sm bg-white px-4 py-2 text-xs font-black text-indigo-950">Save Current as Scenario</button>
+            }} className="rounded-sm bg-white px-4 py-2 text-xs font-black text-[#c4c4c4]">Save Current as Scenario</button>
           </div>
         </div>
       </div>
 
       <div className="p-5">
         {scenarios.length === 0 ? (
-          <p className="rounded-sm border border-dashed border-indigo-300 bg-indigo-50 p-7 text-center text-sm text-indigo-900">Create Scenario A from the current reconstruction, then change the working speeds, timing, braking point or heading and save another scenario for comparison.</p>
+          <p className="rounded-sm border border-dashed border-[#494949] bg-[#303030] p-7 text-center text-sm text-[#c4c4c4]">Create Scenario A from the current reconstruction, then change the working speeds, timing, braking point or heading and save another scenario for comparison.</p>
         ) : (
           <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
             <div className="space-y-3">
               <h3 className="font-black text-gray-950">Saved scenarios</h3>
               {comparisons.map(({ scenario, metrics }) => (
-                <button key={scenario.id} type="button" onClick={() => setSelectedScenarioId(scenario.id)} className={`w-full rounded-sm border p-4 text-left transition ${selectedScenarioId === scenario.id ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-gray-200 hover:bg-gray-50"}`}>
+                <button key={scenario.id} type="button" onClick={() => setSelectedScenarioId(scenario.id)} className={`w-full rounded-sm border p-4 text-left transition ${selectedScenarioId === scenario.id ? "border-[#494949] bg-[#303030] ring-2 ring-[#e8872d]" : "border-gray-200 hover:bg-gray-50"}`}>
                   <div className="flex items-center justify-between gap-3"><strong className="text-sm text-gray-950">{scenario.name}</strong><span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${scenario.preferred ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-600"}`}>{scenario.preferred ? "Preferred" : scenario.status}</span></div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"><span className="rounded-lg bg-red-50 p-2 text-red-800"><strong className="block text-base">{metrics.critical}</strong>Critical</span><span className="rounded-lg bg-amber-50 p-2 text-amber-900"><strong className="block text-base">{metrics.warnings}</strong>Warnings</span><span className="rounded-lg bg-sky-50 p-2 text-sky-900"><strong className="block text-base">{metrics.impactSpread?.toFixed(2) ?? "—"}s</strong>Impact spread</span></div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"><span className="rounded-lg bg-red-50 p-2 text-red-800"><strong className="block text-base">{metrics.critical}</strong>Critical</span><span className="rounded-lg bg-amber-50 p-2 text-amber-900"><strong className="block text-base">{metrics.warnings}</strong>Warnings</span><span className="rounded-lg bg-[#303030] p-2 text-[#c4c4c4]"><strong className="block text-base">{metrics.impactSpread?.toFixed(2) ?? "—"}s</strong>Impact spread</span></div>
                   <p className="mt-3 text-[11px] text-gray-500">{metrics.participants.map((participant) => `${participant.participantName}: ${participant.impactSpeedKmh.toFixed(0)} km/h impact`).join(" · ") || "No participants"}</p>
                 </button>
               ))}
@@ -115,8 +115,8 @@ function ReconstructionScenarioWorkspace({ reconstruction, onLoadScenario }: Rec
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => onLoadScenario(selected)} className="rounded-lg bg-indigo-700 px-4 py-2 text-xs font-black text-white">Load into Editor</button>
-                  <button type="button" onClick={() => { ReconstructionScenarioService.capture(selected.id, reconstruction); refresh(); }} className="rounded-lg border border-indigo-300 px-4 py-2 text-xs font-black text-indigo-800">Replace with Current Scene</button>
+                  <button type="button" onClick={() => onLoadScenario(selected)} className="rounded-lg bg-[#303030] px-4 py-2 text-xs font-black text-white">Load into Editor</button>
+                  <button type="button" onClick={() => { ReconstructionScenarioService.capture(selected.id, reconstruction); refresh(); }} className="rounded-lg border border-[#494949] px-4 py-2 text-xs font-black text-[#c4c4c4]">Replace with Current Scene</button>
                   <button type="button" onClick={() => { if (window.confirm(`Delete ${selected.name}?`)) { ReconstructionScenarioService.remove(selected.id); setSelectedScenarioId(null); refresh(); } }} className="rounded-lg border border-red-200 px-4 py-2 text-xs font-black text-red-700">Delete</button>
                 </div>
 

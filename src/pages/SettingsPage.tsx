@@ -30,18 +30,18 @@ export default function SettingsPage() {
 
             <ShieldCheck
               size={16}
-              className="text-[#8ed6ca]"
+              className="text-[#c4c4c4]"
             />
           </div>
 
           <div className="grid gap-3 p-4 sm:grid-cols-2">
             <Link
               to="/officers"
-              className="rounded-md border border-[#315b91] bg-[#0b1b38] p-4 transition-colors hover:bg-[#10284f]"
+              className="rounded-md border border-[#494949] bg-[#303030] p-4 transition-colors hover:bg-[#303030]"
             >
               <Users
                 size={18}
-                className="text-[#8ebcff]"
+                className="text-[#c4c4c4]"
               />
               <h3 className="mt-3 text-sm font-bold text-slate-100">
                 Officer management
@@ -53,11 +53,11 @@ export default function SettingsPage() {
 
             <Link
               to="/change-password"
-              className="rounded-md border border-[#1a2946] bg-[#070d1a] p-4 transition-colors hover:border-[#29446f] hover:bg-[#0a1325]"
+              className="rounded-md border border-[#494949] bg-[#303030] p-4 transition-colors hover:border-[#494949] hover:bg-[#303030]"
             >
               <KeyRound
                 size={18}
-                className="text-[#8ebcff]"
+                className="text-[#c4c4c4]"
               />
               <h3 className="mt-3 text-sm font-bold text-slate-100">
                 Change my password
@@ -71,10 +71,10 @@ export default function SettingsPage() {
       )}
 
       <section className="ui-panel p-5">
-        <div className="flex items-center gap-3 border-b border-[#18243f] pb-3">
+        <div className="flex items-center gap-3 border-b border-[#494949] pb-3">
           <SlidersHorizontal
             size={16}
-            className="text-[#8ebcff]"
+            className="text-[#c4c4c4]"
           />
           <div>
             <h2 className="ui-panel-title">
@@ -104,7 +104,7 @@ export default function SettingsPage() {
             ([label, note], index) => (
               <label
                 key={label}
-                className="flex items-center justify-between gap-5 border-b border-[#15223b] pb-5"
+                className="flex items-center justify-between gap-5 border-b border-[#494949] pb-5"
               >
                 <span>
                   <span className="block text-xs font-semibold text-slate-300">
