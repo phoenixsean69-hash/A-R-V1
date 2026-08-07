@@ -1,0 +1,128 @@
+/* [RoadSafe:ForensicMapHybridSearchV2:start] */
+
+.roadsafe-forensic-map__toolbar {
+  align-items: flex-start;
+}
+
+.roadsafe-forensic-map__search {
+  position: relative;
+  flex: 1 1 360px;
+  max-width: 430px;
+  pointer-events: auto;
+}
+
+.roadsafe-forensic-map__search-input {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #171717;
+  background: rgba(35,35,35,.96);
+  box-shadow: 0 4px 14px rgba(0,0,0,.22);
+}
+
+.roadsafe-forensic-map__search-input input {
+  min-width: 0;
+  height: 27px;
+  padding: 4px 8px;
+  border: 1px solid #454545;
+  border-radius: 1px;
+  background: #242424;
+  color: #e3e3e3;
+  font-size: 9px;
+}
+
+.roadsafe-forensic-map__search-input input:focus {
+  border-color: #7a5b3d;
+  box-shadow: 0 0 0 1px rgba(232,135,45,.38);
+}
+
+.roadsafe-forensic-map__search-input input::placeholder {
+  color: #777;
+}
+
+.roadsafe-forensic-map__search-input button {
+  min-width: 68px;
+  height: 27px;
+  min-height: 27px;
+  padding: 3px 8px;
+  border: 1px solid #505050;
+  border-left: 2px solid #e8872d;
+  background: #353535;
+  color: #d8d8d8;
+  font-size: 8.5px;
+}
+
+.roadsafe-forensic-map__search-results {
+  position: absolute;
+  z-index: 35;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border: 1px solid #171717;
+  border-radius: 2px;
+  background: #242424;
+  box-shadow: 0 12px 28px rgba(0,0,0,.42);
+}
+
+.roadsafe-forensic-map__search-results > button {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-bottom: 1px solid #343434;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: #292929;
+  color: #d1d1d1;
+  text-align: left;
+}
+
+.roadsafe-forensic-map__search-results > button:last-child {
+  border-bottom: 0;
+}
+
+.roadsafe-forensic-map__search-results > button:hover {
+  border-left-color: #e8872d;
+  background: #383838;
+}
+
+.roadsafe-forensic-map__search-results > button span {
+  overflow: hidden;
+  color: #ddd;
+  font-size: 8.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-forensic-map__search-results > button small {
+  color: #777;
+  font-size: 7.5px;
+  text-transform: capitalize;
+}
+
+.roadsafe-forensic-map__search-error {
+  margin: 0;
+  padding: 8px;
+  color: #d29a8f;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .roadsafe-forensic-map__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .roadsafe-forensic-map__search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+/* [RoadSafe:ForensicMapHybridSearchV2:end] */

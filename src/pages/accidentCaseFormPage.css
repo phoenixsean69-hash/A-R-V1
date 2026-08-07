@@ -1,0 +1,193 @@
+/*
+ * RoadSafe New Case shell
+ *
+ * AppShell already provides the main centre workspace. New Case must not add
+ * another page/card/background layer around the forensic wizard.
+ */
+
+.roadsafe-new-case-page {
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  color: #d8d8d8;
+}
+
+/* Compact workstation header, not a second card. */
+.roadsafe-new-case-page__header {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  margin: 0;
+  padding: 18px 20px 16px;
+
+  border: 0;
+  border-bottom: 1px solid #171717;
+
+  background: transparent;
+  box-shadow: none;
+}
+
+.roadsafe-new-case-page__intro {
+  min-width: 0;
+}
+
+.roadsafe-new-case-page__eyebrow {
+  display: block;
+
+  margin: 0 0 5px;
+
+  color: #9d9d9d;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  line-height: 1;
+
+  letter-spacing: .16em;
+
+  text-transform: uppercase;
+}
+
+.roadsafe-new-case-page__header h1 {
+  margin: 0;
+
+  color: #eeeeee;
+
+  font-size: clamp(20px, 1.55vw, 25px);
+  font-weight: 760;
+
+  line-height: 1.14;
+
+  letter-spacing: -.015em;
+}
+
+.roadsafe-new-case-page__header p {
+  max-width: 1040px;
+
+  margin: 8px 0 0;
+
+  color: #a1a1a1;
+
+  font-size: 10.5px;
+  font-weight: 450;
+
+  line-height: 1.5;
+}
+
+/*
+ * Theme-synchronised Back control:
+ * same dark control language as the reconstruction workstation, with the
+ * RoadSafe orange active edge instead of the old white Tailwind button.
+ */
+.roadsafe-new-case-page__back {
+  flex: 0 0 auto;
+
+  min-width: 78px;
+  min-height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  border: 1px solid #494949;
+  border-left: 2px solid #e8872d;
+  border-radius: 2px;
+
+  background: #303030;
+  color: #cfcfcf;
+
+  font-size: 9.5px;
+  font-weight: 700;
+
+  line-height: 1;
+
+  text-decoration: none;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    0 1px 2px rgba(0,0,0,.22);
+
+  transition:
+    background 90ms ease,
+    border-color 90ms ease,
+    color 90ms ease;
+}
+
+.roadsafe-new-case-page__back:hover {
+  border-color: #5b5148;
+  border-left-color: #f0943a;
+
+  background: #393939;
+  color: #ffffff;
+}
+
+.roadsafe-new-case-page__back:focus-visible {
+  outline: 1px solid #e8872d;
+  outline-offset: 2px;
+}
+
+.roadsafe-new-case-page__back > span:first-child {
+  color: #e8872d;
+  font-size: 12px;
+}
+
+/*
+ * The wizard is now the centre workspace content itself.
+ * Remove the floating-card treatment that made it look like a view nested
+ * inside another view.
+ */
+.roadsafe-new-case-page
+  > .roadsafe-forensic-wizard {
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0;
+
+  background: transparent;
+
+  box-shadow: none;
+}
+
+/*
+ * Keep the wizard's internal functional sections dark, but remove the
+ * separate outer-panel background layer.
+ */
+.roadsafe-new-case-page
+  > .roadsafe-forensic-wizard
+  > .roadsafe-forensic-wizard__header {
+  border-radius: 0;
+}
+
+@media (max-width: 720px) {
+  .roadsafe-new-case-page__header {
+    align-items: stretch;
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding: 14px;
+  }
+
+  .roadsafe-new-case-page__back {
+    align-self: flex-start;
+  }
+}

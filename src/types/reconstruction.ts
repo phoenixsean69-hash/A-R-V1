@@ -1,4 +1,5 @@
 import type { RealSceneGeometry } from "./realSceneGeometry";
+import type { ForensicScenePackage } from "./forensicScenePipeline";
 
 import type { RoadLayoutDetection } from "./roadLayoutDetection";
 
@@ -220,6 +221,9 @@ export type SceneTrafficVolume =
 export interface RoadSceneSettings {
   /** Officer-selected, metre-based real-world geometry shared by 2D and 3D. */
   realSceneGeometry?: RealSceneGeometry;
+
+  /** Frozen canonical forensic geospatial package. */
+  forensicScene?: ForensicScenePackage;
   /** Controls whether RoadSafe generates road geometry or preserves neutral ground. */
   sceneEnvironment: SceneEnvironmentType;
   groundSurface: GroundSurfaceType;
