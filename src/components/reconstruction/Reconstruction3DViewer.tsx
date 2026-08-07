@@ -36,6 +36,21 @@ import {
   reconstructionPositionToThreeVector,
 } from "../../utils/reconstructionThreeCoordinates";
 
+import type {
+  ReconstructionParticipantAssetId,
+  ReconstructionVehicleType,
+  SceneObjectType,
+} from "../../types/reconstruction";
+
+import {
+  loadPremiumParticipantModel,
+} from "../../services/premiumParticipantAssetService";
+
+import {
+  hasRoadSafeSceneAssetDrag,
+  readRoadSafeSceneAssetDrag,
+} from "../../engine/assets/sceneAssetDragData";
+
 interface Reconstruction3DViewerProps {
   reconstruction: AccidentReconstruction;
   onSwitchTo2D: () => void;
@@ -58,6 +73,17 @@ interface Reconstruction3DViewerProps {
     physics: boolean;
   };
   workspaceTool?: WorkspaceToolMode;
+
+  onDropParticipantAsset?: (
+    assetId: ReconstructionParticipantAssetId,
+    type: ReconstructionVehicleType,
+    position: ReconstructionPosition,
+  ) => void;
+
+  onDropSceneObject?: (
+    type: SceneObjectType,
+    position: ReconstructionPosition,
+  ) => void;
 }
 
 type WorkspaceToolMode =
@@ -374,6 +400,8 @@ function Reconstruction3DViewer({
   workspaceCameraMode,
   workspaceLayers,
   workspaceTool = "Select",
+  onDropParticipantAsset,
+  onDropSceneObject,
 }: Reconstruction3DViewerProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -384,6 +412,20 @@ function Reconstruction3DViewer({
   const cameraModeRef = useRef<CameraMode>("Orbit");
   const selectedRef = useRef<string | null>(selectedParticipantId);
   const onSelectRef = useRef(onSelectParticipant);
+  const onDropParticipantAssetRef =
+    useRef(onDropParticipantAsset);
+  const onDropSceneObjectRef =
+    useRef(onDropSceneObject);
+
+  useEffect(() => {
+    onDropParticipantAssetRef.current =
+      onDropParticipantAsset;
+  }, [onDropParticipantAsset]);
+
+  useEffect(() => {
+    onDropSceneObjectRef.current =
+      onDropSceneObject;
+  }, [onDropSceneObject]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [displayTime, setDisplayTime] = useState(workspaceTimeSeconds ?? 0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -542,7 +584,45 @@ function Reconstruction3DViewer({
       const entry = createParticipantHolder(participant);
       scene.add(entry.holder);
       participantEntries.set(participant.id, entry);
-      settleAsset(false);
+      void loadPremiumParticipantModel(participant)
+        .then((premiumModel) => {
+          if (!premiumModel) {
+            settleAsset(false);
+            return;
+          }
+
+          if (disposed) {
+            disposeObjectTree(
+              premiumModel,
+            );
+            return;
+          }
+
+          const previousModels = [
+            ...entry.modelRoot.children,
+          ];
+
+          previousModels.forEach(
+            (object) => {
+              entry.modelRoot.remove(
+                object,
+              );
+
+              disposeObjectTree(
+                object,
+              );
+            },
+          );
+
+          entry.modelRoot.add(
+            premiumModel,
+          );
+
+          settleAsset(false);
+        })
+        .catch(() =>
+          settleAsset(true),
+        );
 
 
       if (effectiveShowPaths) {
@@ -709,6 +789,149 @@ function Reconstruction3DViewer({
       const id = current?.userData.participantId as string | undefined;
       if (id) onSelectRef.current(id);
     };
+    const handleSceneAssetDragOver = (
+      event: DragEvent,
+    ) => {
+      const dataTransfer =
+        event.dataTransfer;
+
+      if (
+        !dataTransfer ||
+        !hasRoadSafeSceneAssetDrag(
+          dataTransfer,
+        )
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      dataTransfer.dropEffect =
+        "copy";
+    };
+
+    const handleSceneAssetDrop = (
+      event: DragEvent,
+    ) => {
+      const dataTransfer =
+        event.dataTransfer;
+
+      if (!dataTransfer) {
+        return;
+      }
+
+      const payload =
+        readRoadSafeSceneAssetDrag(
+          dataTransfer,
+        );
+
+      if (!payload) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect =
+        renderer.domElement
+          .getBoundingClientRect();
+
+      pointer.x =
+        (
+          (
+            event.clientX -
+            rect.left
+          ) /
+          rect.width
+        ) *
+          2 -
+        1;
+
+      pointer.y =
+        -(
+          (
+            event.clientY -
+            rect.top
+          ) /
+          rect.height
+        ) *
+          2 +
+        1;
+
+      raycaster.setFromCamera(
+        pointer,
+        camera,
+      );
+
+      const point =
+        raycaster.ray.intersectPlane(
+          new THREE.Plane(
+            new THREE.Vector3(
+              0,
+              1,
+              0,
+            ),
+            0,
+          ),
+          new THREE.Vector3(),
+        );
+
+      if (!point) {
+        return;
+      }
+
+      const position: ReconstructionPosition = {
+        x: clamp(
+          (
+            point.x /
+              width +
+            0.5
+          ) *
+            100,
+          0,
+          100,
+        ),
+        y: clamp(
+          (
+            point.z /
+              height +
+            0.5
+          ) *
+            100,
+          0,
+          100,
+        ),
+      };
+
+      if (
+        payload.kind ===
+        "participant"
+      ) {
+        onDropParticipantAssetRef.current?.(
+          payload.assetId,
+          payload.type,
+          position,
+        );
+
+        return;
+      }
+
+      onDropSceneObjectRef.current?.(
+        payload.type,
+        position,
+      );
+    };
+
+    renderer.domElement.addEventListener(
+      "dragover",
+      handleSceneAssetDragOver,
+    );
+
+    renderer.domElement.addEventListener(
+      "drop",
+      handleSceneAssetDrop,
+    );
+
     renderer.domElement.addEventListener("pointerdown", handlePointerDown);
 
     const resizeObserver = new ResizeObserver(() => {
@@ -855,6 +1078,16 @@ function Reconstruction3DViewer({
       window.cancelAnimationFrame(animationId);
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+
+      renderer.domElement.removeEventListener(
+        "dragover",
+        handleSceneAssetDragOver,
+      );
+
+      renderer.domElement.removeEventListener(
+        "drop",
+        handleSceneAssetDrop,
+      );
       controls.dispose();
       scene.traverse((object) => {
         if (

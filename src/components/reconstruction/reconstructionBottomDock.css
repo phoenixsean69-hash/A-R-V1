@@ -1317,3 +1317,734 @@
   min-width: 88px !important;
 }
 /* [RoadSafe:SpeedLimitWidthFixV1:end] */
+
+/* [RoadSafe:3DFullWorkspaceFillV1:start] */
+
+/*
+ * The original workstation layout predates the AppShell Properties portal.
+ * It reserves a second internal grid column for the old inline inspector:
+ *
+ *   minmax(0, 1fr) minmax(270px, 300px)
+ *
+ * Properties now lives in .roadsafe-workspace-context-slot, so the 3D centre
+ * must never reserve that legacy column.
+ *
+ * These selectors deliberately DO NOT depend on
+ * .has-reconstruction-bottom-dock. The 3D viewport owns the entire available
+ * centre whether the bottom editor is open, collapsed, or temporarily absent.
+ */
+
+.reconstruction-workspace--3d
+  > .reconstruction-workspace__body {
+  width: 100% !important;
+  height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  display: block !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+}
+
+.reconstruction-workspace--3d
+  .reconstruction-workspace__stage-grid--3d {
+  width: 100% !important;
+  height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr) !important;
+
+  grid-template-rows:
+    minmax(0, 1fr) !important;
+
+  gap: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+}
+
+.reconstruction-workspace--3d
+  .reconstruction-workspace__stage-grid--3d
+  > .reconstruction-workspace__stage-main {
+  grid-column:
+    1 / -1 !important;
+
+  grid-row:
+    1 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+}
+
+/*
+ * Defeat the legacy:
+ *   height: min(64vh, 720px);
+ *   min-height: 520px;
+ *
+ * The viewport now fills the editor area between the top workspace header and
+ * the current bottom dock height.
+ */
+.reconstruction-workspace--3d
+  .reconstruction-workspace__stage-main
+  > .reconstruction-3d--workspace,
+.reconstruction-workspace--3d
+  .reconstruction-3d.reconstruction-3d--workspace {
+  width: 100% !important;
+  height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  flex: 1 1 auto !important;
+
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+
+  box-shadow: none !important;
+}
+
+/* Three.js mount and renderer own all remaining stage space. */
+.reconstruction-workspace--3d
+  .reconstruction-3d--workspace
+  > div {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+.reconstruction-workspace--3d
+  .reconstruction-3d--workspace
+  canvas {
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/*
+ * If the legacy closed Inspector button is still emitted as a child of the 3D
+ * stage grid, keep it as a small overlay instead of allowing it to create a
+ * second grid track or row.
+ */
+.reconstruction-workspace--3d
+  .reconstruction-workspace__stage-grid--3d
+  > .reconstruction-workspace__inspector-tab {
+  position: absolute !important;
+
+  z-index: 95 !important;
+
+  top: 8px !important;
+  right: 8px !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  margin: 0 !important;
+}
+
+/*
+ * The stage needs a positioning context for the tool rail, hint and optional
+ * closed-inspector button, while the renderer still fills the whole area.
+ */
+.reconstruction-workspace--3d
+  .reconstruction-workspace__stage-main {
+  position: relative !important;
+}
+
+/* [RoadSafe:3DFullWorkspaceFillV1:end] */
+
+/* [RoadSafe:BlenderViewportToolbarShortcutsV1:start] */
+
+/* ========================================================================== */
+/* Blender-style viewport toolbar — shared by 2D and 3D.                     */
+/* ========================================================================== */
+
+.reconstruction-workspace
+  .reconstruction-workspace__tools.reconstruction-workspace__blender-toolbar {
+  position: absolute !important;
+
+  z-index: 96 !important;
+
+  top: 8px !important;
+  left: 8px !important;
+
+  width: 40px !important;
+  min-width: 40px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+
+  gap: 1px !important;
+
+  padding: 2px !important;
+
+  overflow: visible !important;
+
+  border:
+    1px solid #171717 !important;
+  border-radius:
+    2px !important;
+
+  background:
+    rgba(43, 43, 43, .97) !important;
+
+  box-shadow:
+    0 4px 12px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+.reconstruction-workspace
+  .reconstruction-workspace__tools.reconstruction-workspace__blender-toolbar
+  > button {
+  position: relative !important;
+
+  width: 34px !important;
+  min-width: 34px !important;
+
+  height: 34px !important;
+  min-height: 34px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border:
+    1px solid transparent !important;
+  border-left:
+    2px solid transparent !important;
+  border-radius:
+    1px !important;
+
+  background:
+    transparent !important;
+
+  color:
+    #aaa !important;
+
+  box-shadow:
+    none !important;
+
+  overflow: visible !important;
+}
+
+.reconstruction-workspace
+  .reconstruction-workspace__tools.reconstruction-workspace__blender-toolbar
+  > button:hover {
+  border-color:
+    #4b4b4b !important;
+
+  background:
+    #383838 !important;
+
+  color:
+    #f0f0f0 !important;
+}
+
+.reconstruction-workspace
+  .reconstruction-workspace__tools.reconstruction-workspace__blender-toolbar
+  > button.is-active {
+  border-color:
+    #494949 !important;
+
+  border-left-color:
+    #e8872d !important;
+
+  background:
+    #404040 !important;
+
+  color:
+    #fff !important;
+
+  box-shadow:
+    inset 2px 0 0 #e8872d !important;
+}
+
+/* Small Blender-like separators between transform and utility groups. */
+.reconstruction-workspace
+  .reconstruction-workspace__blender-toolbar
+  > button[data-tool="Timeline"],
+.reconstruction-workspace
+  .reconstruction-workspace__blender-toolbar
+  > button[data-tool="Camera"] {
+  margin-top:
+    5px !important;
+}
+
+.reconstruction-workspace
+  .reconstruction-workspace__blender-toolbar
+  > button[data-tool="Timeline"]::before,
+.reconstruction-workspace
+  .reconstruction-workspace__blender-toolbar
+  > button[data-tool="Camera"]::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  left:
+    3px !important;
+  right:
+    3px !important;
+  top:
+    -4px !important;
+
+  height:
+    1px !important;
+
+  background:
+    #1a1a1a !important;
+}
+
+/* No static text. Details appear only as a Blender-style hover flyout. */
+.reconstruction-workspace__blender-tool-tooltip {
+  position:
+    absolute !important;
+
+  z-index:
+    140 !important;
+
+  left:
+    calc(100% + 7px) !important;
+
+  top:
+    -1px !important;
+
+  width:
+    220px !important;
+
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  gap:
+    4px !important;
+
+  padding:
+    7px 8px !important;
+
+  border:
+    1px solid #525252 !important;
+
+  border-radius:
+    2px !important;
+
+  background:
+    #222 !important;
+
+  color:
+    #cfcfcf !important;
+
+  text-align:
+    left !important;
+
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.36) !important;
+
+  opacity:
+    0 !important;
+
+  visibility:
+    hidden !important;
+
+  transform:
+    translateX(-3px) !important;
+
+  transition:
+    opacity 90ms ease,
+    transform 90ms ease,
+    visibility 90ms ease !important;
+
+  pointer-events:
+    none !important;
+}
+
+.reconstruction-workspace__blender-toolbar
+  > button:hover
+  .reconstruction-workspace__blender-tool-tooltip,
+.reconstruction-workspace__blender-toolbar
+  > button:focus-visible
+  .reconstruction-workspace__blender-tool-tooltip {
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  transform:
+    translateX(0) !important;
+}
+
+.reconstruction-workspace__blender-tool-tooltip-title {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    8px !important;
+}
+
+.reconstruction-workspace__blender-tool-tooltip
+  strong {
+  color:
+    #eee !important;
+
+  font-size:
+    9.5px !important;
+
+  font-weight:
+    700 !important;
+}
+
+.reconstruction-workspace__blender-tool-tooltip
+  small {
+  color:
+    #8d8d8d !important;
+
+  font-size:
+    8px !important;
+
+  line-height:
+    1.4 !important;
+}
+
+.reconstruction-workspace
+  kbd {
+  min-width:
+    20px !important;
+
+  min-height:
+    18px !important;
+
+  display:
+    inline-grid !important;
+
+  place-items:
+    center !important;
+
+  padding:
+    1px 5px !important;
+
+  border:
+    1px solid #555 !important;
+
+  border-bottom-color:
+    #252525 !important;
+
+  border-radius:
+    2px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #444,
+      #303030
+    ) !important;
+
+  color:
+    #ddd !important;
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace !important;
+
+  font-size:
+    7.5px !important;
+
+  font-weight:
+    700 !important;
+
+  line-height:
+    1 !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 1px 0 #111 !important;
+}
+
+/* Persistent giant SELECT AND INSPECT hint is gone. */
+.reconstruction-workspace
+  .reconstruction-workspace__tool-hint {
+  display:
+    none !important;
+}
+
+/* ========================================================================== */
+/* Shortcut sheet — keyboard only (? toggles it).                             */
+/* ========================================================================== */
+
+.reconstruction-workspace__shortcut-sheet {
+  position:
+    absolute !important;
+
+  z-index:
+    135 !important;
+
+  top:
+    8px !important;
+
+  left:
+    56px !important;
+
+  width:
+    min(340px, calc(100% - 72px)) !important;
+
+  overflow:
+    hidden !important;
+
+  border:
+    1px solid #555 !important;
+
+  border-radius:
+    2px !important;
+
+  background:
+    #292929 !important;
+
+  color:
+    #d4d4d4 !important;
+
+  box-shadow:
+    0 14px 32px rgba(0,0,0,.42) !important;
+}
+
+.reconstruction-workspace__shortcut-sheet
+  > header {
+  min-height:
+    36px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    8px !important;
+
+  padding:
+    5px 6px 5px 9px !important;
+
+  border-bottom:
+    1px solid #171717 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #363636,
+      #2d2d2d
+    ) !important;
+}
+
+.reconstruction-workspace__shortcut-sheet
+  > header
+  > div {
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  gap:
+    1px !important;
+}
+
+.reconstruction-workspace__shortcut-sheet
+  > header
+  span {
+  color:
+    #858585 !important;
+
+  font-size:
+    7px !important;
+
+  text-transform:
+    uppercase !important;
+
+  letter-spacing:
+    .08em !important;
+}
+
+.reconstruction-workspace__shortcut-sheet
+  > header
+  strong {
+  color:
+    #e1e1e1 !important;
+
+  font-size:
+    10px !important;
+}
+
+.reconstruction-workspace__shortcut-sheet
+  > header
+  button {
+  width:
+    24px !important;
+
+  min-width:
+    24px !important;
+
+  height:
+    24px !important;
+
+  min-height:
+    24px !important;
+
+  padding:
+    0 !important;
+}
+
+.reconstruction-workspace__shortcut-groups {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    ) !important;
+
+  gap:
+    0 !important;
+}
+
+.reconstruction-workspace__shortcut-groups
+  > section {
+  min-width:
+    0 !important;
+
+  padding:
+    7px !important;
+
+  border-right:
+    1px solid #1b1b1b !important;
+
+  background:
+    #292929 !important;
+}
+
+.reconstruction-workspace__shortcut-groups
+  > section:last-child {
+  border-right:
+    0 !important;
+}
+
+.reconstruction-workspace__shortcut-groups
+  > section
+  > strong {
+  display:
+    block !important;
+
+  margin-bottom:
+    5px !important;
+
+  color:
+    #9d9d9d !important;
+
+  font-size:
+    8px !important;
+
+  text-transform:
+    uppercase !important;
+
+  letter-spacing:
+    .06em !important;
+}
+
+.reconstruction-workspace__shortcut-groups
+  > section
+  > div {
+  display:
+    grid !important;
+
+  gap:
+    4px !important;
+}
+
+.reconstruction-workspace__shortcut-groups
+  > section
+  > div
+  > span {
+  min-width:
+    0 !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    4px !important;
+
+  color:
+    #b5b5b5 !important;
+
+  font-size:
+    8px !important;
+}
+
+@media (max-width: 760px) {
+  .reconstruction-workspace__shortcut-groups {
+    grid-template-columns:
+      minmax(0, 1fr) !important;
+  }
+
+  .reconstruction-workspace__shortcut-groups
+    > section {
+    border-right:
+      0 !important;
+
+    border-bottom:
+      1px solid #1b1b1b !important;
+  }
+}
+
+/* [RoadSafe:BlenderViewportToolbarShortcutsV1:end] */

@@ -8,6 +8,7 @@ import {
   useState,
   Suspense,
 } from "react";
+import type { DragEvent as ReactDragEvent } from "react";
 
 import type {
   PointerEvent as ReactPointerEvent,
@@ -57,12 +58,16 @@ import {
 } from "../../services/reconstructionScenarioService";
 import { getSceneObjectCatalogItem } from "../../data/sceneObjectCatalog";
 import {
+  PARTICIPANT_ASSET_CATALOG,
   getDefaultParticipantAssetId,
-  getParticipantAssetDefinition,
   getParticipantAssetsForType,
 } from "../../engine/assets/participantAssetCatalog";
 
 import ReconstructionBottomDock from "./ReconstructionBottomDock";
+import {
+  hasRoadSafeSceneAssetDrag,
+  readRoadSafeSceneAssetDrag,
+} from "../../engine/assets/sceneAssetDragData";
 import ReconstructionRecorder from "../footage/ReconstructionRecorder";
 import FieldPlacementPanel from "../fieldPlacement/FieldPlacementPanel";
 import EvidenceMarkerLayer from "./EvidenceMarkerLayer";
@@ -77,6 +82,7 @@ import SceneObjectPalette from "./SceneObjectPalette";
 import SceneObjectRenderer from "./SceneObjectRenderer";
 import SceneObjectSettingsPanel from "./SceneObjectSettingsPanel";
 import SceneSettingsPanel from "./SceneSettingsPanel";
+import SceneCollectionAssetBrowser from "./SceneCollectionAssetBrowser";
 import Participant2DModel from "./Participant2DModel";
 import ReconstructionGuide from "./ReconstructionGuide";
 import ReconstructionValidationPanel from "./ReconstructionValidationPanel";
@@ -882,8 +888,6 @@ export default function AccidentReconstructionEditor({
   const [selectedPathPointId, setSelectedPathPointId] = useState<string | null>(
     reconstruction.vehicles[0]?.pathPoints[0]?.id ?? null,
   );
-  const [newParticipantType, setNewParticipantType] =
-    useState<ReconstructionVehicleType>("Car");
   const [pendingParticipantPlacement, setPendingParticipantPlacement] =
     useState<PendingParticipantPlacement | null>(null);
   const [participantPlacementMessage, setParticipantPlacementMessage] =
@@ -893,9 +897,14 @@ export default function AccidentReconstructionEditor({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sceneExpanded, setSceneExpanded] = useState(false);
+  const [sceneAssetDragActive, setSceneAssetDragActive] = useState(false);
   const [activeReconstructionView, setActiveReconstructionView] = useState<"2D" | "3D">("2D");
   const [activeWorkspaceTool, setActiveWorkspaceTool] =
     useState<WorkspaceTool>("Select");
+  const [workspaceToolbarVisible, setWorkspaceToolbarVisible] =
+    useState(true);
+  const [shortcutHelpVisible, setShortcutHelpVisible] =
+    useState(false);
   const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
   const [workspaceInvestigationTab, setWorkspaceInvestigationTab] =
     useState("case");
@@ -1797,7 +1806,7 @@ export default function AccidentReconstructionEditor({
     (startPosition: ReconstructionPosition) => {
       if (!pendingParticipantPlacement) return;
 
-      const participant = createParticipantAtConfirmedPosition({
+      const participantBase = createParticipantAtConfirmedPosition({
         type: pendingParticipantPlacement.type,
         index: pendingParticipantPlacement.index,
         startPosition,
@@ -1812,6 +1821,15 @@ export default function AccidentReconstructionEditor({
             reconstruction,
           ),
       });
+
+      const participant: ReconstructionVehicle = {
+        ...participantBase,
+        assetId:
+          pendingParticipantPlacement.assetId ??
+          getDefaultParticipantAssetId(
+            pendingParticipantPlacement.type,
+          ),
+      };
 
       setReconstruction((current) => ({
         ...current,
@@ -1870,7 +1888,7 @@ export default function AccidentReconstructionEditor({
           coordinate,
           calibration,
         );
-        const participant = createParticipantAtConfirmedPosition({
+        const participantBase = createParticipantAtConfirmedPosition({
           type: pendingParticipantPlacement.type,
           index: pendingParticipantPlacement.index,
           startPosition: scenePosition,
@@ -1885,6 +1903,15 @@ export default function AccidentReconstructionEditor({
               reconstruction,
             ),
         });
+        const participant: ReconstructionVehicle = {
+          ...participantBase,
+          assetId:
+            pendingParticipantPlacement.assetId ??
+            getDefaultParticipantAssetId(
+              pendingParticipantPlacement.type,
+            ),
+        };
+
         const pointOne = participant.pathPoints[0];
 
         let next: AccidentReconstruction = {
@@ -1947,29 +1974,203 @@ export default function AccidentReconstructionEditor({
     showSaveMessage,
   ]);
 
-  const handleAddParticipant = useCallback(() => {
-    setIsPlaying(false);
-    setActiveReconstructionView("2D");
-    setActiveWorkspaceTool("Select");
-    setPendingParticipantPlacement({
-      type: newParticipantType,
-      index: reconstruction.vehicles.length + 1,
-    });
-    setParticipantPlacementMessage(
-      `Click the exact starting position for ${newParticipantType}. Point Z will stay attached to the primary collision marker.`,
-    );
-    setParticipantGpsBusy(false);
-    setActiveSceneObjectType(null);
-    setTraceToolObjectId(null);
-    setRouteDrawingParticipantId(null);
-    setMeasurementToolActive(false);
-    setMeasurementDraftStart(null);
-    setCollisionPlacementActive(false);
-    setActiveEvidencePlacementId(null);
-  }, [
-    newParticipantType,
-    reconstruction.vehicles.length,
-  ]);
+  const handleArmLibraryParticipantPlacement = useCallback(
+    (
+      assetId: ReconstructionParticipantAssetId,
+      type: ReconstructionVehicleType,
+    ) => {
+      setIsPlaying(false);
+      setActiveReconstructionView("2D");
+      setActiveWorkspaceTool("Select");
+
+      setPendingParticipantPlacement({
+        type,
+        index: reconstruction.vehicles.length + 1,
+        assetId,
+      });
+
+      setParticipantPlacementMessage(
+        `Click the exact starting position for ${PARTICIPANT_ASSET_CATALOG[assetId].shortLabel}, or drag it directly onto the scene.`,
+      );
+
+      setParticipantGpsBusy(false);
+      setActiveSceneObjectType(null);
+      setTraceToolObjectId(null);
+      setRouteDrawingParticipantId(null);
+      setMeasurementToolActive(false);
+      setMeasurementDraftStart(null);
+      setCollisionPlacementActive(false);
+      setActiveEvidencePlacementId(null);
+    },
+    [reconstruction.vehicles.length],
+  );
+
+  const createLibraryParticipantAt = useCallback(
+    (
+      assetId: ReconstructionParticipantAssetId,
+      type: ReconstructionVehicleType,
+      startPosition: ReconstructionPosition,
+    ) => {
+      let createdParticipantId: string | null = null;
+      let createdPointId: string | null = null;
+
+      setIsPlaying(false);
+
+      setReconstruction((current) => {
+        const asset =
+          PARTICIPANT_ASSET_CATALOG[assetId];
+
+        const participant =
+          createParticipantAtConfirmedPosition({
+            type,
+            index: current.vehicles.length + 1,
+            startPosition,
+            collisionPosition: current.collisionPoint,
+            durationSeconds: current.durationSeconds,
+            createId,
+            getDefaultSpeed,
+            getDefaultRole,
+            isHumanParticipant,
+            worldDimensions:
+              getReconstructionWorldDimensions(current),
+          });
+
+        const withAsset: ReconstructionVehicle = {
+          ...participant,
+          assetId,
+          name:
+            `${asset.shortLabel} ${current.vehicles.length + 1}`,
+        };
+
+        createdParticipantId = withAsset.id;
+        createdPointId =
+          withAsset.pathPoints[0]?.id ?? null;
+
+        return {
+          ...current,
+          lastPhysicsSimulation: undefined,
+          vehicles: [
+            ...current.vehicles,
+            withAsset,
+          ],
+        };
+      });
+
+      window.requestAnimationFrame(() => {
+        if (!createdParticipantId) return;
+
+        setSelectedParticipantId(createdParticipantId);
+        setSelectedPathPointId(createdPointId);
+        setSelectedSceneObjectId(null);
+        setActiveWorkspaceTool("Select");
+      });
+    },
+    [],
+  );
+
+  const createLibrarySceneObjectAt = useCallback(
+    (
+      type: SceneObjectType,
+      position: ReconstructionPosition,
+    ) => {
+      let objectId: string | null = null;
+
+      setReconstruction((current) => {
+        const object = createSceneObject(
+          type,
+          position,
+          current.sceneObjects.length + 1,
+        );
+
+        objectId = object.id;
+
+        return {
+          ...current,
+          sceneObjects: [
+            ...current.sceneObjects,
+            object,
+          ],
+        };
+      });
+
+      window.requestAnimationFrame(() => {
+        if (!objectId) return;
+
+        setSelectedSceneObjectId(objectId);
+        setSelectedParticipantId(null);
+        setSelectedPathPointId(null);
+        setActiveWorkspaceTool("Select");
+      });
+    },
+    [],
+  );
+
+  const handleLibrarySceneDragOver = useCallback(
+    (
+      event: ReactDragEvent<HTMLDivElement>,
+    ) => {
+      if (
+        !event.dataTransfer ||
+        !hasRoadSafeSceneAssetDrag(
+          event.dataTransfer,
+        )
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      setSceneAssetDragActive(true);
+    },
+    [],
+  );
+
+  const handleLibrarySceneDrop = useCallback(
+    (
+      event: ReactDragEvent<HTMLDivElement>,
+    ) => {
+      if (!event.dataTransfer) return;
+
+      const payload =
+        readRoadSafeSceneAssetDrag(
+          event.dataTransfer,
+        );
+
+      if (!payload) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setSceneAssetDragActive(false);
+
+      const position =
+        clientToScenePosition(
+          event.clientX,
+          event.clientY,
+        );
+
+      if (!position) return;
+
+      if (payload.kind === "participant") {
+        createLibraryParticipantAt(
+          payload.assetId,
+          payload.type,
+          position,
+        );
+        return;
+      }
+
+      createLibrarySceneObjectAt(
+        payload.type,
+        position,
+      );
+    },
+    [
+      clientToScenePosition,
+      createLibraryParticipantAt,
+      createLibrarySceneObjectAt,
+    ],
+  );
 
   const handleDeleteParticipant = useCallback(() => {
     if (!selectedParticipantId) return;
@@ -3327,14 +3528,15 @@ export default function AccidentReconstructionEditor({
   const workspaceTools: Array<{
     label: WorkspaceTool;
     icon: typeof Crosshair;
+    shortcut: string;
   }> = [
-    { label: "Select", icon: Crosshair },
-    { label: "Move", icon: Move },
-    { label: "Rotate", icon: RotateCw },
-    { label: "Scale", icon: Expand },
-    { label: "Timeline", icon: ScanLine },
-    { label: "Measure", icon: Ruler },
-    { label: "Camera", icon: Camera },
+    { label: "Select", icon: Crosshair, shortcut: "W" },
+    { label: "Move", icon: Move, shortcut: "G" },
+    { label: "Rotate", icon: RotateCw, shortcut: "R" },
+    { label: "Scale", icon: Expand, shortcut: "S" },
+    { label: "Timeline", icon: ScanLine, shortcut: "⇧T" },
+    { label: "Measure", icon: Ruler, shortcut: "M" },
+    { label: "Camera", icon: Camera, shortcut: "C" },
   ];
 
   const workspaceToolGuidance: Record<
@@ -3378,47 +3580,403 @@ export default function AccidentReconstructionEditor({
     },
   };
 
-  const activeToolGuidance = workspaceToolGuidance[activeWorkspaceTool];
+  useEffect(() => {
+    const handleViewportShortcut = (
+      event: KeyboardEvent,
+    ) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat
+      ) {
+        return;
+      }
+
+      if (
+        activeInvestigationDetail ||
+        fieldPlacementOpen
+      ) {
+        return;
+      }
+
+      const target =
+        event.target as
+          HTMLElement | null;
+
+      if (
+        target?.closest(
+          "input, textarea, select, button, a, [contenteditable='true'], [role='textbox']",
+        )
+      ) {
+        return;
+      }
+
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const key =
+        event.key.toLowerCase();
+
+      if (
+        event.shiftKey &&
+        key === "t"
+      ) {
+        event.preventDefault();
+        handleWorkspaceTool(
+          "Timeline",
+        );
+        return;
+      }
+
+      if (
+        event.key === "?"
+      ) {
+        event.preventDefault();
+        setShortcutHelpVisible(
+          (current) => !current,
+        );
+        return;
+      }
+
+      if (
+        event.code === "Space"
+      ) {
+        event.preventDefault();
+        handlePlayPause();
+        return;
+      }
+
+      switch (key) {
+        case "t":
+          event.preventDefault();
+          setWorkspaceToolbarVisible(
+            (current) => !current,
+          );
+          return;
+
+        case "n":
+          event.preventDefault();
+
+          if (
+            workspaceSettingsOpen
+          ) {
+            setWorkspaceSettingsOpen(
+              false,
+            );
+          } else {
+            setWorkspacePropertiesOpen(
+              (current) => !current,
+            );
+          }
+
+          return;
+
+        case "w":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Select",
+          );
+          return;
+
+        case "g":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Move",
+          );
+          return;
+
+        case "r":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Rotate",
+          );
+          return;
+
+        case "s":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Scale",
+          );
+          return;
+
+        case "m":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Measure",
+          );
+          return;
+
+        case "c":
+          event.preventDefault();
+          handleWorkspaceTool(
+            "Camera",
+          );
+          return;
+
+        case "1":
+          event.preventDefault();
+          setIsPlaying(
+            false,
+          );
+          setActiveReconstructionView(
+            "2D",
+          );
+          return;
+
+        case "3":
+          event.preventDefault();
+          setIsPlaying(
+            false,
+          );
+          setActiveReconstructionView(
+            "3D",
+          );
+          return;
+
+        case "home":
+          if (
+            activeReconstructionView ===
+            "2D"
+          ) {
+            event.preventDefault();
+            setSceneView({
+              zoom:
+                MIN_SCENE_ZOOM,
+              panX: 0,
+              panY: 0,
+            });
+          }
+
+          return;
+
+        default:
+          return;
+      }
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleViewportShortcut,
+    );
+
+    return () =>
+      window.removeEventListener(
+        "keydown",
+        handleViewportShortcut,
+      );
+  }, [
+    activeInvestigationDetail,
+    activeReconstructionView,
+    fieldPlacementOpen,
+    handlePlayPause,
+    workspaceSettingsOpen,
+  ]);
 
   const renderWorkspaceTools = () => (
-    <nav
-      className="reconstruction-workspace__tools"
-      aria-label="Reconstruction tools"
-      data-scene-interactive="true"
-    >
-      {workspaceTools.map(({ label, icon: Icon }) => (
-        <button
-          key={label}
-          type="button"
-          onClick={() => handleWorkspaceTool(label)}
-          className={activeWorkspaceTool === label ? "is-active" : ""}
-          aria-pressed={activeWorkspaceTool === label}
-          title={`${workspaceToolGuidance[label].title}: ${
-            activeReconstructionView === "2D"
-              ? workspaceToolGuidance[label].twoD
-              : workspaceToolGuidance[label].threeD
-          }`}
+    <>
+      {workspaceToolbarVisible && (
+        <nav
+          className="reconstruction-workspace__tools reconstruction-workspace__blender-toolbar"
+          aria-label="Viewport tools"
+          data-scene-interactive="true"
         >
-          <Icon size={15} />
-          <span>{label}</span>
-        </button>
-      ))}
-    </nav>
-  );
+          {workspaceTools.map(
+            ({
+              label,
+              icon: Icon,
+              shortcut,
+            }) => {
+              const guidance =
+                workspaceToolGuidance[
+                  label
+                ];
 
-  const renderWorkspaceToolHint = () => (
-    <div
-      className="reconstruction-workspace__tool-hint"
-      data-scene-interactive="true"
-      role="status"
-    >
-      <strong>{activeToolGuidance.title}</strong>
-      <span>
-        {activeReconstructionView === "2D"
-          ? activeToolGuidance.twoD
-          : activeToolGuidance.threeD}
-      </span>
-    </div>
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() =>
+                    handleWorkspaceTool(
+                      label,
+                    )
+                  }
+                  className={
+                    activeWorkspaceTool ===
+                    label
+                      ? "is-active"
+                      : ""
+                  }
+                  aria-label={`${label} tool (${shortcut})`}
+                  aria-pressed={
+                    activeWorkspaceTool ===
+                    label
+                  }
+                  data-tool={
+                    label
+                  }
+                >
+                  <Icon
+                    size={17}
+                    strokeWidth={1.8}
+                  />
+
+                  <span className="reconstruction-workspace__blender-tool-tooltip">
+                    <span className="reconstruction-workspace__blender-tool-tooltip-title">
+                      <strong>
+                        {guidance.title}
+                      </strong>
+
+                      <kbd>
+                        {shortcut}
+                      </kbd>
+                    </span>
+
+                    <small>
+                      {activeReconstructionView ===
+                      "2D"
+                        ? guidance.twoD
+                        : guidance.threeD}
+                    </small>
+                  </span>
+                </button>
+              );
+            },
+          )}
+        </nav>
+      )}
+
+      {shortcutHelpVisible && (
+        <aside
+          className="reconstruction-workspace__shortcut-sheet"
+          data-scene-interactive="true"
+          aria-label="Reconstruction keyboard shortcuts"
+        >
+          <header>
+            <div>
+              <span>
+                Viewport
+              </span>
+              <strong>
+                Keyboard Shortcuts
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShortcutHelpVisible(
+                  false,
+                )
+              }
+              aria-label="Close keyboard shortcuts"
+            >
+              ×
+            </button>
+          </header>
+
+          <div className="reconstruction-workspace__shortcut-groups">
+            <section>
+              <strong>
+                Tools
+              </strong>
+
+              <div>
+                <span>
+                  <kbd>W</kbd>
+                  Select
+                </span>
+                <span>
+                  <kbd>G</kbd>
+                  Move / Grab
+                </span>
+                <span>
+                  <kbd>R</kbd>
+                  Rotate
+                </span>
+                <span>
+                  <kbd>S</kbd>
+                  Scale
+                </span>
+                <span>
+                  <kbd>M</kbd>
+                  Measure
+                </span>
+                <span>
+                  <kbd>C</kbd>
+                  Camera
+                </span>
+                <span>
+                  <kbd>Shift</kbd>
+                  <kbd>T</kbd>
+                  Timeline
+                </span>
+              </div>
+            </section>
+
+            <section>
+              <strong>
+                Viewport
+              </strong>
+
+              <div>
+                <span>
+                  <kbd>T</kbd>
+                  Toolbar
+                </span>
+                <span>
+                  <kbd>N</kbd>
+                  Properties
+                </span>
+                <span>
+                  <kbd>1</kbd>
+                  2D View
+                </span>
+                <span>
+                  <kbd>3</kbd>
+                  3D View
+                </span>
+                <span>
+                  <kbd>Home</kbd>
+                  Fit 2D
+                </span>
+                <span>
+                  <kbd>?</kbd>
+                  Shortcut sheet
+                </span>
+              </div>
+            </section>
+
+            <section>
+              <strong>
+                Playback & History
+              </strong>
+
+              <div>
+                <span>
+                  <kbd>Space</kbd>
+                  Play / Pause
+                </span>
+                <span>
+                  <kbd>Ctrl</kbd>
+                  <kbd>Z</kbd>
+                  Undo
+                </span>
+                <span>
+                  <kbd>Ctrl</kbd>
+                  <kbd>Shift</kbd>
+                  <kbd>Z</kbd>
+                  Redo
+                </span>
+              </div>
+            </section>
+          </div>
+        </aside>
+      )}
+    </>
   );
 
   const handleLoadScenario = (scenario: ReconstructionScenario) => {
@@ -3675,7 +4233,6 @@ export default function AccidentReconstructionEditor({
           <div className="reconstruction-workspace__stage-grid reconstruction-workspace__stage-grid--3d">
             <div className="reconstruction-workspace__stage-main">
               {renderWorkspaceTools()}
-              {renderWorkspaceToolHint()}
               <Suspense
                 fallback={
                   <div className="reconstruction-workspace__loading">
@@ -3701,6 +4258,8 @@ export default function AccidentReconstructionEditor({
                   workspaceCameraMode={workspaceCameraMode}
                   workspaceLayers={workspaceLayers}
                   workspaceTool={activeWorkspaceTool}
+                  onDropParticipantAsset={createLibraryParticipantAt}
+                  onDropSceneObject={createLibrarySceneObjectAt}
                 />
               </Suspense>
             </div>
@@ -3789,6 +4348,18 @@ export default function AccidentReconstructionEditor({
                   <div className="reconstruction-workspace__blender-properties-content">
                     {workspacePropertiesTab === "participant" && (
                       <>
+                        <div className="roadsafe-3d-scene-collection-browser">
+                          <SceneCollectionAssetBrowser
+                            reconstruction={reconstruction}
+                            selectedParticipantId={selectedParticipantId}
+                            selectedSceneObjectId={selectedSceneObjectId}
+                            onSelectParticipant={handleSelectParticipant}
+                            onSelectSceneObject={handleSelectSceneObject}
+                            onArmParticipantPlacement={
+                              handleArmLibraryParticipantPlacement
+                            }
+                          />
+                        </div>
                         {!selectedParticipant || !selectedParticipantState ? (
                           <div className="reconstruction-workspace__blender-properties-empty">
                             Select a participant in the 3D scene to inspect it.
@@ -4158,14 +4729,25 @@ export default function AccidentReconstructionEditor({
               onPointerMove={handleSceneGesturePointerMove}
               onPointerUp={handleSceneGesturePointerEnd}
               onPointerCancel={handleSceneGesturePointerEnd}
+              onDragOver={handleLibrarySceneDragOver}
+              onDragEnter={handleLibrarySceneDragOver}
+              onDragLeave={(event) => {
+                if (event.currentTarget === event.target) {
+                  setSceneAssetDragActive(false);
+                }
+              }}
+              onDrop={handleLibrarySceneDrop}
               className={`reconstruction-workspace__2d-viewport relative isolate touch-none overflow-hidden bg-slate-600 ${
                 sceneExpanded
                   ? "min-h-[320px] flex-1"
                   : ""
-              } ${sceneCursorClass}`}
+              } ${sceneCursorClass} ${
+                sceneAssetDragActive
+                  ? "is-library-drop-target"
+                  : ""
+              }`}
             >
               {renderWorkspaceTools()}
-              {renderWorkspaceToolHint()}
 
               <button
                 type="button"
@@ -4705,109 +5287,16 @@ export default function AccidentReconstructionEditor({
 
                   <div className="reconstruction-workspace__blender-properties-content">
                     {workspace2DPropertiesTab === "participants" && (
-                      <details
-                        open
-                        className="reconstruction-workspace__blender-properties-section"
-                      >
-                        <summary>Participants</summary>
-
-                        <div className="reconstruction-workspace__blender-properties-add">
-                          <select
-                            value={newParticipantType}
-                            onChange={(event) =>
-                              setNewParticipantType(
-                                event.target.value as ReconstructionVehicleType,
-                              )
-                            }
-                            aria-label="Participant type"
-                          >
-                            {PARTICIPANT_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-
-                          <button
-                            type="button"
-                            onClick={handleAddParticipant}
-                          >
-                            Add
-                          </button>
-                        </div>
-
-                        <div className="reconstruction-workspace__blender-participant-list">
-                          {reconstruction.vehicles.length === 0 ? (
-                            <div className="reconstruction-workspace__blender-properties-empty">
-                              Add the first participant to begin plotting the reconstruction.
-                            </div>
-                          ) : (
-                            reconstruction.vehicles.map((participant) => {
-                              const participantState =
-                                getParticipantStateAtTime(
-                                  participant,
-                                  currentTime,
-                                  getReconstructionWorldDimensions(
-                                    reconstruction,
-                                  ),
-                                );
-
-                              return (
-                                <button
-                                  key={participant.id}
-                                  type="button"
-                                  onClick={() => {
-                                    handleSelectParticipant(
-                                      participant.id,
-                                    );
-                                    setWorkspace2DPropertiesTab(
-                                      "selection",
-                                    );
-                                  }}
-                                  className={
-                                    selectedParticipantId === participant.id
-                                      ? "is-active"
-                                      : ""
-                                  }
-                                >
-                                  <span
-                                    className="reconstruction-workspace__participant-swatch"
-                                    style={{
-                                      backgroundColor:
-                                        getParticipantColour(
-                                          participant.colour,
-                                        ),
-                                    }}
-                                  />
-
-                                  <span className="reconstruction-workspace__participant-copy">
-                                    <strong>
-                                      {participant.name}
-                                    </strong>
-                                    <small>
-                                      {getParticipantAssetDefinition(
-                                        participant,
-                                      ).shortLabel}{" "}
-                                      ·{" "}
-                                      {participantState.speedKmh.toFixed(
-                                        1,
-                                      )}{" "}
-                                      km/h
-                                    </small>
-                                  </span>
-
-                                  <span className="reconstruction-workspace__participant-points">
-                                    {getVisibleParticipantControlPoints(
-                                      participant.pathPoints,
-                                    ).length}{" "}
-                                    pts
-                                  </span>
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      </details>
+                      <SceneCollectionAssetBrowser
+                        reconstruction={reconstruction}
+                        selectedParticipantId={selectedParticipantId}
+                        selectedSceneObjectId={selectedSceneObjectId}
+                        onSelectParticipant={handleSelectParticipant}
+                        onSelectSceneObject={handleSelectSceneObject}
+                        onArmParticipantPlacement={
+                          handleArmLibraryParticipantPlacement
+                        }
+                      />
                     )}
 
                     {workspace2DPropertiesTab === "selection" && (

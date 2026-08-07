@@ -1,0 +1,150 @@
+{
+  "generatedAt": "2026-08-07T17:13:33.452Z",
+  "intakeRoot": "model-intake\\extracted",
+  "assets": {
+    "car-sedan-generic": {
+      "assetId": "car-sedan-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/car-sedan-generic/CARRO%203D%20HIGH%20POLY.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\byzmod-original-car-pack\\CARRO 3D LOW POLY, HIGH POLY\\CAR_2022\\CARRO 3D HIGH POLY.fbx",
+      "sourceName": "Byzmod High-Poly Car",
+      "license": "CC0",
+      "bytes": 423580
+    },
+    "car-hatchback-generic": {
+      "assetId": "car-hatchback-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/car-hatchback-generic/Hatchback.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\rgsdev-vehicle-pack\\Free Low Poly Vehicles Pack by Rgsdev\\Hatchback\\Hatchback.fbx",
+      "sourceName": "RGSDev Hatchback",
+      "license": "CC0",
+      "bytes": 53932
+    },
+    "car-suv-generic": {
+      "assetId": "car-suv-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/car-suv-generic/SUV.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\rgsdev-vehicle-pack\\Free Low Poly Vehicles Pack by Rgsdev\\SUV\\SUV.fbx",
+      "sourceName": "RGSDev SUV",
+      "license": "CC0",
+      "bytes": 59820
+    },
+    "car-pickup-generic": {
+      "assetId": "car-pickup-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/car-pickup-generic.glb",
+      "format": "glb",
+      "sourceFile": "model-intake\\extracted\\public-domain-pickup-glb\\public-domain-pickup.glb",
+      "sourceName": "Public-domain Pickup GLB",
+      "license": "Public Domain",
+      "bytes": 273012
+    },
+    "bus-minibus-generic": {
+      "assetId": "bus-minibus-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/bus-minibus-generic.glb",
+      "format": "glb",
+      "sourceFile": "model-intake\\extracted\\kenney-car-kit\\Models\\GLB format\\van.glb",
+      "sourceName": "Kenney Van / Minibus",
+      "license": "CC0",
+      "bytes": 175664
+    },
+    "bus-city-generic": {
+      "assetId": "bus-city-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/bus-city-generic/Bus.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-public-transport\\Public Transport\\FBX\\Bus.fbx",
+      "sourceName": "Quaternius Bus",
+      "license": "CC0",
+      "bytes": 38332
+    },
+    "truck-rigid-generic": {
+      "assetId": "truck-rigid-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/truck-rigid-generic.glb",
+      "format": "glb",
+      "sourceFile": "model-intake\\extracted\\public-domain-truck-glb\\public-domain-truck.glb",
+      "sourceName": "Public-domain Truck GLB",
+      "license": "Public Domain",
+      "bytes": 326828
+    },
+    "truck-articulated-generic": {
+      "assetId": "truck-articulated-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/truck-articulated-generic/Truck%20with%20trailer.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\rgsdev-vehicle-pack\\Free Low Poly Vehicles Pack by Rgsdev\\Truck with trailer\\Truck with trailer.fbx",
+      "sourceName": "RGSDev Truck with Trailer",
+      "license": "CC0",
+      "bytes": 108588
+    },
+    "truck-lorry-generic": {
+      "assetId": "truck-lorry-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/truck-lorry-generic/Truck.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\rgsdev-vehicle-pack\\Free Low Poly Vehicles Pack by Rgsdev\\Truck\\Truck.fbx",
+      "sourceName": "RGSDev Truck / Lorry",
+      "license": "CC0",
+      "bytes": 66940
+    },
+    "truck-tractor-generic": {
+      "assetId": "truck-tractor-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/truck-tractor-generic.glb",
+      "format": "glb",
+      "sourceFile": "model-intake\\extracted\\kenney-car-kit\\Models\\GLB format\\tractor.glb",
+      "sourceName": "Kenney Tractor",
+      "license": "CC0",
+      "bytes": 175960
+    },
+    "two-wheel-motorcycle-generic": {
+      "assetId": "two-wheel-motorcycle-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/two-wheel-motorcycle-generic.glb",
+      "format": "glb",
+      "sourceFile": "model-intake\\extracted\\public-domain-motorcycle-glb\\public-domain-motorcycle.glb",
+      "sourceName": "Public-domain Motorcycle GLB",
+      "license": "Public Domain",
+      "bytes": 109608
+    },
+    "two-wheel-bicycle-generic": {
+      "assetId": "two-wheel-bicycle-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/two-wheel-bicycle-generic/Bicycle.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-public-transport\\Public Transport\\FBX\\Bicycle.fbx",
+      "sourceName": "Quaternius Bicycle",
+      "license": "CC0",
+      "bytes": 72316
+    },
+    "human-adult-generic": {
+      "assetId": "human-adult-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/human-adult-generic/Animated%20Human.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-animated-human\\Animated Human by @Quaternius\\FBX\\Animated Human.fbx",
+      "sourceName": "Quaternius Animated Human",
+      "license": "CC0",
+      "bytes": 2399964
+    },
+    "human-adult-male-generic": {
+      "assetId": "human-adult-male-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/human-adult-male-generic/Animated%20Human.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-animated-human\\Animated Human by @Quaternius\\FBX\\Animated Human.fbx",
+      "sourceName": "Quaternius Animated Human — Adult Male scale",
+      "license": "CC0",
+      "bytes": 2399964
+    },
+    "human-adult-female-generic": {
+      "assetId": "human-adult-female-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/human-adult-female-generic/Animated%20Human.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-animated-human\\Animated Human by @Quaternius\\FBX\\Animated Human.fbx",
+      "sourceName": "Quaternius Animated Human — Adult Female scale",
+      "license": "CC0",
+      "bytes": 2399964
+    },
+    "human-child-generic": {
+      "assetId": "human-child-generic",
+      "url": "/assets/roadsafe-premium-participants/assets/human-child-generic/Animated%20Human.fbx",
+      "format": "fbx",
+      "sourceFile": "model-intake\\extracted\\quaternius-animated-human\\Animated Human by @Quaternius\\FBX\\Animated Human.fbx",
+      "sourceName": "Quaternius Animated Human — Child scale",
+      "license": "CC0",
+      "bytes": 2399964
+    }
+  }
+}

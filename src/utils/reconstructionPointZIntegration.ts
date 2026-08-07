@@ -6,6 +6,7 @@ import type {
   ReconstructionVehicle,
   ReconstructionVehicleColour,
   ReconstructionVehicleType,
+  ReconstructionParticipantAssetId,
 } from "../types/reconstruction";
 
 import {
@@ -31,6 +32,7 @@ import {
 export interface PendingParticipantPlacement {
   type: ReconstructionVehicleType;
   index: number;
+  assetId?: ReconstructionParticipantAssetId;
 }
 
 interface ParticipantFactoryOptions {
