@@ -31,7 +31,7 @@ const COLOURS: Record<string, string> = {
   Red: "#dc2626",
   Green: "#16a34a",
   Yellow: "#eab308",
-  Black: "#111827",
+  Black: "#292929",
   White: "#f8fafc",
   Orange: "#ea580c",
   Purple: "#9333ea",
@@ -136,7 +136,7 @@ function drawRoad(
   const night = scene.timeOfDay === "Night";
   const dusk = scene.timeOfDay === "Dusk" || scene.timeOfDay === "Dawn";
 
-  context.fillStyle = night ? "#0f172a" : dusk ? "#64748b" : "#86a96f";
+  context.fillStyle = night ? "#292929" : dusk ? "#64748b" : "#86a96f";
   context.fillRect(0, 0, width, height);
 
   context.save();
@@ -301,7 +301,7 @@ function drawSceneObject(
   if (object.tracePoints && object.tracePoints.length >= 2) {
     context.save();
     context.strokeStyle =
-      object.type === "Road Crack" ? "#111827" : "rgba(15,23,42,0.88)";
+      object.type === "Road Crack" ? "#292929" : "rgba(15,23,42,0.88)";
     context.lineWidth = Math.max(2, (object.traceWidth ?? 0.7) * 5);
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -326,7 +326,7 @@ function drawSceneObject(
 
   switch (object.type) {
     case "Pothole":
-      context.fillStyle = "#1f2937";
+      context.fillStyle = "#303030";
       context.beginPath();
       context.ellipse(0, 0, size * 1.5, size, 0.2, 0, Math.PI * 2);
       context.fill();
@@ -674,7 +674,7 @@ function drawEvidenceMarkers(
     context.arc(point.x, point.y, 16, 0, Math.PI * 2);
     context.fill();
     context.stroke();
-    context.fillStyle = "#111827";
+    context.fillStyle = "#292929";
     context.font = "700 12px Rubik, Arial, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";

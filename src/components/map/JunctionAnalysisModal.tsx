@@ -534,7 +534,7 @@ export default function JunctionAnalysisModal({
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-[#111e36]">
+                  <tbody className="divide-y divide-[#303030]">
                     {analysis.recentAccidents.map((accident) => (
                       <tr
                         key={accident.id}

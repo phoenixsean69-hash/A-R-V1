@@ -985,7 +985,7 @@ export default function OfficerManagementPage() {
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-[#111e36]">
+          <div className="divide-y divide-[#303030]">
             {filteredOfficers.map(
               (officer) => {
                 const isSelf =

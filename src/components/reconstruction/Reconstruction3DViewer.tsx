@@ -81,7 +81,7 @@ const PARTICIPANT_COLOURS: Record<string, number> = {
   Red: 0xdc2626,
   Green: 0x16a34a,
   Yellow: 0xeab308,
-  Black: 0x111827,
+  Black: 0x292929,
   White: 0xf8fafc,
   Orange: 0xea580c,
   Purple: 0x9333ea,
@@ -365,7 +365,7 @@ function createFallbackSceneObject(
     const group = new THREE.Group();
     const hole = new THREE.Mesh(
       new THREE.CircleGeometry(radius, 36),
-      new THREE.MeshStandardMaterial({ color: 0x14181d, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 1 }),
     );
     hole.rotation.x = -Math.PI / 2;
     hole.position.y = 0.015;
@@ -383,7 +383,7 @@ function createFallbackSceneObject(
     const patch = new THREE.Mesh(
       new THREE.CircleGeometry(Math.max(0.55, scale), 30),
       new THREE.MeshPhysicalMaterial({
-        color: object.type === "Oil Spill" ? 0x11131b : 0x506d7a,
+        color: object.type === "Oil Spill" ? 0x202020 : 0x506d7a,
         roughness: object.type === "Oil Spill" ? 0.1 : 0.7,
         transparent: true,
         opacity: 0.72,
@@ -609,7 +609,7 @@ function Reconstruction3DViewer({
       getReconstructionWorldDimensions(reconstruction);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(
-      reconstruction.scene.timeOfDay === "Night" ? 0x030916 : 0x74818a,
+      reconstruction.scene.timeOfDay === "Night" ? 0x202020 : 0x74818a,
     );
     scene.fog = new THREE.FogExp2(
       scene.background as THREE.Color,
@@ -777,7 +777,7 @@ function Reconstruction3DViewer({
                   worldPosition(point, width, height, 0.12),
                 ),
               ),
-              new THREE.LineBasicMaterial({ color: 0x111827 }),
+              new THREE.LineBasicMaterial({ color: 0x292929 }),
             );
             scene.add(line);
             settleAsset(false);

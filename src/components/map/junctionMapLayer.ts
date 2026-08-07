@@ -191,7 +191,7 @@ function createRow(
   valueElement.style.textAlign =
     "right";
   valueElement.style.color =
-    "#111827";
+    "#292929";
 
   row.append(
     labelElement,
@@ -272,7 +272,7 @@ function createPopupContent(
   heading.style.margin = "0";
   heading.style.fontSize = "17px";
   heading.style.fontWeight = "800";
-  heading.style.color = "#111827";
+  heading.style.color = "#292929";
 
   const location =
     document.createElement("p");

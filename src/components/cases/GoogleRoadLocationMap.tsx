@@ -249,9 +249,9 @@ export default function GoogleRoadLocationMap({
           center: initial
             ? latLngLiteral(initial)
             : { lat: -17.8252, lng: 31.0335 },
-          zoom: initial ? 18 : 6,
+          zoom: initial ? 17 : 6,
           minZoom: 3,
-          maxZoom: 22,
+          maxZoom: 17,
           mapTypeId: MAP_TYPE_IDS[initialMapTypeRef.current],
           mapId: getGoogleMapsRuntimeMapId(),
           gestureHandling: "greedy",
@@ -298,7 +298,7 @@ export default function GoogleRoadLocationMap({
               map.fitBounds(place.viewport as never, 48);
             } else if (place.location) {
               map.panTo({ lat: place.location.lat(), lng: place.location.lng() });
-              map.setZoom(19);
+              map.setZoom(17);
             }
             if (editableRef.current && place.location) {
               onCoordinateChangeRef.current?.({
@@ -383,7 +383,7 @@ export default function GoogleRoadLocationMap({
     const map = mapRef.current;
     if (!map || !coordinate) return;
     map.panTo(latLngLiteral(coordinate));
-    map.setZoom(Math.max(map.getZoom() ?? 17, 17.5));
+    map.setZoom(17);
   }, [coordinate]);
 
   useEffect(() => {
@@ -448,7 +448,7 @@ export default function GoogleRoadLocationMap({
       const nextType = mapType === "Hybrid" ? "Hybrid" : "Satellite";
       setMapType(nextType);
       map.setMapTypeId(MAP_TYPE_IDS[nextType]);
-      map.setZoom(result.zoom);
+      map.setZoom(Math.min(result.zoom, 17));
       setMaxZoomMessage(`Maximum imagery zoom: ${result.zoom}`);
     });
   };

@@ -40,7 +40,7 @@ const PARTICIPANT_TINTS: Record<string, number> = {
   Red: 0xdc2626,
   Green: 0x16a34a,
   Yellow: 0xeab308,
-  Black: 0x111827,
+  Black: 0x292929,
   White: 0xf1f5f9,
   Orange: 0xea580c,
   Purple: 0x9333ea,
@@ -209,7 +209,7 @@ function addOfficerDetails(group: THREE.Group, target: RealisticTargetDimensions
 
   const cap = new THREE.Mesh(
     new THREE.CylinderGeometry(target.width * 0.22, target.width * 0.24, target.height * 0.06, 24),
-    new THREE.MeshStandardMaterial({ color: 0x111a2d, roughness: 0.64 }),
+    new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.64 }),
   );
   cap.position.set(0, target.height * 0.96, 0);
   cap.userData.officerAccessory = true;
@@ -301,7 +301,7 @@ function createPothole(object: ReconstructionSceneObject): THREE.Group {
   const depression = new THREE.Mesh(
     irregularCircleGeometry(radius, 64, 0.16),
     new THREE.MeshPhysicalMaterial({
-      color: 0x15191d,
+      color: 0x202020,
       roughness: 0.96,
       metalness: 0,
       clearcoat: object.depthCentimetres && object.depthCentimetres > 8 ? 0.08 : 0,
@@ -328,7 +328,7 @@ function createPothole(object: ReconstructionSceneObject): THREE.Group {
 function createLiquidPatch(object: ReconstructionSceneObject, oil: boolean): THREE.Mesh {
   const geometry = irregularCircleGeometry(Math.max(0.65, object.scale), 64, 0.22);
   const material = new THREE.MeshPhysicalMaterial({
-    color: oil ? 0x11151d : 0x355a72,
+    color: oil ? 0x202020 : 0x355a72,
     roughness: oil ? 0.08 : 0.16,
     metalness: oil ? 0.42 : 0.08,
     transmission: oil ? 0.08 : 0.22,
@@ -420,7 +420,7 @@ function createBarrier(object: ReconstructionSceneObject): THREE.Group {
     group.add(post);
     const foot = new THREE.Mesh(
       new THREE.BoxGeometry(0.85, 0.10, 0.45),
-      new THREE.MeshStandardMaterial({ color: 0x20242a, roughness: 0.88 }),
+      new THREE.MeshStandardMaterial({ color: 0x292929, roughness: 0.88 }),
     );
     foot.position.set(x, 0.05, 0);
     group.add(foot);
@@ -545,7 +545,7 @@ function createCctv(object: ReconstructionSceneObject): THREE.Group {
   group.add(camera);
   const lens = new THREE.Mesh(
     new THREE.CylinderGeometry(0.065 * scale, 0.065 * scale, 0.04, 24),
-    new THREE.MeshPhysicalMaterial({ color: 0x07101a, roughness: 0.06, metalness: 0.45, clearcoat: 1 }),
+    new THREE.MeshPhysicalMaterial({ color: 0x202020, roughness: 0.06, metalness: 0.45, clearcoat: 1 }),
   );
   lens.rotation.z = Math.PI / 2;
   lens.position.set(1.055 * scale, 3.30 * scale, 0);
@@ -637,7 +637,7 @@ export function createRealisticProceduralSceneObject(
       for (let index = -4; index <= 4; index += 1) {
         const bar = new THREE.Mesh(
           new THREE.BoxGeometry(0.055, 0.05, 0.72 * object.scale),
-          new THREE.MeshStandardMaterial({ color: 0x11161b, metalness: 0.7, roughness: 0.48 }),
+          new THREE.MeshStandardMaterial({ color: 0x202020, metalness: 0.7, roughness: 0.48 }),
         );
         bar.position.set(index * 0.12 * object.scale, 0.08, 0);
         group.add(bar);

@@ -13,6 +13,7 @@ import "./styles/reconstruction2DWorkstation.css";
 import "./styles/reconstructionNodeEditor.css";
 import "./styles/blenderTotalUI.css";
 import "./styles/blenderColorGuard.css";
+import "./styles/mapWorkstation.css";
 import App from "./App.tsx";
 import { migratePreciseSceneCollisionConfirmation } from "./utils/migratePreciseSceneCollisionConfirmation";
 import { installParticipantAnchorSynchronization } from "./utils/reconstructionParticipantAnchorSync";

@@ -75,7 +75,7 @@ const PARTICIPANT_COLOURS: Record<string, number> = {
   Red: 0xdc2626,
   Green: 0x16a34a,
   Yellow: 0xeab308,
-  Black: 0x111827,
+  Black: 0x292929,
   White: 0xf8fafc,
   Orange: 0xea580c,
   Purple: 0x9333ea,
@@ -442,7 +442,7 @@ function createFallbackSceneObject(
           32,
         ),
         new THREE.MeshStandardMaterial({
-          color: 0x14181d,
+          color: 0x202020,
           roughness: 1,
         }),
       );
@@ -501,7 +501,7 @@ function createFallbackSceneObject(
           color:
             object.type ===
             "Oil Spill"
-              ? 0x11131b
+              ? 0x202020
               : 0x506d7a,
           roughness:
             object.type ===
@@ -1261,7 +1261,7 @@ export function createARReconstructionScene({
           18,
         ),
         new THREE.MeshStandardMaterial({
-          color: 0x111827,
+          color: 0x292929,
           roughness: 0.8,
         }),
       );

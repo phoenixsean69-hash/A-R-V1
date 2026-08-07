@@ -389,7 +389,7 @@ function buildWordHtml(report: AccidentReportModel): string {
 <meta charset="utf-8" />
 <title>${escapeHtml(accidentCase.caseNumber)} Accident Report</title>
 <style>
-body { font-family: Rubik, Arial, sans-serif; color: #111827; line-height: 1.5; }
+body { font-family: Rubik, Arial, sans-serif; color: #292929; line-height: 1.5; }
 h1, h2 { color: #1e3a8a; }
 table { border-collapse: collapse; width: 100%; margin: 12px 0; }
 th, td { border: 1px solid #cfcfcf; padding: 8px; text-align: left; vertical-align: top; }

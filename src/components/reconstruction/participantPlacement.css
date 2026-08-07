@@ -53,7 +53,7 @@
   place-items: center;
   border: 1px solid #263c5b;
   border-radius: 6px;
-  background: #081426;
+  background: #292929;
   color: #b8c9de;
 }
 
@@ -86,7 +86,7 @@
 .participant-placement__divider::after {
   height: 1px;
   flex: 1;
-  background: #1d304b;
+  background: #383838;
   content: "";
 }
 
@@ -106,8 +106,8 @@
 }
 
 .participant-placement__gps:disabled {
-  border-color: #243652;
-  background: #111d2e;
+  border-color: #383838;
+  background: #303030;
   color: #5e718b;
   cursor: not-allowed;
 }

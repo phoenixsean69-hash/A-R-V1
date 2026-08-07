@@ -20,7 +20,7 @@ body.roadsafe-case-wizard-open {
 .roadsafe-case-wizard {
   --rs-bg: #1b1b1b;
   --rs-panel: #202020;
-  --rs-panel-raised: #091326;
+  --rs-panel-raised: #292929;
   --rs-panel-soft: #202020;
   --rs-border: #171717;
   --rs-border-strong: #494949;
@@ -105,7 +105,7 @@ body.roadsafe-case-wizard-open {
   place-items: center;
   border: 1px solid var(--rs-border-strong);
   border-radius: 5px;
-  background: #0a162b;
+  background: #292929;
   color: var(--rs-blue-text);
 }
 
@@ -233,7 +233,7 @@ body.roadsafe-case-wizard-open {
   border: 1px solid var(--rs-border);
   border-radius: 6px;
   outline: none;
-  background: #050f20;
+  background: #292929;
   color: var(--rs-text);
   padding: 10px 12px;
   box-shadow: none;
@@ -270,7 +270,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-case-wizard option {
-  background: #081426;
+  background: #292929;
   color: var(--rs-text);
 }
 
@@ -299,7 +299,7 @@ body.roadsafe-case-wizard-open {
   gap: 12px;
   padding: 13px;
   border-bottom: 1px solid var(--rs-border);
-  background: #081225;
+  background: #292929;
 }
 
 .roadsafe-summary-workspace__header > div:first-child {
@@ -335,7 +335,7 @@ body.roadsafe-case-wizard-open {
   min-height: 34px;
   border: 1px solid var(--rs-border-strong);
   border-radius: 5px;
-  background: #0b1930;
+  background: #303030;
   color: #bfd0e8;
   padding: 7px 10px;
   font-size: 9px;
@@ -344,7 +344,7 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-summary-workspace__actions button:hover {
   border-color: #3f6da8;
-  background: #10213d;
+  background: #303030;
 }
 
 .roadsafe-summary-workspace__actions button.is-recording {
@@ -454,7 +454,7 @@ body.roadsafe-case-wizard-open {
   min-height: 42px;
   padding: 9px 11px;
   border-bottom: 1px solid var(--rs-border);
-  background: #081225;
+  background: #292929;
 }
 
 .roadsafe-info-card > header > span {
@@ -483,7 +483,7 @@ body.roadsafe-case-wizard-open {
   flex: 0 0 auto;
   border: 1px solid var(--rs-border-strong);
   border-radius: 4px;
-  background: #0a162b;
+  background: #292929;
   color: #8095b2;
   padding: 4px 6px;
   font-size: 7px;
@@ -750,7 +750,7 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-environment-grid > button:hover {
   border-color: #3d659b;
-  background: #0a162b;
+  background: #292929;
 }
 
 .roadsafe-environment-grid > button.is-selected {
@@ -765,7 +765,7 @@ body.roadsafe-case-wizard-open {
   place-items: center;
   border: 1px solid var(--rs-border-strong);
   border-radius: 4px;
-  background: #091326;
+  background: #292929;
   color: var(--rs-blue-text);
 }
 
@@ -896,7 +896,7 @@ body.roadsafe-case-wizard-open {
 .roadsafe-summary-card > h3 {
   margin: 0;
   border-bottom: 1px solid var(--rs-border);
-  background: #081225;
+  background: #292929;
   color: #d7e4f5;
   padding: 10px 12px;
   font-size: 10px;
@@ -1044,13 +1044,13 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-case-wizard .ui-button {
   border: 1px solid var(--rs-border-strong);
-  background: #0a162b;
+  background: #292929;
   color: #c3d2e7;
 }
 
 .roadsafe-case-wizard .ui-button:hover {
   border-color: #3e6eaf;
-  background: #10213d;
+  background: #303030;
 }
 
 .roadsafe-case-wizard .ui-button-primary {
@@ -1190,7 +1190,7 @@ body.roadsafe-case-wizard-open {
   align-items: flex-start;
   gap: 8px;
   border: 0;
-  border-bottom: 1px solid #111e36;
+  border-bottom: 1px solid #303030;
   border-radius: 0;
   background: transparent;
   color: #c7d5e8;
@@ -1203,7 +1203,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-scene-map__search-results > button:hover {
-  background: #0a162b;
+  background: #292929;
 }
 
 .roadsafe-scene-map__search-results > button > svg {

@@ -1,0 +1,3142 @@
+{
+  "mode": "apply",
+  "generatedAt": "2026-08-07T09:17:32.636Z",
+  "range": {
+    "maxRed": 36,
+    "maxGreen": 58,
+    "minBlue": 16,
+    "maxBlue": 100,
+    "minBlueOverRed": 8,
+    "minBlueOverGreen": 4
+  },
+  "filesScanned": 200,
+  "coloursScanned": 2818,
+  "filesWithDeepBlue": 23,
+  "replacements": 249,
+  "mappings": {
+    "#030713": "#202020",
+    "#030816": "#202020",
+    "#030817": "#202020",
+    "#040712": "#202020",
+    "#040A17": "#202020",
+    "#050B16": "#202020",
+    "#050B18": "#202020",
+    "#050C19": "#202020",
+    "#050C1A": "#202020",
+    "#050D1B": "#202020",
+    "#050F20": "#292929",
+    "#060B16": "#202020",
+    "#060D1A": "#202020",
+    "#060D1B": "#202020",
+    "#061021": "#292929",
+    "#070A11": "#202020",
+    "#070B12": "#202020",
+    "#070C17": "#202020",
+    "#07101C": "#202020",
+    "#07101F": "#292929",
+    "#07111F": "#292929",
+    "#071121": "#292929",
+    "#080B12": "#202020",
+    "#081121": "#292929",
+    "#081221": "#292929",
+    "#081225": "#292929",
+    "#081321": "#292929",
+    "#081326": "#292929",
+    "#081426": "#292929",
+    "#081427": "#292929",
+    "#08162A": "#292929",
+    "#08162C": "#303030",
+    "#09111F": "#292929",
+    "#091326": "#292929",
+    "#091329": "#292929",
+    "#091429": "#292929",
+    "#091527": "#292929",
+    "#091625": "#292929",
+    "#091626": "#292929",
+    "#09162B": "#292929",
+    "#09172B": "#292929",
+    "#0A162B": "#292929",
+    "#0A172A": "#292929",
+    "#0A172B": "#292929",
+    "#0A172C": "#303030",
+    "#0B1729": "#292929",
+    "#0B172B": "#292929",
+    "#0B1930": "#303030",
+    "#0B1A31": "#303030",
+    "#0D2039": "#303030",
+    "#0D203B": "#303030",
+    "#0E2038": "#303030",
+    "#0F172A": "#292929",
+    "#101C2C": "#303030",
+    "#101E35": "#303030",
+    "#101F36": "#303030",
+    "#10213D": "#303030",
+    "#10213E": "#303030",
+    "#10213F": "#303030",
+    "#10223D": "#303030",
+    "#102744": "#383838",
+    "#10294D": "#383838",
+    "#10294F": "#383838",
+    "#102B4D": "#383838",
+    "#102B50": "#383838",
+    "#102D5C": "#383838",
+    "#111827": "#292929",
+    "#111D2E": "#303030",
+    "#111E36": "#303030",
+    "#11223D": "#303030",
+    "#121A28": "#292929",
+    "#12223B": "#303030",
+    "#132541": "#383838",
+    "#14243B": "#303030",
+    "#142641": "#383838",
+    "#142643": "#383838",
+    "#142743": "#383838",
+    "#142842": "#383838",
+    "#142A46": "#383838",
+    "#152744": "#383838",
+    "#171B25": "#292929",
+    "#172B47": "#383838",
+    "#172B48": "#383838",
+    "#172B49": "#383838",
+    "#172C4A": "#383838",
+    "#172D4C": "#383838",
+    "#182946": "#383838",
+    "#182B49": "#383838",
+    "#182C49": "#383838",
+    "#182C4A": "#383838",
+    "#182D49": "#383838",
+    "#192940": "#303030",
+    "#192D49": "#383838",
+    "#1A2D49": "#383838",
+    "#1A2D4A": "#383838",
+    "#1A2E4D": "#383838",
+    "#1A2E4E": "#383838",
+    "#1A2F4C": "#383838",
+    "#1A304E": "#383838",
+    "#1A304F": "#383838",
+    "#1A3152": "#383838",
+    "#1A3154": "#383838",
+    "#1A3355": "#383838",
+    "#1B304E": "#383838",
+    "#1B3152": "#383838",
+    "#1C3152": "#383838",
+    "#1D304B": "#383838",
+    "#1D3150": "#383838",
+    "#1D3454": "#383838",
+    "#1D3558": "#383838",
+    "#1E293B": "#303030",
+    "#1E3455": "#383838",
+    "#1F2937": "#303030",
+    "#1F3658": "#383838",
+    "#201A2D": "#303030",
+    "#202A37": "#303030",
+    "#203759": "#383838",
+    "#203859": "#383838",
+    "#203A60": "#383838",
+    "#22395B": "#383838",
+    "#242C32": "#303030",
+    "#243652": "#383838",
+    "#243755": "#383838",
+    "#243A5C": "#383838",
+    "0x030916": "0x202020",
+    "0x07101A": "0x202020",
+    "0x11131B": "0x202020",
+    "0x11151D": "0x202020",
+    "0x11161B": "0x202020",
+    "0x111827": "0x292929",
+    "0x111A2D": "0x303030",
+    "0x14181D": "0x202020",
+    "0x15191D": "0x202020",
+    "0x20242A": "0x292929"
+  },
+  "changes": [
+    {
+      "file": "src/components/cases/CaseStatusBadge.tsx",
+      "offset": 505,
+      "oldValue": "#201a2d",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 32,
+        "g": 26,
+        "b": 45
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 520,
+      "oldValue": "#091326",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 19,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 2467,
+      "oldValue": "#0a162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 5006,
+      "oldValue": "#050f20",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 5,
+        "g": 15,
+        "b": 32
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 5888,
+      "oldValue": "#081426",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 20,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 6508,
+      "oldValue": "#081225",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 18,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 7213,
+      "oldValue": "#0b1930",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 11,
+        "g": 25,
+        "b": 48
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 7402,
+      "oldValue": "#10213d",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 61
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 9610,
+      "oldValue": "#081225",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 18,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 10221,
+      "oldValue": "#0a162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 15784,
+      "oldValue": "#0a162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 16124,
+      "oldValue": "#091326",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 19,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 18655,
+      "oldValue": "#081225",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 18,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 21648,
+      "oldValue": "#0a162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 21764,
+      "oldValue": "#10213d",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 61
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 24688,
+      "oldValue": "#111e36",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 30,
+        "b": 54
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/NewCaseRoadWizard.css",
+      "offset": 24963,
+      "oldValue": "#0a162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/cases/RoadLocationMap.tsx",
+      "offset": 24105,
+      "oldValue": "#0f172a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 15,
+        "g": 23,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 333,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 408,
+      "oldValue": "#050b18",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 11,
+        "b": 24
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 420,
+      "oldValue": "#030816",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 3,
+        "g": 8,
+        "b": 22
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 740,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 1734,
+      "oldValue": "#203759",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 55,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 1785,
+      "oldValue": "#091429",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 20,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 2062,
+      "oldValue": "#10213e",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 62
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 2764,
+      "oldValue": "#152744",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 21,
+        "g": 39,
+        "b": 68
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 3149,
+      "oldValue": "#102d5c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 45,
+        "b": 92
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 4178,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 4250,
+      "oldValue": "#050b18",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 11,
+        "b": 24
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 4427,
+      "oldValue": "#152744",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 21,
+        "g": 39,
+        "b": 68
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 4911,
+      "oldValue": "#203759",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 55,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 4983,
+      "oldValue": "#091429",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 20,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 5259,
+      "oldValue": "#10213e",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 62
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 6020,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 7573,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 8355,
+      "oldValue": "#1a2e4e",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 78
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 8617,
+      "oldValue": "#102d5c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 45,
+        "b": 92
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 8852,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 9257,
+      "oldValue": "#182946",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 41,
+        "b": 70
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 10092,
+      "oldValue": "#101e35",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 30,
+        "b": 53
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 10897,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 11824,
+      "oldValue": "#203759",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 55,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldPlacementPanel.css",
+      "offset": 11875,
+      "oldValue": "#091429",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 20,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/fieldPlacement/FieldSceneLivePreview.tsx",
+      "offset": 1013,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/map/JunctionAnalysisModal.tsx",
+      "offset": 19843,
+      "oldValue": "#111e36",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 30,
+        "b": 54
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/map/junctionMapLayer.ts",
+      "offset": 3692,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/map/junctionMapLayer.ts",
+      "offset": 5295,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 12233,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 16746,
+      "oldValue": "#0f172a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 15,
+        "g": 23,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 16993,
+      "oldValue": "#1e293b",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 30,
+        "g": 41,
+        "b": 59
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 17808,
+      "oldValue": "#070b12",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 11,
+        "b": 18
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 17912,
+      "oldValue": "#070b12",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 11,
+        "b": 18
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 18500,
+      "oldValue": "#202a37",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 32,
+        "g": 42,
+        "b": 55
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 19998,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 20072,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 20146,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 20221,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+      "offset": 141709,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ar/ARSceneFactory.ts",
+      "offset": 2171,
+      "oldValue": "0x111827",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ar/ARSceneFactory.ts",
+      "offset": 8373,
+      "oldValue": "0x14181d",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 20,
+        "g": 24,
+        "b": 29
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ar/ARSceneFactory.ts",
+      "offset": 9386,
+      "oldValue": "0x11131b",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 17,
+        "g": 19,
+        "b": 27
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ar/ARSceneFactory.ts",
+      "offset": 23220,
+      "oldValue": "0x111827",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 712,
+      "oldValue": "#171b25",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 23,
+        "g": 27,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 1857,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 1943,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 2223,
+      "oldValue": "#080b12",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 8,
+        "g": 11,
+        "b": 18
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 2662,
+      "oldValue": "#040712",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 4,
+        "g": 7,
+        "b": 18
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 2932,
+      "oldValue": "#070a11",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 10,
+        "b": 17
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 3044,
+      "oldValue": "#070a11",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 10,
+        "b": 17
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 3157,
+      "oldValue": "#070a11",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 10,
+        "b": 17
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/ForensicScenePreview.tsx",
+      "offset": 3268,
+      "oldValue": "#070a11",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 10,
+        "b": 17
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/participantPlacement.css",
+      "offset": 1184,
+      "oldValue": "#081426",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 20,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/participantPlacement.css",
+      "offset": 1841,
+      "oldValue": "#1d304b",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 29,
+        "g": 48,
+        "b": 75
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/participantPlacement.css",
+      "offset": 2219,
+      "oldValue": "#243652",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 36,
+        "g": 54,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/participantPlacement.css",
+      "offset": 2243,
+      "oldValue": "#111d2e",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 29,
+        "b": 46
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/Reconstruction3DViewer.tsx",
+      "offset": 2777,
+      "oldValue": "0x111827",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/Reconstruction3DViewer.tsx",
+      "offset": 10907,
+      "oldValue": "0x14181d",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 20,
+        "g": 24,
+        "b": 29
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/Reconstruction3DViewer.tsx",
+      "offset": 11564,
+      "oldValue": "0x11131b",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 17,
+        "g": 19,
+        "b": 27
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/Reconstruction3DViewer.tsx",
+      "offset": 18482,
+      "oldValue": "0x030916",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 3,
+        "g": 9,
+        "b": 22
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/Reconstruction3DViewer.tsx",
+      "offset": 24877,
+      "oldValue": "0x111827",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 1485,
+      "oldValue": "#060b16",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 6,
+        "g": 11,
+        "b": 22
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 1654,
+      "oldValue": "#243a5c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 36,
+        "g": 58,
+        "b": 92
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 2188,
+      "oldValue": "#1a3154",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 49,
+        "b": 84
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 2349,
+      "oldValue": "#081326",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 19,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 4135,
+      "oldValue": "#203a60",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 58,
+        "b": 96
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 4184,
+      "oldValue": "#0a172c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 10,
+        "g": 23,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 4731,
+      "oldValue": "#172b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 4953,
+      "oldValue": "#172c4a",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 44,
+        "b": 74
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 5279,
+      "oldValue": "#142641",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 38,
+        "b": 65
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 6720,
+      "oldValue": "#1d3558",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 29,
+        "g": 53,
+        "b": 88
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 6793,
+      "oldValue": "#060d1a",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 6,
+        "g": 13,
+        "b": 26
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 7146,
+      "oldValue": "#09111f",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 17,
+        "b": 31
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 7865,
+      "oldValue": "#050b16",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 11,
+        "b": 22
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 8772,
+      "oldValue": "#172d4c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 45,
+        "b": 76
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 8823,
+      "oldValue": "#071121",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 7,
+        "g": 17,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 9113,
+      "oldValue": "#0a172b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 23,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 9832,
+      "oldValue": "#1a3355",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 51,
+        "b": 85
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 9867,
+      "oldValue": "#081426",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 20,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 10097,
+      "oldValue": "#0d203b",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 13,
+        "g": 32,
+        "b": 59
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 10380,
+      "oldValue": "#07111f",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 7,
+        "g": 17,
+        "b": 31
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/reconstructionPlaybackFixes.css",
+      "offset": 13296,
+      "oldValue": "#10294d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 41,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/RoadSceneEnvironment.tsx",
+      "offset": 510,
+      "oldValue": "#242c32",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 36,
+        "g": 44,
+        "b": 50
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/SceneObjectRenderer.tsx",
+      "offset": 1205,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/components/reconstruction/SceneObjectRenderer.tsx",
+      "offset": 7384,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 16941,
+      "oldValue": "#091329",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 19,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 17045,
+      "oldValue": "#10213f",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 63
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 17382,
+      "oldValue": "#101e35",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 30,
+        "b": 53
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 17828,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 17900,
+      "oldValue": "#061021",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 6,
+        "g": 16,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 18117,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 18391,
+      "oldValue": "#091329",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 19,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 18550,
+      "oldValue": "#10213f",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 63
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 19560,
+      "oldValue": "#050c1a",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 12,
+        "b": 26
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 22500,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 22734,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 22784,
+      "oldValue": "#030817",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 3,
+        "g": 8,
+        "b": 23
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 23884,
+      "oldValue": "#152744",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 21,
+        "g": 39,
+        "b": 68
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 24402,
+      "oldValue": "#1a2e4e",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 78
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 24686,
+      "oldValue": "#102d5c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 45,
+        "b": 92
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 24979,
+      "oldValue": "#142643",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 38,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 25435,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 26258,
+      "oldValue": "#182b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 27348,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 27671,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 27930,
+      "oldValue": "#081225",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 18,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 27942,
+      "oldValue": "#050b18",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 11,
+        "b": 24
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 28115,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 28496,
+      "oldValue": "#182946",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 41,
+        "b": 70
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 29272,
+      "oldValue": "#203759",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 55,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 29322,
+      "oldValue": "#091429",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 20,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 29491,
+      "oldValue": "#10213e",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 62
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 30739,
+      "oldValue": "#1f3658",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 31,
+        "g": 54,
+        "b": 88
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 31178,
+      "oldValue": "#040a17",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 4,
+        "g": 10,
+        "b": 23
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 32207,
+      "oldValue": "#1e3455",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 30,
+        "g": 52,
+        "b": 85
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 32256,
+      "oldValue": "#081326",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 19,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 32502,
+      "oldValue": "#10294f",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 41,
+        "b": 79
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 33063,
+      "oldValue": "#132541",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 19,
+        "g": 37,
+        "b": 65
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 33087,
+      "oldValue": "#050b18",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 11,
+        "b": 24
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 33836,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 33860,
+      "oldValue": "#060d1b",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 6,
+        "g": 13,
+        "b": 27
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 34011,
+      "oldValue": "#12223b",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 18,
+        "g": 34,
+        "b": 59
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 34951,
+      "oldValue": "#030713",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 3,
+        "g": 7,
+        "b": 19
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 35066,
+      "oldValue": "#203859",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 56,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 35292,
+      "oldValue": "#050d1b",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 13,
+        "b": 27
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 35780,
+      "oldValue": "#101f36",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 31,
+        "b": 54
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 36137,
+      "oldValue": "#243755",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 36,
+        "g": 55,
+        "b": 85
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 36889,
+      "oldValue": "#10294f",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 41,
+        "b": 79
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 38196,
+      "oldValue": "#060d1b",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 6,
+        "g": 13,
+        "b": 27
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 38267,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 39831,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 41457,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 41522,
+      "oldValue": "#08162c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 8,
+        "g": 22,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 43735,
+      "oldValue": "#08162c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 8,
+        "g": 22,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 44527,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 45228,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 45757,
+      "oldValue": "#203759",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 32,
+        "g": 55,
+        "b": 89
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 45829,
+      "oldValue": "#091429",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 20,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 46121,
+      "oldValue": "#10213e",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 33,
+        "b": 62
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 47019,
+      "oldValue": "#192940",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 25,
+        "g": 41,
+        "b": 64
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 47054,
+      "oldValue": "#07101f",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 7,
+        "g": 16,
+        "b": 31
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 52882,
+      "oldValue": "#050c19",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 12,
+        "b": 25
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 52952,
+      "oldValue": "#081427",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 20,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 53054,
+      "oldValue": "#0a172a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 23,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 53284,
+      "oldValue": "#10223d",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 34,
+        "b": 61
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 54473,
+      "oldValue": "#08162c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 8,
+        "g": 22,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 55021,
+      "oldValue": "#14243b",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 20,
+        "g": 36,
+        "b": 59
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 55736,
+      "oldValue": "#1d304b",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 29,
+        "g": 48,
+        "b": 75
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 55760,
+      "oldValue": "#0b1729",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 11,
+        "g": 23,
+        "b": 41
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 56844,
+      "oldValue": "#1a304f",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 48,
+        "b": 79
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 57273,
+      "oldValue": "#1d3454",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 29,
+        "g": 52,
+        "b": 84
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 57323,
+      "oldValue": "#091326",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 19,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 57455,
+      "oldValue": "#101c2c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 16,
+        "g": 28,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 58348,
+      "oldValue": "#121a28",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 18,
+        "g": 26,
+        "b": 40
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 58670,
+      "oldValue": "#142a46",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 42,
+        "b": 70
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 58860,
+      "oldValue": "#142a46",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 42,
+        "b": 70
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 58897,
+      "oldValue": "#142a46",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 42,
+        "b": 70
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 59910,
+      "oldValue": "#1a304e",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 48,
+        "b": 78
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 60985,
+      "oldValue": "#182d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 61235,
+      "oldValue": "#142842",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 40,
+        "b": 66
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 62563,
+      "oldValue": "#182d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 62829,
+      "oldValue": "#142842",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 40,
+        "b": 66
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 64075,
+      "oldValue": "#1a2f4c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 47,
+        "b": 76
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 64099,
+      "oldValue": "#08162c",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 8,
+        "g": 22,
+        "b": 44
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 64628,
+      "oldValue": "#0a172b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 23,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 66120,
+      "oldValue": "#09172b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 23,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 69490,
+      "oldValue": "#0b1a31",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 11,
+        "g": 26,
+        "b": 49
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 69970,
+      "oldValue": "#1c3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 28,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 70794,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 71951,
+      "oldValue": "#08162a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 22,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 72182,
+      "oldValue": "#1a2e4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 46,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 72254,
+      "oldValue": "#061021",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 6,
+        "g": 16,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 72478,
+      "oldValue": "#142743",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 20,
+        "g": 39,
+        "b": 67
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 75157,
+      "oldValue": "#050c19",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 12,
+        "b": 25
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 75262,
+      "oldValue": "#050c19",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 5,
+        "g": 12,
+        "b": 25
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 77652,
+      "oldValue": "#182c4a",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 44,
+        "b": 74
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/index.css",
+      "offset": 77713,
+      "oldValue": "#09162b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 22,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 434,
+      "oldValue": "#1d3150",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 29,
+        "g": 49,
+        "b": 80
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 485,
+      "oldValue": "#081121",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 17,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 2149,
+      "oldValue": "#22395b",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 34,
+        "g": 57,
+        "b": 91
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 2200,
+      "oldValue": "#0b172b",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 11,
+        "g": 23,
+        "b": 43
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 2459,
+      "oldValue": "#11223d",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 34,
+        "b": 61
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 2649,
+      "oldValue": "#081221",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 18,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 3712,
+      "oldValue": "#1a2d4a",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 45,
+        "b": 74
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 3762,
+      "oldValue": "#07101f",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 7,
+        "g": 16,
+        "b": 31
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 3961,
+      "oldValue": "#1b3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 27,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 4062,
+      "oldValue": "#081426",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 20,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 6341,
+      "oldValue": "#172b49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 43,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 6392,
+      "oldValue": "#091527",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 21,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 6995,
+      "oldValue": "#1a3152",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 49,
+        "b": 82
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 7046,
+      "oldValue": "#0a172a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 10,
+        "g": 23,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 7227,
+      "oldValue": "#102b50",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 43,
+        "b": 80
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 7638,
+      "oldValue": "#182c49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 24,
+        "g": 44,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 7689,
+      "oldValue": "#081321",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 8,
+        "g": 19,
+        "b": 33
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 7817,
+      "oldValue": "#172b48",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 43,
+        "b": 72
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 8045,
+      "oldValue": "#0d2039",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 13,
+        "g": 32,
+        "b": 57
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 8582,
+      "oldValue": "#1a2d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 8790,
+      "oldValue": "#0e2038",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 14,
+        "g": 32,
+        "b": 56
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 8990,
+      "oldValue": "#192d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 25,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 9027,
+      "oldValue": "#192d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 25,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 9342,
+      "oldValue": "#091626",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 22,
+        "b": 38
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 9572,
+      "oldValue": "#172b47",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 23,
+        "g": 43,
+        "b": 71
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 9623,
+      "oldValue": "#091625",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 22,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 9795,
+      "oldValue": "#102744",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 39,
+        "b": 68
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 10703,
+      "oldValue": "#1b304e",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 27,
+        "g": 48,
+        "b": 78
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 10754,
+      "oldValue": "#091625",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 22,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 11404,
+      "oldValue": "#192d49",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 25,
+        "g": 45,
+        "b": 73
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 11454,
+      "oldValue": "#091625",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 9,
+        "g": 22,
+        "b": 37
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 11639,
+      "oldValue": "#102b4d",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 16,
+        "g": 43,
+        "b": 77
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 12323,
+      "oldValue": "#1a2f4c",
+      "newValue": "#383838",
+      "rgb": {
+        "r": 26,
+        "g": 47,
+        "b": 76
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 12347,
+      "oldValue": "#07101c",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 16,
+        "b": 28
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 14434,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 14916,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AccidentReportPage.css",
+      "offset": 15611,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/AnalyticsPage.tsx",
+      "offset": 1132,
+      "oldValue": "#070c17",
+      "newValue": "#202020",
+      "rgb": {
+        "r": 7,
+        "g": 12,
+        "b": 23
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/OfficerManagementPage.tsx",
+      "offset": 26417,
+      "oldValue": "#111e36",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 30,
+        "b": 54
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/pages/SceneMapPage.tsx",
+      "offset": 21567,
+      "oldValue": "#111e36",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 17,
+        "g": 30,
+        "b": 54
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/services/accidentReportService.ts",
+      "offset": 14467,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 1286,
+      "oldValue": "0x111827",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 7214,
+      "oldValue": "0x111a2d",
+      "newValue": "0x303030",
+      "rgb": {
+        "r": 17,
+        "g": 26,
+        "b": 45
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 11223,
+      "oldValue": "0x15191d",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 21,
+        "g": 25,
+        "b": 29
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 12060,
+      "oldValue": "0x11151d",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 17,
+        "g": 21,
+        "b": 29
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 15662,
+      "oldValue": "0x20242a",
+      "newValue": "0x292929",
+      "rgb": {
+        "r": 32,
+        "g": 36,
+        "b": 42
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 20438,
+      "oldValue": "0x07101a",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 7,
+        "g": 16,
+        "b": 26
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/services/realisticSceneAssetService.ts",
+      "offset": 24450,
+      "oldValue": "0x11161b",
+      "newValue": "0x202020",
+      "rgb": {
+        "r": 17,
+        "g": 22,
+        "b": 27
+      },
+      "kind": "js-hex"
+    },
+    {
+      "file": "src/utils/reconstructionCanvasRenderer.ts",
+      "offset": 915,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/utils/reconstructionCanvasRenderer.ts",
+      "offset": 3824,
+      "oldValue": "#0f172a",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 15,
+        "g": 23,
+        "b": 42
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/utils/reconstructionCanvasRenderer.ts",
+      "offset": 9063,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/utils/reconstructionCanvasRenderer.ts",
+      "offset": 9845,
+      "oldValue": "#1f2937",
+      "newValue": "#303030",
+      "rgb": {
+        "r": 31,
+        "g": 41,
+        "b": 55
+      },
+      "kind": "css-hex"
+    },
+    {
+      "file": "src/utils/reconstructionCanvasRenderer.ts",
+      "offset": 21729,
+      "oldValue": "#111827",
+      "newValue": "#292929",
+      "rgb": {
+        "r": 17,
+        "g": 24,
+        "b": 39
+      },
+      "kind": "css-hex"
+    }
+  ]
+}

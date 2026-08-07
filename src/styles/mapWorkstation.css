@@ -1,0 +1,144 @@
+/*
+ * RoadSafe global map workstation policy
+ * Blender-style dark maps + restrained controls.
+ */
+
+:root {
+  --roadsafe-map-bg: #202020;
+  --roadsafe-map-panel: #292929;
+  --roadsafe-map-control: #383838;
+  --roadsafe-map-control-hover: #414141;
+  --roadsafe-map-border: #171717;
+  --roadsafe-map-border-mid: #494949;
+  --roadsafe-map-text: #dedede;
+  --roadsafe-map-muted: #969696;
+  --roadsafe-map-accent: #e8872d;
+}
+
+/* MapLibre map surfaces */
+.maplibregl-map {
+  background: var(--roadsafe-map-bg) !important;
+}
+
+.maplibregl-map .maplibregl-canvas {
+  filter:
+    brightness(0.58)
+    saturate(0.62)
+    contrast(1.14) !important;
+}
+
+/* Google map / Street View surfaces */
+.roadsafe-google-map {
+  background: var(--roadsafe-map-bg) !important;
+}
+
+.roadsafe-google-map .gm-style > div:first-child {
+  filter:
+    brightness(0.6)
+    saturate(0.65)
+    contrast(1.12);
+}
+
+/*
+ * Google sometimes renders vector tiles into canvas elements nested below the
+ * primary pane. This keeps those dark as well without altering surrounding
+ * RoadSafe UI.
+ */
+.roadsafe-google-map .gm-style canvas {
+  filter:
+    brightness(0.6)
+    saturate(0.65)
+    contrast(1.12);
+}
+
+/* MapLibre controls */
+.maplibregl-ctrl-group {
+  overflow: hidden !important;
+  border: 1px solid var(--roadsafe-map-border) !important;
+  border-radius: 2px !important;
+  background: var(--roadsafe-map-panel) !important;
+  box-shadow:
+    0 4px 14px rgb(0 0 0 / 0.34) !important;
+}
+
+.maplibregl-ctrl-group button {
+  border: 0 !important;
+  border-bottom:
+    1px solid var(--roadsafe-map-border) !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141 0%,
+      #343434 100%
+    ) !important;
+}
+
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: 0 !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background:
+    var(--roadsafe-map-control-hover) !important;
+}
+
+.maplibregl-ctrl-group button:disabled {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+}
+
+.maplibregl-ctrl-group
+  .maplibregl-ctrl-icon {
+  filter:
+    invert(0.86)
+    grayscale(1)
+    brightness(1.35);
+}
+
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-scale {
+  border-color:
+    var(--roadsafe-map-border-mid) !important;
+  background:
+    rgb(41 41 41 / 0.9) !important;
+  color:
+    var(--roadsafe-map-text) !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #c6c6c6 !important;
+}
+
+.maplibregl-popup-content {
+  border: 1px solid var(--roadsafe-map-border-mid) !important;
+  border-radius: 2px !important;
+  background:
+    var(--roadsafe-map-panel) !important;
+  color:
+    var(--roadsafe-map-text) !important;
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 0.42) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color:
+    var(--roadsafe-map-panel) !important;
+  border-bottom-color:
+    var(--roadsafe-map-panel) !important;
+}
+
+.maplibregl-popup-close-button {
+  color:
+    var(--roadsafe-map-text) !important;
+}
+
+/*
+ * Selection overlays keep the RoadSafe orange selection language.
+ * This does not alter heatmap/data colours.
+ */
+.maplibregl-map:focus-within {
+  outline:
+    1px solid rgb(232 135 45 / 0.26);
+  outline-offset: -1px;
+}

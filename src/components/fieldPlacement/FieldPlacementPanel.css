@@ -13,9 +13,9 @@
   min-height: calc(100vh - 1rem);
   margin: 0 auto;
   overflow: hidden;
-  border: 1px solid #182b49;
+  border: 1px solid #383838;
   border-radius: 0.55rem;
-  background: linear-gradient(180deg, #050b18 0%, #030816 100%);
+  background: linear-gradient(180deg, #202020 0%, #202020 100%);
   color: #cfcfcf;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
 }
@@ -30,7 +30,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   min-height: 58px;
-  border-bottom: 1px solid #182b49;
+  border-bottom: 1px solid #383838;
   background: rgba(5, 11, 24, 0.97);
   padding: 0.65rem 0.8rem;
   backdrop-filter: blur(12px);
@@ -82,9 +82,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  border: 1px solid #203759;
+  border: 1px solid #383838;
   border-radius: 0.32rem;
-  background: #091429;
+  background: #292929;
   padding: 0.42rem 0.65rem;
   color: #9aabc1;
   font-size: 0.54rem;
@@ -94,7 +94,7 @@
 
 .field-mode-button:hover:not(:disabled) {
   border-color: #5c5c5c;
-  background: #10213e;
+  background: #303030;
   color: #edf5ff;
 }
 
@@ -134,7 +134,7 @@
   display: flex;
   gap: 0.25rem;
   overflow-x: auto;
-  border-bottom: 1px solid #152744;
+  border-bottom: 1px solid #383838;
   background: #292929;
   padding: 0.45rem 0.75rem;
 }
@@ -153,7 +153,7 @@
 .field-mode-tab:hover,
 .field-mode-tab.is-active {
   border-color: #315d96;
-  background: #102d5c;
+  background: #383838;
   color: #d7e8ff;
 }
 
@@ -208,15 +208,15 @@
 
 .field-mode-visual-grid > section {
   overflow: hidden !important;
-  border: 1px solid #182b49 !important;
+  border: 1px solid #383838 !important;
   border-radius: 0.5rem !important;
-  background: #050b18 !important;
+  background: #202020 !important;
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25) !important;
 }
 
 .field-mode-visual-grid > section > div:first-child {
   min-height: 48px;
-  border-color: #152744 !important;
+  border-color: #383838 !important;
   background: #383838 !important;
   padding: 0.55rem 0.65rem !important;
 }
@@ -234,9 +234,9 @@
 
 .field-mode-visual-grid > section button {
   min-height: 30px !important;
-  border-color: #203759 !important;
+  border-color: #383838 !important;
   border-radius: 0.3rem !important;
-  background: #091429 !important;
+  background: #292929 !important;
   padding: 0.36rem 0.5rem !important;
   color: #93a6c1 !important;
   font-size: 0.5rem !important;
@@ -245,7 +245,7 @@
 
 .field-mode-visual-grid > section button:hover:not(:disabled) {
   border-color: #5c5c5c !important;
-  background: #10213e !important;
+  background: #303030 !important;
   color: #edf5ff !important;
 }
 /* Legacy cool-colour compensation rule removed by Blender Color Purge V3. */
@@ -275,9 +275,9 @@
 .field-mode-metric,
 .field-mode-history-stat {
   min-width: 0;
-  border: 1px solid #142743;
+  border: 1px solid #383838;
   border-radius: 0.35rem;
-  background: #061020;
+  background: #292929;
   padding: 0.55rem;
 }
 
@@ -348,9 +348,9 @@
 .field-mode-control textarea {
   width: 100%;
   min-height: 34px;
-  border: 1px solid #1c3152;
+  border: 1px solid #383838;
   border-radius: 0.3rem;
-  background: #061020;
+  background: #292929;
   padding: 0.42rem 0.55rem;
   color: #dedede;
   font-size: 0.56rem;
@@ -385,7 +385,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  border: 1px solid #1a2e4e;
+  border: 1px solid #383838;
   border-radius: 0.32rem;
   background: #383838;
   color: #7588a4;
@@ -397,7 +397,7 @@
 .field-mode-method:hover:not(:disabled),
 .field-mode-method.is-active {
   border-color: #315d96;
-  background: #102d5c;
+  background: #383838;
   color: #d7e8ff;
 }
 
@@ -410,9 +410,9 @@
 .field-mode-calibration-item,
 .field-mode-history-card,
 .field-mode-guidance {
-  border: 1px solid #142743;
+  border: 1px solid #383838;
   border-radius: 0.35rem;
-  background: #061020;
+  background: #292929;
   padding: 0.6rem;
 }
 
@@ -430,7 +430,7 @@
   height: 3px;
   overflow: hidden;
   border-radius: 999px;
-  background: #182946;
+  background: #383838;
 }
 
 .field-mode-progress > div {
@@ -470,7 +470,7 @@
 }
 
 .field-mode-review-grid > div {
-  border-top: 1px solid #101e35;
+  border-top: 1px solid #303030;
   padding-top: 0.42rem;
 }
 
@@ -513,9 +513,9 @@
 }
 
 .field-mode-track-metrics > div {
-  border: 1px solid #142743;
+  border: 1px solid #383838;
   border-radius: 0.32rem;
-  background: #061020;
+  background: #292929;
   padding: 0.48rem;
   text-align: center;
 }
@@ -562,9 +562,9 @@
   display: inline-flex;
   min-height: 32px;
   align-items: center;
-  border: 1px solid #203759;
+  border: 1px solid #383838;
   border-radius: 0.32rem;
-  background: #091429;
+  background: #292929;
   padding: 0.42rem 0.65rem;
   color: #9aabc1;
   font-size: 0.52rem;

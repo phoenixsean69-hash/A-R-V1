@@ -43,9 +43,9 @@ export default function GoogleReconstructionBasemap({
           : { lat: -17.311182, lng: 31.336976 };
         const map = new maps.Map(containerRef.current, {
           center,
-          zoom: calibration ? 20 : 15,
+          zoom: calibration ? 17 : 15,
           minZoom: 3,
-          maxZoom: 22,
+          maxZoom: 17,
           mapTypeId: mode === "Street" ? "roadmap" : "satellite",
           mapId: getGoogleMapsRuntimeMapId(),
           heading: calibration?.rotationDegrees ?? 0,
@@ -67,7 +67,7 @@ export default function GoogleReconstructionBasemap({
                 typeof result?.zoom === "number" &&
                 mapRef.current
               ) {
-                mapRef.current.setZoom(Math.min(result.zoom, 21));
+                mapRef.current.setZoom(Math.min(result.zoom, 17));
               }
             },
           );

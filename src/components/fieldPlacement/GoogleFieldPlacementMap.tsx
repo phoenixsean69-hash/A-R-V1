@@ -317,7 +317,7 @@ export default function GoogleFieldPlacementMap({
     if (!map || !maps || coordinates.length === 0) return;
     if (coordinates.length === 1) {
       map.panTo(latLngLiteral(coordinates[0]));
-      map.setZoom(Math.max(18, map.getZoom() ?? 18));
+      map.setZoom(17);
       return;
     }
     const bounds = new maps.LatLngBounds();
@@ -340,9 +340,9 @@ export default function GoogleFieldPlacementMap({
           center: initial
             ? latLngLiteral(initial)
             : { lat: -17.311182, lng: 31.336976 },
-          zoom: initial ? 18 : 14,
+          zoom: initial ? 17 : 14,
           minZoom: 3,
-          maxZoom: 22,
+          maxZoom: 17,
           mapTypeId: MAP_TYPE_IDS[initialMapTypeRef.current],
           mapId: getGoogleMapsRuntimeMapId(),
           gestureHandling: "greedy",
@@ -379,7 +379,7 @@ export default function GoogleFieldPlacementMap({
               map.fitBounds(place.viewport as never, 48);
             } else if (place.location) {
               map.panTo({ lat: place.location.lat(), lng: place.location.lng() });
-              map.setZoom(19);
+              map.setZoom(17);
             }
             setFollowOfficer(false);
           };
@@ -561,7 +561,7 @@ export default function GoogleFieldPlacementMap({
       const nextType = mapType === "Hybrid" ? "Hybrid" : "Satellite";
       setMapType(nextType);
       map.setMapTypeId(MAP_TYPE_IDS[nextType]);
-      map.setZoom(result.zoom);
+      map.setZoom(Math.min(result.zoom, 17));
       setMaxZoomMessage(`Maximum imagery zoom: ${result.zoom}`);
     });
   };

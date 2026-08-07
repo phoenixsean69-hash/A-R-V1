@@ -587,7 +587,7 @@ export default function SceneMapPage() {
                 </div>
               </div>
             ) : (
-              <div className="divide-y divide-[#111e36]">
+              <div className="divide-y divide-[#303030]">
                 {recentAccidents.map((accident) => {
                   const junction = JunctionService.getById(accident.junctionId);
 

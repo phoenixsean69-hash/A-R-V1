@@ -124,7 +124,7 @@ function createRasterStyle(
         tiles,
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 20,
+        maxzoom: 17,
         attribution,
       },
     },
@@ -153,7 +153,7 @@ function createHybridStyle(): StyleSpecification {
         ],
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 20,
+        maxzoom: 17,
         attribution: "Imagery © Esri",
       },
       labels: {
@@ -163,7 +163,7 @@ function createHybridStyle(): StyleSpecification {
         ],
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 20,
+        maxzoom: 17,
         attribution:
           "Places and boundaries © Esri",
       },
@@ -1108,7 +1108,7 @@ const RoadLocationMap = forwardRef<
           "line-join": "round",
         },
         paint: {
-          "line-color": "#0f172a",
+          "line-color": "#292929",
           "line-width": 7,
           "line-opacity": 0.5,
         },
@@ -1408,7 +1408,7 @@ const RoadLocationMap = forwardRef<
 
       focusCoordinate(
         nextCoordinate: RoadDetectionCoordinate,
-        zoom = 18,
+        zoom = 17,
       ) {
         mapRef.current?.easeTo({
           center: [
@@ -1454,12 +1454,9 @@ const RoadLocationMap = forwardRef<
           mapModeRef.current,
         ),
         center: centre,
-        zoom:
-          coordinateRef.current
-            ? 18
-            : 6,
+        zoom: coordinateRef.current ? 17 : 6,
         minZoom: 4,
-        maxZoom: 20,
+        maxZoom: 17,
         canvasContextAttributes: {
           preserveDrawingBuffer:
             true,
@@ -1904,7 +1901,7 @@ const RoadLocationMap = forwardRef<
         result.coordinate.longitude,
         result.coordinate.latitude,
       ],
-      zoom: 18.2,
+      zoom: 17.2,
       duration: 520,
     });
   };

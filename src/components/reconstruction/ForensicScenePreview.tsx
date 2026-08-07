@@ -22,7 +22,7 @@ const COLOURS: Record<string, string> = {
   Red: "#9b3039",
   Green: "#39785b",
   Yellow: "#b18b3d",
-  Black: "#171b25",
+  Black: "#292929",
   White: "#d8dde5",
   Orange: "#a35d33",
   Purple: "#695585",
@@ -57,10 +57,10 @@ function ParticipantGlyph({
   if (twoWheeler) {
     return (
       <g transform={`translate(${position.x} ${position.y}) rotate(${rotation})`}>
-        <circle cx="-2.1" r="1.35" fill="none" stroke="#111827" strokeWidth="0.75" />
-        <circle cx="2.1" r="1.35" fill="none" stroke="#111827" strokeWidth="0.75" />
+        <circle cx="-2.1" r="1.35" fill="none" stroke="#292929" strokeWidth="0.75" />
+        <circle cx="2.1" r="1.35" fill="none" stroke="#292929" strokeWidth="0.75" />
         <path d="M-2.1 0 L-.4 -1.2 L.6 .2 L-1 .2 Z M.6 .2 L2.1 0 M-.4 -1.2 L1.4 -1.3" fill="none" stroke={colour} strokeWidth="0.7" />
-        {participant.type === "Motorcycle" && <ellipse cx=".2" cy="-.7" rx="1.1" ry=".55" fill={colour} stroke="#080b12" strokeWidth=".35" />}
+        {participant.type === "Motorcycle" && <ellipse cx=".2" cy="-.7" rx="1.1" ry=".55" fill={colour} stroke="#202020" strokeWidth=".35" />}
       </g>
     );
   }
@@ -69,12 +69,12 @@ function ParticipantGlyph({
   const width = participant.type === "Bus" || participant.type === "Truck" ? 3.1 : 2.65;
   return (
     <g transform={`translate(${position.x} ${position.y}) rotate(${rotation})`}>
-      <rect x={-length / 2} y={-width / 2} width={length} height={width} rx="0.85" fill={colour} stroke="#040712" strokeWidth="0.45" />
+      <rect x={-length / 2} y={-width / 2} width={length} height={width} rx="0.85" fill={colour} stroke="#202020" strokeWidth="0.45" />
       <rect x={-length * 0.12} y={-width * 0.36} width={length * 0.42} height={width * 0.72} rx="0.35" fill="#8295aa" opacity="0.78" />
-      <rect x={-length * 0.36} y={-width * 0.57} width={length * 0.16} height="0.42" rx="0.18" fill="#070a11" />
-      <rect x={length * 0.2} y={-width * 0.57} width={length * 0.16} height="0.42" rx="0.18" fill="#070a11" />
-      <rect x={-length * 0.36} y={width * 0.44} width={length * 0.16} height="0.42" rx="0.18" fill="#070a11" />
-      <rect x={length * 0.2} y={width * 0.44} width={length * 0.16} height="0.42" rx="0.18" fill="#070a11" />
+      <rect x={-length * 0.36} y={-width * 0.57} width={length * 0.16} height="0.42" rx="0.18" fill="#202020" />
+      <rect x={length * 0.2} y={-width * 0.57} width={length * 0.16} height="0.42" rx="0.18" fill="#202020" />
+      <rect x={-length * 0.36} y={width * 0.44} width={length * 0.16} height="0.42" rx="0.18" fill="#202020" />
+      <rect x={length * 0.2} y={width * 0.44} width={length * 0.16} height="0.42" rx="0.18" fill="#202020" />
     </g>
   );
 }

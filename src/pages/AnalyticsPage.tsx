@@ -48,7 +48,7 @@ const commonPlugins = {
     },
   },
   tooltip: {
-    backgroundColor: "#070c17",
+    backgroundColor: "#202020",
     borderColor: "#263958",
     borderWidth: 1,
     titleColor: "#e5edf8",

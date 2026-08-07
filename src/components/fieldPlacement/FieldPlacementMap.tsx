@@ -143,7 +143,7 @@ export default function FieldPlacementMap({
     if (coordinates.length === 1) {
       map.easeTo({
         center: [coordinates[0].longitude, coordinates[0].latitude],
-        zoom: Math.max(18, map.getZoom()),
+        zoom: Math.min(17, Math.max(16, map.getZoom())),
         duration: 450,
       });
       return;
@@ -159,7 +159,7 @@ export default function FieldPlacementMap({
     );
     map.fitBounds(bounds, {
       padding: 56,
-      maxZoom: 19.5,
+      maxZoom: 17,
       duration: 500,
     });
   }, []);
@@ -174,8 +174,8 @@ export default function FieldPlacementMap({
       center: initial
         ? [initial.longitude, initial.latitude]
         : [31.336976, -17.311182],
-      zoom: initial ? 18 : 14,
-      maxZoom: 21,
+      zoom: initial ? 17 : 14,
+      maxZoom: 17,
     });
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");

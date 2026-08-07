@@ -9,7 +9,7 @@ const STATUS_CLASSES: Record<AccidentCaseStatus, string> = {
   "Under Investigation": "border-[#66552f] bg-[#282111] text-[#d8bd78]",
   "Reconstruction Complete": "border-[#494949] bg-[#303030] text-[#c4c4c4]",
   Closed: "border-[#494949] bg-[#303030] text-slate-400",
-  Archived: "border-[#4a415e] bg-[#201a2d] text-[#b8a7d3]",
+  Archived: "border-[#4a415e] bg-[#303030] text-[#b8a7d3]",
 };
 
 export default function CaseStatusBadge({ status }: CaseStatusBadgeProps) {

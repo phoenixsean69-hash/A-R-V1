@@ -85,7 +85,7 @@ interface SelectionFeatureCollection {
   }>;
 }
 
-const MAX_ALLOWED_ZOOM = 18;
+const MAX_ALLOWED_ZOOM = 17;
 const MIN_ALLOWED_ZOOM = 5;
 const INITIAL_ZOOM = 15;
 
@@ -124,7 +124,7 @@ function createHybridStyle():
 
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 19,
+        maxzoom: 17,
 
         attribution:
           "Tiles © Esri",
@@ -139,7 +139,7 @@ function createHybridStyle():
 
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 19,
+        maxzoom: 17,
 
         attribution:
           "Transportation © Esri",
@@ -154,7 +154,7 @@ function createHybridStyle():
 
         tileSize: 256,
         minzoom: 0,
-        maxzoom: 19,
+        maxzoom: 17,
 
         attribution:
           "Places and boundaries © Esri",

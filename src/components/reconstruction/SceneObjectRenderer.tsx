@@ -40,7 +40,7 @@ function ObjectShape({ object }: { object: ReconstructionSceneObject }) {
           <polyline
             points="2,14 15,10 23,20 35,8 44,17 55,6 68,14"
             fill="none"
-            stroke="#111827"
+            stroke="#292929"
             strokeWidth="4"
             strokeLinecap="round"
           />
@@ -213,7 +213,7 @@ function ObjectShape({ object }: { object: ReconstructionSceneObject }) {
 
 function getTraceStroke(object: ReconstructionSceneObject): string {
   if (object.type === "Road Crack") {
-    return "#111827";
+    return "#292929";
   }
 
   return "rgba(5, 5, 5, 0.82)";

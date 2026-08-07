@@ -14,7 +14,7 @@ function clamp(value: number, minimum: number, maximum: number): number {
 }
 
 function roadTexture(settings: RoadSceneSettings): string {
-  const base = settings.roadSurface === "Wet" ? "#242c32" : "#30343a";
+  const base = settings.roadSurface === "Wet" ? "#303030" : "#30343a";
   const highlight = settings.roadSurface === "Wet" ? "rgba(165,190,205,.12)" : "rgba(255,255,255,.025)";
   return [
     `linear-gradient(115deg, transparent 0 49%, ${highlight} 50%, transparent 51%)`,

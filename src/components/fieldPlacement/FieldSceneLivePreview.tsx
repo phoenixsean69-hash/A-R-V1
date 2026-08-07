@@ -27,7 +27,7 @@ const COLOURS: Record<string, string> = {
   Red: "#dc2626",
   Green: "#16a34a",
   Yellow: "#eab308",
-  Black: "#111827",
+  Black: "#292929",
   White: "#f8fafc",
   Orange: "#ea580c",
   Purple: "#9333ea",

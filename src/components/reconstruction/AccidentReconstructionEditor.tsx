@@ -279,6 +279,9 @@ const HUMAN_TYPES: ReconstructionVehicleType[] = [
 
 const MAX_TRACE_POINTS = 250;
 const MAX_PLAYBACK_FRAME_DELTA_SECONDS = 0.05;
+const MIN_SCENE_ZOOM = 0.92;
+const MAX_SCENE_ZOOM = 3;
+const SCENE_ZOOM_STEP = 0.1;
 
 type SaveMessageType = "success" | "error" | "info";
 
@@ -504,7 +507,7 @@ function getParticipantColour(colour: ReconstructionVehicleColour): string {
     case "Yellow":
       return "#eab308";
     case "Black":
-      return "#111827";
+      return "#292929";
     case "White":
       return "#f9fafb";
     case "Orange":
@@ -671,9 +674,9 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
           <path d="M10 16 C10 13 22 13 22 16 L24 30 C22 34 10 34 8 30 Z" fill={colour} stroke="#e2e8f0" strokeWidth="1.2" />
           <path d="M9 19 L3.8 31 M23 19 L28.2 31" stroke="#b97850" strokeWidth="3.2" strokeLinecap="round" />
           <path d="M12.5 32 L10 45 M19.5 32 L22 45" stroke="#273244" strokeWidth="4.2" strokeLinecap="round" />
-          <path d="M7.6 45 H12.2 M19.8 45 H24.4" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+          <path d="M7.6 45 H12.2 M19.8 45 H24.4" stroke="#292929" strokeWidth="3" strokeLinecap="round" />
           {participant.type === "Officer" && <path d="M9 18 L23 18" stroke="#cfcfcf" strokeWidth="2.2" />}
-          {participant.type === "Officer" && <path d="M10 5 Q16 0 22 5 L22 8 H10 Z" fill="#1e293b" stroke="#94a3b8" strokeWidth="1" />}
+          {participant.type === "Officer" && <path d="M10 5 Q16 0 22 5 L22 8 H10 Z" fill="#303030" stroke="#94a3b8" strokeWidth="1" />}
           {participant.type === "Witness" && <rect x="22" y="20" width="4" height="7" rx="1" fill="#dbeafe" stroke="#64748b" />}
         </svg>
         {participant.injured && <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border border-[#fda4af] bg-[#7f1d2d] text-[8px] font-black text-white">!</span>}
@@ -687,8 +690,8 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
     return (
       <div className={`relative ${motorcycle ? "h-8 w-14" : "h-8 w-12"} ${glow}`}>
         <svg viewBox="0 0 56 32" className="h-full w-full overflow-visible" aria-hidden="true">
-          <ellipse cx="10" cy="23" rx="8" ry="6.5" fill="#070b12" stroke="#d9e2ec" strokeWidth="2.2" />
-          <ellipse cx="46" cy="23" rx="8" ry="6.5" fill="#070b12" stroke="#d9e2ec" strokeWidth="2.2" />
+          <ellipse cx="10" cy="23" rx="8" ry="6.5" fill="#202020" stroke="#d9e2ec" strokeWidth="2.2" />
+          <ellipse cx="46" cy="23" rx="8" ry="6.5" fill="#202020" stroke="#d9e2ec" strokeWidth="2.2" />
           <circle cx="10" cy="23" r="2" fill="#94a3b8" />
           <circle cx="46" cy="23" r="2" fill="#94a3b8" />
           {motorcycle ? (
@@ -696,7 +699,7 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
               <path d="M12 21 L22 11 L38 12 L45 21 L29 22 Z" fill={colour} stroke="#f1f5f9" strokeWidth="1.2" />
               <ellipse cx="29" cy="12" rx="8" ry="5" fill={colour} stroke="#dbeafe" strokeWidth="1" />
               <path d="M34 9 L42 5 L47 7" stroke="#aab7c8" strokeWidth="2" strokeLinecap="round" />
-              <rect x="19" y="7" width="10" height="4" rx="2" fill="#202a37" />
+              <rect x="19" y="7" width="10" height="4" rx="2" fill="#303030" />
               <path d="M22 22 L18 28" stroke="#aab7c8" strokeWidth="2" />
               <circle cx="47" cy="8" r="2.5" fill="#fff7cf" stroke="#cfcfcf" />
             </>
@@ -724,10 +727,10 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
     <div className={`relative ${glow}`} style={{ width, height }}>
       <svg viewBox="0 0 100 52" className="h-full w-full overflow-visible" aria-hidden="true">
         <rect x="7" y="4" width="86" height="44" rx={participant.type === "Bus" ? 8 : 14} fill={colour} stroke={bodyStroke} strokeWidth="2" />
-        <rect x="2" y="9" width="8" height="11" rx="2" fill="#111827" />
-        <rect x="2" y="32" width="8" height="11" rx="2" fill="#111827" />
-        <rect x="90" y="9" width="8" height="11" rx="2" fill="#111827" />
-        <rect x="90" y="32" width="8" height="11" rx="2" fill="#111827" />
+        <rect x="2" y="9" width="8" height="11" rx="2" fill="#292929" />
+        <rect x="2" y="32" width="8" height="11" rx="2" fill="#292929" />
+        <rect x="90" y="9" width="8" height="11" rx="2" fill="#292929" />
+        <rect x="90" y="32" width="8" height="11" rx="2" fill="#292929" />
         {participant.type === "Truck" ? (
           <>
             <rect x="12" y="8" width="51" height="36" rx="5" fill="#66717f" stroke="#cfcfcf" />
@@ -1009,7 +1012,7 @@ export default function AccidentReconstructionEditor({
   });
   const [activeInvestigationDetail, setActiveInvestigationDetail] =
     useState<InvestigationDetailView>(null);
-  const [sceneView, setSceneView] = useState({ zoom: 0.92, panX: 0, panY: 0 });
+  const [sceneView, setSceneView] = useState({ zoom: MIN_SCENE_ZOOM, panX: 0, panY: 0 });
   const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>(reconstruction.fieldCalibration ? "Satellite" : "Diagram");
   const [routeDrawingParticipantId, setRouteDrawingParticipantId] = useState<string | null>(null);
   const [historyAvailability, setHistoryAvailability] = useState({
@@ -1067,8 +1070,23 @@ export default function AccidentReconstructionEditor({
       if (!rectangle) return;
 
       setSceneView((view) => {
-        const nextZoom = clamp(view.zoom + zoomDelta, 0.4, 3);
-        if (nextZoom === view.zoom) return view;
+        const nextZoom = clamp(
+          view.zoom + zoomDelta,
+          MIN_SCENE_ZOOM,
+          MAX_SCENE_ZOOM,
+        );
+
+        if (nextZoom === view.zoom) {
+          return view;
+        }
+
+        if (nextZoom <= MIN_SCENE_ZOOM + 0.0001) {
+          return {
+            zoom: MIN_SCENE_ZOOM,
+            panX: 0,
+            panY: 0,
+          };
+        }
 
         const pointerX = clientX - rectangle.left - rectangle.width / 2;
         const pointerY = clientY - rectangle.top - rectangle.height / 2;
@@ -2167,11 +2185,24 @@ export default function AccidentReconstructionEditor({
       }
 
       const nextZoom = clamp(
-        gesture.startZoom + (gesture.startClientY - event.clientY) / 220,
-        0.4,
-        3,
+        gesture.startZoom +
+          (gesture.startClientY - event.clientY) / 220,
+        MIN_SCENE_ZOOM,
+        MAX_SCENE_ZOOM,
       );
-      setSceneView((view) => ({ ...view, zoom: nextZoom }));
+
+      setSceneView((view) =>
+        nextZoom <= MIN_SCENE_ZOOM + 0.0001
+          ? {
+              zoom: MIN_SCENE_ZOOM,
+              panX: 0,
+              panY: 0,
+            }
+          : {
+              ...view,
+              zoom: nextZoom,
+            },
+      );
     },
     [updatePathPoint],
   );
@@ -3831,7 +3862,8 @@ export default function AccidentReconstructionEditor({
                       key={mode}
                       type="button"
                       onClick={() => setBasemapMode(mode)}
-                      className={`rounded px-2.5 py-1.5 text-[9px] font-bold ${basemapMode === mode ? "bg-[#303030] text-white" : "text-slate-500 hover:bg-[#303030] hover:text-slate-200"}`}
+                      aria-pressed={basemapMode === mode}
+                      className={`relative rounded-sm border-b-2 px-3 py-1.5 text-[9px] font-bold transition-colors ${basemapMode === mode ? "border-[#E8872D] bg-[#383838] text-white" : "border-transparent bg-[#292929] text-[#B8B8B8] hover:bg-[#383838] hover:text-white"}`}
                     >
                       {mode}
                     </button>
@@ -3847,16 +3879,16 @@ export default function AccidentReconstructionEditor({
                 >
                   {routeDrawingParticipantId ? "Cancel Route" : "Draw Route"}
                 </button>
-                <span className="rounded-full bg-green-100 px-2 py-1 font-bold text-green-700">
+                <span className=" bg-green-100 px-2 py-1 font-bold text-green-700">
                   Start
                 </span>
-                <span className="rounded-full bg-amber-100 px-2 py-1 font-bold text-amber-700">
+                <span className=" bg-amber-100 px-2 py-1 font-bold text-amber-700">
                   Brake
                 </span>
-                <span className="rounded-full bg-[#303030] px-2 py-1 font-bold text-[#c4c4c4]">
+                <span className=" bg-[#303030] px-2 py-1 font-bold text-[#c4c4c4]">
                   Turn / Swerve
                 </span>
-                <span className="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
+                <span className=" bg-red-100 px-2 py-1 font-bold text-red-700">
                   Impact
                 </span>
               </div>
@@ -3914,11 +3946,49 @@ export default function AccidentReconstructionEditor({
               <div data-scene-interactive="true" className="reconstruction-workspace__map-controls absolute right-3 top-3 z-[90] grid grid-cols-3 gap-1 rounded-xl bg-slate-950/80 p-2 text-white shadow-xl backdrop-blur" aria-label="2D map navigation controls">
                 <span />
                 <button type="button" title="Pan map north" aria-label="Pan map north" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY + 40 }))} className="rounded bg-white/15 p-2 font-black">↑</button>
-                <button type="button" title="Zoom map in" aria-label="Zoom map in" onClick={() => setSceneView((view) => ({ ...view, zoom: Math.min(3, view.zoom + 0.1) }))} className="rounded bg-white/15 p-2 font-black">+</button>
+                <button type="button" title="Zoom map in" aria-label="Zoom map in" onClick={() => setSceneView((view) => ({ ...view, zoom: Math.min(MAX_SCENE_ZOOM, view.zoom + SCENE_ZOOM_STEP) }))} className="rounded bg-white/15 p-2 font-black">+</button>
                 <button type="button" title="Pan map west" aria-label="Pan map west" onClick={() => setSceneView((view) => ({ ...view, panX: view.panX + 40 }))} className="rounded bg-white/15 p-2 font-black">←</button>
-                <button type="button" title="Fit the complete map" aria-label="Fit the complete map" onClick={() => setSceneView({ zoom: 0.92, panX: 0, panY: 0 })} className="rounded bg-white/15 p-2 text-[9px] font-black">FIT</button>
+                <button type="button" title="Fit the complete map" aria-label="Fit the complete map" onClick={() => setSceneView({ zoom: MIN_SCENE_ZOOM, panX: 0, panY: 0 })} className="rounded bg-white/15 p-2 text-[9px] font-black">FIT</button>
                 <button type="button" title="Pan map east" aria-label="Pan map east" onClick={() => setSceneView((view) => ({ ...view, panX: view.panX - 40 }))} className="rounded bg-white/15 p-2 font-black">→</button>
-                <button type="button" title="Zoom map out" aria-label="Zoom map out" onClick={() => setSceneView((view) => ({ ...view, zoom: Math.max(0.4, view.zoom - 0.1) }))} className="rounded bg-white/15 p-2 font-black">−</button>
+                <button
+                  type="button"
+                  title={
+                    sceneView.zoom <= MIN_SCENE_ZOOM + 0.0001
+                      ? "Selected workspace is already fully fitted"
+                      : "Zoom map out"
+                  }
+                  aria-label="Zoom map out"
+                  disabled={
+                    sceneView.zoom <= MIN_SCENE_ZOOM + 0.0001
+                  }
+                  onClick={() =>
+                    setSceneView((view) => {
+                      const nextZoom = Math.max(
+                        MIN_SCENE_ZOOM,
+                        view.zoom - SCENE_ZOOM_STEP,
+                      );
+
+                      if (
+                        nextZoom <=
+                        MIN_SCENE_ZOOM + 0.0001
+                      ) {
+                        return {
+                          zoom: MIN_SCENE_ZOOM,
+                          panX: 0,
+                          panY: 0,
+                        };
+                      }
+
+                      return {
+                        ...view,
+                        zoom: nextZoom,
+                      };
+                    })
+                  }
+                  className="rounded bg-white/15 p-2 font-black"
+                >
+                  −
+                </button>
                 <button type="button" title="Pan map south" aria-label="Pan map south" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY - 40 }))} className="rounded bg-white/15 p-2 font-black">↓</button>
                 <span className="self-center text-center text-[9px] font-black" title="Current map zoom">{Math.round(sceneView.zoom * 100)}%</span>
               </div>
@@ -4154,7 +4224,7 @@ export default function AccidentReconstructionEditor({
                         <path
                           d={skidPath}
                           fill="none"
-                          stroke="#111827"
+                          stroke="#292929"
                           strokeWidth="1.15"
                           strokeLinecap="round"
                           opacity="0.72"

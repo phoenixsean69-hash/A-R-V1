@@ -20,6 +20,7 @@ const SATELLITE_STYLE: StyleSpecification = {
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
+      maxzoom: 17,
       attribution: "Tiles © Esri",
     },
   },
@@ -45,9 +46,10 @@ export default function ReconstructionBasemap({
         ? "https://tiles.openfreemap.org/styles/liberty"
         : SATELLITE_STYLE,
       center,
-      zoom: calibration ? 19 : 15,
+      zoom: calibration ? 17 : 15,
       bearing: calibration?.rotationDegrees ?? 0,
       pitch: 0,
+      maxZoom: 17,
       interactive: false,
       attributionControl: false,
     });

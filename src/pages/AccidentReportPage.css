@@ -17,9 +17,9 @@
   width: min(100%, 30rem);
   flex-direction: column;
   align-items: center;
-  border: 1px solid #1d3150;
+  border: 1px solid #383838;
   border-radius: 0.85rem;
-  background: #081121;
+  background: #292929;
   padding: 2.4rem;
   text-align: center;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
@@ -102,9 +102,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.42rem;
-  border: 1px solid #22395b;
+  border: 1px solid #383838;
   border-radius: 0.48rem;
-  background: #0b172b;
+  background: #292929;
   padding: 0.5rem 0.72rem;
   color: #afc1d9;
   font-size: 0.66rem;
@@ -114,7 +114,7 @@
 
 .report-toolbar-button:hover {
   border-color: #37679f;
-  background: #11223d;
+  background: #303030;
   color: #f2f7ff;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .report-toolbar-button--quiet {
-  background: #081221;
+  background: #292929;
 }
 
 .report-incomplete {
@@ -181,9 +181,9 @@
 
 .report-document {
   overflow: hidden;
-  border: 1px solid #1a2d4a;
+  border: 1px solid #383838;
   border-radius: 0.9rem;
-  background: #07101f;
+  background: #292929;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
 }
 
@@ -191,10 +191,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.2rem;
-  border-bottom: 1px solid #1b3152;
+  border-bottom: 1px solid #383838;
   background:
     linear-gradient(135deg, rgba(26, 67, 126, 0.26), transparent 54%),
-    #081426;
+    #292929;
   padding: 1.5rem;
 }
 
@@ -315,9 +315,9 @@
 
 .report-value {
   min-width: 0;
-  border: 1px solid #172b49;
+  border: 1px solid #383838;
   border-radius: 0.55rem;
-  background: #091527;
+  background: #292929;
   padding: 0.68rem;
 }
 
@@ -350,9 +350,9 @@
   display: flex;
   align-items: center;
   gap: 0.58rem;
-  border: 1px solid #1a3152;
+  border: 1px solid #383838;
   border-radius: 0.55rem;
-  background: #0a172a;
+  background: #292929;
   padding: 0.62rem;
 }
 
@@ -362,7 +362,7 @@
   height: 1.9rem;
   place-items: center;
   border-radius: 0.42rem;
-  background: #102b50;
+  background: #383838;
   color: #78aef5;
 }
 
@@ -387,16 +387,16 @@
 .report-section {
   margin: 1rem 1.5rem 0;
   break-inside: avoid;
-  border: 1px solid #182c49;
+  border: 1px solid #383838;
   border-radius: 0.68rem;
-  background: #081321;
+  background: #292929;
 }
 
 .report-section__header {
   display: flex;
   align-items: center;
   gap: 0.52rem;
-  border-bottom: 1px solid #172b48;
+  border-bottom: 1px solid #383838;
   padding: 0.72rem 0.82rem;
 }
 
@@ -407,7 +407,7 @@
   place-items: center;
   border: 1px solid #27476f;
   border-radius: 0.38rem;
-  background: #0d2039;
+  background: #303030;
   color: #78aef5;
 }
 
@@ -442,7 +442,7 @@
 
 .report-table-wrap {
   overflow-x: auto;
-  border: 1px solid #1a2d49;
+  border: 1px solid #383838;
   border-radius: 0.5rem;
 }
 
@@ -455,7 +455,7 @@
 }
 
 .report-table th {
-  background: #0e2038;
+  background: #303030;
   color: #7892b4;
   font-size: 0.51rem;
   font-weight: 850;
@@ -465,8 +465,8 @@
 
 .report-table th,
 .report-table td {
-  border-right: 1px solid #192d49;
-  border-bottom: 1px solid #192d49;
+  border-right: 1px solid #383838;
+  border-bottom: 1px solid #383838;
   padding: 0.62rem;
   vertical-align: top;
 }
@@ -485,7 +485,7 @@
 }
 
 .report-table tbody tr:nth-child(even) td {
-  background: #091626;
+  background: #292929;
 }
 
 .report-record-list {
@@ -498,9 +498,9 @@
   grid-template-columns: 1.8rem minmax(0, 1fr);
   gap: 0.58rem;
   align-items: start;
-  border: 1px solid #172b47;
+  border: 1px solid #383838;
   border-radius: 0.48rem;
-  background: #091625;
+  background: #292929;
   padding: 0.58rem;
 }
 
@@ -509,7 +509,7 @@
   height: 1.45rem;
   place-items: center;
   border-radius: 0.32rem;
-  background: #102744;
+  background: #383838;
   color: #79a8e8;
   font-size: 0.49rem;
   font-weight: 900;
@@ -558,9 +558,9 @@
 
 .report-photo-card {
   overflow: hidden;
-  border: 1px solid #1b304e;
+  border: 1px solid #383838;
   border-radius: 0.55rem;
-  background: #091625;
+  background: #292929;
 }
 
 .report-photo-card img {
@@ -597,9 +597,9 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  border: 1px solid #192d49;
+  border: 1px solid #383838;
   border-radius: 0.5rem;
-  background: #091625;
+  background: #292929;
   padding: 0.62rem;
 }
 
@@ -609,7 +609,7 @@
   height: 1.9rem;
   place-items: center;
   border-radius: 0.4rem;
-  background: #102b4d;
+  background: #383838;
   color: #7baef1;
 }
 
@@ -646,8 +646,8 @@
   justify-content: space-between;
   gap: 1rem;
   margin-top: 1rem;
-  border-top: 1px solid #1a2f4c;
-  background: #07101c;
+  border-top: 1px solid #383838;
+  background: #202020;
   padding: 1rem 1.5rem;
 }
 
@@ -766,7 +766,7 @@
   .accident-report-screen {
     min-height: auto;
     background: #fff !important;
-    color: #111827 !important;
+    color: #292929 !important;
     padding: 0 !important;
   }
 
@@ -789,7 +789,7 @@
   .report-footage-item,
   .report-audit-card {
     background: #fff !important;
-    color: #111827 !important;
+    color: #292929 !important;
     box-shadow: none;
   }
 
@@ -818,7 +818,7 @@
   .report-document__footer strong,
   .report-table td,
   .report-audit-card strong {
-    color: #111827 !important;
+    color: #292929 !important;
   }
 
   .report-document__brand small,
