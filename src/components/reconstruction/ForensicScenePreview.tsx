@@ -48,7 +48,7 @@ function ParticipantGlyph({
   if (human) {
     return (
       <g transform={`translate(${position.x} ${position.y}) rotate(${rotation})`}>
-        <circle cy="-1.7" r="0.9" fill="#c28b67" stroke="#050914" strokeWidth="0.35" />
+        <circle cy="-1.7" r="0.9" fill="#c28b67" stroke="#202020" strokeWidth="0.35" />
         <path d="M0 -.7 L0 2.4 M0 .3 L-1.4 1.4 M0 .3 L1.4 1.4 M0 2.4 L-1.1 4 M0 2.4 L1.1 4" stroke={colour} strokeWidth="1.15" strokeLinecap="round" />
       </g>
     );
@@ -193,13 +193,13 @@ export default function ForensicScenePreview({
       })}
       {evidence && (
         <g transform={`translate(${evidence.position.x} ${evidence.position.y})`}>
-          <circle r="3.3" fill="#050914" stroke="#79a9f2" strokeWidth="0.65" />
+          <circle r="3.3" fill="#202020" stroke="#79a9f2" strokeWidth="0.65" />
           <text y="1.05" textAnchor="middle" fontSize="2.8" fontWeight="700" fill="#dceaff">
             E{evidence.evidenceNumber}
           </text>
         </g>
       )}
-      <rect x="1.5" y="92.5" width="31" height="5.5" rx="1" fill="#050914" fillOpacity="0.82" stroke="#263650" strokeWidth="0.35" />
+      <rect x="1.5" y="92.5" width="31" height="5.5" rx="1" fill="#202020" fillOpacity="0.82" stroke="#263650" strokeWidth="0.35" />
       <text x="3.2" y="96" fontSize="2.3" fill="#aeb9c8">
         {sceneEnvironmentLabel(reconstruction.scene)}
       </text>

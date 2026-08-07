@@ -323,7 +323,7 @@
   .reconstruction-workspace__canvas
   > div:first-child
   .flex.rounded-md
-  button[class*="bg-[#173c78]"] {
+  button[class*="bg-[#39332f]"] {
   border-color: var(--rs-2d-active) !important;
   background: var(--rs-2d-active) !important;
   color: #fff !important;
@@ -2023,11 +2023,11 @@
 .reconstruction-workspace--2d
   [class*="bg-blue-"],
 .reconstruction-workspace--2d
-  [class*="bg-[#173c78]"],
+  [class*="bg-[#39332f]"],
 .roadsafe-workspace-context-slot
   [class*="bg-blue-"],
 .roadsafe-workspace-context-slot
-  [class*="bg-[#173c78]"] {
+  [class*="bg-[#39332f]"] {
   background: #3b3b3b !important;
 }
 

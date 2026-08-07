@@ -506,7 +506,7 @@ export default function Dashboard() {
                         </span>
 
                         <div
-                          className="w-2 rounded-t-sm bg-[#80ACFF]"
+                          className="w-2 rounded-t-sm bg-[#e8872d]"
                           style={{
                             height: `${height}px`,
                           }}
@@ -557,7 +557,7 @@ export default function Dashboard() {
                       y1="36"
                       x2="96"
                       y2="36"
-                      stroke="#80ACFF"
+                      stroke="#e8872d"
                       strokeWidth="0.8"
                     />
                     <line
@@ -580,13 +580,13 @@ export default function Dashboard() {
                     />
                     <path
                       d={analyticsAreaPath}
-                      fill="#80ACFF"
+                      fill="#e8872d"
                       opacity="0.16"
                     />
                     <path
                       d={analyticsLinePath}
                       fill="none"
-                      stroke="#80ACFF"
+                      stroke="#e8872d"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -597,7 +597,7 @@ export default function Dashboard() {
                           cx={point.x}
                           cy={point.y}
                           r="1.4"
-                          fill="#80ACFF"
+                          fill="#e8872d"
                         />
                       </g>
                     ))}
@@ -870,7 +870,7 @@ export default function Dashboard() {
                     key={participant.id}
                     className="flex items-center gap-3 rounded-md border border-[#494949] bg-[#303030] p-3"
                   >
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[#c4c4c4]">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#e8872d] bg-[#303030] text-[#c4c4c4]">
                       <ParticipantIcon
                         type={participant.type}
                       />
@@ -946,7 +946,7 @@ export default function Dashboard() {
                   key={item.id}
                   className="flex items-center gap-3 py-3"
                 >
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[9px] font-semibold text-[#c4c4c4]">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#e8872d] bg-[#303030] text-[9px] font-semibold text-[#c4c4c4]">
                     E{item.evidenceNumber}
                   </div>
 

@@ -49,7 +49,7 @@ function formatRecordedAt(value: string): string {
 }
 
 const compactActionClass =
-  "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[8px] font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[#315d9d]/50";
+  "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[8px] font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[#e8872d]/50";
 
 export default function CaseFootagePanel({
   accidentCase,
@@ -182,7 +182,7 @@ export default function CaseFootagePanel({
         <div
           className={
             compact
-              ? "max-h-[510px] space-y-2 overflow-y-auto overscroll-contain p-3 [scrollbar-color:#223656_#070d1a] [scrollbar-width:thin]"
+              ? "max-h-[510px] space-y-2 overflow-y-auto overscroll-contain p-3 [scrollbar-color:#555555_#202020] [scrollbar-width:thin]"
               : "grid min-w-0 gap-3 p-4 md:grid-cols-2"
           }
         >

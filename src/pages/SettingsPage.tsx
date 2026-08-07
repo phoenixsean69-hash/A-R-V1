@@ -120,7 +120,7 @@ export default function SettingsPage() {
                   defaultChecked={
                     index !== 1
                   }
-                  className="h-4 w-4 accent-[#80ACFF]"
+                  className="h-4 w-4 accent-[#e8872d]"
                 />
               </label>
             ),

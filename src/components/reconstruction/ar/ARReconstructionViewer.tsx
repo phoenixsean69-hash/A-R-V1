@@ -1709,7 +1709,7 @@ export default function ARReconstructionViewer({
 
       scene.background =
         new THREE.Color(
-          0x07101d,
+          0x202020,
         );
 
       basePlacementRef.current =

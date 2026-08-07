@@ -1,0 +1,2176 @@
+:root {
+  color-scheme: dark;
+
+  --js-shell: #1b1b1b;
+  --js-sidebar: #242424;
+  --js-workspace: #303030;
+  --js-inspector: #292929;
+  --js-panel: #303030;
+  --js-panel-raised: #3b3b3b;
+  --js-panel-hover: #474747;
+
+  --js-border-subtle: #171717;
+  --js-border-default: #4a4a4a;
+  --js-border-strong: #5d5d5d;
+
+  --js-blue-muted: #e8872d;
+  --js-blue-active: #e8872d;
+  --js-blue-selected: #383838;
+  --js-blue-soft-bg: #303030;
+
+  --js-text-primary: #dedede;
+  --js-text-secondary: #c2c2c2;
+  --js-text-muted: #8e8e8e;
+  --js-text-disabled: #666666;
+
+  --js-red-muted: #986060;
+  --js-red-bg: #50383b;
+  --js-amber-muted: #9a825c;
+  --js-amber-bg: #51483a;
+  --js-green-muted: #62806f;
+  --js-green-bg: #3b4f47;
+  --js-info-muted: #657f91;
+
+  --js-navigation-width: 220px;
+  --js-navigation-collapsed-width: 46px;
+  --js-inspector-width: 312px;
+  --js-header-height: 42px;
+  --js-radius-sm: 2px;
+  --js-radius-md: 3px;
+  --js-radius-lg: 4px;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--js-shell) !important;
+}
+
+body {
+  margin: 0;
+  color: var(--js-text-primary);
+  background: var(--js-shell) !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.roadsafe-workstation {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns:
+    var(--js-navigation-width)
+    minmax(0, 1fr)
+    0;
+  background: var(--js-shell);
+  color: var(--js-text-primary);
+  transition: grid-template-columns 160ms ease;
+}
+
+.roadsafe-workstation.is-navigation-collapsed {
+  grid-template-columns:
+    var(--js-navigation-collapsed-width)
+    minmax(0, 1fr)
+    0;
+}
+
+.roadsafe-workstation.is-inspector-open {
+  grid-template-columns:
+    var(--js-navigation-width)
+    minmax(0, 1fr)
+    var(--js-inspector-width);
+}
+
+.roadsafe-workstation.is-navigation-collapsed.is-inspector-open {
+  grid-template-columns:
+    var(--js-navigation-collapsed-width)
+    minmax(0, 1fr)
+    var(--js-inspector-width);
+}
+
+.roadsafe-workstation.is-editor-route,
+.roadsafe-workstation.is-navigation-collapsed.is-editor-route {
+  grid-template-columns:
+    var(--js-navigation-width)
+    minmax(0, 1fr)
+    0;
+}
+
+.roadsafe-workstation.is-navigation-collapsed.is-editor-route {
+  grid-template-columns:
+    var(--js-navigation-collapsed-width)
+    minmax(0, 1fr)
+    0;
+}
+
+.roadsafe-navigation {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  grid-column: 1;
+  display: flex;
+  min-width: 0;
+  height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--js-border-subtle);
+  background: var(--js-sidebar);
+}
+
+.roadsafe-navigation-brand {
+  min-height: var(--js-header-height);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-brand-link {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 11px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.roadsafe-brand-mark {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--js-border-strong);
+  border-radius: var(--js-radius-md);
+  background: var(--js-blue-soft-bg);
+  color: var(--js-text-primary);
+}
+
+.roadsafe-brand-copy,
+.roadsafe-station-copy,
+.roadsafe-navigation-footer-copy,
+.roadsafe-profile-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.roadsafe-brand-copy strong {
+  overflow: hidden;
+  color: var(--js-text-primary);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.055em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.roadsafe-brand-copy small,
+.roadsafe-station-copy small,
+.roadsafe-navigation-footer-copy small,
+.roadsafe-profile-copy small {
+  margin-top: 2px;
+  color: var(--js-text-muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.roadsafe-navigation-collapse {
+  flex: 0 0 auto;
+}
+
+.roadsafe-navigation-mobile-close,
+.roadsafe-mobile-menu-button {
+  display: none !important;
+}
+
+.roadsafe-navigation-station {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--js-border-subtle);
+  background: color-mix(in srgb, var(--js-sidebar) 88%, var(--js-panel));
+}
+
+.roadsafe-station-symbol {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-panel);
+  color: var(--js-text-secondary);
+}
+
+.roadsafe-station-copy strong {
+  overflow: hidden;
+  color: var(--js-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-navigation-groups {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px 12px;
+}
+
+.roadsafe-navigation-group + .roadsafe-navigation-group {
+  margin-top: 13px;
+}
+
+.roadsafe-navigation-group-label,
+.roadsafe-eyebrow {
+  margin: 0;
+  color: var(--js-text-muted);
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.roadsafe-navigation-group-label {
+  padding: 0 9px 6px;
+}
+
+.roadsafe-navigation-links {
+  display: grid;
+  gap: 3px;
+}
+
+.roadsafe-navigation-link {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--js-radius-sm);
+  color: var(--js-text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    background-color 110ms ease,
+    border-color 110ms ease,
+    color 110ms ease;
+}
+
+.roadsafe-navigation-link:hover {
+  border-color: var(--js-border-subtle);
+  background: var(--js-panel);
+  color: var(--js-text-primary);
+}
+
+.roadsafe-navigation-link.is-active {
+  border-color: var(--js-blue-muted);
+  background: var(--js-blue-selected);
+  color: var(--js-text-primary);
+}
+
+.roadsafe-navigation-link.is-active::before {
+  width: 2px;
+  align-self: stretch;
+  margin: -3px 0 -3px -7px;
+  border-radius: 2px;
+  background: var(--js-blue-active);
+  content: "";
+}
+
+.roadsafe-navigation-link-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-navigation-case {
+  margin: 0 9px 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 11px;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-md);
+  background: var(--js-panel);
+  color: inherit;
+  text-decoration: none;
+}
+
+.roadsafe-navigation-case:hover {
+  border-color: var(--js-blue-muted);
+  background: var(--js-panel-hover);
+}
+
+.roadsafe-navigation-case strong {
+  margin-top: 5px;
+  color: var(--js-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 11px;
+}
+
+.roadsafe-navigation-case small {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--js-text-muted);
+  font-size: 9px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-navigation-case-status {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 3px 6px;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-blue-soft-bg);
+  color: var(--js-text-secondary);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.roadsafe-navigation-footer {
+  min-height: 57px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border-top: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-system-indicator {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border: 2px solid var(--js-sidebar);
+  border-radius: 999px;
+  background: var(--js-green-muted);
+  outline: 1px solid var(--js-border-default);
+}
+
+.roadsafe-navigation-footer-copy strong {
+  color: var(--js-text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.roadsafe-center {
+  grid-column: 2;
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--js-workspace);
+}
+
+.roadsafe-workspace-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: var(--js-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 14px 8px 17px;
+  border-bottom: 1px solid var(--js-border-subtle);
+  background: color-mix(in srgb, var(--js-workspace) 96%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.roadsafe-workspace-header-left,
+.roadsafe-workspace-header-right {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.roadsafe-workspace-header-left {
+  flex: 1;
+  gap: 12px;
+}
+
+.roadsafe-workspace-header-right {
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.roadsafe-workspace-title {
+  min-width: 0;
+  padding-left: 11px;
+  border-left: 2px solid var(--js-blue-muted);
+}
+
+.roadsafe-workspace-title h1 {
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: var(--js-text-primary);
+  font-size: 15px;
+  font-weight: 740;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-title > p:last-child {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--js-text-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-active-case-chip {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 8px;
+  align-content: center;
+  padding: 6px 9px;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-panel);
+  color: inherit;
+  text-decoration: none;
+}
+
+.roadsafe-active-case-chip:hover {
+  border-color: var(--js-blue-muted);
+  background: var(--js-panel-hover);
+}
+
+.roadsafe-active-case-chip span,
+.roadsafe-active-case-chip small {
+  color: var(--js-text-muted);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roadsafe-active-case-chip strong {
+  color: var(--js-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 10px;
+}
+
+.roadsafe-active-case-chip small {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.roadsafe-header-clock {
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0 10px;
+  border-right: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-header-clock strong {
+  color: var(--js-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 10px;
+}
+
+.roadsafe-header-clock span {
+  margin-top: 2px;
+  color: var(--js-text-muted);
+  font-size: 7px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.roadsafe-header-icon {
+  flex: 0 0 auto;
+}
+
+.roadsafe-notification-button {
+  position: relative;
+}
+
+.roadsafe-notification-button > span {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 1px solid var(--js-border-strong);
+  border-radius: 999px;
+  background: var(--js-blue-active);
+  color: var(--js-text-primary);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.roadsafe-inspector-toggle {
+  min-height: 34px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px !important;
+}
+
+.roadsafe-profile-menu {
+  position: relative;
+}
+
+.roadsafe-profile-trigger {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 7px;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-panel);
+  color: var(--js-text-secondary);
+  cursor: pointer;
+}
+
+.roadsafe-profile-trigger:hover {
+  border-color: var(--js-border-strong);
+  background: var(--js-panel-hover);
+}
+
+.roadsafe-profile-avatar {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--js-blue-muted);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-blue-soft-bg);
+  color: var(--js-text-primary);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.roadsafe-profile-copy {
+  width: 116px;
+  align-items: flex-start;
+}
+
+.roadsafe-profile-copy strong {
+  width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--js-text-primary);
+  font-size: 9px;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-profile-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 70;
+  width: 230px;
+  padding: 5px;
+  border: 1px solid var(--js-border-strong);
+  border-radius: var(--js-radius-md);
+  background: var(--js-panel-raised);
+  box-shadow: 0 12px 30px rgba(14, 18, 22, 0.28);
+}
+
+.roadsafe-profile-popover-head {
+  display: flex;
+  flex-direction: column;
+  padding: 9px;
+  border-bottom: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-profile-popover-head strong {
+  overflow: hidden;
+  color: var(--js-text-primary);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-profile-popover-head span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--js-text-muted);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-profile-popover a,
+.roadsafe-profile-popover button {
+  width: 100%;
+  min-height: 33px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: var(--js-radius-sm);
+  background: transparent;
+  color: var(--js-text-secondary);
+  font-size: 9px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.roadsafe-profile-popover a:hover,
+.roadsafe-profile-popover button:hover {
+  background: var(--js-panel-hover);
+  color: var(--js-text-primary);
+}
+
+.roadsafe-profile-popover button:last-child {
+  color: #d3a5a5;
+}
+
+.roadsafe-workspace-main {
+  min-width: 0;
+  min-height: calc(100vh - var(--js-header-height));
+  background: var(--js-workspace);
+}
+
+.roadsafe-workspace-main.is-editor {
+  min-height: 100vh;
+}
+
+.roadsafe-page-stage {
+  min-width: 0;
+  padding: 14px;
+}
+
+.roadsafe-page-stage.is-dashboard {
+  padding: 10px;
+}
+
+.roadsafe-page-stage.is-editor {
+  padding: 0;
+}
+
+.roadsafe-inspector {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  grid-column: 3;
+  width: var(--js-inspector-width);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--js-border-default);
+  background: var(--js-inspector);
+}
+
+.roadsafe-inspector-header {
+  min-height: var(--js-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-inspector-header h2,
+.roadsafe-inspector-section h3,
+.roadsafe-inspector-empty h3 {
+  margin: 4px 0 0;
+  color: var(--js-text-primary);
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.roadsafe-inspector-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.roadsafe-inspector-section {
+  padding: 11px;
+  border: 1px solid var(--js-border-default);
+  border-radius: var(--js-radius-md);
+  background: var(--js-panel);
+}
+
+.roadsafe-inspector-section + .roadsafe-inspector-section {
+  margin-top: 9px;
+}
+
+.roadsafe-inspector-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roadsafe-inspector-case-title {
+  margin: 10px 0 0;
+  color: var(--js-text-secondary);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.roadsafe-inspector-definition-list {
+  margin: 10px 0 0;
+  border-top: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-inspector-row {
+  display: grid;
+  grid-template-columns: minmax(82px, 0.8fr) minmax(0, 1.2fr);
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-inspector-row dt,
+.roadsafe-inspector-row dd {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.roadsafe-inspector-row dt {
+  color: var(--js-text-muted);
+  font-weight: 650;
+}
+
+.roadsafe-inspector-row dd {
+  overflow-wrap: anywhere;
+  color: var(--js-text-secondary);
+  font-weight: 650;
+  text-align: right;
+}
+
+.roadsafe-status-stack {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.roadsafe-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--js-text-muted);
+  font-size: 8px;
+}
+
+.roadsafe-status-line strong {
+  color: var(--js-text-secondary);
+  font-size: 8px;
+  text-align: right;
+}
+
+.roadsafe-inline-alert {
+  margin: 9px 0 0;
+  padding: 7px 8px;
+  border: 1px solid var(--js-red-muted);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-red-bg);
+  color: #e1c5c5;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.roadsafe-inspector-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.roadsafe-inspector-metrics > div {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 7px;
+  border: 1px solid var(--js-border-subtle);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-panel-raised);
+}
+
+.roadsafe-inspector-metrics strong {
+  color: var(--js-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
+.roadsafe-inspector-metrics span {
+  margin-top: 3px;
+  color: var(--js-text-muted);
+  font-size: 7px;
+  font-weight: 650;
+}
+
+.roadsafe-inspector-actions {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.roadsafe-inspector-actions a {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--js-border-subtle);
+  border-radius: var(--js-radius-sm);
+  background: var(--js-panel-raised);
+  color: var(--js-text-secondary);
+  font-size: 8px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.roadsafe-inspector-actions a:hover {
+  border-color: var(--js-blue-muted);
+  background: var(--js-blue-selected);
+  color: var(--js-text-primary);
+}
+
+.roadsafe-inspector-empty {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  border: 1px dashed var(--js-border-default);
+  border-radius: var(--js-radius-md);
+  color: var(--js-text-muted);
+  text-align: center;
+}
+
+.roadsafe-inspector-empty p {
+  max-width: 210px;
+  margin: 8px 0 14px;
+  color: var(--js-text-muted);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.roadsafe-inspector-footer {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--js-border-subtle);
+}
+
+.roadsafe-inspector-footer > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.roadsafe-inspector-footer span {
+  color: var(--js-text-muted);
+  font-size: 7px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.roadsafe-inspector-footer strong {
+  margin-top: 3px;
+  color: var(--js-text-secondary);
+  font-size: 9px;
+}
+
+.roadsafe-mobile-overlay {
+  display: none;
+}
+
+.ui-panel,
+.roadsafe-shell .bg-white,
+.roadsafe-shell .bg-gray-50,
+.roadsafe-shell .bg-gray-100,
+.roadsafe-shell .bg-slate-50,
+.roadsafe-shell .bg-slate-100,
+.reconstruction-editor .bg-white,
+.reconstruction-editor .bg-gray-50,
+.reconstruction-editor .bg-gray-100,
+.reconstruction-editor .bg-slate-50,
+.reconstruction-editor .bg-slate-100 {
+  background-color: var(--js-panel) !important;
+  border-color: var(--js-border-default) !important;
+  box-shadow: 0 8px 20px rgba(16, 20, 24, 0.14) !important;
+}
+
+.ui-panel-header,
+.roadsafe-shell .border-gray-100,
+.roadsafe-shell .border-gray-200,
+.roadsafe-shell .border-gray-300,
+.roadsafe-shell .border-slate-100,
+.roadsafe-shell .border-slate-200,
+.roadsafe-shell .border-slate-300,
+.reconstruction-editor .border-gray-100,
+.reconstruction-editor .border-gray-200,
+.reconstruction-editor .border-gray-300,
+.reconstruction-editor .border-slate-100,
+.reconstruction-editor .border-slate-200,
+.reconstruction-editor .border-slate-300 {
+  border-color: var(--js-border-default) !important;
+}
+
+.ui-button,
+.ui-icon-button {
+  min-height: 32px;
+  border: 1px solid var(--js-border-default) !important;
+  border-radius: var(--js-radius-sm) !important;
+  background: var(--js-panel-raised) !important;
+  color: var(--js-text-secondary) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition:
+    background-color 110ms ease,
+    border-color 110ms ease,
+    color 110ms ease;
+}
+
+.ui-icon-button {
+  width: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0 !important;
+}
+
+.ui-button:hover,
+.ui-icon-button:hover {
+  border-color: var(--js-border-strong) !important;
+  background: var(--js-panel-hover) !important;
+  color: var(--js-text-primary) !important;
+}
+
+.ui-button-primary {
+  border-color: var(--js-blue-muted) !important;
+  background: var(--js-blue-active) !important;
+  color: var(--js-text-primary) !important;
+}
+
+.ui-button-primary:hover {
+  border-color: var(--js-border-strong) !important;
+  background: #6b8395 !important;
+}
+
+.ui-button:disabled,
+.ui-icon-button:disabled {
+  border-color: var(--js-border-subtle) !important;
+  background: var(--js-panel) !important;
+  color: var(--js-text-disabled) !important;
+  cursor: not-allowed;
+}
+
+.ui-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  border-color: var(--js-border-default) !important;
+  border-radius: var(--js-radius-sm) !important;
+  background-color: var(--js-panel-raised) !important;
+  color: var(--js-text-primary) !important;
+  box-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--js-text-disabled) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--js-blue-active) !important;
+  outline: 2px solid color-mix(in srgb, var(--js-blue-active) 26%, transparent) !important;
+  outline-offset: 1px;
+  box-shadow: none !important;
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  border: 1px solid var(--js-border-default) !important;
+  border-radius: var(--js-radius-sm) !important;
+  background: var(--js-panel-raised) !important;
+  color: var(--js-text-secondary) !important;
+  font-size: 7px;
+  font-weight: 720;
+}
+
+.ui-badge.is-info {
+  border-color: var(--js-info-muted) !important;
+  background: var(--js-blue-soft-bg) !important;
+}
+
+.ui-badge.is-success {
+  border-color: var(--js-green-muted) !important;
+  background: var(--js-green-bg) !important;
+}
+
+.ui-badge.is-warning {
+  border-color: var(--js-amber-muted) !important;
+  background: var(--js-amber-bg) !important;
+}
+
+.ui-badge.is-danger {
+  border-color: var(--js-red-muted) !important;
+  background: var(--js-red-bg) !important;
+}
+
+.ui-badge.is-neutral {
+  border-color: var(--js-border-default) !important;
+  background: var(--js-panel-raised) !important;
+}
+
+.reconstruction-editor [class*="bg-blue-"],
+.reconstruction-editor [class*="bg-indigo-"],
+.roadsafe-workstation [class*="bg-blue-"],
+.roadsafe-workstation [class*="bg-indigo-"] {
+  background-color: var(--js-blue-selected) !important;
+}
+
+.reconstruction-editor [class*="text-blue-"],
+.reconstruction-editor [class*="text-indigo-"],
+.roadsafe-workstation [class*="text-blue-"],
+.roadsafe-workstation [class*="text-indigo-"] {
+  color: #b9c8d3 !important;
+}
+
+.reconstruction-editor [class*="bg-emerald-"],
+.reconstruction-editor [class*="bg-green-"],
+.roadsafe-workstation [class*="bg-emerald-"],
+.roadsafe-workstation [class*="bg-green-"] {
+  background-color: var(--js-green-bg) !important;
+}
+
+.reconstruction-editor [class*="text-emerald-"],
+.reconstruction-editor [class*="text-green-"],
+.roadsafe-workstation [class*="text-emerald-"],
+.roadsafe-workstation [class*="text-green-"] {
+  color: #9cb7a9 !important;
+}
+
+.reconstruction-editor [class*="bg-amber-"],
+.reconstruction-editor [class*="bg-yellow-"],
+.roadsafe-workstation [class*="bg-amber-"],
+.roadsafe-workstation [class*="bg-yellow-"] {
+  background-color: var(--js-amber-bg) !important;
+}
+
+.reconstruction-editor [class*="text-amber-"],
+.reconstruction-editor [class*="text-yellow-"],
+.roadsafe-workstation [class*="text-amber-"],
+.roadsafe-workstation [class*="text-yellow-"] {
+  color: #c2ae87 !important;
+}
+
+.reconstruction-editor [class*="bg-red-"],
+.reconstruction-editor [class*="bg-rose-"],
+.roadsafe-workstation [class*="bg-red-"],
+.roadsafe-workstation [class*="bg-rose-"] {
+  background-color: var(--js-red-bg) !important;
+}
+
+.reconstruction-editor [class*="text-red-"],
+.reconstruction-editor [class*="text-rose-"],
+.roadsafe-workstation [class*="text-red-"],
+.roadsafe-workstation [class*="text-rose-"] {
+  color: #d2a1a1 !important;
+}
+
+.reconstruction-editor input[type="checkbox"],
+.reconstruction-editor input[type="radio"],
+.roadsafe-range {
+  accent-color: var(--js-blue-active) !important;
+}
+
+.reconstruction-workspace__header,
+.reconstruction-workspace__toolbar,
+.reconstruction-workspace__properties,
+.reconstruction-workspace__context-panel,
+.reconstruction-workspace__canvas,
+.reconstruction-workspace__timeline {
+  border-color: var(--js-border-default) !important;
+  background-color: var(--js-workspace) !important;
+}
+
+.reconstruction-workspace__properties,
+.reconstruction-workspace__context-panel {
+  background-color: var(--js-inspector) !important;
+}
+
+.reconstruction-workspace__button,
+.reconstruction-workspace__icon-button,
+.reconstruction-workspace__view-switch button {
+  border-color: var(--js-border-default) !important;
+  border-radius: var(--js-radius-sm) !important;
+  background: var(--js-panel-raised) !important;
+  color: var(--js-text-secondary) !important;
+}
+
+.reconstruction-workspace__button:hover,
+.reconstruction-workspace__icon-button:hover,
+.reconstruction-workspace__view-switch button:hover,
+.reconstruction-workspace__view-switch button.is-active {
+  border-color: var(--js-blue-muted) !important;
+  background: var(--js-blue-selected) !important;
+  color: var(--js-text-primary) !important;
+}
+
+.dashboard-stat-card,
+.dashboard-command-grid .ui-panel {
+  border-color: var(--js-border-default) !important;
+  background: var(--js-panel) !important;
+  box-shadow: 0 8px 20px rgba(16, 20, 24, 0.13) !important;
+}
+
+.dashboard-stat-card:hover {
+  border-color: var(--js-blue-muted) !important;
+  background: var(--js-panel-hover) !important;
+}
+
+.dashboard-stat-icon {
+  border-color: var(--js-border-default) !important;
+  background: var(--js-blue-soft-bg) !important;
+  color: var(--js-text-secondary) !important;
+}
+
+.maplibregl-map {
+  background: #737d84 !important;
+}
+
+.maplibregl-map {
+  background: #303030 !important;
+}
+
+.maplibregl-ctrl-group,
+.maplibregl-popup-content {
+  border: 1px solid var(--js-border-default) !important;
+  border-radius: var(--js-radius-sm) !important;
+  background: var(--js-panel-raised) !important;
+  color: var(--js-text-primary) !important;
+  box-shadow: 0 8px 20px rgba(16, 20, 24, 0.24) !important;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: var(--js-panel-raised) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--js-panel-hover) !important;
+}
+
+.reconstruction-3d,
+.dashboard-3d-preview,
+canvas {
+  background-color: #252c33;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--js-sidebar);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--js-sidebar);
+  border-radius: 999px;
+  background: var(--js-border-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--js-blue-muted);
+}
+
+@media (min-width: 1024px) {
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-brand-copy,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-station-copy,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-group-label,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-link-label,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-case,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-footer-copy {
+    display: none;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-brand,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-station,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-footer {
+    justify-content: center;
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-brand-link {
+    flex: 0 0 auto;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse {
+    position: absolute;
+    top: 50px;
+    right: -13px;
+    z-index: 5;
+    width: 26px;
+    min-height: 26px;
+    border-radius: 999px !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-group + .roadsafe-navigation-group {
+    margin-top: 6px;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-link {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-link.is-active::before {
+    display: none;
+  }
+}
+
+@media (max-width: 1279px) {
+  .roadsafe-workstation,
+  .roadsafe-workstation.is-navigation-collapsed,
+  .roadsafe-workstation.is-inspector-open,
+  .roadsafe-workstation.is-navigation-collapsed.is-inspector-open,
+  .roadsafe-workstation.is-editor-route,
+  .roadsafe-workstation.is-navigation-collapsed.is-editor-route {
+    grid-template-columns:
+      var(--js-navigation-width)
+      minmax(0, 1fr);
+  }
+
+  .roadsafe-inspector {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 90;
+    width: min(var(--js-inspector-width), 94vw);
+    transform: translateX(102%);
+    transition: transform 160ms ease;
+  }
+
+  .roadsafe-workstation.is-mobile-inspector-open
+    .roadsafe-inspector {
+    transform: translateX(0);
+  }
+
+  .roadsafe-inspector-overlay {
+    z-index: 85;
+  }
+
+  .roadsafe-workstation.is-mobile-inspector-open
+    .roadsafe-inspector-overlay {
+    display: block;
+  }
+}
+
+@media (max-width: 1023px) {
+  .roadsafe-workstation,
+  .roadsafe-workstation.is-navigation-collapsed,
+  .roadsafe-workstation.is-inspector-open,
+  .roadsafe-workstation.is-navigation-collapsed.is-inspector-open,
+  .roadsafe-workstation.is-editor-route,
+  .roadsafe-workstation.is-navigation-collapsed.is-editor-route {
+    display: block;
+  }
+
+  .roadsafe-navigation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 90;
+    width: min(var(--js-navigation-width), 92vw);
+    transform: translateX(-102%);
+    transition: transform 160ms ease;
+  }
+
+  .roadsafe-workstation.is-mobile-navigation-open
+    .roadsafe-navigation {
+    transform: translateX(0);
+  }
+
+  .roadsafe-navigation-collapse {
+    display: none !important;
+  }
+
+  .roadsafe-navigation-mobile-close,
+  .roadsafe-mobile-menu-button {
+    display: grid !important;
+  }
+
+  .roadsafe-navigation-mobile-close {
+    margin-left: auto;
+  }
+
+  .roadsafe-navigation-overlay {
+    z-index: 85;
+  }
+
+  .roadsafe-workstation.is-mobile-navigation-open
+    .roadsafe-navigation-overlay {
+    display: block;
+  }
+
+  .roadsafe-center {
+    min-height: 100vh;
+  }
+
+  .roadsafe-workspace-header {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 860px) {
+  .roadsafe-active-case-chip,
+  .roadsafe-header-clock,
+  .roadsafe-header-icon,
+  .roadsafe-inspector-toggle > span,
+  .roadsafe-profile-copy {
+    display: none !important;
+  }
+
+  .roadsafe-inspector-toggle {
+    width: 34px;
+    justify-content: center;
+    padding: 0 !important;
+  }
+
+  .roadsafe-inspector-toggle svg:last-child {
+    display: none;
+  }
+
+  .roadsafe-workspace-title > p:last-child {
+    max-width: 430px;
+  }
+}
+
+@media (max-width: 620px) {
+  .roadsafe-workspace-header {
+    min-height: 62px;
+    gap: 8px;
+  }
+
+  .roadsafe-workspace-title {
+    padding-left: 8px;
+  }
+
+  .roadsafe-workspace-title h1 {
+    font-size: 13px;
+  }
+
+  .roadsafe-workspace-title > p:last-child,
+  .roadsafe-workspace-title .roadsafe-eyebrow {
+    display: none;
+  }
+
+  .roadsafe-page-stage,
+  .roadsafe-page-stage.is-dashboard {
+    padding: 8px;
+  }
+
+  .roadsafe-profile-trigger {
+    padding: 4px;
+  }
+}
+
+.roadsafe-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(18, 22, 26, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+@media print {
+  html,
+  body,
+  #root,
+  .roadsafe-workstation,
+  .roadsafe-center,
+  .roadsafe-workspace-main {
+    background: white !important;
+    color: black !important;
+  }
+
+  .roadsafe-navigation,
+  .roadsafe-inspector,
+  .roadsafe-workspace-header,
+  .roadsafe-mobile-overlay {
+    display: none !important;
+  }
+
+  .roadsafe-workstation {
+    display: block !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Blender-inspired precision UI pass
+ * --------------------------------------------------------------------------
+ * Visual language derived from the supplied Blender 2.90 reference:
+ * compact charcoal bars, inset controls, blue selection rows and orange
+ * active-state markers. RoadSafe keeps its own information architecture.
+ */
+
+:root {
+  --blender-topbar: #1f1f1f;
+  --blender-header: #292929;
+  --blender-region: #303030;
+  --blender-control-top: #4a4a4a;
+  --blender-control-bottom: #393939;
+  --blender-control-hover-top: #555555;
+  --blender-control-hover-bottom: #444444;
+  --blender-control-pressed: #2c2c2c;
+  --blender-blue: #80ACFF;
+  --blender-blue-dark: #2f527a;
+  --blender-orange: #e8872d;
+  --blender-orange-soft: #6a4728;
+  --blender-grid-line: rgba(255, 255, 255, 0.035);
+  --blender-inset-highlight: rgba(255, 255, 255, 0.075);
+  --blender-inset-shadow: rgba(0, 0, 0, 0.48);
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+}
+
+.roadsafe-workstation {
+  background: var(--js-shell);
+}
+
+.roadsafe-center,
+.roadsafe-workspace-main {
+  background: var(--js-workspace);
+}
+
+/* Region borders: thin, dark and flush like Blender editors. */
+.roadsafe-navigation,
+.roadsafe-inspector,
+.roadsafe-workspace-header,
+.reconstruction-workspace__header,
+.reconstruction-workspace__toolbar,
+.reconstruction-workspace__properties,
+.reconstruction-workspace__context-panel,
+.reconstruction-workspace__canvas,
+.reconstruction-workspace__timeline {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38);
+}
+
+.roadsafe-navigation {
+  border-right-color: #111 !important;
+  background: #242424;
+}
+
+.roadsafe-navigation-brand {
+  min-height: var(--js-header-height);
+  gap: 5px;
+  padding: 4px 5px;
+  border-bottom-color: #111;
+  background: var(--blender-topbar);
+}
+
+.roadsafe-brand-mark {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+  border-color: #555;
+  border-radius: 2px;
+  background: linear-gradient(#3f3f3f, #303030);
+  color: #d7d7d7;
+  box-shadow:
+    inset 0 1px 0 var(--blender-inset-highlight),
+    inset 0 -1px 0 var(--blender-inset-shadow);
+}
+
+.roadsafe-brand-link:hover .roadsafe-brand-mark,
+.roadsafe-brand-link:focus-visible .roadsafe-brand-mark {
+  border-color: var(--blender-orange);
+  color: #fff;
+}
+
+.roadsafe-brand-copy strong {
+  font-size: 11px;
+  letter-spacing: 0.035em;
+}
+
+.roadsafe-brand-copy small,
+.roadsafe-station-copy small,
+.roadsafe-navigation-footer-copy small,
+.roadsafe-profile-copy small {
+  margin-top: 1px;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+
+.roadsafe-navigation-station {
+  min-height: 36px;
+  gap: 7px;
+  padding: 4px 6px;
+  border-bottom-color: #151515;
+  background: #2a2a2a;
+}
+
+.roadsafe-station-symbol {
+  width: 25px;
+  height: 25px;
+  flex-basis: 25px;
+  border-color: #4b4b4b;
+  background: #353535;
+}
+
+.roadsafe-navigation-groups {
+  padding: 5px 4px 8px;
+}
+
+.roadsafe-navigation-group + .roadsafe-navigation-group {
+  margin-top: 7px;
+}
+
+.roadsafe-navigation-group-label,
+.roadsafe-eyebrow {
+  color: #858585;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.roadsafe-navigation-group-label {
+  padding: 3px 7px 4px;
+}
+
+.roadsafe-navigation-links {
+  gap: 1px;
+}
+
+.roadsafe-navigation-link {
+  position: relative;
+  min-height: 27px;
+  gap: 7px;
+  padding: 4px 7px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: #c5c5c5;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.roadsafe-navigation-link:hover {
+  border-color: #4a4a4a;
+  background: #333;
+  color: #f1f1f1;
+}
+
+.roadsafe-navigation-link.is-active {
+  border-color: #80ACFF;
+  background: #80ACFF;
+  color: #fff;
+  box-shadow:
+    inset 2px 0 0 var(--blender-orange),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.roadsafe-navigation-link.is-active::before {
+  display: none;
+}
+
+.roadsafe-navigation-case {
+  margin: 0 5px 5px;
+  padding: 7px;
+  border-color: #151515;
+  border-radius: 2px;
+  background: #2d2d2d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.roadsafe-navigation-case:hover {
+  border-color: var(--blender-orange);
+  background: #353535;
+}
+
+.roadsafe-navigation-case-status {
+  margin-top: 6px;
+  padding: 2px 5px;
+  border-color: #4d4d4d;
+  background: #3a3a3a;
+  font-size: 8px;
+}
+
+.roadsafe-navigation-footer {
+  min-height: 35px;
+  gap: 7px;
+  padding: 4px 7px;
+  border-top-color: #111;
+  background: #202020;
+}
+
+.roadsafe-system-indicator {
+  width: 7px;
+  height: 7px;
+  flex-basis: 7px;
+  border: 0;
+  background: #65a26d;
+  outline-color: #111;
+}
+
+/* Compact Blender-like top bar. */
+.roadsafe-workspace-header {
+  min-height: var(--js-header-height);
+  gap: 8px;
+  padding: 4px 6px;
+  border-bottom-color: #111;
+  background: var(--blender-topbar);
+  backdrop-filter: none;
+}
+
+.roadsafe-workspace-header-left {
+  gap: 6px;
+}
+
+.roadsafe-workspace-header-right {
+  gap: 3px;
+}
+
+.roadsafe-workspace-title {
+  padding: 2px 8px;
+  border-left: 2px solid var(--blender-orange);
+}
+
+.roadsafe-workspace-title h1 {
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.roadsafe-workspace-title > p:last-child {
+  display: none;
+}
+
+.roadsafe-active-case-chip {
+  min-height: 30px;
+  padding: 3px 6px;
+  border-color: #171717;
+  border-radius: 2px;
+  background: linear-gradient(#3d3d3d, #303030);
+  box-shadow:
+    inset 0 1px 0 var(--blender-inset-highlight),
+    inset 0 -1px 0 var(--blender-inset-shadow);
+}
+
+.roadsafe-active-case-chip:hover {
+  border-color: var(--blender-orange);
+  background: linear-gradient(#484848, #373737);
+}
+
+.roadsafe-header-clock {
+  min-width: 70px;
+  padding: 0 7px;
+  border-right-color: #111;
+}
+
+.roadsafe-profile-trigger {
+  min-height: 30px;
+  gap: 5px;
+  padding: 2px 4px;
+  border-color: #171717;
+  border-radius: 2px;
+  background: linear-gradient(#424242, #343434);
+  box-shadow:
+    inset 0 1px 0 var(--blender-inset-highlight),
+    inset 0 -1px 0 var(--blender-inset-shadow);
+}
+
+.roadsafe-profile-trigger:hover {
+  border-color: #686868;
+  background: linear-gradient(#4d4d4d, #3c3c3c);
+}
+
+.roadsafe-profile-avatar {
+  width: 24px;
+  height: 24px;
+  border-color: var(--blender-orange);
+  border-radius: 2px;
+  background: #333;
+  color: #f1f1f1;
+}
+
+.roadsafe-profile-popover {
+  top: calc(100% + 3px);
+  padding: 3px;
+  border-color: #111;
+  border-radius: 2px;
+  background: #2b2b2b;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+.roadsafe-profile-popover a,
+.roadsafe-profile-popover button {
+  min-height: 27px;
+  margin-top: 1px;
+  padding: 4px 6px;
+  border-radius: 2px;
+}
+
+.roadsafe-page-stage {
+  padding: 7px;
+}
+
+.roadsafe-page-stage.is-dashboard {
+  padding: 5px;
+}
+
+/* Inspector regions echo Blender's Properties editor. */
+.roadsafe-inspector {
+  border-left-color: #111;
+  background: #292929;
+}
+
+.roadsafe-inspector-header {
+  min-height: var(--js-header-height);
+  padding: 4px 6px;
+  border-bottom-color: #111;
+  background: var(--blender-topbar);
+}
+
+.roadsafe-inspector-scroll {
+  padding: 5px;
+}
+
+.roadsafe-inspector-section {
+  padding: 7px;
+  border-color: #171717;
+  border-radius: 2px;
+  background: #303030;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32);
+}
+
+.roadsafe-inspector-section + .roadsafe-inspector-section {
+  margin-top: 4px;
+}
+
+.roadsafe-inspector-section-heading {
+  margin: -7px -7px 6px;
+  padding: 5px 7px;
+  border-bottom: 1px solid #191919;
+  background: #282828;
+}
+
+.roadsafe-inspector-row {
+  padding: 5px 0;
+  border-bottom-color: #202020;
+}
+
+.roadsafe-inspector-metrics {
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.roadsafe-inspector-metrics > div {
+  min-height: 42px;
+  padding: 5px;
+  border-color: #1d1d1d;
+  border-radius: 2px;
+  background: #383838;
+}
+
+.roadsafe-inspector-actions {
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.roadsafe-inspector-actions a {
+  min-height: 27px;
+  padding: 4px 6px;
+  border-color: #171717;
+  border-radius: 2px;
+  background: linear-gradient(#444, #363636);
+  box-shadow:
+    inset 0 1px 0 var(--blender-inset-highlight),
+    inset 0 -1px 0 var(--blender-inset-shadow);
+}
+
+.roadsafe-inspector-actions a:hover {
+  border-color: var(--blender-orange);
+  background: linear-gradient(#505050, #3f3f3f);
+}
+
+/* Buttons: compact, lightly bevelled and mechanically precise. */
+.ui-button,
+.ui-icon-button,
+.reconstruction-workspace__button,
+.reconstruction-workspace__icon-button,
+.reconstruction-workspace__view-switch button {
+  min-height: 26px;
+  border-color: #171717 !important;
+  border-radius: 2px !important;
+  background: linear-gradient(
+    180deg,
+    var(--blender-control-top),
+    var(--blender-control-bottom)
+  ) !important;
+  color: #d6d6d6 !important;
+  box-shadow:
+    inset 0 1px 0 var(--blender-inset-highlight),
+    inset 0 -1px 0 var(--blender-inset-shadow) !important;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.ui-icon-button {
+  width: 26px;
+}
+
+.ui-button:hover,
+.ui-icon-button:hover,
+.reconstruction-workspace__button:hover,
+.reconstruction-workspace__icon-button:hover,
+.reconstruction-workspace__view-switch button:hover {
+  border-color: #686868 !important;
+  background: linear-gradient(
+    180deg,
+    var(--blender-control-hover-top),
+    var(--blender-control-hover-bottom)
+  ) !important;
+  color: #fff !important;
+}
+
+.ui-button:active,
+.ui-icon-button:active,
+.reconstruction-workspace__button:active,
+.reconstruction-workspace__icon-button:active,
+.reconstruction-workspace__view-switch button:active {
+  background: var(--blender-control-pressed) !important;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.62) !important;
+  transform: translateY(1px);
+}
+
+.ui-button-primary {
+  border-color: #80ACFF !important;
+  background: linear-gradient(#80ACFF, #80ACFF) !important;
+  color: #fff !important;
+}
+
+.ui-button-primary:hover {
+  border-color: #80ACFF !important;
+  background: linear-gradient(#80ACFF, #80ACFF) !important;
+}
+
+[aria-pressed="true"].ui-button,
+[aria-pressed="true"].ui-icon-button,
+.reconstruction-workspace__view-switch button.is-active {
+  border-color: var(--blender-orange) !important;
+  background: #3b3b3b !important;
+  box-shadow:
+    inset 0 0 0 1px var(--blender-orange-soft),
+    inset 0 1px 0 var(--blender-inset-highlight) !important;
+  color: #fff !important;
+}
+
+/* Inputs use a recessed Blender field treatment. */
+.ui-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  min-height: 26px;
+  border-color: #171717 !important;
+  border-radius: 2px !important;
+  background: #262626 !important;
+  color: #dedede !important;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.025) !important;
+  font-size: 10px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blender-orange) !important;
+  outline: 1px solid var(--blender-orange) !important;
+  outline-offset: 0;
+}
+
+.ui-badge {
+  min-height: 17px;
+  padding: 1px 4px;
+  border-color: #181818 !important;
+  border-radius: 2px !important;
+  background: #3a3a3a !important;
+  font-size: 8px;
+  font-weight: 500;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Flatten oversized web-card styling across existing screens. */
+.ui-panel,
+.dashboard-stat-card,
+.dashboard-command-grid .ui-panel,
+.roadsafe-workstation [class*="rounded-xl"],
+.roadsafe-workstation [class*="rounded-2xl"],
+.roadsafe-workstation [class*="rounded-3xl"],
+.reconstruction-editor [class*="rounded-xl"],
+.reconstruction-editor [class*="rounded-2xl"],
+.reconstruction-editor [class*="rounded-3xl"] {
+  border-radius: 3px !important;
+}
+
+.ui-panel,
+.dashboard-stat-card,
+.dashboard-command-grid .ui-panel {
+  border-color: #171717 !important;
+  background: #303030 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32) !important;
+}
+
+.dashboard-stat-card:hover {
+  border-color: var(--blender-orange) !important;
+  background: #363636 !important;
+}
+
+.dashboard-stat-icon {
+  border-color: #171717 !important;
+  background: #3a3a3a !important;
+  color: #cfcfcf !important;
+}
+
+/* Existing utility-colour controls: Blender blue for actions, orange for focus. */
+.roadsafe-workstation button[class*="bg-blue-"],
+.roadsafe-workstation a[class*="bg-blue-"],
+.reconstruction-editor button[class*="bg-blue-"],
+.reconstruction-editor a[class*="bg-blue-"] {
+  border-color: #80ACFF !important;
+  background: linear-gradient(#80ACFF, #80ACFF) !important;
+  color: #fff !important;
+}
+
+.roadsafe-workstation button,
+.roadsafe-workstation a,
+.reconstruction-editor button,
+.reconstruction-editor a {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.roadsafe-workstation button:focus-visible,
+.roadsafe-workstation a:focus-visible,
+.reconstruction-editor button:focus-visible,
+.reconstruction-editor a:focus-visible {
+  outline: 1px solid var(--blender-orange) !important;
+  outline-offset: 1px;
+}
+
+/* Reconstruction workstation regions. */
+.reconstruction-workspace__header,
+.reconstruction-workspace__toolbar {
+  background: #202020 !important;
+}
+
+.reconstruction-workspace__properties,
+.reconstruction-workspace__context-panel {
+  background: #292929 !important;
+}
+
+.reconstruction-workspace__canvas {
+  background: #303030 !important;
+}
+
+.reconstruction-workspace__timeline {
+  background: #252525 !important;
+}
+
+.reconstruction-workspace__button,
+.reconstruction-workspace__icon-button,
+.reconstruction-workspace__view-switch button {
+  min-height: 25px;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+/* Map and 3D controls match the surrounding editor chrome. */
+.maplibregl-ctrl-group,
+.maplibregl-popup-content {
+  border-color: #151515 !important;
+  border-radius: 2px !important;
+  background: #303030 !important;
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.maplibregl-ctrl-group button {
+  background: linear-gradient(#444, #353535) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: linear-gradient(#555, #424242) !important;
+}
+
+/* Blender-like square scrollbar with a dark channel. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  border-left: 1px solid #181818;
+  background: #242424;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid #242424;
+  border-radius: 2px;
+  background: #4b4b4b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+::-webkit-scrollbar-corner {
+  background: #242424;
+}
+
+@media (min-width: 1024px) {
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse {
+    top: 8px;
+    right: -12px;
+    width: 24px;
+    min-height: 24px;
+    border-radius: 2px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .roadsafe-workspace-header {
+    min-height: 40px;
+  }
+}
+
+/* [RoadSafe:CanonicalBlenderBlueV1] */
+:root {
+  --js-blue-muted: #e8872d;
+  --js-blue-active: #e8872d;
+  --js-blue-selected: #383838;
+  --js-blue-soft-bg: #303030;
+
+  --blender-blue: #80ACFF;
+  --blender-blue-dark: #80ACFF;
+}
+
+/* The requested single muted blue for navigation, buttons, icons and labels. */
+.roadsafe-navigation-link.is-active,
+.ui-button-primary,
+.roadsafe-workstation button[class*="bg-blue-"],
+.roadsafe-workstation a[class*="bg-blue-"],
+.reconstruction-editor button[class*="bg-blue-"],
+.reconstruction-editor a[class*="bg-blue-"],
+.reconstruction-workspace__view-switch button.is-active {
+  border-color: #80ACFF !important;
+  background: #80ACFF !important;
+}
+
+.roadsafe-workstation [class*="text-blue-"],
+.roadsafe-workstation [class*="text-indigo-"],
+.reconstruction-editor [class*="text-blue-"],
+.reconstruction-editor [class*="text-indigo-"] {
+  color: #80ACFF !important;
+}
+
+.dashboard-stat-icon {
+  border-color: #80ACFF !important;
+  background: #303030 !important;
+  color: #80ACFF !important;
+}
+
+.ui-button-primary:hover,
+.roadsafe-navigation-link.is-active:hover {
+  border-color: #80ACFF !important;
+  background: #80ACFF !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #80ACFF !important;
+}
+
+.reconstruction-editor input[type="checkbox"],
+.reconstruction-editor input[type="radio"],
+.roadsafe-range {
+  accent-color: #80ACFF !important;
+}
+/* [/RoadSafe:CanonicalBlenderBlueV1] */

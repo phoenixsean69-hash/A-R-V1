@@ -210,7 +210,7 @@ function makeTextSprite(text: string): THREE.Sprite {
   canvas.height = 128;
   const context = canvas.getContext("2d");
   if (context) {
-    context.fillStyle = "rgba(5,10,22,.88)";
+    context.fillStyle = "rgba(32,32,32,.88)";
     context.roundRect(8, 8, 496, 104, 22);
     context.fill();
     context.fillStyle = "#ffffff";

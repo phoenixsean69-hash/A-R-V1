@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
 
         <ChartPanel title="Collision severity" subtitle="Distribution within the accident register">
           <Doughnut
-            data={{ labels: severities.map((item) => item.label), datasets: [{ data: severities.map((item) => item.value), backgroundColor: [danger, amber, blue, slate], borderColor: "#090f20", borderWidth: 3 }] }}
+            data={{ labels: severities.map((item) => item.label), datasets: [{ data: severities.map((item) => item.value), backgroundColor: [danger, amber, blue, slate], borderColor: "#292929", borderWidth: 3 }] }}
             options={{ responsive: true, maintainAspectRatio: false, cutout: "65%", plugins: commonPlugins }}
           />
         </ChartPanel>
@@ -159,7 +159,7 @@ export default function AnalyticsPage() {
         <ChartPanel title="Road and weather combinations" subtitle="Conditions captured in reconstruction scenes">
           {roadConditions.length ? (
             <PolarArea
-              data={{ labels: roadConditions.map((item) => item.label), datasets: [{ data: roadConditions.map((item) => item.value), backgroundColor: roadConditions.map((_, index) => ["rgba(79,140,230,.55)", "rgba(98,113,138,.58)", "rgba(165,122,50,.58)", "rgba(168,66,74,.55)"][index % 4]), borderColor: "#090f20", borderWidth: 2 }] }}
+              data={{ labels: roadConditions.map((item) => item.label), datasets: [{ data: roadConditions.map((item) => item.value), backgroundColor: roadConditions.map((_, index) => ["rgba(79,140,230,.55)", "rgba(98,113,138,.58)", "rgba(165,122,50,.58)", "rgba(168,66,74,.55)"][index % 4]), borderColor: "#292929", borderWidth: 2 }] }}
               options={{ responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: { r: { ticks: { display: false }, grid: { color: chartGrid } } } }}
             />
           ) : <EmptyChart text="No reconstruction scene conditions have been saved." />}

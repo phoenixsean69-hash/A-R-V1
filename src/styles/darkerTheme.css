@@ -1483,7 +1483,7 @@ canvas {
   --blender-control-hover-top: #555555;
   --blender-control-hover-bottom: #444444;
   --blender-control-pressed: #2c2c2c;
-  --blender-blue: #80ACFF;
+  --blender-blue: #e8872d;
   --blender-blue-dark: #2f527a;
   --blender-orange: #e8872d;
   --blender-orange-soft: #6a4728;
@@ -1625,8 +1625,8 @@ body {
 }
 
 .roadsafe-navigation-link.is-active {
-  border-color: #80ACFF;
-  background: #80ACFF;
+  border-color: #e8872d;
+  background: #e8872d;
   color: #fff;
   box-shadow:
     inset 2px 0 0 var(--blender-orange),
@@ -1915,14 +1915,14 @@ body {
 }
 
 .ui-button-primary {
-  border-color: #80ACFF !important;
-  background: linear-gradient(#80ACFF, #80ACFF) !important;
+  border-color: #e8872d !important;
+  background: linear-gradient(#e8872d, #e8872d) !important;
   color: #fff !important;
 }
 
 .ui-button-primary:hover {
-  border-color: #80ACFF !important;
-  background: linear-gradient(#80ACFF, #80ACFF) !important;
+  border-color: #e8872d !important;
+  background: linear-gradient(#e8872d, #e8872d) !important;
 }
 
 [aria-pressed="true"].ui-button,
@@ -2012,8 +2012,8 @@ textarea:focus {
 .roadsafe-workstation a[class*="bg-blue-"],
 .reconstruction-editor button[class*="bg-blue-"],
 .reconstruction-editor a[class*="bg-blue-"] {
-  border-color: #80ACFF !important;
-  background: linear-gradient(#80ACFF, #80ACFF) !important;
+  border-color: #e8872d !important;
+  background: linear-gradient(#e8872d, #e8872d) !important;
   color: #fff !important;
 }
 
@@ -2127,8 +2127,8 @@ textarea:focus {
   --js-blue-selected: #383838;
   --js-blue-soft-bg: #303030;
 
-  --blender-blue: #80ACFF;
-  --blender-blue-dark: #80ACFF;
+  --blender-blue: #e8872d;
+  --blender-blue-dark: #e8872d;
 }
 
 /* The requested single muted blue for navigation, buttons, icons and labels. */
@@ -2139,38 +2139,38 @@ textarea:focus {
 .reconstruction-editor button[class*="bg-blue-"],
 .reconstruction-editor a[class*="bg-blue-"],
 .reconstruction-workspace__view-switch button.is-active {
-  border-color: #80ACFF !important;
-  background: #80ACFF !important;
+  border-color: #e8872d !important;
+  background: #e8872d !important;
 }
 
 .roadsafe-workstation [class*="text-blue-"],
 .roadsafe-workstation [class*="text-indigo-"],
 .reconstruction-editor [class*="text-blue-"],
 .reconstruction-editor [class*="text-indigo-"] {
-  color: #80ACFF !important;
+  color: #e8872d !important;
 }
 
 .dashboard-stat-icon {
-  border-color: #80ACFF !important;
+  border-color: #e8872d !important;
   background: #303030 !important;
-  color: #80ACFF !important;
+  color: #e8872d !important;
 }
 
 .ui-button-primary:hover,
 .roadsafe-navigation-link.is-active:hover {
-  border-color: #80ACFF !important;
-  background: #80ACFF !important;
+  border-color: #e8872d !important;
+  background: #e8872d !important;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #80ACFF !important;
+  border-color: #e8872d !important;
 }
 
 .reconstruction-editor input[type="checkbox"],
 .reconstruction-editor input[type="radio"],
 .roadsafe-range {
-  accent-color: #80ACFF !important;
+  accent-color: #e8872d !important;
 }
 /* [/RoadSafe:CanonicalBlenderBlueV1] */

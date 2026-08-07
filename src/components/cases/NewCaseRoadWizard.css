@@ -1,12 +1,12 @@
 /* RoadSafe precise new-scene construction workspace */
 
 body.roadsafe-case-wizard-open {
-  background: #030714;
+  background: #1b1b1b;
 }
 
 .roadsafe-case-page-shell {
   min-height: 100%;
-  background: #030714 !important;
+  background: #1b1b1b !important;
   color: #dbe7f7;
 }
 
@@ -18,17 +18,17 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-case-wizard {
-  --rs-bg: #030714;
-  --rs-panel: #070d1a;
+  --rs-bg: #1b1b1b;
+  --rs-panel: #202020;
   --rs-panel-raised: #091326;
-  --rs-panel-soft: #050b17;
-  --rs-border: #18243f;
-  --rs-border-strong: #29446f;
-  --rs-blue-border: #315b91;
-  --rs-blue-bg: #0b1b38;
-  --rs-blue: #80ACFF;
-  --rs-blue-text: #8ebcff;
-  --rs-text: #edf4ff;
+  --rs-panel-soft: #202020;
+  --rs-border: #171717;
+  --rs-border-strong: #494949;
+  --rs-blue-border: #5c5c5c;
+  --rs-blue-bg: #303030;
+  --rs-blue: #e8872d;
+  --rs-blue-text: #c4c4c4;
+  --rs-text: #ffffff;
   --rs-muted: #94a7c2;
   --rs-subtle: #60728f;
   --rs-green-border: #28645e;
@@ -176,7 +176,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-wizard-heading p {
-  color: #80ACFF;
+  color: #e8872d;
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -362,7 +362,7 @@ body.roadsafe-case-wizard-open {
   min-height: 300px;
   border: 0;
   border-radius: 0;
-  background: #050b17;
+  background: #202020;
   padding: 15px;
 }
 
@@ -637,7 +637,7 @@ body.roadsafe-case-wizard-open {
   min-width: 0;
   border: 1px solid var(--rs-border);
   border-radius: 5px;
-  background: #050b17;
+  background: #202020;
   padding: 9px;
 }
 
@@ -967,7 +967,7 @@ body.roadsafe-case-wizard-open {
   overflow: hidden;
   border: 1px solid var(--rs-border);
   border-radius: 7px;
-  background: #020611;
+  background: #1b1b1b;
 }
 
 .roadsafe-neutral-preview__scene {
@@ -999,7 +999,7 @@ body.roadsafe-case-wizard-open {
   transform: translateX(-38%);
   border: 1px solid var(--rs-border-strong);
   border-radius: 4px;
-  background: #050b17;
+  background: #202020;
   color: #f4cad3;
   padding: 4px 7px;
   font-size: 7px;
@@ -1012,7 +1012,7 @@ body.roadsafe-case-wizard-open {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   border-top: 1px solid var(--rs-border);
-  background: #070d1a;
+  background: #202020;
   padding: 11px;
 }
 
@@ -1055,12 +1055,12 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-case-wizard .ui-button-primary {
   border: 1px solid #3f78c5;
-  background: #173c78;
+  background: #39332f;
   color: white;
 }
 
 .roadsafe-case-wizard .ui-button-primary:hover {
-  background: #1b4789;
+  background: #46413d;
 }
 
 .roadsafe-case-wizard button:disabled {
@@ -1081,7 +1081,7 @@ body.roadsafe-case-wizard-open {
   position: relative;
   min-width: 0;
   overflow: hidden;
-  background: #020611;
+  background: #1b1b1b;
 }
 
 .roadsafe-scene-map .maplibregl-canvas {
@@ -1166,7 +1166,7 @@ body.roadsafe-case-wizard-open {
   justify-content: center;
   border: 1px solid #3f78c5;
   border-radius: 4px;
-  background: #173c78;
+  background: #39332f;
   color: white;
   padding: 6px 9px;
   font-size: 8px;
@@ -1179,7 +1179,7 @@ body.roadsafe-case-wizard-open {
   border: 1px solid var(--rs-border-strong);
   border-radius: 6px;
   margin-top: 5px;
-  background: #050b17;
+  background: #202020;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.44);
 }
 
@@ -1272,7 +1272,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-scene-map__modes button.is-active {
-  background: #173c78;
+  background: #39332f;
   color: white;
 }
 
@@ -1325,7 +1325,7 @@ body.roadsafe-case-wizard-open {
 
 .roadsafe-scene-map__area-controls button.is-active {
   border-color: #3f78c5;
-  background: #173c78;
+  background: #39332f;
   color: white;
 }
 
@@ -1370,7 +1370,7 @@ body.roadsafe-case-wizard-open {
   gap: 7px;
   min-height: 42px;
   border-top: 1px solid var(--rs-border);
-  background: #070d1a;
+  background: #202020;
   color: var(--rs-subtle);
   padding: 8px 11px;
   font-size: 8px;
@@ -1380,13 +1380,13 @@ body.roadsafe-case-wizard-open {
 .roadsafe-scene-map .maplibregl-ctrl-group {
   overflow: hidden;
   border: 1px solid var(--rs-border-strong);
-  background: #050b17;
+  background: #202020;
   box-shadow: none;
 }
 
 .roadsafe-scene-map .maplibregl-ctrl-group button {
   min-height: 29px;
-  background-color: #050b17;
+  background-color: #202020;
 }
 
 .roadsafe-scene-map .maplibregl-ctrl-group button + button {
@@ -1403,7 +1403,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-scene-map .maplibregl-ctrl-attrib a {
-  color: #8ebcff;
+  color: #c4c4c4;
 }
 
 @media (max-width: 1180px) {

@@ -329,7 +329,7 @@ export default function SceneMapPage() {
           </div>
         </section>
 
-        <aside className="min-w-0 space-y-3 xl:max-h-[calc(100vh-92px)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1 [scrollbar-color:#223656_#070d1a] [scrollbar-width:thin]">
+        <aside className="min-w-0 space-y-3 xl:max-h-[calc(100vh-92px)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1 [scrollbar-color:#555555_#202020] [scrollbar-width:thin]">
           <section className="ui-panel min-w-0 overflow-hidden">
             <div className="ui-panel-header gap-3">
               <div className="flex min-w-0 items-center gap-2.5">

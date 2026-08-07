@@ -16,7 +16,7 @@
   border: 1px solid #182b49;
   border-radius: 0.55rem;
   background: linear-gradient(180deg, #050b18 0%, #030816 100%);
-  color: #cbd5e1;
+  color: #cfcfcf;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
 }
 
@@ -93,7 +93,7 @@
 }
 
 .field-mode-button:hover:not(:disabled) {
-  border-color: #315b91;
+  border-color: #5c5c5c;
   background: #10213e;
   color: #edf5ff;
 }
@@ -135,7 +135,7 @@
   gap: 0.25rem;
   overflow-x: auto;
   border-bottom: 1px solid #152744;
-  background: #040a16;
+  background: #292929;
   padding: 0.45rem 0.75rem;
 }
 
@@ -217,7 +217,7 @@
 .field-mode-visual-grid > section > div:first-child {
   min-height: 48px;
   border-color: #152744 !important;
-  background: #071124 !important;
+  background: #383838 !important;
   padding: 0.55rem 0.65rem !important;
 }
 
@@ -228,7 +228,7 @@
 }
 
 .field-mode-visual-grid > section > div:first-child h3 {
-  color: #dce7f7 !important;
+  color: #dedede !important;
   font-size: 0.62rem !important;
 }
 
@@ -244,16 +244,12 @@
 }
 
 .field-mode-visual-grid > section button:hover:not(:disabled) {
-  border-color: #315b91 !important;
+  border-color: #5c5c5c !important;
   background: #10213e !important;
   color: #edf5ff !important;
 }
+/* Legacy cool-colour compensation rule removed by Blender Color Purge V3. */
 
-.field-mode-visual-grid > section button[class*="bg-sky-500"] {
-  border-color: #386eb3 !important;
-  background: #164b96 !important;
-  color: #fff !important;
-}
 
 .field-mode-visual-grid > section .rounded-xl,
 .field-mode-visual-grid > section .rounded-2xl,
@@ -309,7 +305,7 @@
   max-height: calc(100vh - 5.3rem);
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid #1b3153;
+  border: 1px solid #494949;
   border-radius: 0.5rem;
   background: linear-gradient(180deg, rgba(8, 17, 36, 0.98), rgba(4, 10, 23, 0.98));
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
@@ -321,17 +317,17 @@
 
 .field-mode-inspector::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: #223656;
+  background: #555555;
 }
 
 .field-mode-panel-header {
-  border-bottom: 1px solid #172944;
+  border-bottom: 1px solid #171717;
   padding: 0.7rem;
 }
 
 .field-mode-panel-header h3 {
   margin: 0.2rem 0 0;
-  color: #dce7f7;
+  color: #dedede;
   font-size: 0.7rem;
   font-weight: 800;
 }
@@ -356,7 +352,7 @@
   border-radius: 0.3rem;
   background: #061020;
   padding: 0.42rem 0.55rem;
-  color: #dce7f7;
+  color: #dedede;
   font-size: 0.56rem;
   outline: none;
 }
@@ -364,7 +360,7 @@
 .field-mode-control select:focus,
 .field-mode-control input:focus,
 .field-mode-control textarea:focus {
-  border-color: #3d6da9;
+  border-color: #e8872d;
   box-shadow: 0 0 0 2px rgba(61, 109, 169, 0.18);
 }
 
@@ -391,7 +387,7 @@
   gap: 0.3rem;
   border: 1px solid #1a2e4e;
   border-radius: 0.32rem;
-  background: #071124;
+  background: #383838;
   color: #7588a4;
   padding: 0.4rem;
   font-size: 0.5rem;
@@ -425,7 +421,7 @@
 .field-mode-calibration-item h4,
 .field-mode-history-card h4,
 .field-mode-guidance strong {
-  color: #dce7f7;
+  color: #dedede;
   font-size: 0.58rem;
   font-weight: 800;
 }
@@ -458,7 +454,7 @@
   align-items: center;
   border: 1px solid #284a7b;
   border-radius: 0.28rem;
-  background: #112241;
+  background: #303030;
   padding: 0.24rem 0.4rem;
   color: #7fb1ff;
   font-size: 0.46rem;
@@ -506,7 +502,7 @@
 
 .field-mode-checkbox input {
   margin-top: 0.1rem;
-  accent-color: #80ACFF;
+  accent-color: #e8872d;
 }
 
 .field-mode-track-metrics,
@@ -596,9 +592,9 @@
 
 .field-mode-shell .maplibregl-ctrl-group,
 .field-mode-shell .maplibregl-popup-content {
-  border-color: #1d2c4b !important;
+  border-color: #494949 !important;
   background: #292929 !important;
-  color: #dbe4f0 !important;
+  color: #dedede !important;
 }
 
 @media (max-width: 1180px) {

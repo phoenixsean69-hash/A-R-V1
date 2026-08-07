@@ -779,7 +779,7 @@ export function renderReconstructionFrame(
   context.font = "900 26px Rubik, Arial, sans-serif";
   context.fillText(`${timeSeconds.toFixed(2)}s`, width - 30, 45);
   context.font = "700 14px Rubik, Arial, sans-serif";
-  context.fillStyle = "#cbd5e1";
+  context.fillStyle = "#cfcfcf";
   context.fillText(
     `${reconstruction.scene.roadLayout} · ${reconstruction.scene.weather} · ${reconstruction.scene.timeOfDay}`,
     width - 30,
@@ -801,7 +801,7 @@ export function renderReconstructionFrame(
     context.font = "900 18px Rubik, Arial, sans-serif";
     context.fillText(event.title, width / 2, boxY + 25);
     context.font = "14px Rubik, Arial, sans-serif";
-    context.fillStyle = "#cbd5e1";
+    context.fillStyle = "#cfcfcf";
     const description = event.description.slice(0, 95);
     context.fillText(description, width / 2, boxY + 47);
     context.restore();

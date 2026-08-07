@@ -133,7 +133,7 @@ export default function AccidentReconstructionPage() {
           </div>
 
           <div className="flex items-center justify-center gap-2 p-4 text-[9px] font-semibold text-[#c4c4c4]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#80ACFF]" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#e8872d]" />
             Loading the last selected scene
           </div>
         </section>

@@ -146,7 +146,7 @@ function BreakdownChart({
 
               <div className="h-1.5 overflow-hidden rounded-full border border-[#494949] bg-[#303030]">
                 <div
-                  className="h-full rounded-full bg-[#80ACFF]"
+                  className="h-full rounded-full bg-[#e8872d]"
                   style={{
                     width: `${Math.max(item.percentage, 3)}%`,
                   }}
@@ -268,7 +268,7 @@ export default function JunctionAnalysisModal({
           </button>
         </header>
 
-        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-5 [scrollbar-color:#223656_#070d1a] [scrollbar-width:thin]">
+        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-5 [scrollbar-color:#555555_#202020] [scrollbar-width:thin]">
           <section className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard
               label="Risk score"
@@ -480,7 +480,7 @@ export default function JunctionAnalysisModal({
                         key={action}
                         className="flex min-w-0 items-start gap-2 text-[8px] leading-4 text-slate-400"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#80ACFF]" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#e8872d]" />
                         <span className="min-w-0 break-words">{action}</span>
                       </div>
                     ))}

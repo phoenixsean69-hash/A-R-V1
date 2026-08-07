@@ -13,7 +13,7 @@ function LoadingScreen() {
     <div className="grid min-h-screen place-items-center bg-[#303030] p-5 text-slate-200">
       <section className="ui-panel w-full max-w-md overflow-hidden text-center">
         <div className="border-b border-[#494949] p-6">
-          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#494949] border-t-[#8ebcff]" />
+          <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#494949] border-t-[#c4c4c4]" />
           <h1 className="mt-4 text-base font-bold text-slate-100">
             Opening RoadSafe AR
           </h1>

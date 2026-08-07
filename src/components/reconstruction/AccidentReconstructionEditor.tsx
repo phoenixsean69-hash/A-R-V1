@@ -672,7 +672,7 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
           <path d="M9 19 L3.8 31 M23 19 L28.2 31" stroke="#b97850" strokeWidth="3.2" strokeLinecap="round" />
           <path d="M12.5 32 L10 45 M19.5 32 L22 45" stroke="#273244" strokeWidth="4.2" strokeLinecap="round" />
           <path d="M7.6 45 H12.2 M19.8 45 H24.4" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
-          {participant.type === "Officer" && <path d="M9 18 L23 18" stroke="#cbd5e1" strokeWidth="2.2" />}
+          {participant.type === "Officer" && <path d="M9 18 L23 18" stroke="#cfcfcf" strokeWidth="2.2" />}
           {participant.type === "Officer" && <path d="M10 5 Q16 0 22 5 L22 8 H10 Z" fill="#1e293b" stroke="#94a3b8" strokeWidth="1" />}
           {participant.type === "Witness" && <rect x="22" y="20" width="4" height="7" rx="1" fill="#dbeafe" stroke="#64748b" />}
         </svg>
@@ -698,12 +698,12 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
               <path d="M34 9 L42 5 L47 7" stroke="#aab7c8" strokeWidth="2" strokeLinecap="round" />
               <rect x="19" y="7" width="10" height="4" rx="2" fill="#202a37" />
               <path d="M22 22 L18 28" stroke="#aab7c8" strokeWidth="2" />
-              <circle cx="47" cy="8" r="2.5" fill="#fff7cf" stroke="#cbd5e1" />
+              <circle cx="47" cy="8" r="2.5" fill="#fff7cf" stroke="#cfcfcf" />
             </>
           ) : (
             <>
               <path d="M10 23 L22 10 L30 23 Z M22 10 L39 10 L30 23 M39 10 L46 23" fill="none" stroke={colour} strokeWidth="2.4" strokeLinejoin="round" />
-              <path d="M18 8 H27 M38 7 L44 5" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+              <path d="M18 8 H27 M38 7 L44 5" stroke="#cfcfcf" strokeWidth="2" strokeLinecap="round" />
               <circle cx="30" cy="23" r="2.3" fill="#94a3b8" />
             </>
           )}
@@ -730,7 +730,7 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
         <rect x="90" y="32" width="8" height="11" rx="2" fill="#111827" />
         {participant.type === "Truck" ? (
           <>
-            <rect x="12" y="8" width="51" height="36" rx="5" fill="#66717f" stroke="#cbd5e1" />
+            <rect x="12" y="8" width="51" height="36" rx="5" fill="#66717f" stroke="#cfcfcf" />
             <rect x="65" y="8" width="23" height="36" rx="7" fill={colour} stroke={bodyStroke} />
             <path d="M70 11 H85 V41 H70 Z" fill="#7ea1b8" opacity=".85" />
             <path d="M18 13 H57 M18 20 H57 M18 27 H57 M18 34 H57" stroke="#8793a0" strokeWidth="1" />
@@ -744,8 +744,8 @@ function ParticipantShape({ participant, selected }: ParticipantShapeProps) {
         ) : (
           <>
             <path d="M22 8 Q30 4 50 4 Q70 4 78 8 L88 18 V34 L78 44 Q69 48 50 48 Q31 48 22 44 L12 34 V18 Z" fill={colour} stroke={bodyStroke} strokeWidth="1.4" />
-            <path d="M31 9 Q50 4 69 9 L75 17 H25 Z" fill="#7da0b8" stroke="#cbd5e1" strokeWidth="1" />
-            <path d="M25 35 H75 L69 44 Q50 49 31 44 Z" fill="#66899f" stroke="#cbd5e1" strokeWidth="1" />
+            <path d="M31 9 Q50 4 69 9 L75 17 H25 Z" fill="#7da0b8" stroke="#cfcfcf" strokeWidth="1" />
+            <path d="M25 35 H75 L69 44 Q50 49 31 44 Z" fill="#66899f" stroke="#cfcfcf" strokeWidth="1" />
             <path d="M23 26 H77" stroke="#dbe4ee" strokeWidth="1" opacity=".7" />
             <rect x="9" y="21" width="5" height="10" rx="2" fill="#263442" stroke="#94a3b8" />
             <rect x="86" y="21" width="5" height="10" rx="2" fill="#263442" stroke="#94a3b8" />
