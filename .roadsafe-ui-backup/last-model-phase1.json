@@ -1,0 +1,26 @@
+{
+  "installedAt": "2026-08-07T11:01:39.971Z",
+  "backupRoot": "C:\\Users\\nooklyweb\\Desktop\\A-R-V1\\.roadsafe-ui-backup\\model-phase1-2026-08-07T11-01-23-555Z",
+  "changedFiles": [
+    "src/engine/assets/participantAssetCatalog.ts",
+    "src/engine/assets/participant3DModelFactory.ts",
+    "src/components/reconstruction/Participant2DModel.tsx",
+    "src/types/reconstruction.ts",
+    "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+    "src/components/reconstruction/ForensicScenePreview.tsx",
+    "src/components/reconstruction/Reconstruction3DViewer.tsx",
+    "scripts/verify-participant-model-foundation.mjs",
+    "package.json"
+  ],
+  "existedBefore": {
+    "src/engine/assets/participantAssetCatalog.ts": true,
+    "src/engine/assets/participant3DModelFactory.ts": true,
+    "src/components/reconstruction/Participant2DModel.tsx": true,
+    "src/types/reconstruction.ts": true,
+    "src/components/reconstruction/AccidentReconstructionEditor.tsx": true,
+    "src/components/reconstruction/ForensicScenePreview.tsx": true,
+    "src/components/reconstruction/Reconstruction3DViewer.tsx": true,
+    "scripts/verify-participant-model-foundation.mjs": false,
+    "package.json": true
+  }
+}

@@ -1,0 +1,56 @@
+RoadSafe AR — SOURCE / LICENSE NOTES
+=====================================
+
+Blender Studio Human Base Meshes
+Source index:
+https://download.blender.org/demo/bundles/bundles-3.6/
+License: CC0
+Use: realistic adult male/female source meshes; normalize/retopo/rig later.
+
+Kenney Car Kit
+Source:
+https://opengameart.org/content/car-kit
+License: CC0
+Use: car/source parts and glTF candidates.
+
+RGSDev Free Low Poly Vehicles Pack
+Source:
+https://opengameart.org/content/free-low-poly-vehicles-pack
+License: CC0
+Use: sedan, hatchback, SUV, pickup, truck, trailer truck, bus.
+
+Byzmod LOW POLY CAR UPDATE Pack
+Source:
+https://opengameart.org/content/low-poly-car-update-pack
+License: CC0
+Use: car/truck/bus/van/motorcycle candidates; source describes a second
+original/non-low-poly-effect attachment.
+
+Quaternius Public Transport
+Source:
+https://opengameart.org/content/lowpoly-public-transport
+License: CC0
+Use: bus, bicycle and public transport candidates.
+
+Quaternius Animated Human
+Source:
+https://opengameart.org/content/animated-human-low-poly
+License: CC0
+Use: rig/animation reference with idle/run/walk/work/death clips.
+
+Optional Public-domain GLB source pages
+Car:
+https://www.get3dmodels.com/vehicles/car-model/
+
+Pickup:
+https://www.get3dmodels.com/vehicles/pickup-truck/
+
+Truck:
+https://www.get3dmodels.com/vehicles/truck-2/
+
+Motorcycle:
+https://www.get3dmodels.com/vehicles/motorcycle-2/
+
+The downloader only keeps an optional GLB if an actual .glb binary URL is
+exposed and can be downloaded. If page delivery changes, these optional items
+are skipped without failing the core intake.

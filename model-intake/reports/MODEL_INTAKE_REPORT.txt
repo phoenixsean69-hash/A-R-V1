@@ -1,0 +1,296 @@
+RoadSafe AR — MODEL INTAKE REPORT
+=================================
+
+Generated: 2026-08-07T12:06:20.732Z
+Sources ready: 11/11
+Required failures: 0
+Candidate model files: 229
+
+Model file counts:
+  .blend: 15
+  .dae: 1
+  .fbx: 96
+  .glb: 54
+  .obj: 63
+
+Sources:
+  [ready] Blender Studio Human Base Meshes
+    license: CC0
+    tier: high-detail
+    candidates: 1
+  [ready] Kenney Car Kit 3.1
+    license: CC0
+    tier: production-mid
+    candidates: 150
+  [ready] RGSDev Free Vehicles Pack
+    license: CC0
+    tier: production-mid
+    candidates: 22
+  [ready] Byzmod 2023 Vehicle Pack
+    license: CC0
+    tier: production-mid
+    candidates: 4
+  [ready] Byzmod Original / Low-High Car Pack
+    license: CC0
+    tier: higher-detail-candidate
+    candidates: 8
+  [ready] Quaternius Public Transport
+    license: CC0
+    tier: production-mid
+    candidates: 36
+  [ready] Quaternius Animated Human
+    license: CC0
+    tier: animated-reference
+    candidates: 4
+  [ready] Public-domain Car GLB
+    license: Public domain
+    tier: detailed-glb-candidate
+    candidates: 1
+  [ready] Public-domain Pickup GLB
+    license: Public domain
+    tier: detailed-glb-candidate
+    candidates: 1
+  [ready] Public-domain Truck GLB
+    license: Public domain
+    tier: detailed-glb-candidate
+    candidates: 1
+  [ready] Public-domain Motorcycle GLB
+    license: Public domain
+    tier: detailed-glb-candidate
+    candidates: 1
+
+Candidate files:
+  model-intake/extracted/blender-human-base-meshes/human_base_meshes_bundle.blend  [CC0; high-detail]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/ambulance.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/box.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/cone-flat.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/cone.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-bolt.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-bumper.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-door-window.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-door.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-drivetrain-axle.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-drivetrain.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-nut.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-plate-a.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-plate-b.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-plate-small-a.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-plate-small-b.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-spoiler-a.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-spoiler-b.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/debris-tire.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/delivery-flat.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/delivery.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/firetruck.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/garbage-truck.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/hatchback-sports.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/kart-oobi.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/kart-oodi.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/kart-ooli.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/kart-oopi.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/kart-oozi.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/police.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/race-future.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/race.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/sedan-sports.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/sedan.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/suv-luxury.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/suv.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/taxi.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/tractor-police.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/tractor-shovel.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/tractor.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/truck-flat.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/truck.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/van.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-dark.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-default.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-racing.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-tractor-back.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-tractor-dark-back.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-tractor-dark-front.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-tractor-front.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/FBX format/wheel-truck.fbx  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/ambulance.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/box.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/cone-flat.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/cone.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-bolt.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-bumper.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-door-window.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-door.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-drivetrain-axle.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-drivetrain.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-nut.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-plate-a.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-plate-b.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-plate-small-a.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-plate-small-b.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-spoiler-a.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-spoiler-b.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/debris-tire.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/delivery-flat.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/delivery.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/firetruck.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/garbage-truck.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/hatchback-sports.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/kart-oobi.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/kart-oodi.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/kart-ooli.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/kart-oopi.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/kart-oozi.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/police.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/race-future.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/race.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/sedan-sports.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/sedan.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/suv-luxury.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/suv.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/taxi.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/tractor-police.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/tractor-shovel.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/tractor.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/truck-flat.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/truck.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/van.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-dark.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-default.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-racing.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-tractor-back.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-tractor-dark-back.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-tractor-dark-front.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-tractor-front.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/GLB format/wheel-truck.glb  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/ambulance.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/box.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/cone-flat.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/cone.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-bolt.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-bumper.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-door-window.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-door.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-drivetrain-axle.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-drivetrain.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-nut.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-plate-a.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-plate-b.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-plate-small-a.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-plate-small-b.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-spoiler-a.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-spoiler-b.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/debris-tire.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/delivery-flat.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/delivery.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/firetruck.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/garbage-truck.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/hatchback-sports.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/kart-oobi.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/kart-oodi.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/kart-ooli.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/kart-oopi.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/kart-oozi.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/police.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/race-future.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/race.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/sedan-sports.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/sedan.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/suv-luxury.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/suv.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/taxi.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/tractor-police.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/tractor-shovel.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/tractor.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/truck-flat.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/truck.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/van.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-dark.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-default.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-racing.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-tractor-back.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-tractor-dark-back.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-tractor-dark-front.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-tractor-front.obj  [CC0; production-mid]
+  model-intake/extracted/kenney-car-kit/Models/OBJ format/wheel-truck.obj  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/All vehicles.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Ambulance/Ambulance.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Bus/Bus.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Firetruck/Firetruck.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Hatchback/Hatchback.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Limousine/Limousine.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Monster Truck/Monster Truck.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Muscle/Muscle.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Muscle 2/Muscle 2.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Pickup/Pickup.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Police Muscle/Police Muscle.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Police Sedan/Police Sedan.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Police Sports/Police Sports.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Police SUV/Police SUV.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Roadster/Roadster.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Sedan/Sedan.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Sports/Sports.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/SUV/SUV.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Taxi/Taxi.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Truck/Truck.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Truck with trailer/Truck with trailer.fbx  [CC0; production-mid]
+  model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Van/Van.fbx  [CC0; production-mid]
+  model-intake/extracted/byzmod-vehicle-pack/PACK_CAR_2023/CAR_EFEITO/PACK_CAR_2023.fbx  [CC0; production-mid]
+  model-intake/extracted/byzmod-vehicle-pack/PACK_CAR_2023/CAR_EFEITO/PLAYER.fbx  [CC0; production-mid]
+  model-intake/extracted/byzmod-vehicle-pack/PACK_CAR_2023/CAR_PADR╟O/PACK_CAR_2023.fbx  [CC0; production-mid]
+  model-intake/extracted/byzmod-vehicle-pack/PACK_CAR_2023/CAR_PADR╟O/PLAYER.fbx  [CC0; production-mid]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CAMIONETE_LOW_POLY.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CARRO 3D HIGH POLY.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CARRO 3D LOW POLY.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CARRO AMARELO LOW POLY.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CAR_PACK.blend  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/PACK_CAR.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2023/PACK_CAR_2023.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2023/PLAYER.fbx  [CC0; higher-detail-candidate]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/Ambulance.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/Bicycle.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/Bus.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/SchoolBus.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/SquareFrameBicycle.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/Taxi.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/TrafficCone.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/TrafficLight.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/TrafficSign1.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/TrafficSign2.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/TrafficSign3.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/Blends/Train.blend  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Ambulance.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Bicycle.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Bus.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/SchoolBus.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/SquareFrameBicycle.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Taxi.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/TrafficCone.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/TrafficLight.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/TrafficSign1.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/TrafficSign2.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/TrafficSign3.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Train.fbx  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/Ambulance.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/Bicycle.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/Bus.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/SchoolBus.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/SquareFrameBicycle.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/Taxi.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/TrafficCone.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/TrafficLight.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/TrafficSign1.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/TrafficSign2.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/TrafficSign3.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-public-transport/Public Transport/OBJ/Train.obj  [CC0; production-mid]
+  model-intake/extracted/quaternius-animated-human/Animated Human by @Quaternius/Blend/Animated Human.blend  [CC0; animated-reference]
+  model-intake/extracted/quaternius-animated-human/Animated Human by @Quaternius/DAE/Animated Human.dae  [CC0; animated-reference]
+  model-intake/extracted/quaternius-animated-human/Animated Human by @Quaternius/FBX/Animated Human.fbx  [CC0; animated-reference]
+  model-intake/extracted/quaternius-animated-human/Animated Human by @Quaternius/OBJ/Animated Human.obj  [CC0; animated-reference]
+  model-intake/extracted/public-domain-car-glb/public-domain-car.glb  [Public domain; detailed-glb-candidate]
+  model-intake/extracted/public-domain-pickup-glb/public-domain-pickup.glb  [Public domain; detailed-glb-candidate]
+  model-intake/extracted/public-domain-truck-glb/public-domain-truck.glb  [Public domain; detailed-glb-candidate]
+  model-intake/extracted/public-domain-motorcycle-glb/public-domain-motorcycle.glb  [Public domain; detailed-glb-candidate]
+
+NEXT STEP:
+Do not move these into public/assets yet.
+First review MODEL_INTAKE_REPORT.txt and choose one source model per RoadSafe asset category.
+Then normalize scale, forward axis, ground pivot, materials and triangle budget before runtime integration.

@@ -1,0 +1,585 @@
+/*
+ * RoadSafe AR — Blender-style Reconstruction Properties Panel V1
+ *
+ * Scope:
+ * - 3D Context Inspector only.
+ * - No scene, physics, timeline, participant-state, or model behavior changes.
+ *
+ * Visual language:
+ * - Blender-inspired vertical property tab rail.
+ * - Compact editor rows instead of dashboard cards.
+ * - RoadSafe gray workstation palette + #E8872D selection accent.
+ */
+
+.reconstruction-workspace__properties.reconstruction-workspace__properties--blender {
+  --rs-props-rail-width: 36px;
+  --rs-props-bg: #292929;
+  --rs-props-bg-deep: #202020;
+  --rs-props-bg-raised: #303030;
+  --rs-props-bg-hover: #383838;
+  --rs-props-border: #171717;
+  --rs-props-border-soft: #454545;
+  --rs-props-text: #d8d8d8;
+  --rs-props-muted: #929292;
+  --rs-props-accent: #e8872d;
+
+  position: relative;
+  min-width: 322px;
+  width: clamp(322px, 22vw, 368px);
+  overflow: hidden;
+  border: 1px solid var(--rs-props-border) !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  color: var(--rs-props-text);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.025),
+    -4px 0 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Top editor header                                                         */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header {
+  min-height: 38px !important;
+  height: 38px;
+  padding: 5px 7px 5px calc(var(--rs-props-rail-width) + 9px) !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--rs-props-border) !important;
+  background:
+    linear-gradient(180deg, #343434 0%, #2c2c2c 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header
+  > div:first-child {
+  min-width: 0;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header
+  p {
+  margin: 0 !important;
+  color: #dddddd !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: none !important;
+  line-height: 1.15 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header
+  span {
+  display: block;
+  max-width: 220px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #959595 !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header
+  button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #a7a7a7 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__panel-header
+  button:hover {
+  border-color: #4a4a4a !important;
+  background: #3a3a3a !important;
+  color: #fff !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Blender-like vertical property tabs                                       */
+/* ------------------------------------------------------------------------- */
+
+.blender-properties-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 14;
+  width: var(--rs-props-rail-width);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-top: 39px;
+  border-right: 1px solid var(--rs-props-border);
+  background: #242424;
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.02);
+}
+
+.blender-properties-rail__button {
+  position: relative;
+  width: 35px !important;
+  min-width: 35px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #8f8f8f !important;
+  box-shadow: none !important;
+}
+
+.blender-properties-rail__button:hover {
+  background: #303030 !important;
+  color: #d7d7d7 !important;
+}
+
+.blender-properties-rail__button.is-active {
+  border-left-color: var(--rs-props-accent) !important;
+  background: #333333 !important;
+  color: #f1f1f1 !important;
+}
+
+.blender-properties-rail__button.is-active::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 7px;
+  bottom: 7px;
+  width: 1px;
+  background: #333333;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Scroll body                                                               */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__context-scroll {
+  height: calc(100% - 38px);
+  min-height: 0;
+  padding-left: var(--rs-props-rail-width) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: var(--rs-props-bg) !important;
+  scrollbar-color: #555 #242424;
+  scrollbar-width: thin;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar {
+  width: 9px;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-track {
+  background: #242424;
+}
+
+.reconstruction-workspace__properties--blender
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #242424;
+  border-radius: 2px;
+  background: #555;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Section anatomy                                                           */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .blender-properties-section-heading,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__context-title {
+  min-height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 5px 8px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #1d1d1d !important;
+  background:
+    linear-gradient(180deg, #333333 0%, #2e2e2e 100%) !important;
+  color: #d0d0d0 !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.025em !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .blender-properties-section-heading::before,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__context-title::before {
+  content: "▾";
+  flex: 0 0 auto;
+  color: #a6a6a6;
+  font-size: 8px;
+  transform: translateY(-0.5px);
+}
+
+.reconstruction-workspace__properties--blender
+  .blender-properties-section-heading
+  svg,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__context-title
+  svg {
+  width: 12px !important;
+  height: 12px !important;
+  color: #bcbcbc !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__context-section {
+  margin: 0 !important;
+  padding: 0 0 7px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--rs-props-border) !important;
+  border-radius: 0 !important;
+  background: var(--rs-props-bg) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .blender-properties-object-section {
+  margin: 0;
+  padding: 0 0 7px;
+  border-bottom: 1px solid var(--rs-props-border);
+  background: var(--rs-props-bg);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Participant/property rows                                                 */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list {
+  display: grid !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 4px 8px 1px !important;
+  background: transparent !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > label,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > div {
+  min-height: 29px !important;
+  display: grid !important;
+  grid-template-columns: 88px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 2px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #242424 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > label:last-child,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > label
+  > span,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  > div
+  > span {
+  color: var(--rs-props-muted) !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.1 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #d9d9d9 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  input,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  select {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  padding: 2px 7px !important;
+  border: 1px solid #4a4a4a !important;
+  border-radius: 3px !important;
+  outline: none !important;
+  background: #202020 !important;
+  color: #dedede !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.34) !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  input:hover,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  select:hover {
+  border-color: #5a5a5a !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  input:focus,
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__property-list
+  select:focus {
+  border-color: var(--rs-props-accent) !important;
+  box-shadow:
+    0 0 0 1px rgba(232, 135, 45, 0.12),
+    inset 0 1px 2px rgba(0, 0, 0, 0.34) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Camera — compact Blender-style segmented control                          */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__segmented-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1px !important;
+  margin: 5px 8px 0 !important;
+  padding: 1px !important;
+  border: 1px solid #171717 !important;
+  border-radius: 3px !important;
+  background: #202020 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__segmented-grid
+  button {
+  min-width: 0 !important;
+  min-height: 25px !important;
+  height: 25px !important;
+  padding: 2px 5px !important;
+  border: 1px solid #454545 !important;
+  border-radius: 2px !important;
+  background:
+    linear-gradient(180deg, #3b3b3b, #303030) !important;
+  color: #c0c0c0 !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__segmented-grid
+  button:hover {
+  background: #404040 !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__segmented-grid
+  button.is-active {
+  border-color: #5a5a5a !important;
+  background: #3a3a3a !important;
+  color: #fff !important;
+  box-shadow:
+    inset 3px 0 0 var(--rs-props-accent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Layer rows                                                                */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__layer-list {
+  display: grid !important;
+  gap: 0 !important;
+  margin: 4px 8px 0 !important;
+  padding: 0 !important;
+  border: 1px solid #242424 !important;
+  border-radius: 2px !important;
+  background: #2b2b2b !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__layer-list
+  label {
+  min-height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 3px 7px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #222 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #c7c7c7 !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__layer-list
+  label:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__layer-list
+  label:hover {
+  background: #343434 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__layer-list
+  input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  accent-color: var(--rs-props-accent) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Physics telemetry                                                         */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__telemetry-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+  margin: 4px 8px 0 !important;
+  padding: 0 !important;
+  border: 1px solid #242424 !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__telemetry-grid
+  > div {
+  min-height: 28px !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 3px 7px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #222 !important;
+  border-radius: 0 !important;
+  background: #2b2b2b !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__telemetry-grid
+  > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__telemetry-grid
+  span {
+  color: var(--rs-props-muted) !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+}
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__telemetry-grid
+  strong {
+  color: #d8d8d8 !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Empty state                                                               */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  .reconstruction-workspace__empty-properties {
+  margin: 5px 8px 7px !important;
+  padding: 9px !important;
+  border: 1px dashed #484848 !important;
+  border-radius: 2px !important;
+  background: #272727 !important;
+  color: #9a9a9a !important;
+  font-size: 9.5px !important;
+  line-height: 1.45 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Keep RoadSafe's orange as selection only — no deep blue / gaming chrome.  */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace__properties--blender
+  ::selection {
+  background: rgba(232, 135, 45, 0.38);
+  color: #fff;
+}
+
+@media (max-width: 1180px) {
+  .reconstruction-workspace__properties.reconstruction-workspace__properties--blender {
+    min-width: 304px;
+    width: 318px;
+  }
+
+  .reconstruction-workspace__properties--blender
+    .reconstruction-workspace__property-list
+    > label,
+  .reconstruction-workspace__properties--blender
+    .reconstruction-workspace__property-list
+    > div {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+  }
+}

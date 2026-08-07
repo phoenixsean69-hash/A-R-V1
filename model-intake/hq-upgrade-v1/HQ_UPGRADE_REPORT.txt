@@ -1,0 +1,83 @@
+RoadSafe AR — HQ UPGRADE REPORT
+================================
+
+Generated: 2026-08-07T12:22:32.687Z
+
+AUTOMATIC DOWNLOADS
+[ready] bus — City Bus Model
+  license: CC Attribution
+  expected geometry: 47,700 verts / 50,830 tris
+  file: model-intake/hq-upgrade-v1/automatic/hq-city-bus.glb
+
+[ready] bus — City Bus Vehicle
+  license: CC Attribution
+  expected geometry: 14,907 verts / 13,004 tris
+  file: model-intake/hq-upgrade-v1/automatic/hq-city-bus-lod.glb
+
+[ready] rigid-truck — Logging Truck
+  license: CC Attribution
+  expected geometry: 34,360 verts / 31,296 tris
+  file: model-intake/hq-upgrade-v1/automatic/hq-logging-truck.glb
+
+[ready] hatchback — Stylized Hatchback Car
+  license: CC Attribution
+  expected geometry: 17,077 verts / 13,364 tris
+  file: model-intake/hq-upgrade-v1/automatic/hq-hatchback.glb
+
+[ready] sedan-alt — Blue Muscle Car
+  license: CC Attribution
+  expected geometry: 12,305 verts / 11,183 tris
+  file: model-intake/hq-upgrade-v1/automatic/hq-passenger-car-alt.glb
+
+AUTHENTICATED HIGH-QUALITY TARGETS
+passenger-family — Generic passenger car pack
+  provider: Sketchfab
+  license: CC Attribution
+  page: https://sketchfab.com/3d-models/generic-passenger-car-pack-20f9af9b8a404d5cb022ac6fe87f21f5
+  why: Best single generic pack found: sedan, hatchback, minivan, pickup, SUV and more; roughly 6k–8k tris each, textures/metallic/gloss/opacity, intentionally trademark-safe.
+
+suv — Urban '10 generic SUV
+  provider: Sketchfab
+  license: CC Attribution
+  page: https://sketchfab.com/3d-models/generic-suv-low-poly-model-2866efdfa943484391ef8313768e074d
+  why: Generic economy SUV, ~16.6k triangles / 10.5k vertices; materially stronger than the current ~1.7k-triangle RGS SUV.
+
+bus — Public bus
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/vehicle/bus/public-bus
+  why: Free CGTrader model with PBR textures and CGTrader technical/visual verification.
+
+rigid-truck — Transport Truck 3D
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/vehicle/truck/transport-truck-3d
+  why: Free box truck with interior, realistic proportions, detailed textures and CGTrader quality checks/PBR.
+
+motorcycle — Free motorcycle
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/vehicle/motorcycle/free-motorcycle
+  why: Free textured/materialled higher-quality motorcycle source; Blender file around 41 MB.
+
+adult-male-female — Realistic Male and Female Characters
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/character/man/realistic-male-and-female-characters
+  why: Free, quality-verified, rigged and textured male/female characters with PBR-ready materials; roughly 56k–64k faces each.
+
+child — Child Character 3D Model
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/character/child/child-character-3d-model
+  why: Free realistic child source with 4K/2K textures. Very high-poly (~533k vertices), so it is a SOURCE asset only and must be retopologized/decimated before RoadSafe runtime use.
+
+officer — Rigged Police Man - Low Poly
+  provider: CGTrader
+  license: Royalty Free License (no AI)
+  page: https://www.cgtrader.com/free-3d-models/character/man/rigged-police-man-low-poly
+  why: Free officer candidate with CGTrader technical/visual verification and PBR checks.
+
+IMPORTANT
+Do not integrate these automatically.
+After downloads, inspect geometry/materials/rigging, then normalize scale/axis/pivot and build LODs.

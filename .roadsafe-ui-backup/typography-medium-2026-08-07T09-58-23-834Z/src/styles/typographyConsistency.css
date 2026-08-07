@@ -1,0 +1,349 @@
+/*
+ * RoadSafe AR — Readable Typography V2
+ *
+ * IMPORTANT:
+ * The actual application root is .roadsafe-workstation.
+ * This stylesheet is loaded LAST and owns the final readable type scale.
+ */
+
+:root {
+  --rs-type-micro: 12px;
+  --rs-type-meta: 13px;
+  --rs-type-control: 14px;
+  --rs-type-body: 14px;
+  --rs-type-section: 15px;
+  --rs-type-panel: 16px;
+  --rs-type-subtitle: 17px;
+  --rs-type-page: 21px;
+  --rs-type-page-large: 25px;
+
+  --rs-text-primary: #e2e2e2;
+  --rs-text-secondary: #c5c5c5;
+  --rs-text-muted: #a7a7a7;
+  --rs-text-faint: #929292;
+}
+
+html {
+  font-size: 16px;
+}
+
+body,
+#root,
+.roadsafe-workstation,
+.roadsafe-shell {
+  font-size: var(--rs-type-body);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Actual RoadSafe application root.
+ * Nothing operational should fall below 12px.
+ */
+.roadsafe-workstation {
+  color: var(--rs-text-primary);
+}
+
+/* Arbitrary Tailwind sizes */
+.roadsafe-workstation [class~="text-[5px]"],
+.roadsafe-workstation [class~="text-[6px]"],
+.roadsafe-workstation [class~="text-[7px]"],
+.roadsafe-workstation [class~="text-[8px]"],
+.roadsafe-workstation [class~="text-[9px]"],
+.roadsafe-shell [class~="text-[5px]"],
+.roadsafe-shell [class~="text-[6px]"],
+.roadsafe-shell [class~="text-[7px]"],
+.roadsafe-shell [class~="text-[8px]"],
+.roadsafe-shell [class~="text-[9px]"] {
+  font-size: var(--rs-type-micro) !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-workstation [class~="text-[10px]"],
+.roadsafe-workstation [class~="text-[11px]"],
+.roadsafe-shell [class~="text-[10px]"],
+.roadsafe-shell [class~="text-[11px]"] {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.42 !important;
+}
+
+.roadsafe-workstation [class~="text-[12px]"],
+.roadsafe-workstation [class~="text-[13px]"],
+.roadsafe-shell [class~="text-[12px]"],
+.roadsafe-shell [class~="text-[13px]"] {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.42 !important;
+}
+
+.roadsafe-workstation [class~="text-[14px]"],
+.roadsafe-workstation [class~="text-[15px]"],
+.roadsafe-shell [class~="text-[14px]"],
+.roadsafe-shell [class~="text-[15px]"] {
+  font-size: 15px !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-workstation [class~="text-[16px]"],
+.roadsafe-workstation [class~="text-[17px]"],
+.roadsafe-shell [class~="text-[16px]"],
+.roadsafe-shell [class~="text-[17px]"] {
+  font-size: var(--rs-type-subtitle) !important;
+  line-height: 1.4 !important;
+}
+
+/* Standard Tailwind scale */
+.roadsafe-workstation .text-xs,
+.roadsafe-shell .text-xs {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.42 !important;
+}
+
+.roadsafe-workstation .text-sm,
+.roadsafe-shell .text-sm {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.45 !important;
+}
+
+.roadsafe-workstation .text-base,
+.roadsafe-shell .text-base {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+.roadsafe-workstation .text-lg,
+.roadsafe-shell .text-lg {
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-workstation .text-xl,
+.roadsafe-shell .text-xl {
+  font-size: 19px !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation .text-2xl,
+.roadsafe-shell .text-2xl {
+  font-size: var(--rs-type-page) !important;
+  line-height: 1.28 !important;
+}
+
+.roadsafe-workstation .text-3xl,
+.roadsafe-shell .text-3xl {
+  font-size: var(--rs-type-page-large) !important;
+  line-height: 1.22 !important;
+}
+
+/*
+ * Native and shared controls.
+ */
+.roadsafe-workstation button,
+.roadsafe-workstation input,
+.roadsafe-workstation select,
+.roadsafe-workstation textarea,
+.roadsafe-workstation option,
+.roadsafe-workstation .ui-button,
+.roadsafe-workstation .ui-button-primary,
+.roadsafe-workstation .ui-input,
+.roadsafe-workstation .ui-icon-button {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation label,
+.roadsafe-workstation td,
+.roadsafe-workstation th,
+.roadsafe-workstation dt,
+.roadsafe-workstation dd,
+.roadsafe-workstation li {
+  font-size: var(--rs-type-control);
+  line-height: 1.45;
+}
+
+.roadsafe-workstation small,
+.roadsafe-workstation .ui-badge,
+.roadsafe-workstation [class*="__meta"],
+.roadsafe-workstation [class*="__hint"],
+.roadsafe-workstation [class*="__helper"],
+.roadsafe-workstation [class*="__description"] {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.42 !important;
+}
+
+/*
+ * Headings.
+ */
+.roadsafe-workstation h1 {
+  font-size: var(--rs-type-page-large) !important;
+  line-height: 1.22 !important;
+}
+
+.roadsafe-workstation h2 {
+  font-size: var(--rs-type-page) !important;
+  line-height: 1.28 !important;
+}
+
+.roadsafe-workstation h3 {
+  font-size: var(--rs-type-subtitle) !important;
+  line-height: 1.32 !important;
+}
+
+.roadsafe-workstation h4,
+.roadsafe-workstation h5,
+.roadsafe-workstation h6 {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation .ui-panel-title,
+.roadsafe-workstation [class*="__panel-title"],
+.roadsafe-workstation [class*="panel-title"] {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.3 !important;
+}
+
+.roadsafe-workstation [class*="__section-title"],
+.roadsafe-workstation [class*="section-title"],
+.roadsafe-workstation [class*="section__title"],
+.roadsafe-workstation [class*="__section-header"] strong,
+.roadsafe-workstation [class*="section-header"] strong,
+.roadsafe-workstation summary > span:first-child {
+  font-size: var(--rs-type-section) !important;
+  line-height: 1.3 !important;
+  font-weight: 700 !important;
+}
+
+/*
+ * Make formerly low-contrast Tailwind slate text readable on charcoal.
+ * These were a major part of the screenshot problem.
+ */
+.roadsafe-workstation .text-slate-700,
+.roadsafe-workstation .text-slate-600 {
+  color: var(--rs-text-muted) !important;
+}
+
+.roadsafe-workstation .text-slate-500 {
+  color: #b1b1b1 !important;
+}
+
+.roadsafe-workstation .text-slate-400 {
+  color: #c4c4c4 !important;
+}
+
+.roadsafe-workstation .text-slate-300 {
+  color: #d6d6d6 !important;
+}
+
+.roadsafe-workstation .text-slate-200,
+.roadsafe-workstation .text-white {
+  color: #eeeeee !important;
+}
+
+/*
+ * Inspector / reconstruction / bottom-panel readability.
+ */
+.roadsafe-workstation .roadsafe-inspector,
+.roadsafe-workstation .roadsafe-bottom-panel,
+.roadsafe-workstation .reconstruction-workspace,
+.roadsafe-workstation .reconstruction-node-editor,
+.roadsafe-workstation .scene-settings,
+.roadsafe-workstation .blender-object-palette,
+.roadsafe-workstation .blender-placed-objects {
+  font-size: var(--rs-type-control);
+}
+
+.roadsafe-workstation .roadsafe-inspector small,
+.roadsafe-workstation .reconstruction-workspace small,
+.roadsafe-workstation .scene-settings small,
+.roadsafe-workstation .blender-object-palette small {
+  font-size: var(--rs-type-meta) !important;
+}
+
+/*
+ * Navigation and shell chrome.
+ */
+.roadsafe-workstation .roadsafe-navigation-link,
+.roadsafe-workstation .roadsafe-navigation-case,
+.roadsafe-workstation .roadsafe-navigation-station,
+.roadsafe-workstation .roadsafe-header,
+.roadsafe-workstation .roadsafe-toolbar {
+  font-size: var(--rs-type-control) !important;
+}
+
+.roadsafe-workstation .roadsafe-navigation-group-label,
+.roadsafe-workstation .roadsafe-eyebrow {
+  font-size: var(--rs-type-micro) !important;
+}
+
+/*
+ * Timelines and playback were particularly tiny.
+ */
+.roadsafe-workstation [class*="timeline"] button,
+.roadsafe-workstation [class*="timeline"] label,
+.roadsafe-workstation [class*="timeline"] span:not(.material-symbols-outlined),
+.roadsafe-workstation [class*="playback"] button,
+.roadsafe-workstation [class*="playback"] label,
+.roadsafe-workstation [class*="playback"] span:not(.material-symbols-outlined) {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.42 !important;
+}
+
+/*
+ * Map controls and popups.
+ */
+.roadsafe-workstation .maplibregl-map,
+.roadsafe-workstation .maplibregl-ctrl,
+.roadsafe-workstation .maplibregl-popup-content,
+.roadsafe-workstation .maplibregl-ctrl-attrib,
+.roadsafe-workstation .maplibregl-ctrl-scale {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.4 !important;
+}
+
+/*
+ * Do not enlarge icon glyphs as text.
+ */
+.material-symbols-outlined,
+.roadsafe-material-icon {
+  line-height: 1 !important;
+}
+
+/*
+ * Ensure compact layouts wrap rather than shrink text.
+ */
+.roadsafe-workstation button,
+.roadsafe-workstation a,
+.roadsafe-workstation label,
+.roadsafe-workstation td,
+.roadsafe-workstation th,
+.roadsafe-workstation dt,
+.roadsafe-workstation dd {
+  min-width: 0;
+}
+
+/*
+ * Keep very narrow screens readable too.
+ */
+@media (max-width: 640px) {
+  :root {
+    --rs-type-page: 20px;
+    --rs-type-page-large: 23px;
+  }
+
+  .roadsafe-workstation button,
+  .roadsafe-workstation input,
+  .roadsafe-workstation select,
+  .roadsafe-workstation textarea {
+    font-size: 14px !important;
+  }
+}
+
+@media print {
+  body,
+  #root,
+  .roadsafe-workstation {
+    font-size: 12px !important;
+  }
+}

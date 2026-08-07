@@ -1,0 +1,228 @@
+{
+  "createdAt": "2026-08-07T12:11:32.650Z",
+  "purpose": "RoadSafe AR model visual/geometry shortlist review",
+  "candidates": [
+    {
+      "category": "sedan",
+      "priority": "primary",
+      "source": "Byzmod",
+      "license": "CC0",
+      "file": "model-intake/extracted/byzmod-original-car-pack/CARRO 3D LOW POLY, HIGH POLY/CAR_2022/CARRO 3D HIGH POLY.fbx",
+      "note": "Highest-detail sedan/car candidate in the current intake; needs inspection and GLB export.",
+      "stagedFile": "model-intake/shortlist-v1/sedan/sedan__primary__Byzmod.fbx",
+      "bytes": 423580
+    },
+    {
+      "category": "sedan",
+      "priority": "alternate",
+      "source": "Public domain",
+      "license": "Public domain",
+      "file": "model-intake/extracted/public-domain-car-glb/public-domain-car.glb",
+      "note": "Integration-ready GLB fallback/alternate.",
+      "stagedFile": "model-intake/shortlist-v1/sedan/sedan__alternate__Public_domain.glb",
+      "bytes": 1829316
+    },
+    {
+      "category": "hatchback",
+      "priority": "primary",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Hatchback/Hatchback.fbx",
+      "note": "Best hatchback-specific candidate currently present.",
+      "stagedFile": "model-intake/shortlist-v1/hatchback/hatchback__primary__RGSDev.fbx",
+      "bytes": 53932
+    },
+    {
+      "category": "suv",
+      "priority": "primary",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/SUV/SUV.fbx",
+      "note": "Best SUV-specific candidate currently present.",
+      "stagedFile": "model-intake/shortlist-v1/suv/suv__primary__RGSDev.fbx",
+      "bytes": 59820
+    },
+    {
+      "category": "suv",
+      "priority": "alternate",
+      "source": "Kenney",
+      "license": "CC0",
+      "file": "model-intake/extracted/kenney-car-kit/Models/GLB format/suv-luxury.glb",
+      "note": "GLB alternate for direct comparison.",
+      "stagedFile": "model-intake/shortlist-v1/suv/suv__alternate__Kenney.glb",
+      "bytes": 175908
+    },
+    {
+      "category": "pickup",
+      "priority": "primary",
+      "source": "Public domain",
+      "license": "Public domain",
+      "file": "model-intake/extracted/public-domain-pickup-glb/public-domain-pickup.glb",
+      "note": "Best ready-to-load pickup candidate.",
+      "stagedFile": "model-intake/shortlist-v1/pickup/pickup__primary__Public_domain.glb",
+      "bytes": 273012
+    },
+    {
+      "category": "pickup",
+      "priority": "alternate",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Pickup/Pickup.fbx",
+      "note": "Pickup-specific CC0 alternate.",
+      "stagedFile": "model-intake/shortlist-v1/pickup/pickup__alternate__RGSDev.fbx",
+      "bytes": 58428
+    },
+    {
+      "category": "minibus",
+      "priority": "temporary-candidate",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Van/Van.fbx",
+      "note": "Not a true minibus. Review only; do not approve as final without visual confirmation.",
+      "stagedFile": "model-intake/shortlist-v1/minibus/minibus__temporary-candidate__RGSDev.fbx",
+      "bytes": 55068
+    },
+    {
+      "category": "minibus",
+      "priority": "temporary-alternate",
+      "source": "Kenney",
+      "license": "CC0",
+      "file": "model-intake/extracted/kenney-car-kit/Models/GLB format/van.glb",
+      "note": "Not a true minibus. GLB comparison candidate.",
+      "stagedFile": "model-intake/shortlist-v1/minibus/minibus__temporary-alternate__Kenney.glb",
+      "bytes": 175664
+    },
+    {
+      "category": "bus",
+      "priority": "primary",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Bus/Bus.fbx",
+      "note": "Bus-specific candidate.",
+      "stagedFile": "model-intake/shortlist-v1/bus/bus__primary__RGSDev.fbx",
+      "bytes": 61516
+    },
+    {
+      "category": "bus",
+      "priority": "alternate",
+      "source": "Quaternius",
+      "license": "CC0",
+      "file": "model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Bus.fbx",
+      "note": "Second bus candidate for visual comparison.",
+      "stagedFile": "model-intake/shortlist-v1/bus/bus__alternate__Quaternius.fbx",
+      "bytes": 38332
+    },
+    {
+      "category": "rigid-truck",
+      "priority": "primary",
+      "source": "Public domain",
+      "license": "Public domain",
+      "file": "model-intake/extracted/public-domain-truck-glb/public-domain-truck.glb",
+      "note": "Best ready-to-load rigid truck candidate.",
+      "stagedFile": "model-intake/shortlist-v1/rigid-truck/rigid-truck__primary__Public_domain.glb",
+      "bytes": 326828
+    },
+    {
+      "category": "rigid-truck",
+      "priority": "alternate",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Truck/Truck.fbx",
+      "note": "CC0 truck alternate.",
+      "stagedFile": "model-intake/shortlist-v1/rigid-truck/rigid-truck__alternate__RGSDev.fbx",
+      "bytes": 66940
+    },
+    {
+      "category": "articulated-truck",
+      "priority": "primary",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Truck with trailer/Truck with trailer.fbx",
+      "note": "Only explicit truck+trailer candidate in current intake.",
+      "stagedFile": "model-intake/shortlist-v1/articulated-truck/articulated-truck__primary__RGSDev.fbx",
+      "bytes": 108588
+    },
+    {
+      "category": "lorry",
+      "priority": "temporary-candidate",
+      "source": "RGSDev",
+      "license": "CC0",
+      "file": "model-intake/extracted/rgsdev-vehicle-pack/Free Low Poly Vehicles Pack by Rgsdev/Truck/Truck.fbx",
+      "note": "No distinct lorry model in current intake. Review as temporary only.",
+      "stagedFile": "model-intake/shortlist-v1/lorry/lorry__temporary-candidate__RGSDev.fbx",
+      "bytes": 66940
+    },
+    {
+      "category": "tractor",
+      "priority": "primary",
+      "source": "Kenney",
+      "license": "CC0",
+      "file": "model-intake/extracted/kenney-car-kit/Models/GLB format/tractor.glb",
+      "note": "Only clean GLB tractor candidate in current intake.",
+      "stagedFile": "model-intake/shortlist-v1/tractor/tractor__primary__Kenney.glb",
+      "bytes": 175960
+    },
+    {
+      "category": "motorcycle",
+      "priority": "primary",
+      "source": "Public domain",
+      "license": "Public domain",
+      "file": "model-intake/extracted/public-domain-motorcycle-glb/public-domain-motorcycle.glb",
+      "note": "Best ready-to-load motorcycle candidate.",
+      "stagedFile": "model-intake/shortlist-v1/motorcycle/motorcycle__primary__Public_domain.glb",
+      "bytes": 109608
+    },
+    {
+      "category": "bicycle",
+      "priority": "primary",
+      "source": "Quaternius",
+      "license": "CC0",
+      "file": "model-intake/extracted/quaternius-public-transport/Public Transport/FBX/Bicycle.fbx",
+      "note": "Bicycle-specific candidate.",
+      "stagedFile": "model-intake/shortlist-v1/bicycle/bicycle__primary__Quaternius.fbx",
+      "bytes": 72316
+    },
+    {
+      "category": "bicycle",
+      "priority": "alternate",
+      "source": "Quaternius",
+      "license": "CC0",
+      "file": "model-intake/extracted/quaternius-public-transport/Public Transport/FBX/SquareFrameBicycle.fbx",
+      "note": "Second frame style for comparison.",
+      "stagedFile": "model-intake/shortlist-v1/bicycle/bicycle__alternate__Quaternius.fbx",
+      "bytes": 41836
+    },
+    {
+      "category": "adult-human",
+      "priority": "high-detail-source",
+      "source": "Blender Studio",
+      "license": "CC0",
+      "file": "model-intake/extracted/blender-human-base-meshes/human_base_meshes_bundle.blend",
+      "note": "High-detail human source bundle. Internal meshes must be inspected before male/female assignment.",
+      "stagedFile": "model-intake/shortlist-v1/adult-human/adult-human__high-detail-source__Blender_Studio.blend",
+      "bytes": 62172376
+    },
+    {
+      "category": "adult-human-animation-reference",
+      "priority": "reference",
+      "source": "Quaternius",
+      "license": "CC0",
+      "file": "model-intake/extracted/quaternius-animated-human/Animated Human by @Quaternius/FBX/Animated Human.fbx",
+      "note": "Animation/rigging reference only, not proposed as final visual model.",
+      "stagedFile": "model-intake/shortlist-v1/adult-human-animation-reference/adult-human-animation-reference__reference__Quaternius.fbx",
+      "bytes": 2399964
+    }
+  ],
+  "missing": [
+    {
+      "category": "child",
+      "status": "missing-final-candidate",
+      "note": "The report does not expose a child-specific production model. Do not fake this from an adult mesh yet."
+    },
+    {
+      "category": "officer",
+      "status": "missing-final-candidate",
+      "note": "No dedicated high-quality officer model appears in the current intake."
+    }
+  ]
+}

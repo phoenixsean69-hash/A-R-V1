@@ -44,7 +44,7 @@ const commonPlugins = {
       color: chartText,
       boxWidth: 10,
       boxHeight: 10,
-      font: { size: 9 },
+      font: { size: 11 },
     },
   },
   tooltip: {
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
                 { label: "Investigation cases", data: monthly.map((item) => item.cases), borderColor: steel, backgroundColor: "rgba(148,163,184,0.08)", tension: 0.32, pointRadius: 2 },
               ],
             }}
-            options={{ responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: { x: { ticks: { color: chartText, font: { size: 8 } }, grid: { color: chartGrid } }, y: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 8 } }, grid: { color: chartGrid } } } }}
+            options={{ responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: { x: { ticks: { color: chartText, font: { size: 11 } }, grid: { color: chartGrid } }, y: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 11 } }, grid: { color: chartGrid } } } }}
           />
         </ChartPanel>
 
@@ -143,14 +143,14 @@ export default function AnalyticsPage() {
         <ChartPanel title="Leading collision causes" subtitle="Ranked from the recorded accident dataset">
           <Bar
             data={{ labels: causes.slice(0, 8).map((item) => item.label), datasets: [{ label: "Accidents", data: causes.slice(0, 8).map((item) => item.value), backgroundColor: causes.slice(0, 8).map((_, index) => index < 2 ? danger : index < 5 ? blue : slate), borderRadius: 3 }] }}
-            options={{ indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { ...commonPlugins, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 8 } }, grid: { color: chartGrid } }, y: { ticks: { color: chartText, font: { size: 8 } }, grid: { display: false } } } }}
+            options={{ indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { ...commonPlugins, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 11 } }, grid: { color: chartGrid } }, y: { ticks: { color: chartText, font: { size: 11 } }, grid: { display: false } } } }}
           />
         </ChartPanel>
 
         <ChartPanel title="Reconstruction evidence readiness" subtitle="Average scene documentation depth">
           <Radar
             data={{ labels: ["Participants", "Evidence", "Measurements", "Photos", "Timeline"], datasets: [{ label: "Coverage", data: Object.values(reconstructionReadiness), borderColor: blue, backgroundColor: blueSoft, pointBackgroundColor: "#a9caff", pointRadius: 2 }] }}
-            options={{ responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { color: chartText, font: { size: 9 } }, angleLines: { color: chartGrid }, grid: { color: chartGrid } } } }}
+            options={{ responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { color: chartText, font: { size: 11 } }, angleLines: { color: chartGrid }, grid: { color: chartGrid } } } }}
           />
         </ChartPanel>
       </section>
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
           {participants.length ? (
             <Bar
               data={{ labels: participants.map((item) => item.label), datasets: [{ label: "Participants", data: participants.map((item) => item.value), backgroundColor: participants.map((_, index) => index === 0 ? blue : index === 1 ? steel : slate), borderRadius: 3 }] }}
-              options={{ responsive: true, maintainAspectRatio: false, plugins: { ...commonPlugins, legend: { display: false } }, scales: { x: { ticks: { color: chartText, font: { size: 8 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 8 } }, grid: { color: chartGrid } } } }}
+              options={{ responsive: true, maintainAspectRatio: false, plugins: { ...commonPlugins, legend: { display: false } }, scales: { x: { ticks: { color: chartText, font: { size: 11 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: chartText, precision: 0, font: { size: 11 } }, grid: { color: chartGrid } } } }}
             />
           ) : <EmptyChart text="No participants have been added to saved reconstructions." />}
         </ChartPanel>

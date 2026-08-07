@@ -1,33 +1,43 @@
-RoadSafe AR — Total Blender UI Migration
+RoadSafe AR — BLENDER PROPERTIES PANEL V2
+===========================================
 
-This is the repo-wide migration requested for every RoadSafe UI surface.
+V1's structural audit passed but the full project build failed.
+V2 deliberately removes the risky React restructuring.
 
-It applies:
-- Blender charcoal shell, navigation, views, panels, cards and dialogs;
-- compact bevelled buttons and toolbars;
-- orange-only selection/focus UI accents;
-- recessed inputs and orange-thumb sliders;
-- square orange checkboxes;
-- Station Overview panel styling for every right and bottom panel;
-- 2D, 3D and AR workstation chrome;
-- timeline, playback and animation controls;
-- Material Symbols mappings and verification;
-- checkbox + Material icon Objects, Hazards & Evidence palette;
-- real draggable reconstruction nodes with Bezier links;
-- repo-wide old blue/navy utility-class normalization;
-- automatic backup, verification, build and rollback.
+V2 DOES:
+- add one class to the existing 3D inspector;
+- add one passive Blender-style icon rail;
+- apply a high-specificity stylesheet to the EXISTING controls.
 
-Install from:
+V2 DOES NOT:
+- add React state;
+- wrap conditionals;
+- add scroll handlers;
+- alter participant state;
+- alter physics;
+- alter timeline/playback;
+- alter model assetId/model integration.
+
+INSTALL
+-------
+Extract into:
 C:\Users\nooklyweb\Desktop\A-R-V1
 
 Run:
-node install-roadsafe-blender-total-ui.mjs
+cd C:\Users\nooklyweb\Desktop\A-R-V1
+node .\install-blender-properties-panel-v2.mjs
 
-Start:
+The installer runs npm run build.
+
+If the build fails:
+1. it restores the previous files;
+2. it keeps the full compiler output at:
+   .roadsafe-ui-backup\blender-properties-v2-build.log
+
+START
+-----
 npm run dev
 
-Verify:
-npm run ui:verify
-
-Rollback:
-node revoke-roadsafe-blender-total-ui.mjs
+ROLLBACK
+--------
+node .\revoke-blender-properties-panel-v2.mjs

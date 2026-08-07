@@ -1,0 +1,410 @@
+/*
+ * RoadSafe AR — Balanced Typography
+ *
+ * Goal:
+ * - large workstation card titles come DOWN
+ * - tiny inspector/property text comes UP
+ * - everything meets in one compact Blender-style middle scale
+ *
+ * Keep this as the FINAL CSS import.
+ */
+
+:root {
+  --rs-type-micro: 11px;
+  --rs-type-meta: 12px;
+  --rs-type-label: 12.5px;
+  --rs-type-control: 13px;
+  --rs-type-body: 13px;
+  --rs-type-section: 13.5px;
+  --rs-type-panel: 15px;
+  --rs-type-subtitle: 16px;
+  --rs-type-page: 19px;
+  --rs-type-page-large: 22px;
+
+  --rs-text-primary: #dedede;
+  --rs-text-secondary: #c5c5c5;
+  --rs-text-muted: #a8a8a8;
+  --rs-text-faint: #969696;
+}
+
+html {
+  font-size: 16px;
+}
+
+body,
+#root,
+.roadsafe-workstation,
+.roadsafe-shell {
+  font-size: var(--rs-type-body);
+  line-height: 1.42;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.roadsafe-workstation {
+  color: var(--rs-text-primary);
+}
+
+/* ---------------------------------------------------------
+   TAILWIND / ARBITRARY SIZE NORMALIZATION
+   --------------------------------------------------------- */
+
+.roadsafe-workstation [class~="text-[5px]"],
+.roadsafe-workstation [class~="text-[6px]"],
+.roadsafe-workstation [class~="text-[7px]"],
+.roadsafe-workstation [class~="text-[8px]"],
+.roadsafe-workstation [class~="text-[9px]"] {
+  font-size: var(--rs-type-micro) !important;
+  line-height: 1.32 !important;
+}
+
+.roadsafe-workstation [class~="text-[10px]"],
+.roadsafe-workstation [class~="text-[11px]"] {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation [class~="text-[12px]"],
+.roadsafe-workstation [class~="text-[13px]"] {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.38 !important;
+}
+
+.roadsafe-workstation [class~="text-[14px]"],
+.roadsafe-workstation [class~="text-[15px]"] {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-workstation [class~="text-[16px]"],
+.roadsafe-workstation [class~="text-[17px]"] {
+  font-size: var(--rs-type-subtitle) !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation .text-xs {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation .text-sm {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.38 !important;
+}
+
+.roadsafe-workstation .text-base {
+  font-size: 14px !important;
+  line-height: 1.42 !important;
+}
+
+.roadsafe-workstation .text-lg {
+  font-size: 15px !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation .text-xl {
+  font-size: 16px !important;
+  line-height: 1.32 !important;
+}
+
+.roadsafe-workstation .text-2xl {
+  font-size: 18px !important;
+  line-height: 1.28 !important;
+}
+
+.roadsafe-workstation .text-3xl {
+  font-size: 21px !important;
+  line-height: 1.22 !important;
+}
+
+/* ---------------------------------------------------------
+   GENERAL CONTROLS / LABELS
+   --------------------------------------------------------- */
+
+.roadsafe-workstation button,
+.roadsafe-workstation input,
+.roadsafe-workstation select,
+.roadsafe-workstation textarea,
+.roadsafe-workstation option,
+.roadsafe-workstation .ui-button,
+.roadsafe-workstation .ui-button-primary,
+.roadsafe-workstation .ui-input,
+.roadsafe-workstation .ui-icon-button {
+  font-size: var(--rs-type-control) !important;
+  line-height: 1.34 !important;
+}
+
+.roadsafe-workstation label,
+.roadsafe-workstation dt,
+.roadsafe-workstation dd,
+.roadsafe-workstation td,
+.roadsafe-workstation th {
+  font-size: var(--rs-type-label);
+  line-height: 1.38;
+}
+
+.roadsafe-workstation small,
+.roadsafe-workstation .ui-badge,
+.roadsafe-workstation [class*="__meta"],
+.roadsafe-workstation [class*="__hint"],
+.roadsafe-workstation [class*="__helper"],
+.roadsafe-workstation [class*="__description"] {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.36 !important;
+}
+
+/* ---------------------------------------------------------
+   HEADINGS — LESS OVERSIZED
+   --------------------------------------------------------- */
+
+.roadsafe-workstation h1 {
+  font-size: var(--rs-type-page-large) !important;
+  line-height: 1.2 !important;
+}
+
+.roadsafe-workstation h2 {
+  font-size: var(--rs-type-page) !important;
+  line-height: 1.24 !important;
+}
+
+.roadsafe-workstation h3 {
+  font-size: var(--rs-type-subtitle) !important;
+  line-height: 1.28 !important;
+}
+
+.roadsafe-workstation h4,
+.roadsafe-workstation h5,
+.roadsafe-workstation h6 {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.3 !important;
+}
+
+.roadsafe-workstation .ui-panel-title,
+.roadsafe-workstation [class*="__panel-title"],
+.roadsafe-workstation [class*="panel-title"] {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.3 !important;
+}
+
+.roadsafe-workstation [class*="__section-title"],
+.roadsafe-workstation [class*="section-title"],
+.roadsafe-workstation [class*="section__title"],
+.roadsafe-workstation [class*="__section-header"] strong,
+.roadsafe-workstation [class*="section-header"] strong,
+.roadsafe-workstation summary > span:first-child {
+  font-size: var(--rs-type-section) !important;
+  line-height: 1.28 !important;
+  font-weight: 700 !important;
+}
+
+/* ---------------------------------------------------------
+   RECONSTRUCTION WORKSPACE — FORCE ONE HIERARCHY
+   --------------------------------------------------------- */
+
+/* Main workspace card headings such as CASE SETUP / SCENE ENVIRONMENT */
+.roadsafe-workstation
+  .reconstruction-workspace__workspace-card
+  :is(h1, h2, h3, .text-xl, .text-2xl, .text-3xl) {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.035em;
+}
+
+/* Workspace card descriptions */
+.roadsafe-workstation
+  .reconstruction-workspace__workspace-card
+  :is(p, small, [class*="description"], [class*="subtitle"]) {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.38 !important;
+}
+
+/* Form labels and values */
+.roadsafe-workstation
+  .reconstruction-workspace__workspace-card
+  label,
+.roadsafe-workstation
+  .reconstruction-workspace__workspace-card
+  [class*="label"] {
+  font-size: var(--rs-type-label) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation
+  .reconstruction-workspace__workspace-card
+  :is(input, select, textarea, button) {
+  font-size: var(--rs-type-control) !important;
+}
+
+/* ---------------------------------------------------------
+   SCENE ENVIRONMENT — BRING TITLE DOWN, PROPERTY TEXT UP
+   --------------------------------------------------------- */
+
+.roadsafe-workstation .scene-settings__section-title strong {
+  font-size: var(--rs-type-panel) !important;
+  line-height: 1.28 !important;
+}
+
+.roadsafe-workstation .scene-settings__section-title small {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation .scene-settings__label,
+.roadsafe-workstation .scene-settings__range-heading,
+.roadsafe-workstation .scene-settings__checkbox-copy strong {
+  font-size: var(--rs-type-label) !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-workstation .scene-settings__select,
+.roadsafe-workstation .scene-settings__number,
+.roadsafe-workstation .scene-settings__suffix,
+.roadsafe-workstation .scene-settings__range-heading strong {
+  font-size: var(--rs-type-control) !important;
+}
+
+.roadsafe-workstation .scene-settings__checkbox-copy small,
+.roadsafe-workstation .scene-settings__helper {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.35 !important;
+}
+
+/* ---------------------------------------------------------
+   RIGHT CONTEXT INSPECTOR — BRING SMALL TEXT UP
+   --------------------------------------------------------- */
+
+.roadsafe-workstation
+  .roadsafe-inspector
+  [class*="section"]
+  strong,
+.roadsafe-workstation
+  [class*="context-inspector"]
+  [class*="section"]
+  strong,
+.roadsafe-workstation
+  [class*="participant"]
+  [class*="section"]
+  strong {
+  font-size: var(--rs-type-section) !important;
+}
+
+.roadsafe-workstation .roadsafe-inspector label,
+.roadsafe-workstation .roadsafe-inspector dt,
+.roadsafe-workstation .roadsafe-inspector dd,
+.roadsafe-workstation [class*="context-inspector"] label,
+.roadsafe-workstation [class*="context-inspector"] dt,
+.roadsafe-workstation [class*="context-inspector"] dd {
+  font-size: var(--rs-type-label) !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation .roadsafe-inspector input,
+.roadsafe-workstation .roadsafe-inspector select,
+.roadsafe-workstation .roadsafe-inspector button,
+.roadsafe-workstation [class*="context-inspector"] input,
+.roadsafe-workstation [class*="context-inspector"] select,
+.roadsafe-workstation [class*="context-inspector"] button {
+  font-size: var(--rs-type-control) !important;
+}
+
+.roadsafe-workstation .roadsafe-inspector small,
+.roadsafe-workstation [class*="context-inspector"] small {
+  font-size: var(--rs-type-meta) !important;
+}
+
+/* Participant cards */
+.roadsafe-workstation
+  [class*="participant"]
+  strong {
+  font-size: var(--rs-type-control) !important;
+}
+
+.roadsafe-workstation
+  [class*="participant"]
+  small {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.34 !important;
+}
+
+/* ---------------------------------------------------------
+   NAVIGATION / TIMELINE / MAPS
+   --------------------------------------------------------- */
+
+.roadsafe-workstation .roadsafe-navigation-link,
+.roadsafe-workstation .roadsafe-navigation-case,
+.roadsafe-workstation .roadsafe-navigation-station,
+.roadsafe-workstation .roadsafe-header,
+.roadsafe-workstation .roadsafe-toolbar {
+  font-size: var(--rs-type-control) !important;
+}
+
+.roadsafe-workstation .roadsafe-navigation-group-label,
+.roadsafe-workstation .roadsafe-eyebrow {
+  font-size: var(--rs-type-micro) !important;
+}
+
+.roadsafe-workstation [class*="timeline"] button,
+.roadsafe-workstation [class*="timeline"] label,
+.roadsafe-workstation [class*="timeline"] span:not(.material-symbols-outlined),
+.roadsafe-workstation [class*="playback"] button,
+.roadsafe-workstation [class*="playback"] label,
+.roadsafe-workstation [class*="playback"] span:not(.material-symbols-outlined) {
+  font-size: var(--rs-type-meta) !important;
+  line-height: 1.36 !important;
+}
+
+.roadsafe-workstation .maplibregl-map,
+.roadsafe-workstation .maplibregl-ctrl,
+.roadsafe-workstation .maplibregl-popup-content,
+.roadsafe-workstation .maplibregl-ctrl-attrib,
+.roadsafe-workstation .maplibregl-ctrl-scale {
+  font-size: var(--rs-type-meta) !important;
+}
+
+/* ---------------------------------------------------------
+   CONTRAST — READABLE WITHOUT LOOKING BRIGHT
+   --------------------------------------------------------- */
+
+.roadsafe-workstation .text-slate-700,
+.roadsafe-workstation .text-slate-600 {
+  color: var(--rs-text-muted) !important;
+}
+
+.roadsafe-workstation .text-slate-500 {
+  color: #ababab !important;
+}
+
+.roadsafe-workstation .text-slate-400 {
+  color: #bdbdbd !important;
+}
+
+.roadsafe-workstation .text-slate-300 {
+  color: #d0d0d0 !important;
+}
+
+.roadsafe-workstation .text-slate-200,
+.roadsafe-workstation .text-white {
+  color: #e8e8e8 !important;
+}
+
+/* Icons keep their own size */
+.material-symbols-outlined,
+.roadsafe-material-icon {
+  line-height: 1 !important;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --rs-type-page: 18px;
+    --rs-type-page-large: 21px;
+  }
+}
+
+@media print {
+  body,
+  #root,
+  .roadsafe-workstation {
+    font-size: 12px !important;
+  }
+}

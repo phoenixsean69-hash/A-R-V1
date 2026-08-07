@@ -1,0 +1,191 @@
+{
+  "generatedAt": "2026-08-07",
+  "purpose": "RoadSafe AR participant model intake only. No renderer/code integration is performed.",
+  "licensePolicy": "Automatic sources are CC0/Public Domain only. Source/license provenance is retained in the manifest.",
+  "sources": [
+    {
+      "id": "blender-human-base-meshes",
+      "tier": "high-detail",
+      "kind": "archive",
+      "categories": [
+        "adult-male",
+        "adult-female",
+        "human-base"
+      ],
+      "name": "Blender Studio Human Base Meshes",
+      "license": "CC0",
+      "sourcePage": "https://download.blender.org/demo/bundles/bundles-3.6/",
+      "downloadUrl": "https://download.blender.org/demo/bundles/bundles-3.6/human-base-meshes-bundle-v1.0.0.zip",
+      "fileName": "human-base-meshes-bundle-v1.0.0.zip",
+      "required": true,
+      "notes": "17 base meshes including realistic male/female meshes. Blend source; intended for later normalization/retopo/rig/export."
+    },
+    {
+      "id": "kenney-car-kit",
+      "tier": "production-mid",
+      "kind": "archive",
+      "categories": [
+        "sedan",
+        "car",
+        "van",
+        "vehicle-parts"
+      ],
+      "name": "Kenney Car Kit 3.1",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/car-kit",
+      "downloadUrl": "https://opengameart.org/sites/default/files/kenney_car-kit_3.1.zip",
+      "fileName": "kenney_car-kit_3.1.zip",
+      "required": true,
+      "notes": "45+ models. Separate FBX, OBJ and glTF. Clean source and useful wheel/debris parts."
+    },
+    {
+      "id": "rgsdev-vehicle-pack",
+      "tier": "production-mid",
+      "kind": "archive",
+      "categories": [
+        "sedan",
+        "hatchback",
+        "suv",
+        "pickup",
+        "truck",
+        "articulated-truck",
+        "bus"
+      ],
+      "name": "RGSDev Free Vehicles Pack",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/free-low-poly-vehicles-pack",
+      "downloadUrl": "https://opengameart.org/sites/default/files/free_low_poly_vehicles_pack_by_rgsdev.zip",
+      "fileName": "free_low_poly_vehicles_pack_by_rgsdev.zip",
+      "required": true,
+      "notes": "Separated wheels; sedan, hatchback, pickup, SUV, truck, truck with trailer, bus and more."
+    },
+    {
+      "id": "byzmod-vehicle-pack",
+      "tier": "production-mid",
+      "kind": "archive",
+      "categories": [
+        "car",
+        "truck",
+        "bus",
+        "van",
+        "motorcycle"
+      ],
+      "name": "Byzmod 2023 Vehicle Pack",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/low-poly-car-update-pack",
+      "downloadUrl": "https://opengameart.org/sites/default/files/pack_car_2023_14.zip",
+      "fileName": "pack_car_2023_14.zip",
+      "required": true,
+      "notes": "Vehicle collection including motorcycle; source page states CC0."
+    },
+    {
+      "id": "byzmod-original-car-pack",
+      "tier": "higher-detail-candidate",
+      "kind": "archive",
+      "categories": [
+        "car"
+      ],
+      "name": "Byzmod Original / Low-High Car Pack",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/low-poly-car-update-pack",
+      "downloadUrl": "https://opengameart.org/sites/default/files/carro_3d_low_poly_high_poly_6.zip",
+      "fileName": "carro_3d_low_poly_high_poly.zip",
+      "required": false,
+      "notes": "Optional second attachment. Source page describes a version without the low-poly effect/original file."
+    },
+    {
+      "id": "quaternius-public-transport",
+      "tier": "production-mid",
+      "kind": "archive",
+      "categories": [
+        "bus",
+        "bicycle",
+        "car",
+        "taxi",
+        "public-transport"
+      ],
+      "name": "Quaternius Public Transport",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/lowpoly-public-transport",
+      "downloadUrl": "https://opengameart.org/sites/default/files/Public%20Transport_0.zip",
+      "fileName": "Public_Transport_Quaternius.zip",
+      "required": true,
+      "notes": "Bus/bicycle/public transport candidates. Blend, OBJ and FBX."
+    },
+    {
+      "id": "quaternius-animated-human",
+      "tier": "animated-reference",
+      "kind": "archive",
+      "categories": [
+        "adult",
+        "human",
+        "rigged",
+        "animated"
+      ],
+      "name": "Quaternius Animated Human",
+      "license": "CC0",
+      "sourcePage": "https://opengameart.org/content/animated-human-low-poly",
+      "downloadUrl": "https://opengameart.org/sites/default/files/Animated%20Human%20by%20%40Quaternius_0.zip",
+      "fileName": "Animated_Human_Quaternius.zip",
+      "required": true,
+      "notes": "Rigged/animated human reference with idle/run/walk/work/death clips."
+    },
+    {
+      "id": "public-domain-car-glb",
+      "tier": "detailed-glb-candidate",
+      "kind": "discover-glb",
+      "categories": [
+        "sedan",
+        "car"
+      ],
+      "name": "Public-domain Car GLB",
+      "license": "Public domain",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/car-model/",
+      "fileName": "public-domain-car.glb",
+      "required": false,
+      "notes": "Source page reports 8.6k vertices / 10.3k triangles and public-domain license."
+    },
+    {
+      "id": "public-domain-pickup-glb",
+      "tier": "detailed-glb-candidate",
+      "kind": "discover-glb",
+      "categories": [
+        "pickup"
+      ],
+      "name": "Public-domain Pickup GLB",
+      "license": "Public domain",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/pickup-truck/",
+      "fileName": "public-domain-pickup.glb",
+      "required": false,
+      "notes": "Quaternius source; page reports 7k vertices / 6.4k triangles."
+    },
+    {
+      "id": "public-domain-truck-glb",
+      "tier": "detailed-glb-candidate",
+      "kind": "discover-glb",
+      "categories": [
+        "truck"
+      ],
+      "name": "Public-domain Truck GLB",
+      "license": "Public domain",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/truck-2/",
+      "fileName": "public-domain-truck.glb",
+      "required": false,
+      "notes": "Quaternius source; page reports 8.5k vertices / 7.5k triangles."
+    },
+    {
+      "id": "public-domain-motorcycle-glb",
+      "tier": "detailed-glb-candidate",
+      "kind": "discover-glb",
+      "categories": [
+        "motorcycle"
+      ],
+      "name": "Public-domain Motorcycle GLB",
+      "license": "Public domain",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/motorcycle-2/",
+      "fileName": "public-domain-motorcycle.glb",
+      "required": false,
+      "notes": "Quaternius source; page reports 3.4k vertices / 6.4k triangles."
+    }
+  ]
+}

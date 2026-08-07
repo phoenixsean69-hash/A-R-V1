@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-08-07T12:22:32.743Z",
+  "automatic": [
+    {
+      "id": "hq-city-bus",
+      "category": "bus",
+      "name": "City Bus Model",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/city-bus-model-4/",
+      "license": "CC Attribution",
+      "reportedVertices": 47700,
+      "reportedTriangles": 50830,
+      "fileName": "hq-city-bus.glb",
+      "note": "Primary higher-detail bus candidate.",
+      "status": "ready",
+      "downloadedFile": "model-intake/hq-upgrade-v1/automatic/hq-city-bus.glb",
+      "actualBytes": 5448564,
+      "discoveredUrl": "https://www.get3dmodels.com/download/solbus_sm_10_-_bus_simulator_original_by_get3dmodels.glb"
+    },
+    {
+      "id": "hq-city-bus-lod",
+      "category": "bus",
+      "name": "City Bus Vehicle",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/city-bus-vehicle/",
+      "license": "CC Attribution",
+      "reportedVertices": 14907,
+      "reportedTriangles": 13004,
+      "fileName": "hq-city-bus-lod.glb",
+      "note": "Lower-detail alternate/LOD candidate.",
+      "status": "ready",
+      "downloadedFile": "model-intake/hq-upgrade-v1/automatic/hq-city-bus-lod.glb",
+      "actualBytes": 2097724,
+      "discoveredUrl": "https://www.get3dmodels.com/download/volvo_7900_-_bus_simulator_17_by_get3dmodels.glb"
+    },
+    {
+      "id": "hq-logging-truck",
+      "category": "rigid-truck",
+      "name": "Logging Truck",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/logging-truck/",
+      "license": "CC Attribution",
+      "reportedVertices": 34360,
+      "reportedTriangles": 31296,
+      "fileName": "hq-logging-truck.glb",
+      "note": "Higher-detail heavy-truck source. Crane/log supports may later be removed for a generic rigid-truck derivative.",
+      "status": "ready",
+      "downloadedFile": "model-intake/hq-upgrade-v1/automatic/hq-logging-truck.glb",
+      "actualBytes": 2934944,
+      "discoveredUrl": "https://www.get3dmodels.com/download/log_truck_-_construction_sim_2017_by_get3dmodels.glb"
+    },
+    {
+      "id": "hq-hatchback",
+      "category": "hatchback",
+      "name": "Stylized Hatchback Car",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/stylized-hatchback-car/",
+      "license": "CC Attribution",
+      "reportedVertices": 17077,
+      "reportedTriangles": 13364,
+      "fileName": "hq-hatchback.glb",
+      "note": "Much denser hatchback than RGSDev; still stylized, so visual inspection remains mandatory.",
+      "status": "ready",
+      "downloadedFile": "model-intake/hq-upgrade-v1/automatic/hq-hatchback.glb",
+      "actualBytes": 1135884,
+      "discoveredUrl": "https://www.get3dmodels.com/download/low-poly_cartoon_style_car_03_1_by_get3dmodels.glb"
+    },
+    {
+      "id": "hq-passenger-car-alt",
+      "category": "sedan-alt",
+      "name": "Blue Muscle Car",
+      "sourcePage": "https://www.get3dmodels.com/vehicles/blue-muscle-car/",
+      "license": "CC Attribution",
+      "reportedVertices": 12305,
+      "reportedTriangles": 11183,
+      "fileName": "hq-passenger-car-alt.glb",
+      "note": "Alternate passenger-car body for comparison, not an automatic Sedan approval.",
+      "status": "ready",
+      "downloadedFile": "model-intake/hq-upgrade-v1/automatic/hq-passenger-car-alt.glb",
+      "actualBytes": 750180,
+      "discoveredUrl": "https://www.get3dmodels.com/download/helga_-_extreme_car_driving_racing_3d_by_get3dmodels.glb"
+    }
+  ],
+  "manual": [
+    {
+      "category": "passenger-family",
+      "name": "Generic passenger car pack",
+      "provider": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/generic-passenger-car-pack-20f9af9b8a404d5cb022ac6fe87f21f5",
+      "license": "CC Attribution",
+      "why": "Best single generic pack found: sedan, hatchback, minivan, pickup, SUV and more; roughly 6k–8k tris each, textures/metallic/gloss/opacity, intentionally trademark-safe.",
+      "downloadConstraint": "Sketchfab requires the user to be authenticated before model download."
+    },
+    {
+      "category": "suv",
+      "name": "Urban '10 generic SUV",
+      "provider": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/generic-suv-low-poly-model-2866efdfa943484391ef8313768e074d",
+      "license": "CC Attribution",
+      "why": "Generic economy SUV, ~16.6k triangles / 10.5k vertices; materially stronger than the current ~1.7k-triangle RGS SUV.",
+      "downloadConstraint": "Sketchfab requires the user to be authenticated before model download."
+    },
+    {
+      "category": "bus",
+      "name": "Public bus",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/vehicle/bus/public-bus",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free CGTrader model with PBR textures and CGTrader technical/visual verification.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    },
+    {
+      "category": "rigid-truck",
+      "name": "Transport Truck 3D",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/vehicle/truck/transport-truck-3d",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free box truck with interior, realistic proportions, detailed textures and CGTrader quality checks/PBR.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    },
+    {
+      "category": "motorcycle",
+      "name": "Free motorcycle",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/vehicle/motorcycle/free-motorcycle",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free textured/materialled higher-quality motorcycle source; Blender file around 41 MB.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    },
+    {
+      "category": "adult-male-female",
+      "name": "Realistic Male and Female Characters",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/character/man/realistic-male-and-female-characters",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free, quality-verified, rigged and textured male/female characters with PBR-ready materials; roughly 56k–64k faces each.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    },
+    {
+      "category": "child",
+      "name": "Child Character 3D Model",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/character/child/child-character-3d-model",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free realistic child source with 4K/2K textures. Very high-poly (~533k vertices), so it is a SOURCE asset only and must be retopologized/decimated before RoadSafe runtime use.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    },
+    {
+      "category": "officer",
+      "name": "Rigged Police Man - Low Poly",
+      "provider": "CGTrader",
+      "url": "https://www.cgtrader.com/free-3d-models/character/man/rigged-police-man-low-poly",
+      "license": "Royalty Free License (no AI)",
+      "why": "Free officer candidate with CGTrader technical/visual verification and PBR checks.",
+      "downloadConstraint": "CGTrader may require an account/login for Free Download."
+    }
+  ]
+}

@@ -1,13 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-
-import { THIRD_PARTY_3D_ASSET_NOTICE } from "../../data/realisticAssetCatalog";
-import {
-  disposeObjectTree,
-  loadRealisticParticipantModel,
-  loadRealisticSceneObjectModel,
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";import {
+  disposeObjectTree,  loadRealisticSceneObjectModel,
 } from "../../services/realisticSceneAssetService";
 import {
   usesGeneratedRoad,
@@ -23,6 +18,13 @@ import {  getParticipantPlaybackPathPoints,
   isPhysicsGeneratedPathPoint,} from "../../utils/reconstructionGeometry";
 import { addRealSceneGeometryToThreeScene } from "../../utils/realSceneThreeGeometry";
 import { getParticipantPotholeEffect } from "../../utils/reconstructionSurfaceEffects";
+import {
+  createGenericParticipant3DModel,
+} from "../../engine/assets/participant3DModelFactory";
+import {
+  getParticipantColourNumber,
+  getParticipantPhysicalDimensions,
+} from "../../engine/assets/participantAssetCatalog";
 import { AUTO_ROAD_CURVE_NOTE_MARKER } from "../../utils/reconstructionRoadRouting";
 import { getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
 import {
@@ -76,17 +78,6 @@ interface ParticipantRenderEntry {
   label: THREE.Sprite;
 }
 
-const PARTICIPANT_COLOURS: Record<string, number> = {
-  Blue: 0x2563eb,
-  Red: 0xdc2626,
-  Green: 0x16a34a,
-  Yellow: 0xeab308,
-  Black: 0x292929,
-  White: 0xf8fafc,
-  Orange: 0xea580c,
-  Purple: 0x9333ea,
-};
-
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -94,29 +85,15 @@ function clamp(value: number, minimum: number, maximum: number): number {
 function participantDimensions(
   participant: ReconstructionVehicle,
 ): [number, number, number] {
-  const fallback = (() => {
-    switch (participant.type) {
-      case "Bus":
-        return [11.8, 3.2, 2.55] as const;
-      case "Truck":
-        return [8.4, 3.4, 2.5] as const;
-      case "Motorcycle":
-        return [2.2, 1.25, 0.82] as const;
-      case "Bicycle":
-        return [1.85, 1.2, 0.64] as const;
-      case "Pedestrian":
-      case "Officer":
-      case "Witness":
-        return [0.76, 1.75, 0.76] as const;
-      default:
-        return [4.5, 1.55, 1.82] as const;
-    }
-  })();
+  const dimensions =
+    getParticipantPhysicalDimensions(
+      participant,
+    );
 
   return [
-    Math.max(0.2, participant.physics?.lengthMetres ?? fallback[0]),
-    fallback[1],
-    Math.max(0.2, participant.physics?.widthMetres ?? fallback[2]),
+    dimensions.lengthMetres,
+    dimensions.heightMetres,
+    dimensions.widthMetres,
   ];
 }
 
@@ -132,76 +109,6 @@ function worldPosition(
     height,
     y,
   );
-}
-
-const NON_BODY_MATERIAL_TOKENS = [
-  "glass",
-  "window",
-  "windscreen",
-  "windshield",
-  "tyre",
-  "tire",
-  "wheel",
-  "rubber",
-  "chrome",
-  "light",
-  "lamp",
-  "indicator",
-  "skin",
-  "face",
-  "eye",
-  "hair",
-] as const;
-
-function applyExactParticipantColour(
-  root: THREE.Object3D,
-  participant: ReconstructionVehicle,
-): void {
-  const colour =
-    PARTICIPANT_COLOURS[participant.colour] ?? 0x2563eb;
-  const human = ["Pedestrian", "Officer", "Witness"].includes(
-    participant.type,
-  );
-
-  root.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return;
-
-    const objectName = object.name.toLowerCase();
-    const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
-
-    materials.forEach((material) => {
-      const materialName = material.name.toLowerCase();
-      const identity = `${objectName} ${materialName}`;
-      const nonBody = NON_BODY_MATERIAL_TOKENS.some((token) =>
-        identity.includes(token),
-      );
-      const typed = material as THREE.Material & {
-        color?: THREE.Color;
-        emissive?: THREE.Color;
-        map?: THREE.Texture | null;
-        transmission?: number;
-        opacity?: number;
-      };
-
-      if (!typed.color || nonBody) return;
-      if ((typed.transmission ?? 0) > 0.05) return;
-      if ((typed.opacity ?? 1) < 0.78) return;
-
-      // Preserve natural skin and clothing variation for people. Vehicle body
-      // panels, however, use the exact same palette as the 2D SVG so changing
-      // a participant colour produces a consistent result in both views.
-      if (human) {
-        typed.color.lerp(new THREE.Color(colour), 0.32);
-      } else {
-        typed.color.setHex(colour);
-        typed.map = null;
-        typed.emissive?.setHex(0x000000);
-      }
-      material.needsUpdate = true;
-    });
-  });
 }
 
 function makeTextSprite(text: string): THREE.Sprite {
@@ -260,82 +167,10 @@ function roundedBox(
 function createFallbackParticipantModel(
   participant: ReconstructionVehicle,
 ): THREE.Group {
-  const group = new THREE.Group();
-  const [length, height, width] = participantDimensions(participant);
-  const colour = PARTICIPANT_COLOURS[participant.colour] ?? 0x2563eb;
-  const human = ["Pedestrian", "Officer", "Witness"].includes(
-    participant.type,
+  return createGenericParticipant3DModel(
+    participant,
+    "Medium",
   );
-
-  if (human) {
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.22, 0.8, 6, 12),
-      new THREE.MeshStandardMaterial({ color: colour, roughness: 0.75 }),
-    );
-    body.position.y = 0.9;
-    body.castShadow = true;
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.21, 18, 14),
-      new THREE.MeshStandardMaterial({ color: 0xb97850, roughness: 0.8 }),
-    );
-    head.position.y = 1.65;
-    head.castShadow = true;
-    group.add(body, head);
-    return group;
-  }
-
-  if (participant.type === "Bicycle" || participant.type === "Motorcycle") {
-    const wheelMaterial = new THREE.MeshStandardMaterial({
-      color: 0x111317,
-      roughness: 0.95,
-    });
-    for (const x of [-length * 0.32, length * 0.32]) {
-      const wheel = new THREE.Mesh(
-        new THREE.TorusGeometry(height * 0.28, 0.07, 10, 24),
-        wheelMaterial,
-      );
-      wheel.rotation.y = Math.PI / 2;
-      wheel.position.set(x, height * 0.3, 0);
-      wheel.castShadow = true;
-      group.add(wheel);
-    }
-    const frame = roundedBox(
-      [length * 0.62, height * 0.16, width * 0.5],
-      colour,
-      0.05,
-    );
-    frame.position.y = height * 0.55;
-    group.add(frame);
-    return group;
-  }
-
-  const lower = roundedBox([length, height * 0.46, width], colour, 0.16);
-  lower.position.y = height * 0.35;
-  const cabin = roundedBox(
-    [length * 0.5, height * 0.42, width * 0.82],
-    0x7393aa,
-    0.14,
-  );
-  cabin.position.set(-length * 0.04, height * 0.78, 0);
-  group.add(lower, cabin);
-
-  const wheelMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0d1014,
-    roughness: 0.96,
-  });
-  for (const x of [-length * 0.31, length * 0.31]) {
-    for (const z of [-width * 0.51, width * 0.51]) {
-      const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(height * 0.18, height * 0.18, 0.22, 20),
-        wheelMaterial,
-      );
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(x, height * 0.2, z);
-      wheel.castShadow = true;
-      group.add(wheel);
-    }
-  }
-  return group;
 }
 
 function createParticipantHolder(
@@ -707,25 +542,8 @@ function Reconstruction3DViewer({
       const entry = createParticipantHolder(participant);
       scene.add(entry.holder);
       participantEntries.set(participant.id, entry);
-      void loadRealisticParticipantModel(participant, participantDimensions(participant))
-        .then((model) => {
-          if (disposed) {
-            disposeObjectTree(model);
-            return;
-          }
-          const previous = [...entry.modelRoot.children];
-          previous.forEach((child) => {
-            entry.modelRoot.remove(child);
-            disposeObjectTree(child);
-          });
-          applyExactParticipantColour(model, participant);
-          entry.modelRoot.add(model);
-          entry.holder.traverse((object) => {
-            object.userData.participantId = participant.id;
-          });
-          settleAsset(false);
-        })
-        .catch(() => settleAsset(true));
+      settleAsset(false);
+
 
       if (effectiveShowPaths) {
         const authoredPoints =
@@ -756,7 +574,7 @@ function Reconstruction3DViewer({
           const path = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints(renderedPoints),
             new THREE.LineBasicMaterial({
-              color: PARTICIPANT_COLOURS[participant.colour] ?? 0xffffff,
+              color: getParticipantColourNumber(participant.colour),
               transparent: true,
               opacity: 0.85,
             }),
@@ -1186,13 +1004,12 @@ function Reconstruction3DViewer({
         </div>
         <div
           className="pointer-events-none absolute bottom-3 left-3 max-w-[65%] rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[8px] text-slate-400 backdrop-blur"
-          title={THIRD_PARTY_3D_ASSET_NOTICE}
-        >
+>
           {assetStatus.total > 0 && assetStatus.loaded < assetStatus.total
-            ? `Loading realistic assets ${assetStatus.loaded}/${assetStatus.total}`
+            ? `Loading model assets ${assetStatus.loaded}/${assetStatus.total}`
             : assetStatus.failed > 0
-              ? `Realistic assets ready Ãƒâ€šÃ‚Â· ${assetStatus.failed} fallback(s)`
-              : "Realistic GLB/PBR assets ready"}
+              ? `RoadSafe models ready · ${assetStatus.failed} scene fallback(s)`
+              : "RoadSafe generic model library ready"}
         </div>
       </div>
 
