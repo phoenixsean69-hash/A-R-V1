@@ -13,7 +13,6 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from "react";
 
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -39,10 +38,6 @@ import {
   SkipForward,
   X,
 } from "../icons/materialIcons";
-
-import {
-  useWorkspaceRightPanelHost,
-} from "../layout/WorkspaceRightPanelContext";
 
 import { ReconstructionService } from "../../services/reconstructionService";
 import { FieldPlacementService } from "../../services/fieldPlacementService";
@@ -928,9 +923,6 @@ export default function AccidentReconstructionEditor({
   onReconstructionSaved,
   onFootageSaved,
 }: AccidentReconstructionEditorProps) {
-  const workspaceRightPanelHost =
-    useWorkspaceRightPanelHost();
-
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const sceneViewportRef = useRef<HTMLDivElement | null>(null);
   const sceneGestureRef = useRef<SceneGestureState | null>(null);
@@ -3451,13 +3443,331 @@ export default function AccidentReconstructionEditor({
     />
   );
 
+  const twoDContextInspector = (
+    <aside className="ui-panel reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel reconstruction-workspace__right-panel is-open" data-panel="2d-context-inspector">
+                <div className="reconstruction-workspace__context-scroll">
+                <div className="reconstruction-workspace__2d-inspector-sticky">
+                  <div className="reconstruction-workspace__panel-header">
+                    <div>
+                      <p>2D Context Inspector</p>
+                      <span>
+                        {selectedSceneObject
+                          ? selectedSceneObject.label
+                          : selectedParticipant?.name ?? "Participants and scene controls"}
+                      </span>
+                    </div>
+                    <span className="reconstruction-workspace__inspector-count">
+                      {reconstruction.vehicles.length}
+                    </span>
+                  </div>
+
+                  <div className="reconstruction-workspace__participant-roster">
+                    <div className="reconstruction-workspace__context-title">
+                      <Activity size={13} />
+                      Participants
+                    </div>
+
+                    <div className="reconstruction-workspace__participant-add">
+                      <select
+                        value={newParticipantType}
+                        onChange={(event) =>
+                          setNewParticipantType(
+                            event.target.value as ReconstructionVehicleType,
+                          )
+                        }
+                        aria-label="Participant type"
+                      >
+                        {PARTICIPANT_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={handleAddParticipant}>
+                        Add
+                      </button>
+                    </div>
+
+                    <div className="reconstruction-workspace__participant-list">
+                      {reconstruction.vehicles.length === 0 ? (
+                        <div className="reconstruction-workspace__empty-properties">
+                          Add the first participant to begin plotting the reconstruction.
+                        </div>
+                      ) : (
+                        reconstruction.vehicles.map((participant) => {
+                          const participantState = getParticipantStateAtTime(
+                                                     participant,
+                                                     currentTime,
+                                                     getReconstructionWorldDimensions(reconstruction),
+                                                   );
+
+                          return (
+                            <button
+                              key={participant.id}
+                              type="button"
+                              onClick={() => handleSelectParticipant(participant.id)}
+                              className={
+                                selectedParticipantId === participant.id
+                                  ? "is-active"
+                                  : ""
+                              }
+                            >
+                              <span
+                                className="reconstruction-workspace__participant-swatch"
+                                style={{
+                                  backgroundColor: getParticipantColour(
+                                    participant.colour,
+                                  ),
+                                }}
+                              />
+                              <span className="reconstruction-workspace__participant-copy">
+                                <strong>{participant.name}</strong>
+                                <small>
+                                  {participant.type} · {participantState.speedKmh.toFixed(1)} km/h
+                                </small>
+                              </span>
+                              <span className="reconstruction-workspace__participant-points">
+                                {getVisibleParticipantControlPoints(participant.pathPoints).length} route pts
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedSceneObject ? (
+                  <div className="reconstruction-workspace__context-section">
+                    <div className="reconstruction-workspace__context-title">
+                      <Layers3 size={13} />
+                      Selected scene object
+                    </div>
+                    <SceneObjectSettingsPanel
+                      object={selectedSceneObject}
+                      tracing={traceToolObjectId === selectedSceneObject.id}
+                      onChange={(updates) =>
+                        updateSceneObject(selectedSceneObject.id, updates)
+                      }
+                      onDelete={handleDeleteSceneObject}
+                      onDuplicate={handleDuplicateSceneObject}
+                      onPlaceWithGps={handlePlaceSelectedSceneObjectWithGps}
+                      onBeginTrace={() => {
+                        setTraceToolObjectId(selectedSceneObject.id);
+                        setActiveSceneObjectType(null);
+                      }}
+                      onCancelTrace={() => setTraceToolObjectId(null)}
+                      onClearTrace={() =>
+                        updateSceneObject(selectedSceneObject.id, {
+                          tracePoints: [],
+                        })
+                      }
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="reconstruction-workspace__context-section">
+                      <div className="reconstruction-workspace__context-title">
+                        <Crosshair size={13} />
+                        Selected participant
+                      </div>
+
+                      {!selectedParticipant || !selectedParticipantState ? (
+                        <div className="reconstruction-workspace__empty-properties">
+                          Select a participant above or directly on the map to inspect and edit it.
+                        </div>
+                      ) : (
+                        <div className="reconstruction-workspace__property-list">
+                          <label>
+                            <span>Name</span>
+                            <input
+                              value={selectedParticipant.name}
+                              onChange={(event) =>
+                                updateParticipant(selectedParticipant.id, {
+                                  name: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Type</span>
+                            <select
+                              value={selectedParticipant.type}
+                              onChange={(event) =>
+                                handleParticipantTypeChange(
+                                  selectedParticipant,
+                                  event.target.value as ReconstructionVehicleType,
+                                )
+                              }
+                            >
+                              {PARTICIPANT_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>Colour</span>
+                            <select
+                              value={selectedParticipant.colour}
+                              onChange={(event) =>
+                                updateParticipant(selectedParticipant.id, {
+                                  colour: event.target
+                                    .value as ReconstructionVehicleColour,
+                                })
+                              }
+                            >
+                              {PARTICIPANT_COLOURS.map((colour) => (
+                                <option key={colour} value={colour}>
+                                  {colour}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <div>
+                            <span>Speed</span>
+                            <strong>{selectedParticipantState.speedKmh.toFixed(1)} km/h</strong>
+                          </div>
+                          <div>
+                            <span>Position</span>
+                            <strong>
+                              X {selectedParticipantState.position.x.toFixed(2)} · Y {selectedParticipantState.position.y.toFixed(2)}
+                            </strong>
+                          </div>
+                          <label>
+                            <span>Heading</span>
+                            <input
+                              type="number"
+                              value={Math.round(selectedParticipantState.rotation)}
+                              onChange={(event) =>
+                                updatePathPoint(
+                                  selectedParticipant.id,
+                                  selectedParticipantState.activePointId,
+                                  { rotation: Number(event.target.value) },
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedParticipant && (
+                      <>
+                        <div className="reconstruction-workspace__context-section">
+                          <div className="reconstruction-workspace__context-title">
+                            <Activity size={13} />
+                            Default motion
+                          </div>
+                          <label className="reconstruction-workspace__speed-control">
+                            <span>
+                              Default speed
+                              <strong>{selectedParticipant.estimatedSpeedKmh} km/h</strong>
+                            </span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={getMaximumSpeed(selectedParticipant.type)}
+                              step={isHumanParticipant(selectedParticipant.type) ? 1 : 5}
+                              value={selectedParticipant.estimatedSpeedKmh}
+                              onChange={(event) =>
+                                updateParticipant(selectedParticipant.id, {
+                                  estimatedSpeedKmh: Number(event.target.value),
+                                })
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <details className="reconstruction-workspace__context-section reconstruction-workspace__route-details">
+                          <summary className="reconstruction-workspace__context-title">
+                            <Move size={13} />
+                            Route and movement controls
+                            <ChevronUp size={13} />
+                          </summary>
+                          <ParticipantPathPanel
+                            participant={selectedParticipant}
+                            durationSeconds={reconstruction.durationSeconds}
+                          worldDimensions={getReconstructionWorldDimensions(reconstruction)}
+                            sceneObjects={reconstruction.sceneObjects}
+                            selectedPointId={selectedPathPointId}
+                            onSelectPoint={setSelectedPathPointId}
+                            onApplySpeedPlan={({
+                            estimatedSpeedKmh,
+                            pathPoints,
+                            requiredDurationSeconds,
+                          }) => {
+                            setReconstruction(
+                              (current) => ({
+                                ...current,
+
+                                durationSeconds:
+                                  Math.max(
+                                    current.durationSeconds,
+                                    requiredDurationSeconds,
+                                  ),
+
+                                lastPhysicsSimulation:
+                                  undefined,
+
+                                vehicles:
+                                  current.vehicles.map(
+                                    (candidate) =>
+                                      candidate.id ===
+                                      selectedParticipant.id
+                                        ? syncLegacyParticipantFields({
+                                            ...candidate,
+                                            estimatedSpeedKmh,
+                                            pathPoints,
+                                          })
+                                        : candidate,
+                                  ),
+                              }),
+                            );
+                          }}
+                          onParticipantChange={(updates) =>
+                              updateParticipant(selectedParticipant.id, updates)
+                            }
+                            onPointChange={(pointId, updates) =>
+                              updatePathPoint(selectedParticipant.id, pointId, updates)
+                            }
+                            onAddPoint={handleAddPathPoint}
+                            onDeletePoint={handleDeletePathPoint}
+                            onPlacePointWithGps={handlePlaceParticipantPointWithGps}
+                            onJumpToTime={(time) => {
+                              setIsPlaying(false);
+                              setCurrentTime(time);
+                            }}
+                            onHeadingChange={handleParticipantHeadingChange}
+                          />
+                        </details>
+
+                        <button
+                          type="button"
+                          onClick={handleDeleteParticipant}
+                          className="reconstruction-workspace__delete-participant"
+                        >
+                          Delete participant
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+                </div>
+              </aside>
+  );
+
   return (
     <div
-      className={`reconstruction-editor reconstruction-workspace reconstruction-workspace--${activeReconstructionView.toLowerCase()}`}
-      data-reconstruction-view={
-        activeReconstructionView.toLowerCase()
-      }
+      className={`reconstruction-editor reconstruction-workspace ${
+        activeReconstructionView === "2D"
+          ? "is-2d-workspace"
+          : "is-3d-workspace"
+      }`}
+      data-reconstruction-view={activeReconstructionView.toLowerCase()}
     >
+      <div className="reconstruction-workspace__main-column">
       <div className="reconstruction-workspace__header">
         <div className="flex min-w-0 items-center gap-3">
           <Link
@@ -4279,346 +4589,7 @@ export default function AccidentReconstructionEditor({
           </main>
 
           
-
         </div>
-
-        {activeReconstructionView === "2D" &&
-          workspaceRightPanelHost &&
-          createPortal(
-            (
-              <aside
-                className="roadsafe-inspector workstation-panel workstation-panel--right roadsafe-reconstruction-inspector reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel reconstruction-workspace__shell-inspector is-docked is-open"
-                aria-label="2D reconstruction context inspector"
-              >
-              <div className="roadsafe-inspector-header workstation-panel__header reconstruction-workspace__panel-header">
-                <div>
-                  <p className="roadsafe-eyebrow">Context inspector</p>
-                  <h2>2D reconstruction</h2>
-                  <span>
-                    {selectedSceneObject
-                      ? selectedSceneObject.label
-                      : selectedParticipant?.name ?? "Participants and scene controls"}
-                  </span>
-                </div>
-                <span className="ui-badge is-neutral reconstruction-workspace__inspector-count">
-                  {reconstruction.vehicles.length}
-                </span>
-              </div>
-
-              <div className="roadsafe-inspector-scroll workstation-panel__scroll reconstruction-workspace__context-scroll">
-                <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__participant-roster">
-                <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
-                  <Activity size={13} />
-                  Participants
-                </div>
-
-                <div className="reconstruction-workspace__participant-add">
-                  <select
-                    value={newParticipantType}
-                    onChange={(event) =>
-                      setNewParticipantType(
-                        event.target.value as ReconstructionVehicleType,
-                      )
-                    }
-                    aria-label="Participant type"
-                  >
-                    {PARTICIPANT_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={handleAddParticipant}>
-                    Add
-                  </button>
-                </div>
-
-                <div className="reconstruction-workspace__participant-list">
-                  {reconstruction.vehicles.length === 0 ? (
-                    <div className="reconstruction-workspace__empty-properties">
-                      Add the first participant to begin plotting the reconstruction.
-                    </div>
-                  ) : (
-                    reconstruction.vehicles.map((participant) => {
-                      const participantState = getParticipantStateAtTime(
-                                                 participant,
-                                                 currentTime,
-                                                 getReconstructionWorldDimensions(reconstruction),
-                                               );
-
-                      return (
-                        <button
-                          key={participant.id}
-                          type="button"
-                          onClick={() => handleSelectParticipant(participant.id)}
-                          className={
-                            selectedParticipantId === participant.id
-                              ? "is-active"
-                              : ""
-                          }
-                        >
-                          <span
-                            className="reconstruction-workspace__participant-swatch"
-                            style={{
-                              backgroundColor: getParticipantColour(
-                                participant.colour,
-                              ),
-                            }}
-                          />
-                          <span className="reconstruction-workspace__participant-copy">
-                            <strong>{participant.name}</strong>
-                            <small>
-                              {participant.type} · {participantState.speedKmh.toFixed(1)} km/h
-                            </small>
-                          </span>
-                          <span className="reconstruction-workspace__participant-points">
-                            {getVisibleParticipantControlPoints(participant.pathPoints).length} route pts
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-                </div>
-
-            {selectedSceneObject ? (
-              <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
-                  <Layers3 size={13} />
-                  Selected scene object
-                </div>
-                <SceneObjectSettingsPanel
-                  object={selectedSceneObject}
-                  tracing={traceToolObjectId === selectedSceneObject.id}
-                  onChange={(updates) =>
-                    updateSceneObject(selectedSceneObject.id, updates)
-                  }
-                  onDelete={handleDeleteSceneObject}
-                  onDuplicate={handleDuplicateSceneObject}
-                  onPlaceWithGps={handlePlaceSelectedSceneObjectWithGps}
-                  onBeginTrace={() => {
-                    setTraceToolObjectId(selectedSceneObject.id);
-                    setActiveSceneObjectType(null);
-                  }}
-                  onCancelTrace={() => setTraceToolObjectId(null)}
-                  onClearTrace={() =>
-                    updateSceneObject(selectedSceneObject.id, {
-                      tracePoints: [],
-                    })
-                  }
-                />
-              </div>
-            ) : (
-              <>
-                <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                  <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
-                    <Crosshair size={13} />
-                    Selected participant
-                  </div>
-
-                  {!selectedParticipant || !selectedParticipantState ? (
-                    <div className="reconstruction-workspace__empty-properties">
-                      Select a participant above or directly on the map to inspect and edit it.
-                    </div>
-                  ) : (
-                    <div className="reconstruction-workspace__property-list">
-                      <label>
-                        <span>Name</span>
-                        <input
-                          value={selectedParticipant.name}
-                          onChange={(event) =>
-                            updateParticipant(selectedParticipant.id, {
-                              name: event.target.value,
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        <span>Type</span>
-                        <select
-                          value={selectedParticipant.type}
-                          onChange={(event) =>
-                            handleParticipantTypeChange(
-                              selectedParticipant,
-                              event.target.value as ReconstructionVehicleType,
-                            )
-                          }
-                        >
-                          {PARTICIPANT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span>Colour</span>
-                        <select
-                          value={selectedParticipant.colour}
-                          onChange={(event) =>
-                            updateParticipant(selectedParticipant.id, {
-                              colour: event.target
-                                .value as ReconstructionVehicleColour,
-                            })
-                          }
-                        >
-                          {PARTICIPANT_COLOURS.map((colour) => (
-                            <option key={colour} value={colour}>
-                              {colour}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <div>
-                        <span>Speed</span>
-                        <strong>{selectedParticipantState.speedKmh.toFixed(1)} km/h</strong>
-                      </div>
-                      <div>
-                        <span>Position</span>
-                        <strong>
-                          X {selectedParticipantState.position.x.toFixed(2)} · Y {selectedParticipantState.position.y.toFixed(2)}
-                        </strong>
-                      </div>
-                      <label>
-                        <span>Heading</span>
-                        <input
-                          type="number"
-                          value={Math.round(selectedParticipantState.rotation)}
-                          onChange={(event) =>
-                            updatePathPoint(
-                              selectedParticipant.id,
-                              selectedParticipantState.activePointId,
-                              { rotation: Number(event.target.value) },
-                            )
-                          }
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                {selectedParticipant && (
-                  <>
-                    <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                      <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
-                        <Activity size={13} />
-                        Default motion
-                      </div>
-                      <label className="reconstruction-workspace__speed-control">
-                        <span>
-                          Default speed
-                          <strong>{selectedParticipant.estimatedSpeedKmh} km/h</strong>
-                        </span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={getMaximumSpeed(selectedParticipant.type)}
-                          step={isHumanParticipant(selectedParticipant.type) ? 1 : 5}
-                          value={selectedParticipant.estimatedSpeedKmh}
-                          onChange={(event) =>
-                            updateParticipant(selectedParticipant.id, {
-                              estimatedSpeedKmh: Number(event.target.value),
-                            })
-                          }
-                        />
-                      </label>
-                    </div>
-
-                    <details className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section reconstruction-workspace__route-details">
-                      <summary className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
-                        <Move size={13} />
-                        Route and movement controls
-                        <ChevronUp size={13} />
-                      </summary>
-                      <ParticipantPathPanel
-                        participant={selectedParticipant}
-                        durationSeconds={reconstruction.durationSeconds}
-                      worldDimensions={getReconstructionWorldDimensions(reconstruction)}
-                        sceneObjects={reconstruction.sceneObjects}
-                        selectedPointId={selectedPathPointId}
-                        onSelectPoint={setSelectedPathPointId}
-                        onApplySpeedPlan={({
-                        estimatedSpeedKmh,
-                        pathPoints,
-                        requiredDurationSeconds,
-                      }) => {
-                        setReconstruction(
-                          (current) => ({
-                            ...current,
-
-                            durationSeconds:
-                              Math.max(
-                                current.durationSeconds,
-                                requiredDurationSeconds,
-                              ),
-
-                            lastPhysicsSimulation:
-                              undefined,
-
-                            vehicles:
-                              current.vehicles.map(
-                                (candidate) =>
-                                  candidate.id ===
-                                  selectedParticipant.id
-                                    ? syncLegacyParticipantFields({
-                                        ...candidate,
-                                        estimatedSpeedKmh,
-                                        pathPoints,
-                                      })
-                                    : candidate,
-                              ),
-                          }),
-                        );
-                      }}
-                      onParticipantChange={(updates) =>
-                          updateParticipant(selectedParticipant.id, updates)
-                        }
-                        onPointChange={(pointId, updates) =>
-                          updatePathPoint(selectedParticipant.id, pointId, updates)
-                        }
-                        onAddPoint={handleAddPathPoint}
-                        onDeletePoint={handleDeletePathPoint}
-                        onPlacePointWithGps={handlePlaceParticipantPointWithGps}
-                        onJumpToTime={(time) => {
-                          setIsPlaying(false);
-                          setCurrentTime(time);
-                        }}
-                        onHeadingChange={handleParticipantHeadingChange}
-                      />
-                    </details>
-
-                    <button
-                      type="button"
-                      onClick={handleDeleteParticipant}
-                      className="reconstruction-workspace__delete-participant"
-                    >
-                      <X size={14} />
-                      <span>Delete participant</span>
-                    </button>
-                  </>
-                )}
-              </>
-            )}
-            </div>
-
-            <div className="roadsafe-inspector-footer workstation-panel__footer reconstruction-workspace__inspector-footer">
-              <div>
-                <span>Participants</span>
-                <strong>{reconstruction.vehicles.length}</strong>
-              </div>
-              <div>
-                <span>Selection</span>
-                <strong>
-                  {selectedSceneObject
-                    ? "Scene object"
-                    : selectedParticipant?.name ?? "None"}
-                </strong>
-              </div>
-            </div>
-          </aside>
-            ),
-            workspaceRightPanelHost,
-          )}
 
         <section className="reconstruction-playback" aria-label="Reconstruction playback controls">
           <div className="reconstruction-playback__scrubber">
@@ -5309,6 +5280,9 @@ export default function AccidentReconstructionEditor({
           />
         )}
       </div>
+      </div>
+
+      {activeReconstructionView === "2D" && twoDContextInspector}
     </div>
   );
 }

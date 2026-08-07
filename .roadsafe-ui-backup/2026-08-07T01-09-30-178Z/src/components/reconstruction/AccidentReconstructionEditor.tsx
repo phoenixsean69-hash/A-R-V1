@@ -4286,28 +4286,25 @@ export default function AccidentReconstructionEditor({
           workspaceRightPanelHost &&
           createPortal(
             (
-              <aside
-                className="roadsafe-inspector workstation-panel workstation-panel--right roadsafe-reconstruction-inspector reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel reconstruction-workspace__shell-inspector is-docked is-open"
-                aria-label="2D reconstruction context inspector"
-              >
-              <div className="roadsafe-inspector-header workstation-panel__header reconstruction-workspace__panel-header">
+              <aside className="reconstruction-workspace__properties reconstruction-workspace__properties--2d reconstruction-workspace__context-panel reconstruction-workspace__shell-inspector is-open">
+            <div className="reconstruction-workspace__context-scroll">
+            <div className="reconstruction-workspace__2d-inspector-sticky">
+              <div className="reconstruction-workspace__panel-header">
                 <div>
-                  <p className="roadsafe-eyebrow">Context inspector</p>
-                  <h2>2D reconstruction</h2>
+                  <p>2D Context Inspector</p>
                   <span>
                     {selectedSceneObject
                       ? selectedSceneObject.label
                       : selectedParticipant?.name ?? "Participants and scene controls"}
                   </span>
                 </div>
-                <span className="ui-badge is-neutral reconstruction-workspace__inspector-count">
+                <span className="reconstruction-workspace__inspector-count">
                   {reconstruction.vehicles.length}
                 </span>
               </div>
 
-              <div className="roadsafe-inspector-scroll workstation-panel__scroll reconstruction-workspace__context-scroll">
-                <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__participant-roster">
-                <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
+              <div className="reconstruction-workspace__participant-roster">
+                <div className="reconstruction-workspace__context-title">
                   <Activity size={13} />
                   Participants
                 </div>
@@ -4379,11 +4376,12 @@ export default function AccidentReconstructionEditor({
                     })
                   )}
                 </div>
-                </div>
+              </div>
+            </div>
 
             {selectedSceneObject ? (
-              <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
+              <div className="reconstruction-workspace__context-section">
+                <div className="reconstruction-workspace__context-title">
                   <Layers3 size={13} />
                   Selected scene object
                 </div>
@@ -4410,8 +4408,8 @@ export default function AccidentReconstructionEditor({
               </div>
             ) : (
               <>
-                <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                  <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
+                <div className="reconstruction-workspace__context-section">
+                  <div className="reconstruction-workspace__context-title">
                     <Crosshair size={13} />
                     Selected participant
                   </div>
@@ -4499,8 +4497,8 @@ export default function AccidentReconstructionEditor({
 
                 {selectedParticipant && (
                   <>
-                    <div className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section">
-                      <div className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
+                    <div className="reconstruction-workspace__context-section">
+                      <div className="reconstruction-workspace__context-title">
                         <Activity size={13} />
                         Default motion
                       </div>
@@ -4524,8 +4522,8 @@ export default function AccidentReconstructionEditor({
                       </label>
                     </div>
 
-                    <details className="roadsafe-inspector-section workstation-panel__section reconstruction-workspace__context-section reconstruction-workspace__route-details">
-                      <summary className="roadsafe-inspector-section-heading workstation-panel__section-heading reconstruction-workspace__context-title">
+                    <details className="reconstruction-workspace__context-section reconstruction-workspace__route-details">
+                      <summary className="reconstruction-workspace__context-title">
                         <Move size={13} />
                         Route and movement controls
                         <ChevronUp size={13} />
@@ -4599,21 +4597,6 @@ export default function AccidentReconstructionEditor({
                 )}
               </>
             )}
-            </div>
-
-            <div className="roadsafe-inspector-footer workstation-panel__footer reconstruction-workspace__inspector-footer">
-              <div>
-                <span>Participants</span>
-                <strong>{reconstruction.vehicles.length}</strong>
-              </div>
-              <div>
-                <span>Selection</span>
-                <strong>
-                  {selectedSceneObject
-                    ? "Scene object"
-                    : selectedParticipant?.name ?? "None"}
-                </strong>
-              </div>
             </div>
           </aside>
             ),

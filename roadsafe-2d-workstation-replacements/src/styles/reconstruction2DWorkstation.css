@@ -1,0 +1,1318 @@
+/*
+ * RoadSafe AR — 2D Reconstruction Workstation
+ *
+ * This stylesheet is loaded last and is intentionally scoped to
+ * .reconstruction-editor.is-2d-workspace.
+ *
+ * It accompanies the full AccidentReconstructionEditor replacement that moves
+ * the 2D Context Inspector out of the scene grid and into a true right-side
+ * workstation column.
+ */
+
+:root {
+  --rs2d-shell: #202020;
+  --rs2d-workspace: #252525;
+  --rs2d-panel: #2d2d2d;
+  --rs2d-panel-raised: #353535;
+  --rs2d-panel-hover: #3d3d3d;
+  --rs2d-input: #242424;
+  --rs2d-input-hover: #292929;
+  --rs2d-border: #151515;
+  --rs2d-border-soft: #4b4b4b;
+  --rs2d-border-muted: #393939;
+  --rs2d-text: #e0e0e0;
+  --rs2d-text-secondary: #b8b8b8;
+  --rs2d-text-muted: #8e8e8e;
+  --rs2d-blue: #365d86;
+  --rs2d-blue-hover: #426f9d;
+  --rs2d-blue-soft: #34495f;
+  --rs2d-orange: #e8872d;
+  --rs2d-success: #5f8068;
+  --rs2d-warning: #8f7448;
+  --rs2d-danger: #824454;
+  --rs2d-inspector-width: clamp(350px, 27vw, 430px);
+  --rs2d-radius: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shell integration                                                          */
+/* -------------------------------------------------------------------------- */
+
+@supports selector(.roadsafe-workstation:has(*)) {
+  @media (min-width: 1024px) {
+    .roadsafe-workstation:has(
+        .reconstruction-editor.is-2d-workspace
+      ) {
+      grid-template-columns:
+        var(--js-navigation-width, 214px)
+        minmax(0, 1fr) !important;
+    }
+
+    .roadsafe-workstation.is-navigation-collapsed:has(
+        .reconstruction-editor.is-2d-workspace
+      ) {
+      grid-template-columns:
+        var(--js-navigation-collapsed-width, 58px)
+        minmax(0, 1fr) !important;
+    }
+
+    .roadsafe-workstation:has(
+        .reconstruction-editor.is-2d-workspace
+      )
+      > .roadsafe-inspector,
+    .roadsafe-workstation:has(
+        .reconstruction-editor.is-2d-workspace
+      )
+      .roadsafe-inspector-toggle,
+    .roadsafe-workstation:has(
+        .reconstruction-editor.is-2d-workspace
+      )
+      .roadsafe-editor-inspector-toggle {
+      display: none !important;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* True centre + right-panel layout                                            */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--rs2d-inspector-width);
+  align-items: start;
+  min-width: 0;
+  min-height: 100dvh;
+  background: var(--rs2d-shell) !important;
+  color: var(--rs2d-text);
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__main-column {
+  min-width: 0;
+  min-height: 100dvh;
+  background: var(--rs2d-shell);
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__body {
+  display: block !important;
+  min-width: 0;
+  min-height: 0 !important;
+  background: var(--rs2d-shell) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__2d-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-width: 0;
+  min-height: 0 !important;
+  gap: 0 !important;
+  padding: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__2d-grid.hidden {
+  display: none !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel {
+  position: sticky !important;
+  top: 0 !important;
+  right: auto !important;
+  z-index: 85 !important;
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  flex-direction: column;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid var(--rs2d-border) !important;
+  border-radius: 0 !important;
+  background: var(--rs2d-panel) !important;
+  box-shadow:
+    -1px 0 0 rgba(255, 255, 255, 0.025),
+    -8px 0 24px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: none !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  > .reconstruction-workspace__context-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 !important;
+  background: var(--rs2d-panel);
+  scrollbar-gutter: stable;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-track {
+  background: #202020;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #202020;
+  border-radius: 0;
+  background: #505050;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  > .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb:hover {
+  background: #626262;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Top editor chrome                                                          */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__header,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__toolbar {
+  border-color: var(--rs2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #363636 0%,
+      #2b2b2b 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__header {
+  position: sticky;
+  top: 0;
+  z-index: 76;
+  min-height: 48px;
+  padding: 7px 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__view-switch {
+  gap: 2px;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: #242424 !important;
+  padding: 2px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__view-switch
+  button,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__button,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__icon-button {
+  min-height: 28px !important;
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #464646 0%,
+      #363636 100%
+    ) !important;
+  color: var(--rs2d-text-secondary) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42) !important;
+  text-shadow: none !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__view-switch
+  button:hover,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__button:hover,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__icon-button:hover {
+  border-color: var(--rs2d-orange) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #505050 0%,
+      #3d3d3d 100%
+    ) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__view-switch
+  button.is-active,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__button--primary {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__view-switch
+  button.is-active {
+  box-shadow:
+    inset 3px 0 0 var(--rs2d-orange),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Scene panel                                                                */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-workspace) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 4px 12px rgba(0, 0, 0, 0.18) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child {
+  border-color: var(--rs2d-border) !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #323232 0%,
+      #2a2a2a 100%
+    ) !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  h2 {
+  color: var(--rs2d-text) !important;
+  letter-spacing: 0.08em;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  p {
+  color: var(--rs2d-text-muted) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  [class*="border-[#1d2c4b]"] {
+  border-color: var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: #242424 !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  [class*="border-[#1d2c4b]"]
+  button {
+  border: 1px solid transparent !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: transparent !important;
+  color: var(--rs2d-text-secondary) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  [class*="border-[#1d2c4b]"]
+  button[class*="bg-[#173c78]"] {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__canvas
+  > div:first-child
+  [class*="border-[#1d2c4b]"]
+  button:hover {
+  border-color: var(--rs2d-orange) !important;
+  background: #3b3b3b !important;
+  color: #ffffff !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tool rail, helper and map controls                                          */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tools {
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: rgba(42, 42, 42, 0.98) !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tools
+  button {
+  border: 1px solid transparent !important;
+  border-radius: var(--rs2d-radius) !important;
+  color: var(--rs2d-text-muted) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tools
+  button:hover {
+  border-color: #5a5a5a !important;
+  background: var(--rs2d-panel-hover) !important;
+  color: var(--rs2d-text) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tools
+  button.is-active {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 3px 0 0 var(--rs2d-orange),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tool-hint {
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: rgba(48, 48, 48, 0.98) !important;
+  color: var(--rs2d-text-secondary) !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.28) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__tool-hint
+  strong {
+  color: var(--rs2d-text) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__scene-controls,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__zoom-controls {
+  border-color: var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: rgba(45, 45, 45, 0.98) !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.28) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__scene-controls
+  button,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__zoom-controls
+  button {
+  border-color: var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #343434
+    ) !important;
+  color: var(--rs2d-text-secondary) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__scene-controls
+  button:hover,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__zoom-controls
+  button:hover {
+  border-color: var(--rs2d-orange) !important;
+  color: #ffffff !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Right-side 2D Context Inspector                                             */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__2d-inspector-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--rs2d-border);
+  background: var(--rs2d-panel);
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  .reconstruction-workspace__panel-header {
+  min-height: 62px;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid var(--rs2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #373737 0%,
+      #2e2e2e 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  .reconstruction-workspace__panel-header
+  p {
+  color: var(--rs2d-text) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.08em;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  .reconstruction-workspace__panel-header
+  span {
+  color: var(--rs2d-text-muted) !important;
+  font-size: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__inspector-count {
+  display: grid !important;
+  width: 34px;
+  height: 28px;
+  margin: 0 !important;
+  place-items: center;
+  border: 1px solid var(--rs2d-border-soft);
+  border-radius: var(--rs2d-radius);
+  background:
+    linear-gradient(
+      180deg,
+      #444444,
+      #353535
+    );
+  color: var(--rs2d-text) !important;
+  font-size: 11px !important;
+  font-weight: 800;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-roster {
+  padding: 12px 14px 14px !important;
+  border-bottom: 1px solid var(--rs2d-border);
+  background: var(--rs2d-panel);
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__context-title {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  color: var(--rs2d-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__context-title
+  .roadsafe-material-icon {
+  color: #9ab5cf;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 58px !important;
+  gap: 8px !important;
+  margin-top: 8px;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add
+  select,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add
+  button {
+  min-height: 34px !important;
+  border-radius: var(--rs2d-radius) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add
+  select {
+  border: 1px solid var(--rs2d-border-soft) !important;
+  background: var(--rs2d-input) !important;
+  color: var(--rs2d-text) !important;
+  padding: 0 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add
+  button {
+  border: 1px solid #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-add
+  button:hover {
+  border-color: var(--rs2d-orange) !important;
+  background: var(--rs2d-blue-hover) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-list {
+  display: grid !important;
+  max-height: 235px !important;
+  gap: 6px !important;
+  margin-top: 10px;
+  overflow-y: auto;
+  padding: 0 !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-list
+  > button {
+  display: grid !important;
+  min-height: 58px;
+  grid-template-columns:
+    12px minmax(0, 1fr) auto !important;
+  align-items: center;
+  gap: 10px !important;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #323232,
+      #292929
+    ) !important;
+  padding: 9px 10px !important;
+  color: var(--rs2d-text-secondary) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-list
+  > button:hover {
+  border-color: #5c5c5c !important;
+  background:
+    linear-gradient(
+      180deg,
+      #3a3a3a,
+      #303030
+    ) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-list
+  > button.is-active {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 3px 0 0 var(--rs2d-orange),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-swatch {
+  width: 10px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 1px;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-copy
+  strong {
+  color: var(--rs2d-text) !important;
+  font-size: 11px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-copy
+  small {
+  margin-top: 3px !important;
+  color: var(--rs2d-text-muted) !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-list
+  > button.is-active
+  .reconstruction-workspace__participant-copy
+  small {
+  color: #c7d8e8 !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__participant-points {
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: #222222 !important;
+  padding: 5px 7px !important;
+  color: var(--rs2d-text-secondary) !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__context-section {
+  margin: 0 !important;
+  padding: 14px !important;
+  border-top: 1px solid var(--rs2d-border) !important;
+  border-bottom: 0 !important;
+  background: var(--rs2d-panel) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  > label {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 5px !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  > label
+  > span {
+  color: var(--rs2d-text-muted) !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  > div {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+  min-height: 34px;
+  align-items: center;
+  margin: 0;
+  padding: 7px 9px !important;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius);
+  background: #292929;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  > div
+  span {
+  color: var(--rs2d-text-muted) !important;
+  font-size: 9px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  > div
+  strong {
+  color: var(--rs2d-text) !important;
+  font-size: 10px !important;
+  text-align: right;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  input,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  select,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__context-section
+  textarea {
+  min-height: 34px !important;
+  width: 100%;
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-input) !important;
+  color: var(--rs2d-text) !important;
+  padding: 7px 9px !important;
+  font-size: 10px !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.42) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  input:focus,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__property-list
+  select:focus,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__context-section
+  textarea:focus {
+  border-color: var(--rs2d-orange) !important;
+  outline: none !important;
+  box-shadow:
+    0 0 0 1px var(--rs2d-orange) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__speed-control {
+  display: grid;
+  gap: 9px;
+  margin-top: 9px;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: #292929 !important;
+  padding: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__speed-control
+  > span {
+  color: var(--rs2d-text-muted) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__speed-control
+  strong {
+  color: var(--rs2d-text) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  input[type="range"] {
+  accent-color: var(--rs2d-blue) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__route-details {
+  padding: 14px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__route-details
+  > summary {
+  min-height: 32px;
+  padding: 0 2px;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__route-details
+  > :not(summary) {
+  margin-top: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__route-details
+  :is(
+    [class*="bg-white"],
+    [class*="bg-gray-"],
+    [class*="bg-slate-"],
+    [class*="bg-blue-"]
+  ) {
+  background: #2b2b2b !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__route-details
+  :is(
+    [class*="border-gray-"],
+    [class*="border-slate-"],
+    [class*="border-blue-"]
+  ) {
+  border-color: var(--rs2d-border-soft) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__delete-participant {
+  width: calc(100% - 28px);
+  min-height: 34px;
+  margin: 0 14px 16px !important;
+  border: 1px solid #70404c !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #462930,
+      #382127
+    ) !important;
+  color: #e4b3bf !important;
+  font-size: 10px !important;
+  font-weight: 800;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__delete-participant:hover {
+  border-color: var(--rs2d-orange) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #55313a,
+      #42272e
+    ) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__empty-properties {
+  margin-top: 9px;
+  border: 1px dashed #515151 !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: #292929 !important;
+  color: var(--rs2d-text-muted) !important;
+  padding: 11px !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Playback                                                                   */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback {
+  margin: 0 10px 10px !important;
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-panel) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__scrubber {
+  border-bottom: 1px solid var(--rs2d-border) !important;
+  background: #262626 !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__progress {
+  background: var(--rs2d-blue) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__controls {
+  background: var(--rs2d-panel) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__transport
+  button {
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #444444,
+      #343434
+    ) !important;
+  color: var(--rs2d-text-secondary) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__transport
+  button:hover {
+  border-color: var(--rs2d-orange) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__transport
+  .reconstruction-playback__play {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__clock
+  strong {
+  color: var(--rs2d-text) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__clock
+  span,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__summary {
+  color: var(--rs2d-text-muted) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-playback__speed
+  select {
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-input) !important;
+  color: var(--rs2d-text) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Timeline                                                                   */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__timeline-wrap {
+  margin: 0 10px 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-timeline,
+.reconstruction-editor.is-2d-workspace
+  [class*="accident-timeline"] {
+  border-color: var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-panel) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-timeline
+  :is(
+    [class*="bg-[#0"],
+    [class*="bg-slate-"],
+    [class*="bg-gray-"]
+  ),
+.reconstruction-editor.is-2d-workspace
+  [class*="accident-timeline"]
+  :is(
+    [class*="bg-[#0"],
+    [class*="bg-slate-"],
+    [class*="bg-gray-"]
+  ) {
+  background: #292929 !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-timeline
+  :is(
+    [class*="border-[#1"],
+    [class*="border-slate-"],
+    [class*="border-gray-"]
+  ),
+.reconstruction-editor.is-2d-workspace
+  [class*="accident-timeline"]
+  :is(
+    [class*="border-[#1"],
+    [class*="border-slate-"],
+    [class*="border-gray-"]
+  ) {
+  border-color: var(--rs2d-border) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Workspace panels and investigation cards                                   */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-panels,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-workspace {
+  margin-right: 10px !important;
+  margin-left: 10px !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-panels,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-card,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-card,
+.reconstruction-editor.is-2d-workspace
+  .premium-audit-metric {
+  border-color: var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-panel) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-panels-toggle,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-card-header,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-card__header {
+  border-color: var(--rs2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #343434,
+      #2b2b2b
+    ) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-panels-toggle:hover,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-card__header:hover {
+  background:
+    linear-gradient(
+      180deg,
+      #3d3d3d,
+      #313131
+    ) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-panels-icon,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-card-icon,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-card__number {
+  border-color: #4c739a !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-card-scroll,
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__embedded-panel,
+.reconstruction-editor.is-2d-workspace
+  .premium-investigation-card__body {
+  background: var(--rs2d-panel) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__workspace-form
+  :is(input, select, textarea),
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__embedded-panel
+  :is(input, select, textarea) {
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: var(--rs2d-input) !important;
+  color: var(--rs2d-text) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Legacy utility-class neutralisation inside the 2D editor                    */
+/* -------------------------------------------------------------------------- */
+
+.reconstruction-editor.is-2d-workspace
+  :is(
+    [class*="bg-[#03"],
+    [class*="bg-[#04"],
+    [class*="bg-[#05"],
+    [class*="bg-[#06"],
+    [class*="bg-[#07"],
+    [class*="bg-[#08"],
+    [class*="bg-[#09"],
+    [class*="bg-[#0a"],
+    [class*="bg-[#0b"],
+    [class*="bg-[#0c"],
+    [class*="bg-[#0d"],
+    [class*="bg-[#0e"]
+  ):not(.reconstruction-workspace__canvas *) {
+  background-color: var(--rs2d-panel) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  :is(
+    [class*="text-[#79"],
+    [class*="text-[#7f"],
+    [class*="text-[#8e"],
+    [class*="text-blue-"]
+  ) {
+  color: #9ab5cf !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  button[class*="bg-blue-"],
+.reconstruction-editor.is-2d-workspace
+  a[class*="bg-blue-"] {
+  border-color: #4c739a !important;
+  background: var(--rs2d-blue) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  :is(button, a):focus-visible {
+  outline: 1px solid var(--rs2d-orange) !important;
+  outline-offset: 1px;
+}
+
+
+/* Map navigation block in the upper-right of the scene. */
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__map-controls {
+  border: 1px solid var(--rs2d-border) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background: rgba(45, 45, 45, 0.98) !important;
+  padding: 7px !important;
+  color: var(--rs2d-text-secondary) !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__map-controls
+  button {
+  min-width: 40px;
+  min-height: 36px;
+  border: 1px solid var(--rs2d-border-soft) !important;
+  border-radius: var(--rs2d-radius) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #424242,
+      #343434
+    ) !important;
+  color: var(--rs2d-text-secondary) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__map-controls
+  button:hover {
+  border-color: var(--rs2d-orange) !important;
+  color: #ffffff !important;
+}
+
+/*
+ * Nested route, scene-object and evidence controls inherit the same compact
+ * workstation button language instead of retaining the old web-card buttons.
+ */
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  button:not(
+    .reconstruction-workspace__participant-list
+      > button
+  ):not(
+    .reconstruction-workspace__participant-add
+      > button
+  ):not(
+    .reconstruction-workspace__delete-participant
+  ) {
+  border-radius: var(--rs2d-radius) !important;
+  box-shadow: none;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  :is(
+    [class*="rounded-xl"],
+    [class*="rounded-lg"],
+    [class*="rounded-md"]
+  ) {
+  border-radius: var(--rs2d-radius) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  :is(
+    [class*="bg-white"],
+    [class*="bg-gray-50"],
+    [class*="bg-gray-100"],
+    [class*="bg-slate-50"],
+    [class*="bg-slate-100"],
+    [class*="bg-blue-50"],
+    [class*="bg-blue-100"]
+  ) {
+  background: #2b2b2b !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  :is(
+    [class*="border-gray-"],
+    [class*="border-slate-"],
+    [class*="border-blue-"]
+  ) {
+  border-color: var(--rs2d-border-soft) !important;
+}
+
+.reconstruction-editor.is-2d-workspace
+  .reconstruction-workspace__right-panel
+  :is(
+    [class*="text-gray-"],
+    [class*="text-slate-"]
+  ) {
+  color: var(--rs2d-text-secondary) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive                                                                 */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .reconstruction-editor.is-2d-workspace {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(320px, 36vw);
+  }
+}
+
+@media (max-width: 900px) {
+  .reconstruction-editor.is-2d-workspace {
+    display: block !important;
+  }
+
+  .reconstruction-editor.is-2d-workspace
+    .reconstruction-workspace__right-panel {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 10px 12px !important;
+    border: 1px solid var(--rs2d-border) !important;
+    border-radius: var(--rs2d-radius) !important;
+  }
+
+  .reconstruction-editor.is-2d-workspace
+    .reconstruction-workspace__right-panel
+    > .reconstruction-workspace__context-scroll {
+    max-height: 70vh;
+  }
+}

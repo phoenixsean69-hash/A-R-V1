@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "installedAt": "2026-08-07T00:51:24.490Z",
+  "backupRoot": "C:\\Users\\nooklyweb\\Desktop\\A-R-V1\\.roadsafe-ui-backup\\2026-08-07T00-51-01-493Z",
+  "trackedPaths": [
+    "src/components/layout/AppShell.tsx",
+    "src/components/layout/WorkspaceRightPanelContext.tsx",
+    "src/components/reconstruction/AccidentReconstructionEditor.tsx",
+    "src/styles/reconstruction2DWorkstation.css",
+    "src/main.tsx",
+    "src/styles/reconstruction2dTheme.css"
+  ],
+  "existedBefore": {
+    "src/components/layout/AppShell.tsx": true,
+    "src/components/layout/WorkspaceRightPanelContext.tsx": false,
+    "src/components/reconstruction/AccidentReconstructionEditor.tsx": true,
+    "src/styles/reconstruction2DWorkstation.css": false,
+    "src/main.tsx": true,
+    "src/styles/reconstruction2dTheme.css": true
+  }
+}

@@ -1450,9 +1450,740 @@ export default function ParticipantPathPanel(
           headerActionsHost,
         )}
 
-      {/* Visual styling is centralized in reconstruction2DWorkstation.css. */}
+      <style>{`
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"] {
+          width: 16px !important;
+          height: 16px !important;
+          min-width: 16px !important;
+          min-height: 16px !important;
+          padding: 0 !important;
+          border: 1px solid #8bb9fa !important;
+          border-radius: 2px !important;
+          color: transparent !important;
+          font-size: 0 !important;
+          transform: translate(-50%, -50%) rotate(45deg) !important;
+          box-shadow: 0 0 0 2px rgba(4, 10, 23, .72), 0 5px 14px rgba(0, 0, 0, .38) !important;
+          transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease !important;
+        }
 
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]::after {
+          content: attr(${ROUTE_NUMBER_ATTRIBUTE});
+          display: grid;
+          width: 100%;
+          height: 100%;
+          place-items: center;
+          color: #f8fbff;
+          font-size: 8px;
+          font-weight: 900;
+          line-height: 1;
+          transform: rotate(-45deg);
+          text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
+        }
 
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:hover,
+        button[${ROUTE_DIAMOND_ATTRIBUTE}="true"]:focus-visible {
+          border-color: #d7e8ff !important;
+          transform: translate(-50%, -50%) rotate(45deg) scale(1.14) !important;
+          filter: brightness(1.08);
+          z-index: 70 !important;
+        }
+
+        .reconstruction-workspace__properties--2d >
+        .reconstruction-workspace__context-scroll {
+          display: flex !important;
+          min-height: 100% !important;
+          flex-direction: column !important;
+        }
+
+        .roadsafe-participant-header-actions {
+          position: sticky;
+          z-index: 35;
+          bottom: 0;
+          display: grid;
+          width: 100%;
+          grid-template-columns: repeat(2, minmax(0, 132px));
+          justify-content: center;
+          gap: .55rem;
+          margin-top: auto;
+          border-top: 1px solid #172744;
+          background: linear-gradient(180deg, rgba(5, 11, 24, .18), #071020 34%);
+          padding: .75rem .7rem .85rem;
+        }
+
+        .roadsafe-participant-header-actions__button {
+          display: grid;
+          min-width: 0;
+          min-height: 42px;
+          grid-template-columns: 28px minmax(0, 1fr);
+          align-items: center;
+          gap: .48rem;
+          border: 1px solid #203758;
+          border-radius: .48rem;
+          background: #0a1528;
+          padding: .43rem .55rem;
+          color: #b2c1d6;
+          text-align: left;
+          transition: border-color 120ms ease, background 120ms ease, color 120ms ease, transform 120ms ease;
+        }
+
+        .roadsafe-participant-header-actions__button:hover {
+          border-color: #35639b;
+          background: #10213b;
+          color: #f1f7ff;
+          transform: translateY(-1px);
+        }
+
+        .roadsafe-participant-header-actions__icon {
+          display: grid;
+          width: 28px;
+          height: 28px;
+          place-items: center;
+          border: 1px solid #28456c;
+          border-radius: .38rem;
+          background: #0e203b;
+          color: #7fb1f5;
+        }
+
+        .roadsafe-participant-header-actions__copy {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          line-height: 1.08;
+        }
+
+        .roadsafe-participant-header-actions__copy strong {
+          color: inherit;
+          font-size: .58rem;
+          font-weight: 850;
+          letter-spacing: .01em;
+        }
+
+        .roadsafe-participant-header-actions__copy small {
+          margin-top: .16rem;
+          color: #667b98;
+          font-size: .46rem;
+          font-weight: 700;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger {
+          border-color: #4b2c38;
+          background: #1a1018;
+          color: #d5a1ad;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger
+        .roadsafe-participant-header-actions__icon {
+          border-color: #5d3341;
+          background: #25131c;
+          color: #e49aaa;
+        }
+
+        .roadsafe-participant-header-actions__button.is-danger:hover {
+          border-color: #784252;
+          background: #28151f;
+          color: #ffd0d9;
+        }
+
+        .reconstruction-workspace__2d-grid {
+          align-items: start !important;
+          min-height: 0 !important;
+        }
+
+        .reconstruction-workspace__2d-grid >
+        .reconstruction-workspace__properties--2d {
+          position: sticky !important;
+          inset: auto !important;
+          top: .75rem !important;
+          align-self: start !important;
+          width: 100% !important;
+          height: calc(100vh - 7.25rem) !important;
+          min-height: 0 !important;
+          max-height: calc(100vh - 7.25rem) !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior: contain;
+          scrollbar-gutter: stable;
+          padding: .72rem .72rem 7rem !important;
+        }
+
+        .reconstruction-workspace__properties--2d
+        .reconstruction-workspace__speed-control {
+          display: none !important;
+        }
+
+        details.reconstruction-workspace__route-details {
+          display: block !important;
+          overflow: visible !important;
+        }
+
+        details.reconstruction-workspace__route-details > summary {
+          display: none !important;
+        }
+
+        details.reconstruction-workspace__route-details >
+        .roadsafe-route-inspector {
+          display: block !important;
+          margin: 0 !important;
+          border: 0 !important;
+          padding-top: 0 !important;
+        }
+
+        .roadsafe-route-inspector {
+          color: #9eacc0;
+          font-size: .56rem;
+        }
+
+        .roadsafe-route-inspector__section {
+          margin-top: .72rem;
+          border-top: 1px solid #152744;
+          padding-top: .68rem;
+        }
+
+        .roadsafe-route-inspector__section:first-of-type {
+          margin-top: 0;
+          border-top: 0;
+          padding-top: 0;
+        }
+
+        .roadsafe-route-inspector__heading {
+          display: flex;
+          align-items: center;
+          gap: .4rem;
+          margin: 0;
+          color: #9bb2d1;
+          font-size: .54rem;
+          font-weight: 900;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__description {
+          margin-top: .35rem;
+          color: #66758d;
+          font-size: .5rem;
+          line-height: 1.55;
+        }
+
+        .roadsafe-route-inspector__header-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: .65rem;
+        }
+
+        .roadsafe-route-inspector__badge {
+          display: inline-flex;
+          flex: 0 0 auto;
+          align-items: center;
+          gap: .25rem;
+          border: 1px solid #284a7b;
+          border-radius: .26rem;
+          background: #112241;
+          padding: .24rem .4rem;
+          color: #7fb1ff;
+          font-size: .45rem;
+          font-weight: 900;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__toolbar {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .58rem;
+        }
+
+        .roadsafe-route-inspector__toolbar .ui-button,
+        .roadsafe-route-inspector__toolbar .ui-button-primary {
+          min-height: 31px;
+          justify-content: flex-start;
+          padding: .38rem .48rem;
+          font-size: .49rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__toolbar-danger {
+          border-color: #50303a !important;
+          background: #1d1119 !important;
+          color: #c88d9a !important;
+        }
+
+        .roadsafe-route-inspector__toolbar-danger:hover {
+          border-color: #71404d !important;
+          background: #291720 !important;
+          color: #efb5c1 !important;
+        }
+
+        .roadsafe-route-inspector__message {
+          display: flex;
+          align-items: flex-start;
+          gap: .4rem;
+          margin-top: .5rem;
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .45rem .5rem;
+          color: #7f90a8;
+          font-size: .49rem;
+          line-height: 1.5;
+        }
+
+        .roadsafe-route-inspector__chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .28rem;
+          margin-top: .45rem;
+        }
+
+        .roadsafe-route-inspector__chip {
+          border: 1px solid #1a2e4d;
+          border-radius: .25rem;
+          background: #071124;
+          padding: .22rem .34rem;
+          color: #71839d;
+          font-size: .43rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__speed-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 78px;
+          gap: .45rem;
+          align-items: center;
+          margin-top: .55rem;
+        }
+
+        .roadsafe-route-inspector__speed-grid input[type="range"] {
+          width: 100%;
+          accent-color: #80ACFF;
+        }
+
+        .roadsafe-route-inspector__number-wrap {
+          position: relative;
+        }
+
+        .roadsafe-route-inspector__number-wrap input {
+          width: 100%;
+          padding-right: 1.8rem !important;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__number-unit {
+          position: absolute;
+          right: .38rem;
+          top: 50%;
+          pointer-events: none;
+          transform: translateY(-50%);
+          color: #5f7088;
+          font-size: .42rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__presets {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .28rem;
+          margin-top: .42rem;
+        }
+
+        .roadsafe-route-inspector__presets button {
+          min-height: 26px;
+          border: 1px solid #1a2e4e;
+          border-radius: .28rem;
+          background: #071124;
+          padding: .28rem .42rem;
+          color: #7588a4;
+          font-size: .45rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__presets button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-inspector__metrics {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .58rem;
+        }
+
+        .roadsafe-route-inspector__metric {
+          min-width: 0;
+          border: 1px solid #142743;
+          border-radius: .32rem;
+          background: #061020;
+          padding: .46rem;
+        }
+
+        .roadsafe-route-inspector__metric span {
+          display: block;
+          color: #61728b;
+          font-size: .43rem;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__metric strong {
+          display: block;
+          margin-top: .2rem;
+          overflow: hidden;
+          color: #d8e6f8;
+          font-size: .58rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .roadsafe-route-inspector__metric small {
+          display: block;
+          margin-top: .18rem;
+          color: #55657b;
+          font-size: .4rem;
+          line-height: 1.35;
+        }
+
+        .roadsafe-route-inspector__metric.is-observed strong { color: #9ed8ca; }
+        .roadsafe-route-inspector__metric.is-calculated strong { color: #aebef8; }
+        .roadsafe-route-inspector__metric.is-pending strong { color: #c6b17a; }
+
+        .roadsafe-route-inspector__field-list {
+          display: grid;
+          gap: .42rem;
+          margin-top: .55rem;
+        }
+
+        .roadsafe-route-inspector__field-list label > span,
+        .roadsafe-route-inspector__point-fields label > span {
+          display: block;
+          margin-bottom: .24rem;
+          color: #718097;
+          font-size: .46rem;
+          font-weight: 700;
+        }
+
+        .roadsafe-route-inspector :is(input:not([type="range"]), select, textarea) {
+          width: 100%;
+          border: 1px solid #1c3152 !important;
+          border-radius: .28rem !important;
+          background: #061020 !important;
+          padding: .36rem .44rem !important;
+          color: #dce7f7 !important;
+          font-size: .52rem !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-inspector :is(input, select, textarea):focus {
+          border-color: #3d6da9 !important;
+          outline: none !important;
+          box-shadow: 0 0 0 2px rgba(61, 109, 169, .15) !important;
+        }
+
+        .roadsafe-route-inspector__direction-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .52rem;
+        }
+
+        .roadsafe-route-inspector__direction-grid button {
+          min-height: 30px;
+          border: 1px solid #1a2e4e;
+          border-radius: .3rem;
+          background: #071124;
+          color: #7588a4;
+          font-size: .47rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__direction-grid button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-inspector__notice {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: .5rem;
+          margin-top: .65rem;
+          border: 1px solid #192d4d;
+          border-radius: .32rem;
+          background: #071124;
+          padding: .48rem;
+          color: #7e90a9;
+          font-size: .48rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__notice button {
+          min-height: 27px;
+          flex: 0 0 auto;
+        }
+
+        .roadsafe-route-point-card {
+          margin-top: .45rem;
+          scroll-margin-block: 4.5rem;
+          border: 1px solid #142743 !important;
+          border-radius: .34rem !important;
+          background: #061020 !important;
+          padding: .52rem !important;
+          box-shadow: none !important;
+        }
+
+        .roadsafe-route-point-card.is-selected {
+          border-color: #315d96 !important;
+          background: #0a1830 !important;
+        }
+
+        .roadsafe-route-point-card.is-physics {
+          border-color: #263151 !important;
+          background: #090f20 !important;
+        }
+
+        .roadsafe-route-point-card__select {
+          border: 0 !important;
+          background: transparent !important;
+          padding: 0 !important;
+          color: inherit !important;
+          text-align: left;
+        }
+
+        .roadsafe-route-point-card__diamond {
+          display: grid;
+          width: 20px;
+          height: 20px;
+          flex: 0 0 20px;
+          place-items: center;
+          border: 1px solid #5f8fcd;
+          border-radius: 2px;
+          background: #102a53;
+          transform: rotate(45deg);
+          color: #f5f9ff;
+          font-size: .46rem;
+          font-weight: 900;
+        }
+
+        .roadsafe-route-point-card__diamond > span {
+          transform: rotate(-45deg);
+        }
+
+        .roadsafe-route-point-card__title {
+          display: block;
+          overflow: hidden;
+          color: #dce7f7;
+          font-size: .56rem;
+          font-weight: 800;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .roadsafe-route-point-card__subtitle {
+          display: block;
+          margin-top: .14rem;
+          color: #61728b;
+          font-size: .42rem;
+          font-weight: 800;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-action {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #1a2e4d;
+          border-radius: .24rem;
+          background: #071124;
+          padding: .2rem .32rem;
+          color: #8597b0;
+          font-size: .42rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-action.is-impact { border-color: #57313b; color: #d8909f; }
+        .roadsafe-route-action.is-brake { border-color: #51452b; color: #c7ae72; }
+        .roadsafe-route-action.is-turn { border-color: #24516b; color: #7eb9d2; }
+        .roadsafe-route-action.is-start { border-color: #245246; color: #87c9b7; }
+        .roadsafe-route-action.is-ricochet,
+        .roadsafe-route-action.is-slide { border-color: #40375d; color: #a9a2d8; }
+        .roadsafe-route-action.is-stop { color: #8793a5; }
+
+        .roadsafe-route-point-card__status {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #1a2e4d;
+          border-radius: .24rem;
+          background: #071124;
+          padding: .2rem .32rem;
+          color: #687b96;
+          font-size: .4rem;
+          font-weight: 800;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-point-card__actions {
+          display: flex;
+          align-items: center;
+          gap: .28rem;
+        }
+
+        .roadsafe-route-point-card__actions button {
+          min-height: 26px;
+          border: 1px solid #1a2e4e;
+          border-radius: .28rem;
+          background: #071124;
+          padding: .26rem .4rem;
+          color: #7588a4;
+          font-size: .43rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-point-card__actions button:hover {
+          border-color: #315d96;
+          background: #102d5c;
+          color: #d7e8ff;
+        }
+
+        .roadsafe-route-point-card__actions button.is-delete {
+          border-color: #50303a;
+          color: #c88d9a;
+        }
+
+        .roadsafe-route-point-card__details {
+          margin-top: .52rem;
+          border-top: 1px solid #142743;
+          padding-top: .52rem;
+        }
+
+        .roadsafe-route-inspector__gps-box {
+          border: 1px solid #192d4d;
+          border-radius: .32rem;
+          background: #071124;
+          padding: .48rem;
+        }
+
+        .roadsafe-route-inspector__gps-box strong {
+          display: block;
+          color: #b8c7dc;
+          font-size: .5rem;
+        }
+
+        .roadsafe-route-inspector__gps-box p {
+          margin-top: .2rem;
+          color: #61728b;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__gps-box button {
+          width: 100%;
+          margin-top: .4rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box {
+          border: 1px solid #263151;
+          border-radius: .32rem;
+          background: #090f20;
+          padding: .48rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box strong {
+          display: block;
+          color: #b7c4df;
+          font-size: .5rem;
+        }
+
+        .roadsafe-route-inspector__read-only-box p {
+          margin-top: .2rem;
+          color: #65748b;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__physics-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+          margin-top: .45rem;
+        }
+
+        .roadsafe-route-inspector__physics-grid > div {
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .42rem;
+        }
+
+        .roadsafe-route-inspector__physics-grid dt {
+          color: #61728b;
+          font-size: .42rem;
+          text-transform: uppercase;
+        }
+
+        .roadsafe-route-inspector__physics-grid dd {
+          margin-top: .18rem;
+          color: #d8e6f8;
+          font-size: .52rem;
+          font-weight: 800;
+        }
+
+        .roadsafe-route-inspector__physics-note {
+          margin-top: .45rem;
+          border: 1px solid #142743;
+          border-radius: .3rem;
+          background: #061020;
+          padding: .44rem;
+          color: #66758d;
+          font-size: .44rem;
+          line-height: 1.45;
+        }
+
+        .roadsafe-route-inspector__edit-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .34rem;
+        }
+
+        .roadsafe-route-inspector__edit-actions .ui-button {
+          min-height: 30px;
+          justify-content: flex-start;
+          padding: .36rem .46rem;
+          font-size: .47rem;
+        }
+
+        .roadsafe-route-inspector__point-fields {
+          display: grid;
+          gap: .42rem;
+          margin-top: .48rem;
+        }
+
+        .roadsafe-route-inspector__point-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: .36rem;
+        }
+
+        .roadsafe-route-inspector__point-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .36rem;
+        }
+
+        @media (max-width: 980px) {
+          .reconstruction-workspace__2d-grid >
+          .reconstruction-workspace__properties--2d {
+            position: relative !important;
+            top: auto !important;
+            height: min(64vh, 760px) !important;
+            max-height: min(64vh, 760px) !important;
+          }
+        }
+      `}</style>
 
       <section className="roadsafe-route-inspector__section">
         <div className="roadsafe-route-inspector__header-row">

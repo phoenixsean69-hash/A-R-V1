@@ -8,8 +8,8 @@ import "./styles/darkerTheme.css";
 import "./styles/dockableContextInspector.css";
 import "./styles/navigationRailFix.css";
 import "./styles/materialIcons.css";
-import "./styles/workstationPanelSystem.css";
-import "./styles/reconstruction2DWorkstation.css";
+import "./styles/reconstruction2dTheme.css";
+
 import App from "./App.tsx";
 import { migratePreciseSceneCollisionConfirmation } from "./utils/migratePreciseSceneCollisionConfirmation";
 import { installParticipantAnchorSynchronization } from "./utils/reconstructionParticipantAnchorSync";

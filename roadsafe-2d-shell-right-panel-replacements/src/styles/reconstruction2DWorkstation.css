@@ -1,0 +1,1161 @@
+/*
+ * RoadSafe 2D Reconstruction Workstation
+ *
+ * This file is loaded last. It owns the structure and appearance of the 2D
+ * reconstruction workspace and its shell-level context inspector.
+ */
+
+:root {
+  --rs-2d-inspector-width: clamp(340px, 23vw, 388px);
+  --rs-2d-bg: #1b1b1b;
+  --rs-2d-panel: #2b2b2b;
+  --rs-2d-panel-raised: #333333;
+  --rs-2d-panel-hover: #3a3a3a;
+  --rs-2d-input: #202020;
+  --rs-2d-border: #151515;
+  --rs-2d-border-soft: #494949;
+  --rs-2d-text: #dedede;
+  --rs-2d-muted: #929292;
+  --rs-2d-blue: #365d86;
+  --rs-2d-blue-hover: #436f9e;
+  --rs-2d-blue-soft: #2d4864;
+  --rs-2d-orange: #e8872d;
+  --rs-2d-danger: #a84d60;
+}
+
+/* ------------------------------------------------------------------------- */
+/* AppShell integration                                                       */
+/* ------------------------------------------------------------------------- */
+
+.roadsafe-workstation.is-workspace-context-route {
+  grid-template-columns:
+    var(--js-navigation-width)
+    minmax(0, 1fr)
+    0 !important;
+}
+
+.roadsafe-workstation.is-navigation-collapsed.is-workspace-context-route {
+  grid-template-columns:
+    var(--js-navigation-collapsed-width)
+    minmax(0, 1fr)
+    0 !important;
+}
+
+.roadsafe-workstation.is-workspace-context-route:has(
+    > .roadsafe-workspace-context-slot:not(:empty)
+  ) {
+  grid-template-columns:
+    var(--js-navigation-width)
+    minmax(0, 1fr)
+    var(--rs-2d-inspector-width) !important;
+}
+
+.roadsafe-workstation.is-navigation-collapsed.is-workspace-context-route:has(
+    > .roadsafe-workspace-context-slot:not(:empty)
+  ) {
+  grid-template-columns:
+    var(--js-navigation-collapsed-width)
+    minmax(0, 1fr)
+    var(--rs-2d-inspector-width) !important;
+}
+
+.roadsafe-workspace-context-slot {
+  grid-column: 3;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--rs-2d-panel);
+}
+
+.roadsafe-workspace-context-slot:empty {
+  width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.roadsafe-workspace-context-slot:not(:empty) {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-left: 1px solid var(--rs-2d-border);
+  box-shadow:
+    -1px 0 0 rgba(255, 255, 255, 0.025);
+}
+
+/* ------------------------------------------------------------------------- */
+/* 2D editor center workspace                                                 */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d {
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--rs-2d-bg) !important;
+  color: var(--rs-2d-text);
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__header {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border: 0 !important;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #353535 0%,
+      #292929 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.48) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__header
+  p:first-child {
+  color: var(--rs-2d-text) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__header
+  p:last-child {
+  color: var(--rs-2d-muted) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__body {
+  display: block !important;
+  min-width: 0;
+  padding: 14px;
+  background: var(--rs-2d-bg) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__2d-grid,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__2d-grid--scene-only {
+  display: block !important;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas {
+  min-width: 0;
+  overflow: hidden;
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-panel) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.025) inset !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child {
+  min-height: 80px;
+  padding: 12px 14px !important;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #333333,
+      #2a2a2a
+    ) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child
+  h2 {
+  color: var(--rs-2d-text) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.1em;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child
+  p {
+  color: var(--rs-2d-muted) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__2d-viewport {
+  min-height: clamp(460px, 57vh, 720px);
+  border: 0 !important;
+  background: #202020 !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Buttons and segmented controls                                             */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d
+  button,
+.reconstruction-workspace--2d
+  .ui-button,
+.reconstruction-workspace--2d
+  .ui-icon-button,
+.roadsafe-workspace-context-slot
+  button {
+  border-radius: 2px !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__button,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__icon-button,
+.reconstruction-workspace--2d
+  .ui-button,
+.reconstruction-workspace--2d
+  .ui-icon-button {
+  min-height: 30px;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #303030
+    ) !important;
+  color: var(--rs-2d-text) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__button:hover,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__icon-button:hover,
+.reconstruction-workspace--2d
+  .ui-button:hover,
+.reconstruction-workspace--2d
+  .ui-icon-button:hover {
+  border-color: var(--rs-2d-orange) !important;
+  color: #ffffff !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__button--primary,
+.reconstruction-workspace--2d
+  .ui-button-primary,
+.reconstruction-workspace--2d
+  button.is-active {
+  border-color: var(--rs-2d-blue) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__view-switch {
+  display: inline-flex;
+  gap: 1px;
+  padding: 2px;
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: #202020 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__view-switch
+  button {
+  min-height: 28px;
+  padding: 4px 12px;
+  border:
+    1px solid transparent !important;
+  background: transparent !important;
+  color: #b8b8b8 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__view-switch
+  button.is-active {
+  border-color: var(--rs-2d-blue) !important;
+  background: var(--rs-2d-blue) !important;
+  box-shadow:
+    inset 3px 0 0 var(--rs-2d-orange) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child
+  .flex.rounded-md {
+  gap: 1px;
+  padding: 2px !important;
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: #202020 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child
+  .flex.rounded-md
+  button {
+  min-height: 28px;
+  padding: 4px 10px !important;
+  border:
+    1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: #b4b4b4 !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__canvas
+  > div:first-child
+  .flex.rounded-md
+  button[class*="bg-[#173c78]"] {
+  border-color: var(--rs-2d-blue) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Scene tool rail and map controls                                           */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tools {
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background:
+    rgba(43, 43, 43, 0.98) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.28) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tools
+  button {
+  min-height: 44px;
+  border: 0 !important;
+  border-left:
+    3px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #ababab !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tools
+  button:hover {
+  background: var(--rs-2d-panel-hover) !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tools
+  button.is-active {
+  border-left-color:
+    var(--rs-2d-orange) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tool-hint {
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background:
+    rgba(43, 43, 43, 0.97) !important;
+  color: var(--rs-2d-text) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.24) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__tool-hint
+  span {
+  color: var(--rs-2d-muted) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__map-controls,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__map-expand-button {
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background:
+    rgba(43, 43, 43, 0.98) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.26) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__map-controls
+  button,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__map-expand-button {
+  border-color:
+    var(--rs-2d-border-soft) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #303030
+    ) !important;
+  color: var(--rs-2d-text) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Shell-level 2D Context Inspector                                           */
+/* ------------------------------------------------------------------------- */
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__shell-inspector {
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--rs-2d-panel) !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-scroll {
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color:
+    #5b5b5b #242424;
+  scrollbar-width: thin;
+  background: var(--rs-2d-panel) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar-track {
+  background: #242424;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #242424;
+  border-radius: 2px;
+  background: #5b5b5b;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__2d-inspector-sticky {
+  position: relative !important;
+  top: auto !important;
+  z-index: auto !important;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background: var(--rs-2d-panel) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 0 !important;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #353535,
+      #2b2b2b
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__panel-header
+  p {
+  margin: 0;
+  color: var(--rs-2d-text) !important;
+  font-size: 12px !important;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__panel-header
+  span {
+  color: var(--rs-2d-muted) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__inspector-count {
+  min-width: 38px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #303030
+    ) !important;
+  color: var(--rs-2d-text) !important;
+  font-weight: 800;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-roster,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-section {
+  padding: 14px;
+  border: 0 !important;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background: var(--rs-2d-panel) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-title {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: #c4c4c4 !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-title
+  svg,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__context-title
+  .roadsafe-material-icon {
+  color: #8eacc9 !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-add {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1fr)
+    76px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.roadsafe-workspace-context-slot
+  input:not([type="range"]),
+.roadsafe-workspace-context-slot
+  select,
+.roadsafe-workspace-context-slot
+  textarea {
+  width: 100%;
+  min-height: 36px;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-input) !important;
+  color: var(--rs-2d-text) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.42) !important;
+}
+
+.roadsafe-workspace-context-slot
+  input:focus,
+.roadsafe-workspace-context-slot
+  select:focus,
+.roadsafe-workspace-context-slot
+  textarea:focus {
+  border-color: var(--rs-2d-orange) !important;
+  outline: none !important;
+  box-shadow:
+    0 0 0 1px var(--rs-2d-orange) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-add
+  button {
+  min-height: 36px;
+  border:
+    1px solid var(--rs-2d-blue) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+  font-weight: 800;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-add
+  button:hover {
+  border-color: var(--rs-2d-orange) !important;
+  background: var(--rs-2d-blue-hover) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-list {
+  display: grid;
+  gap: 7px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-list
+  > button {
+  width: 100%;
+  min-height: 62px;
+  display: grid !important;
+  grid-template-columns:
+    9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px !important;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-left:
+    3px solid transparent !important;
+  background:
+    linear-gradient(
+      180deg,
+      #323232,
+      #292929
+    ) !important;
+  color: var(--rs-2d-text) !important;
+  text-align: left;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-list
+  > button:hover {
+  border-color: #5a5a5a !important;
+  background: var(--rs-2d-panel-hover) !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-list
+  > button.is-active {
+  border-color: var(--rs-2d-blue) !important;
+  border-left-color:
+    var(--rs-2d-orange) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-swatch {
+  width: 9px;
+  height: 36px;
+  border:
+    1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 2px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-copy
+  strong {
+  overflow: hidden;
+  color: inherit !important;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-copy
+  small {
+  color: #aeb8c2 !important;
+  font-size: 9px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__participant-points {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background: #202020 !important;
+  color: #d1d1d1 !important;
+  font-size: 9px !important;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list {
+  display: grid;
+  gap: 9px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list
+  > label,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list
+  > div {
+  display: grid !important;
+  grid-template-columns:
+    96px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list
+  > label
+  > span,
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list
+  > div
+  > span {
+  color: var(--rs-2d-muted) !important;
+  font-size: 9px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__property-list
+  strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rs-2d-text) !important;
+  font-size: 10px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__speed-control {
+  display: grid;
+  gap: 9px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__speed-control
+  > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--rs-2d-muted) !important;
+  font-size: 9px;
+}
+
+.roadsafe-workspace-context-slot
+  input[type="range"] {
+  width: 100%;
+  accent-color: var(--rs-2d-blue);
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__route-details {
+  padding: 0 !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__route-details
+  > summary {
+  min-height: 42px;
+  margin: 0 !important;
+  padding: 0 14px;
+  cursor: pointer;
+  border-bottom:
+    1px solid transparent;
+  background:
+    linear-gradient(
+      180deg,
+      #333333,
+      #292929
+    );
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__route-details[open]
+  > summary {
+  border-bottom-color:
+    var(--rs-2d-border);
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__route-details
+  > :not(summary) {
+  margin: 12px;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__delete-participant {
+  width: calc(100% - 28px);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 14px;
+  border:
+    1px solid #6e3542 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #3a252b,
+      #2d1c21
+    ) !important;
+  color: #e0a8b4 !important;
+  font-weight: 800;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__delete-participant:hover {
+  border-color: #a84d60 !important;
+  background: #42262e !important;
+  color: #fff !important;
+}
+
+.roadsafe-workspace-context-slot
+  .reconstruction-workspace__empty-properties {
+  padding: 16px;
+  border:
+    1px dashed var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background: #252525 !important;
+  color: var(--rs-2d-muted) !important;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Playback                                                                   */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d
+  .reconstruction-playback {
+  margin-top: 12px;
+  overflow: hidden;
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-panel) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__scrubber {
+  padding: 9px 12px;
+  border-bottom:
+    1px solid var(--rs-2d-border) !important;
+  background: #252525 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__controls {
+  min-height: 54px;
+  padding: 8px 12px;
+  background:
+    linear-gradient(
+      180deg,
+      #333333,
+      #292929
+    ) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__transport
+  button,
+.reconstruction-workspace--2d
+  .reconstruction-playback__play {
+  min-width: 34px;
+  min-height: 34px;
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #303030
+    ) !important;
+  color: var(--rs-2d-text) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__play {
+  min-width: 118px;
+  border-color: var(--rs-2d-blue) !important;
+  background: var(--rs-2d-blue) !important;
+  color: #fff !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__clock {
+  color: var(--rs-2d-text) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-playback__summary {
+  color: var(--rs-2d-muted) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Timeline                                                                   */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__timeline-wrap,
+.reconstruction-workspace--2d
+  .reconstruction-timeline {
+  margin-top: 12px;
+  overflow: hidden;
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-panel) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-timeline__header,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__actions,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__inspector {
+  border-color:
+    var(--rs-2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #333333,
+      #292929
+    ) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-timeline__surface,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__labels,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__viewport,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__track {
+  border-color:
+    var(--rs-2d-border) !important;
+  background: #202020 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-timeline__track:hover {
+  background: #282828 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-timeline__add,
+.reconstruction-workspace--2d
+  .reconstruction-timeline__zoom
+  button {
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #414141,
+      #303030
+    ) !important;
+  color: var(--rs-2d-text) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Lower workspace panels                                                     */
+/* ------------------------------------------------------------------------- */
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-panels,
+.reconstruction-workspace--2d
+  .premium-investigation-card,
+.reconstruction-workspace--2d
+  .premium-audit-metric,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-card {
+  border:
+    1px solid var(--rs-2d-border) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-panel) !important;
+  box-shadow: none !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-panels-heading,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-card-header,
+.reconstruction-workspace--2d
+  .premium-investigation-card__header {
+  border-color:
+    var(--rs-2d-border) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #333333,
+      #292929
+    ) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-card-icon,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-panels-icon {
+  border:
+    1px solid var(--rs-2d-blue) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-blue-soft) !important;
+  color: #b8d0e8 !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  input,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  select,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  textarea {
+  border:
+    1px solid var(--rs-2d-border-soft) !important;
+  border-radius: 2px !important;
+  background: var(--rs-2d-input) !important;
+  color: var(--rs-2d-text) !important;
+}
+
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  input:focus,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  select:focus,
+.reconstruction-workspace--2d
+  .reconstruction-workspace__workspace-field
+  textarea:focus {
+  border-color: var(--rs-2d-orange) !important;
+  outline: none !important;
+}
+
+/* Remove the old navy utility surfaces only inside the active 2D editor. */
+.reconstruction-workspace--2d
+  [class*="bg-[#03"],
+.reconstruction-workspace--2d
+  [class*="bg-[#04"],
+.reconstruction-workspace--2d
+  [class*="bg-[#05"],
+.reconstruction-workspace--2d
+  [class*="bg-[#06"],
+.reconstruction-workspace--2d
+  [class*="bg-[#07"],
+.reconstruction-workspace--2d
+  [class*="bg-[#08"],
+.reconstruction-workspace--2d
+  [class*="bg-[#09"],
+.reconstruction-workspace--2d
+  [class*="bg-[#0a"],
+.reconstruction-workspace--2d
+  [class*="bg-[#0b"],
+.reconstruction-workspace--2d
+  [class*="bg-[#0c"] {
+  background-color:
+    var(--rs-2d-panel) !important;
+}
+
+.reconstruction-workspace--2d
+  [class*="border-[#1"],
+.reconstruction-workspace--2d
+  [class*="border-[#2"],
+.reconstruction-workspace--2d
+  [class*="border-[#3"] {
+  border-color:
+    var(--rs-2d-border-soft) !important;
+}
+
+.reconstruction-workspace--2d
+  [class*="text-[#7"],
+.reconstruction-workspace--2d
+  [class*="text-[#8"] {
+  color: #8eacc9 !important;
+}
+
+@media (max-width: 1120px) {
+  .roadsafe-workstation.is-workspace-context-route:has(
+      > .roadsafe-workspace-context-slot:not(:empty)
+    ),
+  .roadsafe-workstation.is-navigation-collapsed.is-workspace-context-route:has(
+      > .roadsafe-workspace-context-slot:not(:empty)
+    ) {
+    grid-template-columns:
+      var(--js-navigation-collapsed-width)
+      minmax(0, 1fr)
+      0 !important;
+  }
+
+  .roadsafe-workspace-context-slot:not(:empty) {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+    width: min(
+      388px,
+      calc(100vw - 16px)
+    );
+    height: calc(100vh - 16px);
+    border:
+      1px solid var(--rs-2d-border-soft);
+    border-radius: 2px;
+    box-shadow:
+      0 18px 44px rgba(0, 0, 0, 0.42);
+  }
+}

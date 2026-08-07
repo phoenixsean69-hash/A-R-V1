@@ -38,9 +38,6 @@ import {
   roleLabel,
 } from "../../types/auth";
 import WorkspaceInspector from "./WorkspaceInspector";
-import {
-  WorkspaceRightPanelProvider,
-} from "./WorkspaceRightPanelContext";
 
 interface AppNavigationItem {
   to: string;
@@ -270,10 +267,6 @@ export default function AppShell() {
         true,
       ),
     );
-  const [
-    workspaceRightPanelHost,
-    setWorkspaceRightPanelHost,
-  ] = useState<HTMLElement | null>(null);
   const [now, setNow] = useState(
     () => new Date(),
   );
@@ -434,14 +427,7 @@ export default function AppShell() {
     location.pathname === "/reconstruction" ||
     location.pathname.includes("/reconstruction");
 
-  const usesReconstructionContextPanel =
-    isReconstructionWorkspace &&
-    !location.pathname.endsWith(
-      "/reconstruction/ar",
-    );
-
-  const inspectorAvailable =
-    !usesReconstructionContextPanel;
+  const inspectorAvailable = true;
 
   const shellClassName = [
     "roadsafe-workstation",
@@ -451,14 +437,10 @@ export default function AppShell() {
     inspectorOpen && inspectorAvailable
       ? "is-inspector-open"
       : "",
-    inspectorOpen &&
-    inspectorAvailable &&
-    inspectorDocked
+    inspectorOpen && inspectorDocked
       ? "is-inspector-docked"
       : "",
-    inspectorOpen &&
-    inspectorAvailable &&
-    !inspectorDocked
+    inspectorOpen && !inspectorDocked
       ? "is-inspector-floating"
       : "",
     mobileOpen
@@ -466,9 +448,6 @@ export default function AppShell() {
       : "",
     isReconstructionWorkspace
       ? "is-editor-route"
-      : "",
-    usesReconstructionContextPanel
-      ? "is-workspace-context-route"
       : "",
   ]
     .filter(Boolean)
@@ -811,17 +790,12 @@ export default function AppShell() {
                 : ""
             }`}
           >
-            <WorkspaceRightPanelProvider
-              host={workspaceRightPanelHost}
-            >
-              <Outlet />
-            </WorkspaceRightPanelProvider>
+            <Outlet />
           </div>
         </main>
       </div>
 
       {isReconstructionWorkspace &&
-        inspectorAvailable &&
         !inspectorOpen && (
           <button
             type="button"
@@ -834,29 +808,20 @@ export default function AppShell() {
           </button>
         )}
 
-      {usesReconstructionContextPanel ? (
-        <aside
-          ref={setWorkspaceRightPanelHost}
-          className="roadsafe-workspace-context-slot"
-          aria-label="Reconstruction context inspector"
+      {inspectorAvailable && inspectorOpen && (
+        <WorkspaceInspector
+          activeCase={activeCase}
+          activeReconstruction={
+            activeReconstruction
+          }
+          activeCases={summary.activeCases}
+          stationName={
+            identity?.stationTeam?.name ?? ""
+          }
+          docked={inspectorDocked}
+          onToggleDock={toggleInspectorDock}
+          onClose={closeInspector}
         />
-      ) : (
-        inspectorAvailable &&
-        inspectorOpen && (
-          <WorkspaceInspector
-            activeCase={activeCase}
-            activeReconstruction={
-              activeReconstruction
-            }
-            activeCases={summary.activeCases}
-            stationName={
-              identity?.stationTeam?.name ?? ""
-            }
-            docked={inspectorDocked}
-            onToggleDock={toggleInspectorDock}
-            onClose={closeInspector}
-          />
-        )
       )}
 
       <button
