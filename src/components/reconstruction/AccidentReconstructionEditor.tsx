@@ -897,6 +897,8 @@ export default function AccidentReconstructionEditor({
   const [activeWorkspaceTool, setActiveWorkspaceTool] =
     useState<WorkspaceTool>("Select");
   const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
+  const [workspaceInvestigationTab, setWorkspaceInvestigationTab] =
+    useState("case");
   const [workspacePropertiesOpen, setWorkspacePropertiesOpen] = useState(true);
   const [cameraCycleToken, setCameraCycleToken] = useState(0);
   const [workspaceCameraMode, setWorkspaceCameraMode] =
@@ -3091,6 +3093,138 @@ export default function AccidentReconstructionEditor({
     return () => window.removeEventListener("keydown", handleHistoryKeyDown);
   }, [handleRedo, handleUndo]);
 
+  const handleWorkspaceInvestigationTab = (
+    tab: string,
+    heading: string,
+  ) => {
+    setWorkspaceInvestigationTab(tab);
+
+    requestAnimationFrame(() => {
+      const container =
+        document.querySelector<HTMLElement>(
+          ".reconstruction-workspace__aux-inspector-content",
+        );
+
+      if (!container) return;
+
+      const candidates =
+        Array.from(
+          container.querySelectorAll<HTMLElement>(
+            "h1, h2, h3, h4, strong, .premium-investigation-card__title, .reconstruction-workspace__workspace-card-title",
+          ),
+        );
+
+      const normalizedHeading =
+        heading
+          .trim()
+          .toLowerCase();
+
+      const headingElement =
+        candidates.find((element) =>
+          element.textContent
+            ?.trim()
+            .toLowerCase()
+            .includes(
+              normalizedHeading,
+            ),
+        );
+
+      const target =
+        headingElement?.closest<HTMLElement>(
+          ".premium-investigation-card, .reconstruction-workspace__workspace-card, section, article",
+        ) ??
+        headingElement;
+
+      target?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (!workspaceSettingsOpen) return;
+
+    const applySpeedLimitWidth = () => {
+      const inspector = document.querySelector<HTMLElement>(
+        ".reconstruction-workspace__aux-inspector",
+      );
+
+      if (!inspector) return;
+
+      const labelCandidates = Array.from(
+        inspector.querySelectorAll<HTMLElement>(
+          "label, span, div, p, strong",
+        ),
+      );
+
+      const label = labelCandidates.find((element) =>
+        element.textContent?.trim().toLowerCase() === "speed limit",
+      );
+
+      if (!label) return;
+
+      let row = label.closest<HTMLElement>(
+        ".premium-investigation-card__field, .reconstruction-workspace__workspace-field, .grid, .flex, [class*='field'], [class*='row']",
+      );
+
+      if (!row) {
+        let current = label.parentElement;
+
+        while (current && current !== inspector) {
+          if (current.querySelector("input, select, textarea")) {
+            row = current;
+            break;
+          }
+
+          current = current.parentElement;
+        }
+      }
+
+      if (!row) return;
+
+      row.dataset.roadsafeSpeedLimitWidthApplied = "true";
+
+      const control =
+        row.querySelector<HTMLElement>(
+          "input[type='number'], input[inputmode='numeric'], input[inputmode='decimal'], input",
+        ) ?? null;
+
+      if (!control) return;
+
+      control.dataset.roadsafeSpeedLimitInput = "true";
+
+      const controlWrapper = control.parentElement as HTMLElement | null;
+
+      if (controlWrapper) {
+        controlWrapper.dataset.roadsafeSpeedLimitControl = "true";
+      }
+
+      const siblings = Array.from(row.children) as HTMLElement[];
+
+      siblings.forEach((child) => {
+        if (child === control || child.contains(control)) return;
+
+        const text = child.textContent?.trim().toLowerCase() ?? "";
+
+        if (text === "km/h" || text === "kmh") {
+          child.dataset.roadsafeSpeedLimitUnit = "true";
+        }
+      });
+    };
+
+    applySpeedLimitWidth();
+
+    const timer = window.setTimeout(
+      applySpeedLimitWidth,
+      120,
+    );
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [workspaceSettingsOpen, workspaceInvestigationTab, activeReconstructionView]);
+
   const handleDurationChange = (durationSeconds: number) => {
     setReconstruction((current) => ({
       ...current,
@@ -3597,12 +3731,33 @@ export default function AccidentReconstructionEditor({
                           ? "is-active"
                           : ""
                       }
-                      onClick={() => setWorkspacePropertiesTab(tab)}
+                      onClick={() => {
+                        setWorkspaceSettingsOpen(false);
+                        setWorkspacePropertiesTab(tab);
+                      }}
                     >
                       <Icon size={15} />
                     </button>
                   ))}
-                </nav>
+                
+                  <button
+                    type="button"
+                    data-workspace-inspector-tab="true"
+                    title="Workspace & Investigation"
+                    aria-label="Workspace & Investigation"
+                    aria-pressed={workspaceSettingsOpen}
+                    className={
+                      workspaceSettingsOpen
+                        ? "is-active"
+                        : ""
+                    }
+                    onClick={() =>
+                      setWorkspaceSettingsOpen(true)
+                    }
+                  >
+                    <Layers3 size={15} />
+                  </button>
+</nav>
 
                 <div className="reconstruction-workspace__blender-properties-editor">
                   <header className="reconstruction-workspace__blender-properties-header">
@@ -4498,12 +4653,33 @@ export default function AccidentReconstructionEditor({
                           ? "is-active"
                           : ""
                       }
-                      onClick={() => setWorkspace2DPropertiesTab(tab)}
+                      onClick={() => {
+                        setWorkspaceSettingsOpen(false);
+                        setWorkspace2DPropertiesTab(tab);
+                      }}
                     >
                       <Icon size={15} />
                     </button>
                   ))}
-                </nav>
+                
+                  <button
+                    type="button"
+                    data-workspace-inspector-tab="true"
+                    title="Workspace & Investigation"
+                    aria-label="Workspace & Investigation"
+                    aria-pressed={workspaceSettingsOpen}
+                    className={
+                      workspaceSettingsOpen
+                        ? "is-active"
+                        : ""
+                    }
+                    onClick={() =>
+                      setWorkspaceSettingsOpen(true)
+                    }
+                  >
+                    <Layers3 size={15} />
+                  </button>
+</nav>
 
                 <div className="reconstruction-workspace__blender-properties-editor">
                   <header className="reconstruction-workspace__blender-properties-header">
@@ -5179,7 +5355,7 @@ export default function AccidentReconstructionEditor({
               <header className="reconstruction-workspace__aux-inspector-header">
                 <div>
                   <span>Properties</span>
-                  <strong>Workspace & Investigation</strong>
+                  <strong>Workspace, Evidence & Investigation</strong>
                 </div>
 
                 <button
@@ -5193,6 +5369,46 @@ export default function AccidentReconstructionEditor({
                   <X size={14} />
                 </button>
               </header>
+
+              <nav
+                className="reconstruction-workspace__aux-horizontal-tabs"
+                aria-label="Workspace and investigation sections"
+              >
+                {(
+                  [
+                    ["case", "Case", "Case Setup"],
+                    ["scene", "Scene", "Scene Environment"],
+                    ["objects", "Objects", "Objects"],
+                    ["impact", "Impact", "Primary Impact"],
+                    ["physics", "Physics", "Deterministic Simulation"],
+                    ["audit", "Audit", "Non-Destructive Audit"],
+                    ["hypotheses", "Hypotheses", "Alternative Hypotheses"],
+                    ["evidence", "Evidence", "Evidence"],
+                    ["notes", "Notes", "Photos"],
+                  ] as const
+                ).map(([tab, label, heading]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={
+                      workspaceInvestigationTab === tab
+                        ? "is-active"
+                        : ""
+                    }
+                    aria-pressed={
+                      workspaceInvestigationTab === tab
+                    }
+                    onClick={() =>
+                      handleWorkspaceInvestigationTab(
+                        tab,
+                        heading,
+                      )
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </nav>
 
               <div className="reconstruction-workspace__aux-inspector-tools">
                 <div
