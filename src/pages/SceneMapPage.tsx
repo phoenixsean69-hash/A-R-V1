@@ -14,7 +14,7 @@ import {
   Skull,
   SlidersHorizontal,
   Users,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import AccidentMap, {
   type VisualizationMode,

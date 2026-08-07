@@ -1,0 +1,154 @@
+RoadSafe Google Material Icon Migration
+Generated: 2026-08-06T23:50:33.672Z
+
+Migrated source files: 36
+Material icon exports: 171
+Type exports: 31
+
+Unmapped Lucide names using the valid Google fallback icon 'widgets':
+ArcElement
+BarElement
+CalendarDays
+CarFront
+CategoryScale
+Chart
+Clock3
+CloudSun
+Component
+Doughnut
+Expand
+FileClock
+FileJson
+Filler
+Film
+Focus
+KeyRound
+Layers3
+Legend
+Line
+LineElement
+LinearScale
+Link } from "react-router-dom";
+import {
+  Boxes
+LoaderCircle
+LockKeyhole
+MicOff
+NavLink
+Outlet
+Pentagon
+PointElement
+PolarArea
+Radar } from "react-chartjs-2";
+import { Activity
+RadialLinearScale
+Satellite
+ScanEye
+ShieldX
+SkipBack
+SkipForward
+Skull
+Suspense
+Tooltip
+forwardRef
+getReconstructionWorldDimensions } from "../../utils/reconstructionWorldScale";
+import {
+  useCallback
+lazy
+useCallback
+useEffect
+useImperativeHandle
+useLocation
+useMemo
+useNavigate
+useNavigate } from "react-router-dom";
+import {
+  AlertTriangle
+useNavigate } from "react-router-dom";
+import {
+  ArrowRight
+useParams
+useRef
+useState
+useState } from "react";
+import {
+  Activity
+useState } from "react";
+import {
+  Crosshair
+useState } from "react";
+import { Link
+useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Activity
+useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  CalendarClock
+useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Camera
+useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Download
+} from "chart.js";
+import { Bar
+} from "react";
+import {
+  Link
+} from "react";
+
+import type {
+  PointerEvent
+} from "react";
+
+import {
+  Activity
+} from "react";
+
+import {
+  Crosshair
+} from "react";
+
+import { Link } from "react-router-dom";
+import {
+  Activity
+} from "react";
+import {
+  AlertCircle
+} from "react";
+import {
+  AlertTriangle
+} from "react";
+import {
+  Ban
+} from "react";
+import {
+  Eye
+} from "react";
+import {
+  Link
+} from "react";
+import {
+  createPortal
+} from "react";
+import { createPortal } from "react-dom";
+
+import {
+  Activity
+} from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Check
+} from "react-dom";
+import {
+  Link
+} from "react-router-dom";
+import {
+  AppWindow
+} from "react-router-dom";
+import {
+  AlertTriangle

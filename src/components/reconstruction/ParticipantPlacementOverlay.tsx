@@ -1,4 +1,4 @@
-import { Crosshair, MapPin, Satellite, X } from "lucide-react";
+import { Crosshair, MapPin, Satellite, X } from "../icons/materialIcons";
 import type { ReconstructionVehicleType } from "../../types/reconstruction";
 
 interface ParticipantPlacementOverlayProps {

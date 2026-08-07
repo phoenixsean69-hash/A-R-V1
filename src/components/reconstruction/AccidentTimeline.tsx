@@ -20,7 +20,7 @@ import {
   TriangleAlert,
   ZoomIn,
   ZoomOut,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import type {
   AccidentTimelineEvent,

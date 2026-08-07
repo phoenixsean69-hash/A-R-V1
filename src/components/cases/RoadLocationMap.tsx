@@ -12,7 +12,7 @@ import {
   MapPin,
   Search,
   X,
-} from "lucide-react";
+} from "../icons/materialIcons";
 import maplibregl from "maplibre-gl";
 import type {
   StyleSpecification,

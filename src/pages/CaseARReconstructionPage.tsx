@@ -9,7 +9,7 @@ import {
 import {
   AlertTriangle,
   ArrowLeft,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import ARReconstructionViewer from "../components/reconstruction/ar/ARReconstructionViewer";
 import { AccidentCaseService } from "../services/accidentCaseService";

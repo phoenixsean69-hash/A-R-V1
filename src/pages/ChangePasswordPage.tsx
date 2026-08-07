@@ -7,7 +7,7 @@ import {
   EyeOff,
   KeyRound,
   ShieldCheck,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import {
   Navigate,
   useNavigate,

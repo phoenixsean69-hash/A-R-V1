@@ -16,6 +16,8 @@ import {
   Boxes,
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   FileText,
   FolderKanban,
@@ -27,7 +29,7 @@ import {
   ShieldCheck,
   Video,
   X,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import { useAuth } from "../../context/AuthContext";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
@@ -35,52 +37,52 @@ import {
   isStationRole,
   roleLabel,
 } from "../../types/auth";
-import { usesGeneratedRoad } from "../../types/reconstruction";
+import WorkspaceInspector from "./WorkspaceInspector";
 
-/*
- * [RoadSafe:TypedShellNavigationV1]
- *
- * Both station and field navigation use one explicit item shape. Only root
- * destinations need React Router's optional exact-match flag.
- */
 interface AppNavigationItem {
   to: string;
   label: string;
+  section: "Workspace" | "Investigation" | "Outputs" | "Administration";
   icon: typeof Building2;
   end?: boolean;
 }
 
-const sharedNavItems:
-  AppNavigationItem[] = [
+const sharedNavItems: AppNavigationItem[] = [
   {
     to: "/cases",
     label: "Cases",
+    section: "Workspace",
     icon: FolderKanban,
-  },
-  {
-    to: "/reconstruction",
-    label: "Reconstructions",
-    icon: Boxes,
   },
   {
     to: "/scene-map",
     label: "Scene Map",
+    section: "Workspace",
     icon: Map,
   },
   {
     to: "/evidence",
     label: "Evidence",
+    section: "Investigation",
     icon: ClipboardList,
   },
   {
-    to: "/reports",
-    label: "Reports",
-    icon: FileText,
+    to: "/reconstruction",
+    label: "Reconstruction",
+    section: "Investigation",
+    icon: Boxes,
   },
   {
     to: "/footage",
     label: "Footage",
+    section: "Investigation",
     icon: Video,
+  },
+  {
+    to: "/reports",
+    label: "Reports",
+    section: "Outputs",
+    icon: FileText,
   },
 ];
 
@@ -89,92 +91,119 @@ function pageMeta(
 ): [string, string] {
   if (pathname === "/field") {
     return [
-      "Field Client",
-      "Accident-scene capture and reconstruction operations",
+      "Field Operations",
+      "Capture, verify and prepare accident-scene information",
     ];
   }
+
   if (pathname === "/station") {
     return [
-      "Station Client",
-      "Live oversight and collaborative investigation review",
+      "Station Overview",
+      "Monitor investigations, workload and road-safety activity",
     ];
   }
+
   if (pathname.startsWith("/cases/new")) {
     return [
-      "New accident case",
-      "Create and prepare a new investigation record",
+      "New Accident Case",
+      "Create the investigation record and define its scene context",
     ];
   }
+
+  if (pathname.endsWith("/reconstruction/ar")) {
+    return [
+      "AR Reconstruction Review",
+      "Align and inspect the reconstruction against the real scene",
+    ];
+  }
+
   if (pathname.includes("/reconstruction")) {
     return [
-      "Accident reconstruction",
-      "Build, simulate and review the collision sequence",
+      "Accident Reconstruction",
+      "Build, simulate and validate the collision sequence",
     ];
   }
+
   if (pathname.includes("/report")) {
     return [
-      "Investigation report",
-      "Review and export documented findings",
+      "Investigation Report",
+      "Review findings, assumptions and supporting evidence",
     ];
   }
+
   if (pathname.includes("/footage")) {
     return [
-      "Reconstruction footage",
-      "Review captured reconstruction playback",
+      "Reconstruction Footage",
+      "Review captured reconstruction playback and exports",
     ];
   }
+
   if (pathname.startsWith("/cases/")) {
     return [
-      "Case workspace",
-      "Investigation details, evidence and progress",
+      "Case Workspace",
+      "Investigation details, evidence, reconstruction and review status",
     ];
   }
+
   if (pathname === "/cases") {
     return [
-      "Cases",
-      "Manage active and completed investigations",
+      "Investigation Cases",
+      "Manage active, reviewed and archived accident investigations",
     ];
   }
+
   if (pathname === "/scene-map") {
     return [
-      "Scene map",
-      "Review accident locations and blackspot intelligence",
+      "Scene and Risk Map",
+      "Review investigation locations and road-safety intelligence",
     ];
   }
+
   if (pathname === "/evidence") {
     return [
-      "Evidence",
-      "Review scene records and documented items",
+      "Evidence Register",
+      "Inspect scene records, media and linked observations",
     ];
   }
+
   if (pathname === "/reports") {
     return [
       "Reports",
-      "Access generated investigation reports",
+      "Open generated investigation packages and formal outputs",
     ];
   }
+
   if (pathname === "/footage") {
     return [
-      "Footage",
+      "Footage Library",
       "Access saved reconstruction recordings",
     ];
   }
+
   if (pathname === "/analytics") {
     return [
-      "Analytics",
-      "Operational and road-safety trends",
+      "Road-Safety Analytics",
+      "Review operational trends and recurring accident patterns",
     ];
   }
+
+  if (pathname === "/officers") {
+    return [
+      "Officer Management",
+      "Manage station access, roles and investigator accounts",
+    ];
+  }
+
   if (pathname === "/settings") {
     return [
-      "Settings",
-      "Configure the reconstruction workspace",
+      "System Settings",
+      "Configure station and reconstruction workspace preferences",
     ];
   }
 
   return [
     "RoadSafe AR",
-    "Connected accident investigation",
+    "Professional accident investigation and reconstruction workspace",
   ];
 }
 
@@ -192,6 +221,23 @@ function formatDate(value: string): string {
   }).format(date);
 }
 
+function readStoredBoolean(
+  key: string,
+  fallback: boolean,
+): boolean {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const value = window.localStorage.getItem(key);
+    if (value === null) return fallback;
+    return value === "true";
+  } catch {
+    return fallback;
+  }
+}
+
 export default function AppShell() {
   const auth = useAuth();
   const location = useLocation();
@@ -200,6 +246,27 @@ export default function AppShell() {
     useState(false);
   const [profileOpen, setProfileOpen] =
     useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] =
+    useState(() =>
+      readStoredBoolean(
+        "roadsafe:navigation-collapsed",
+        false,
+      ),
+    );
+  const [inspectorOpen, setInspectorOpen] =
+    useState(() =>
+      readStoredBoolean(
+        "roadsafe:inspector-open",
+        true,
+      ),
+    );
+  const [inspectorDocked, setInspectorDocked] =
+    useState(() =>
+      readStoredBoolean(
+        "roadsafe:inspector-docked",
+        true,
+      ),
+    );
   const [now, setNow] = useState(
     () => new Date(),
   );
@@ -219,50 +286,118 @@ export default function AppShell() {
       window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "roadsafe:navigation-collapsed",
+        String(desktopCollapsed),
+      );
+    } catch {
+      // UI preference persistence is non-critical.
+    }
+  }, [desktopCollapsed]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "roadsafe:inspector-open",
+        String(inspectorOpen),
+      );
+    } catch {
+      // UI preference persistence is non-critical.
+    }
+  }, [inspectorOpen]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "roadsafe:inspector-docked",
+        String(inspectorDocked),
+      );
+    } catch {
+      // UI preference persistence is non-critical.
+    }
+  }, [inspectorDocked]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }, [location.pathname]);
+
   const identity = auth.identity;
   const role = identity?.role ?? "unassigned";
   const stationClient = isStationRole(role);
+  const stationAdmin = role === "station_admin";
   const homePath = stationClient
     ? "/station"
     : "/field";
 
-  const navItems =
-    useMemo<AppNavigationItem[]>(
+  const navItems = useMemo<AppNavigationItem[]>(
+    () => {
+      const items: AppNavigationItem[] = [
+        {
+          to: homePath,
+          label: stationClient
+            ? "Station Overview"
+            : "Field Home",
+          section: "Workspace",
+          icon: stationClient
+            ? Building2
+            : RadioTower,
+          end: true,
+        },
+        ...sharedNavItems,
+      ];
+
+      if (stationClient) {
+        items.push({
+          to: "/analytics",
+          label: "Analytics",
+          section: "Outputs",
+          icon: BarChart3,
+        });
+      }
+
+      if (stationAdmin) {
+        items.push({
+          to: "/officers",
+          label: "Officers",
+          section: "Administration",
+          icon: Building2,
+        });
+      }
+
+      if (stationClient) {
+        items.push({
+          to: "/settings",
+          label: "Settings",
+          section: "Administration",
+          icon: Settings,
+        });
+      }
+
+      return items;
+    }, [homePath, stationAdmin, stationClient]);
+
+  const navGroups = useMemo(
     () =>
-      stationClient
-        ? [
-            {
-              to: "/station",
-              label: "Station Overview",
-              icon: Building2,
-              end: true,
-            },
-            ...sharedNavItems,
-            {
-              to: "/analytics",
-              label: "Analytics",
-              icon: BarChart3,
-            },
-            {
-              to: "/settings",
-              label: "Settings",
-              icon: Settings,
-            },
-          ]
-        : [
-            {
-              to: "/field",
-              label: "Field Home",
-              icon: RadioTower,
-              end: true,
-            },
-            ...sharedNavItems,
-          ],
-    [stationClient],
+      [
+        "Workspace",
+        "Investigation",
+        "Outputs",
+        "Administration",
+      ]
+        .map((section) => ({
+          section,
+          items: navItems.filter(
+            (item) => item.section === section,
+          ),
+        }))
+        .filter((group) => group.items.length > 0),
+    [navItems],
   );
 
-  const summary =
-    WorkspaceDataService.getSummary();
+  const summary = WorkspaceDataService.getSummary();
   const activeCase = summary.latestCase;
   const activeReconstruction = activeCase
     ? WorkspaceDataService.getReconstructions().find(
@@ -281,10 +416,7 @@ export default function AppShell() {
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)
-      .map(
-        (part) =>
-          part[0]?.toUpperCase(),
-      )
+      .map((part) => part[0]?.toUpperCase())
       .join("") || "RS";
 
   const isDashboard =
@@ -292,401 +424,413 @@ export default function AppShell() {
     location.pathname === "/station";
 
   const isReconstructionWorkspace =
-    location.pathname ===
-      "/reconstruction" ||
-    location.pathname.endsWith(
-      "/reconstruction",
-    );
+    location.pathname === "/reconstruction" ||
+    location.pathname.includes("/reconstruction");
 
-  const quickInfo = [
-    [
-      "Case ID",
-      activeCase?.caseNumber ??
-        "No active case",
-    ],
-    [
-      "Date",
-      activeCase
-        ? formatDate(
-            activeCase.accidentDate,
-          )
-        : "—",
-    ],
-    [
-      "Time",
-      activeCase?.accidentTime || "—",
-    ],
-    [
-      "Location",
-      activeCase?.location ||
-        "No location recorded",
-    ],
-    [
-      "Investigator",
-      activeCase?.investigatingOfficer ||
-        "Not assigned",
-    ],
-    [
-      "Station",
-      activeCase?.policeStation ||
-        identity?.stationTeam?.name ||
-        "Not assigned",
-    ],
-    [
-      "Weather",
-      activeReconstruction?.scene
-        .weather || "Not configured",
-    ],
-    [
-      activeReconstruction &&
-      usesGeneratedRoad(
-        activeReconstruction.scene,
-      )
-        ? "Road"
-        : "Ground",
-      activeReconstruction
-        ? usesGeneratedRoad(
-            activeReconstruction.scene,
-          )
-          ? activeReconstruction.scene
-              .roadSurface
-          : activeReconstruction.scene
-              .groundSurface
-        : "Not configured",
-    ],
-  ];
+  const inspectorAvailable = true;
+
+  const shellClassName = [
+    "roadsafe-workstation",
+    desktopCollapsed
+      ? "is-navigation-collapsed"
+      : "",
+    inspectorOpen && inspectorAvailable
+      ? "is-inspector-open"
+      : "",
+    inspectorOpen && inspectorDocked
+      ? "is-inspector-docked"
+      : "",
+    inspectorOpen && !inspectorDocked
+      ? "is-inspector-floating"
+      : "",
+    mobileOpen
+      ? "is-mobile-navigation-open"
+      : "",
+    isReconstructionWorkspace
+      ? "is-editor-route"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  function toggleInspector(): void {
+    setInspectorOpen((value) => !value);
+  }
+
+  function closeInspector(): void {
+    setInspectorOpen(false);
+  }
+
+  function toggleInspectorDock(): void {
+    setInspectorOpen(true);
+    setInspectorDocked((value) => !value);
+  }
 
   return (
-    <div className="roadsafe-shell min-h-screen bg-[#030714] text-slate-200">
+    <div className={shellClassName}>
       <aside
-        className={`roadsafe-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[214px] flex-col overflow-y-auto overscroll-contain border-r border-[#182849] bg-[#040918] transition-transform duration-150 lg:translate-x-0 ${
-          mobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        }`}
+        className="roadsafe-navigation"
+        aria-label="Primary navigation"
       >
-        <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-[#182849] px-4">
+        <div className="roadsafe-navigation-brand">
           <Link
             to={homePath}
-            className="flex min-w-0 items-center gap-3"
+            className="roadsafe-brand-link"
           >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#3765a3] bg-[#08142c] text-[#7fb0ff]">
+            <span className="roadsafe-brand-mark">
               <ShieldCheck
-                size={23}
-                strokeWidth={1.65}
+                size={22}
+                strokeWidth={1.6}
               />
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[15px] font-black tracking-[0.12em] text-slate-100">
-                ROADSAFE AR
-              </p>
-              <p className="truncate text-[8px] uppercase tracking-[0.13em] text-slate-500">
+            </span>
+            <span className="roadsafe-brand-copy">
+              <strong>RoadSafe AR</strong>
+              <small>
                 {stationClient
                   ? "Station Client"
                   : "Field Client"}
-              </p>
-            </div>
+              </small>
+            </span>
           </Link>
 
           <button
-            className="ui-icon-button lg:hidden"
-            onClick={() =>
-              setMobileOpen(false)
-            }
+            type="button"
+            className="ui-icon-button roadsafe-navigation-mobile-close"
+            onClick={() => setMobileOpen(false)}
             aria-label="Close navigation"
           >
             <X size={17} />
           </button>
-        </div>
 
-        <div className="border-b border-[#182849] px-3 py-3">
-          <p className="truncate text-[9px] font-bold text-slate-300">
-            {identity?.stationTeam?.name ??
-              "No station assigned"}
-          </p>
-          <p className="mt-1 truncate text-[8px] uppercase tracking-[0.09em] text-[#6fa8ff]">
-            {roleLabel(role)}
-          </p>
-        </div>
-
-        <nav className="shrink-0 space-y-1 p-2.5">
-          {navItems.map(
-            ({
-              to,
-              label,
-              icon: Icon,
-              end,
-            }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                onClick={() =>
-                  setMobileOpen(false)
-                }
-                className={({
-                  isActive,
-                }) =>
-                  `flex items-center gap-3 rounded-md px-3 py-2.5 text-[11px] font-semibold transition-colors duration-100 ${
-                    isActive
-                      ? "bg-[#0d2448] text-[#8ebcff]"
-                      : "text-slate-400 hover:bg-[#081122] hover:text-slate-100"
-                  }`
-                }
-              >
-                <Icon
-                  size={15}
-                  strokeWidth={1.65}
+          <button
+            type="button"
+            className="ui-icon-button roadsafe-navigation-collapse"
+            onClick={() =>
+              setDesktopCollapsed(
+                (value) => !value,
+              )
+            }
+            aria-label={
+              desktopCollapsed
+                ? "Expand navigation"
+                : "Collapse navigation"
+            }
+          >
+            {desktopCollapsed ? (
+              <>
+                <ShieldCheck
+                  className="roadsafe-navigation-collapse-mark"
+                  size={16}
+                  strokeWidth={1.6}
                 />
-                <span>{label}</span>
-              </NavLink>
-            ),
-          )}
+                <ChevronRight
+                  size={12}
+                  strokeWidth={1.8}
+                />
+              </>
+            ) : (
+              <ChevronLeft size={16} />
+            )}
+          </button>
+        </div>
+
+        <div className="roadsafe-navigation-station">
+          <span className="roadsafe-station-symbol">
+            <Building2 size={15} />
+          </span>
+          <span className="roadsafe-station-copy">
+            <strong>
+              {identity?.stationTeam?.name ??
+                "No station assigned"}
+            </strong>
+            <small>{roleLabel(role)}</small>
+          </span>
+        </div>
+
+        <nav className="roadsafe-navigation-groups">
+          {navGroups.map((group) => (
+            <section
+              key={group.section}
+              className="roadsafe-navigation-group"
+            >
+              <p className="roadsafe-navigation-group-label">
+                {group.section}
+              </p>
+
+              <div className="roadsafe-navigation-links">
+                {group.items.map(
+                  ({
+                    to,
+                    label,
+                    icon: Icon,
+                    end,
+                  }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      end={end}
+                      title={
+                        desktopCollapsed
+                          ? label
+                          : undefined
+                      }
+                      className={({ isActive }) =>
+                        `roadsafe-navigation-link ${
+                          isActive
+                            ? "is-active"
+                            : ""
+                        }`
+                      }
+                    >
+                      <Icon
+                        size={16}
+                        strokeWidth={1.65}
+                      />
+                      <span className="roadsafe-navigation-link-label">
+                        {label}
+                      </span>
+                    </NavLink>
+                  ),
+                )}
+              </div>
+            </section>
+          ))}
         </nav>
 
-        <div className="shrink-0 px-2.5 pb-2">
-          <section className="rounded-md border border-[#182849] bg-[#070d1d]">
-            <div className="border-b border-[#182849] px-3 py-2.5">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                Case quick info
-              </p>
-            </div>
+        {activeCase && (
+          <Link
+            to={`/cases/${activeCase.id}`}
+            className="roadsafe-navigation-case"
+          >
+            <span className="roadsafe-eyebrow">
+              Active case
+            </span>
+            <strong>{activeCase.caseNumber}</strong>
+            <small>
+              {activeCase.location ||
+                "Location not recorded"}
+            </small>
+            <span className="roadsafe-navigation-case-status">
+              {activeCase.status}
+            </span>
+          </Link>
+        )}
 
-            <dl className="divide-y divide-[#111e36] px-3">
-              {quickInfo.map(
-                ([label, value]) => (
-                  <div
-                    key={label}
-                    className="py-2"
-                  >
-                    <dt className="text-[7px] font-semibold uppercase tracking-[0.11em] text-slate-600">
-                      {label}
-                    </dt>
-                    <dd className="mt-1 break-words text-[9px] leading-4 text-slate-300">
-                      {value}
-                    </dd>
-                  </div>
-                ),
-              )}
-            </dl>
-          </section>
-        </div>
-
-        <div className="mt-auto shrink-0 border-t border-[#182849] p-3">
-          <p className="text-[8px] font-bold uppercase tracking-[0.13em] text-slate-600">
-            System status
-          </p>
-          <div className="mt-2 flex items-center gap-2 text-[9px] font-semibold text-[#8ed6ca]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#55b9aa] shadow-[0_0_9px_rgba(85,185,170,0.65)]" />
-            Session active
-          </div>
+        <div className="roadsafe-navigation-footer">
+          <span className="roadsafe-system-indicator" />
+          <span className="roadsafe-navigation-footer-copy">
+            <strong>Session active</strong>
+            <small>Workspace operational</small>
+          </span>
         </div>
       </aside>
 
-      {mobileOpen && (
-        <button
-          aria-label="Close navigation"
-          className="fixed inset-0 z-40 bg-black/65 lg:hidden"
-          onClick={() =>
-            setMobileOpen(false)
-          }
-        />
-      )}
-
-      <div className="lg:pl-[214px]">
+      <div className="roadsafe-center">
         {!isReconstructionWorkspace && (
-          <header className="sticky top-0 z-30 border-b border-[#182849] bg-[#040918]/96 backdrop-blur">
-            <div className="flex min-h-[68px] items-center gap-3 px-3 sm:px-4 lg:px-5">
+          <header className="roadsafe-workspace-header">
+            <div className="roadsafe-workspace-header-left">
               <button
-                className="ui-icon-button lg:hidden"
-                onClick={() =>
-                  setMobileOpen(true)
-                }
+                type="button"
+                className="ui-icon-button roadsafe-mobile-menu-button"
+                onClick={() => setMobileOpen(true)}
                 aria-label="Open navigation"
               >
                 <Menu size={18} />
               </button>
 
-              <div className="min-w-0 border-l border-[#244b7f] pl-4">
-                <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-300">
-                  Case:{" "}
-                  {activeCase?.caseNumber ??
-                    "No active case"}
-                </p>
-                <p className="mt-1 truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-[#6fa8ff]">
+              <div className="roadsafe-workspace-title">
+                <p className="roadsafe-eyebrow">
                   {stationClient
-                    ? "Station oversight"
-                    : "Field operations"}{" "}
-                  ·{" "}
-                  {activeCase?.status ??
-                    "Workspace ready"}
+                    ? "Station workspace"
+                    : "Field workspace"}
                 </p>
+                <h1>{title}</h1>
+                <p>{description}</p>
+              </div>
+            </div>
+
+            <div className="roadsafe-workspace-header-right">
+              {activeCase && (
+                <Link
+                  to={`/cases/${activeCase.id}`}
+                  className="roadsafe-active-case-chip"
+                >
+                  <span>Active case</span>
+                  <strong>{activeCase.caseNumber}</strong>
+                  <small>
+                    {formatDate(
+                      activeCase.accidentDate,
+                    )}
+                  </small>
+                </Link>
+              )}
+
+              <div className="roadsafe-header-clock">
+                <strong>
+                  {now.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </strong>
+                <span>
+                  {now.toLocaleDateString([], {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
 
-              <div className="ml-auto flex items-center gap-1.5">
-                <Link
-                  to={homePath}
-                  className="ui-icon-button hidden sm:grid"
-                  aria-label="Client dashboard"
-                >
-                  <AppWindow size={16} />
-                </Link>
+              <Link
+                to={homePath}
+                className="ui-icon-button roadsafe-header-icon"
+                aria-label="Open dashboard"
+              >
+                <AppWindow size={16} />
+              </Link>
 
-                <Link
-                  to="/cases"
-                  className="ui-icon-button relative hidden sm:grid"
-                  aria-label={`${summary.activeCases} active cases`}
-                >
-                  <Bell size={16} />
-                  {summary.activeCases >
-                    0 && (
-                    <span className="absolute -right-1 -top-1 min-w-4 rounded-full border border-[#315786] bg-[#153f79] px-1 text-center text-[7px] font-bold text-white">
-                      {
-                        summary.activeCases
-                      }
-                    </span>
-                  )}
-                </Link>
-
-                {stationClient && (
-                  <Link
-                    to="/settings"
-                    className="ui-icon-button hidden sm:grid"
-                    aria-label="Settings"
-                  >
-                    <Settings size={16} />
-                  </Link>
+              <Link
+                to="/cases"
+                className="ui-icon-button roadsafe-header-icon roadsafe-notification-button"
+                aria-label={`${summary.activeCases} active cases`}
+              >
+                <Bell size={16} />
+                {summary.activeCases > 0 && (
+                  <span>{summary.activeCases}</span>
                 )}
+              </Link>
 
-                <div className="hidden border-l border-[#182849] px-3 text-right sm:block">
-                  <p className="font-mono text-[10px] font-semibold text-slate-300">
-                    {now.toLocaleTimeString(
-                      [],
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      },
-                    )}
-                  </p>
-                  <p className="mt-1 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-600">
-                    {now.toLocaleDateString(
-                      [],
-                      {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      },
-                    )}
-                  </p>
-                </div>
-
-                <div className="relative">
-                  <button
-                    className="flex min-h-10 items-center gap-2 rounded-md border border-[#1d3155] bg-[#071124] px-2.5 py-1.5 text-left transition-colors duration-100 hover:bg-[#0a1730]"
-                    onClick={() =>
-                      setProfileOpen(
-                        (value) =>
-                          !value,
-                      )
-                    }
-                  >
-                    <span className="grid h-7 w-7 place-items-center rounded-md border border-[#284b7e] bg-[#102344] text-[10px] font-bold text-[#9bc1ff]">
-                      {initials}
-                    </span>
-
-                    <span className="hidden md:block">
-                      <span className="block text-[8px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                        {roleLabel(role)}
-                      </span>
-                      <span className="mt-0.5 block max-w-36 truncate text-[9px] font-semibold text-slate-200">
-                        {displayName}
-                      </span>
-                    </span>
-
-                    <ChevronDown
-                      size={13}
-                      className="text-slate-500"
-                    />
-                  </button>
-
-                  {profileOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-md border border-[#1d3155] bg-[#071124] p-1.5 shadow-2xl">
-                      <div className="border-b border-[#182849] px-3 py-2">
-                        <p className="truncate text-[9px] font-bold text-slate-200">
-                          {displayName}
-                        </p>
-                        <p className="mt-1 truncate text-[8px] text-slate-600">
-                          {identity?.user.email}
-                        </p>
-                      </div>
-
-                      <Link
-                        to="/cases"
-                        onClick={() =>
-                          setProfileOpen(
-                            false,
-                          )
-                        }
-                        className="mt-1 block rounded px-3 py-2 text-[10px] text-slate-300 hover:bg-[#0d1c37]"
-                      >
-                        Investigation cases
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileOpen(
-                            false,
-                          );
-                          void auth.signOut();
-                        }}
-                        className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-[10px] text-[#e28b9d] hover:bg-[#321722]"
-                      >
-                        <LogOut size={13} />
-                        Sign out
-                      </button>
-                    </div>
+              {inspectorAvailable && (
+                <button
+                  type="button"
+                  className="ui-button roadsafe-inspector-toggle"
+                  onClick={toggleInspector}
+                  aria-label="Toggle case inspector"
+                  aria-pressed={inspectorOpen}
+                >
+                  <ClipboardList size={15} />
+                  <span>Inspector</span>
+                  {inspectorOpen ? (
+                    <ChevronRight size={14} />
+                  ) : (
+                    <ChevronLeft size={14} />
                   )}
-                </div>
+                </button>
+              )}
+
+              <div className="roadsafe-profile-menu">
+                <button
+                  type="button"
+                  className="roadsafe-profile-trigger"
+                  onClick={() =>
+                    setProfileOpen(
+                      (value) => !value,
+                    )
+                  }
+                  aria-expanded={profileOpen}
+                >
+                  <span className="roadsafe-profile-avatar">
+                    {initials}
+                  </span>
+                  <span className="roadsafe-profile-copy">
+                    <small>{roleLabel(role)}</small>
+                    <strong>{displayName}</strong>
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+
+                {profileOpen && (
+                  <div className="roadsafe-profile-popover">
+                    <div className="roadsafe-profile-popover-head">
+                      <strong>{displayName}</strong>
+                      <span>{identity?.user.email}</span>
+                    </div>
+
+                    <Link
+                      to="/cases"
+                      onClick={() =>
+                        setProfileOpen(false)
+                      }
+                    >
+                      Investigation cases
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        void auth.signOut();
+                      }}
+                    >
+                      <LogOut size={14} />
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </header>
         )}
 
         <main
-          className={
+          className={`roadsafe-workspace-main ${
             isReconstructionWorkspace
-              ? "reconstruction-shell-main"
-              : undefined
-          }
+              ? "is-editor"
+              : ""
+          }`}
         >
-          {!isDashboard &&
-            !isReconstructionWorkspace && (
-              <div className="border-b border-[#14213a] bg-[#050b18] px-4 py-3.5 lg:px-5">
-                <h1 className="text-base font-bold tracking-tight text-slate-100">
-                  {title}
-                </h1>
-                <p className="mt-1 text-[10px] text-slate-500">
-                  {description}
-                </p>
-              </div>
-            )}
-
           <div
-            className={
+            className={`roadsafe-page-stage ${
+              isDashboard
+                ? "is-dashboard"
+                : ""
+            } ${
               isReconstructionWorkspace
-                ? "p-0"
-                : isDashboard
-                  ? "p-2.5 sm:p-3"
-                  : "p-3 sm:p-4 lg:p-5"
-            }
+                ? "is-editor"
+                : ""
+            }`}
           >
             <Outlet />
           </div>
         </main>
       </div>
+
+      {isReconstructionWorkspace &&
+        !inspectorOpen && (
+          <button
+            type="button"
+            className="ui-button roadsafe-editor-inspector-toggle"
+            onClick={toggleInspector}
+            aria-label="Open active investigation inspector"
+          >
+            <ClipboardList size={15} />
+            <span>Inspector</span>
+          </button>
+        )}
+
+      {inspectorAvailable && inspectorOpen && (
+        <WorkspaceInspector
+          activeCase={activeCase}
+          activeReconstruction={
+            activeReconstruction
+          }
+          activeCases={summary.activeCases}
+          stationName={
+            identity?.stationTeam?.name ?? ""
+          }
+          docked={inspectorDocked}
+          onToggleDock={toggleInspectorDock}
+          onClose={closeInspector}
+        />
+      )}
+
+      <button
+        type="button"
+        className="roadsafe-mobile-overlay roadsafe-navigation-overlay"
+        onClick={() => setMobileOpen(false)}
+        aria-label="Close navigation"
+      />
+
     </div>
   );
 }

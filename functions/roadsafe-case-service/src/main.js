@@ -38,13 +38,86 @@ const ROADSAFE_ROLES = new Set([
   "station_admin",
 ]);
 
-const CASE_STATUSES = new Set([
-  "Open",
-  "Under Investigation",
-  "Reconstruction Complete",
-  "Closed",
-  "Archived",
-]);
+/*
+ * RoadSafe uses readable investigation statuses in the UI, while Appwrite's
+ * Console stores these enum elements with underscores.
+ */
+const APP_TO_DATABASE_CASE_STATUS = Object.freeze({
+  Open: "Open",
+  "Under Investigation": "Under_Investigation",
+  "Reconstruction Complete": "Reconstruction_Complete",
+  Closed: "Closed",
+  Archived: "Archived",
+});
+
+const DATABASE_TO_APP_CASE_STATUS = Object.freeze({
+  Open: "Open",
+  Under_Investigation: "Under Investigation",
+  Reconstruction_Complete: "Reconstruction Complete",
+  Closed: "Closed",
+  Archived: "Archived",
+});
+
+const CASE_STATUSES = new Set(
+  Object.keys(
+    APP_TO_DATABASE_CASE_STATUS,
+  ),
+);
+
+function toDatabaseCaseStatus(value) {
+  const status =
+    cleanText(
+      value,
+      40,
+    ) || "Open";
+
+  if (
+    Object.hasOwn(
+      APP_TO_DATABASE_CASE_STATUS,
+      status,
+    )
+  ) {
+    return APP_TO_DATABASE_CASE_STATUS[
+      status
+    ];
+  }
+
+  /*
+   * Also accept an already-normalized database value. This makes imports and
+   * future server-to-server calls safe when they contain underscore values.
+   */
+  if (
+    Object.hasOwn(
+      DATABASE_TO_APP_CASE_STATUS,
+      status,
+    )
+  ) {
+    return status;
+  }
+
+  return null;
+}
+
+function toAppCaseStatus(value) {
+  const status =
+    cleanText(
+      value,
+      40,
+    );
+
+  return (
+    DATABASE_TO_APP_CASE_STATUS[
+      status
+    ] ||
+    (
+      CASE_STATUSES.has(
+        status,
+      )
+        ? status
+        : "Open"
+    )
+  );
+}
 
 const REVIEW_STATUSES = new Set([
   "draft",
@@ -528,7 +601,9 @@ function rowToCase(row) {
     policeStation:
       row.stationName,
     status:
-      row.status,
+      toAppCaseStatus(
+        row.status,
+      ),
     reconstructionId:
       row.reconstructionId ||
       undefined,
@@ -607,10 +682,24 @@ async function findProfileByName({
   teamId,
   fullName,
 }) {
-  if (!fullName) {
+  const requestedName =
+    cleanText(
+      fullName,
+      128,
+    )
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  if (!requestedName) {
     return null;
   }
 
+  /*
+   * officer_profiles already has the composite idx_station_status index.
+   * Querying fullName as well would require a different composite index and
+   * caused every legacy case import to be skipped. Fetch the station's active
+   * officers with the existing index, then perform the small name match here.
+   */
   const result =
     await tablesDB.listRows({
       databaseId:
@@ -623,20 +712,25 @@ async function findProfileByName({
           teamId,
         ),
         Query.equal(
-          "fullName",
-          fullName,
-        ),
-        Query.equal(
           "status",
           "active",
         ),
-        Query.limit(2),
+        Query.limit(100),
       ],
       total: false,
     });
 
   return (
-    result.rows[0] ??
+    result.rows.find(
+      (profile) =>
+        cleanText(
+          profile.fullName,
+          128,
+        )
+          .toLowerCase()
+          .replace(/\s+/g, " ") ===
+        requestedName,
+    ) ??
     null
   );
 }
@@ -799,11 +893,10 @@ function validateCaseInput(
       input.location,
       512,
     );
-  const status =
-    cleanText(
+  const databaseStatus =
+    toDatabaseCaseStatus(
       input.status,
-      40,
-    ) || "Open";
+    );
 
   if (
     !caseNumber ||
@@ -820,11 +913,7 @@ function validateCaseInput(
     throw requestError;
   }
 
-  if (
-    !CASE_STATUSES.has(
-      status,
-    )
-  ) {
+  if (!databaseStatus) {
     const requestError =
       new Error(
         "The case contains an unsupported investigation status.",
@@ -839,7 +928,11 @@ function validateCaseInput(
     accidentDate,
     accidentTime,
     location,
-    status,
+    status:
+      toAppCaseStatus(
+        databaseStatus,
+      ),
+    databaseStatus,
   };
 }
 
@@ -979,7 +1072,9 @@ async function writeCaseEvent({
       payloadJson:
         safeJson({
           status:
-            row.status,
+            toAppCaseStatus(
+              row.status,
+            ),
           reviewStatus:
             row.reviewStatus,
           assignedOfficerUserId:
@@ -1205,7 +1300,7 @@ async function saveCase({
         36,
       ),
     status:
-      validated.status,
+      validated.databaseStatus,
     reviewStatus,
     summary:
       cleanText(
@@ -1338,7 +1433,9 @@ async function saveCase({
       version:
         row.version,
       status:
-        row.status,
+        toAppCaseStatus(
+          row.status,
+        ),
       imported:
         importing,
     },
@@ -1641,6 +1738,7 @@ export default async function ({
 
       const importedCases = [];
       const skippedCaseNumbers = [];
+      const skippedCases = [];
 
       for (
         const record
@@ -1677,10 +1775,21 @@ export default async function ({
             duplicate.rows.length >
             0
           ) {
-            skippedCaseNumbers.push(
+            const skippedCaseNumber =
               caseNumber ||
-              "Unknown",
+              "Unknown";
+
+            skippedCaseNumbers.push(
+              skippedCaseNumber,
             );
+
+            skippedCases.push({
+              caseNumber:
+                skippedCaseNumber,
+              reason:
+                "A shared case with this case number already exists.",
+            });
+
             continue;
           }
 
@@ -1700,32 +1809,68 @@ export default async function ({
             rowToCase(row),
           );
         } catch (importError) {
-          skippedCaseNumbers.push(
+          const skippedCaseNumber =
             cleanText(
               record?.caseNumber,
               40,
             ) ||
-            "Unknown",
+            "Unknown";
+
+          const reason =
+            importError?.message ||
+            String(importError);
+
+          skippedCaseNumbers.push(
+            skippedCaseNumber,
           );
+
+          skippedCases.push({
+            caseNumber:
+              skippedCaseNumber,
+            reason,
+          });
 
           error(
             importError.stack ||
-            importError.message ||
-            String(importError),
+            reason,
           );
         }
+      }
+
+      if (
+        importedCases.length === 0 &&
+        skippedCases.length > 0
+      ) {
+        return json(
+          res,
+          {
+            ok: false,
+            message:
+              `No local cases were imported. ${skippedCases[0].caseNumber}: ${skippedCases[0].reason}`,
+            importedCases,
+            importedCount: 0,
+            skippedCount:
+              skippedCases.length,
+            skippedCaseNumbers,
+            skippedCases,
+          },
+          400,
+        );
       }
 
       return json(res, {
         ok: true,
         message:
-          `${importedCases.length} local case(s) imported.`,
+          `${importedCases.length} local case(s) imported. ${
+            skippedCases.length
+          } skipped.`,
         importedCases,
         importedCount:
           importedCases.length,
         skippedCount:
-          skippedCaseNumbers.length,
+          skippedCases.length,
         skippedCaseNumbers,
+        skippedCases,
       });
     }
 
@@ -1806,7 +1951,9 @@ export default async function ({
           title:
             row.title,
           status:
-            row.status,
+            toAppCaseStatus(
+              row.status,
+            ),
         },
       });
 

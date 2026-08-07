@@ -1095,7 +1095,7 @@ function Reconstruction3DViewer({
     >
       {!workspaceMode && (
         <div
-          className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#182743] bg-[#080e1c] ${
+          className={`flex flex-wrap items-center justify-between gap-2 border-b border-[#171717] bg-[#292929] ${
             compact ? "px-3 py-2" : "px-4 py-3"
           }`}
         >
@@ -1198,7 +1198,7 @@ function Reconstruction3DViewer({
 
       {!workspaceMode && (
         <div
-          className={`border-t border-[#182743] bg-[#080e1c] ${
+          className={`border-t border-[#171717] bg-[#292929] ${
             compact ? "px-3 py-2" : "p-4"
           }`}
         >

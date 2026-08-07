@@ -5,7 +5,7 @@ interface CaseStatusBadgeProps {
 }
 
 const STATUS_CLASSES: Record<AccidentCaseStatus, string> = {
-  Open: "border-[#315d92] bg-[#10264a] text-[#8db8fb]",
+  Open: "border-[#315d92] bg-[#10264a] text-[#80ACFF]",
   "Under Investigation": "border-[#66552f] bg-[#282111] text-[#d8bd78]",
   "Reconstruction Complete": "border-[#365e59] bg-[#102725] text-[#8ccdc3]",
   Closed: "border-[#3b4658] bg-[#171e2a] text-slate-400",

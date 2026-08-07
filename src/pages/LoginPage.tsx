@@ -9,7 +9,7 @@ import {
   LockKeyhole,
   RadioTower,
   ShieldCheck,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import {
   Navigate,
   useLocation,

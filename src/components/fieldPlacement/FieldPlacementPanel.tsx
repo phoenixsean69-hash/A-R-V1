@@ -19,7 +19,7 @@ import {
   Trash2,
   Undo2,
   X,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import type {
   AccidentReconstruction,

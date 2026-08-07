@@ -6,7 +6,7 @@ import {
   FileJson,
   FileText,
   Printer,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import { AccidentReportService } from "../services/accidentReportService";
 import { WorkspaceDataService } from "../services/workspaceDataService";
 
@@ -73,7 +73,7 @@ export default function ReportsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-[10px]">
-              <thead className="bg-[#0c1426] text-slate-500">
+              <thead className="bg-[#383838] text-slate-500">
                 <tr>
                   {[
                     "Report",
@@ -87,19 +87,19 @@ export default function ReportsPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#17243d]">
+              <tbody className="divide-y divide-[#202020]">
                 {reports.map((report) => (
-                  <tr key={report.id} className="hover:bg-[#0c1426]">
+                  <tr key={report.id} className="hover:bg-[#383838]">
                     <td className="px-4 py-3">
                       <p className="font-semibold text-slate-300">{report.title}</p>
                       <p className="mt-1 text-[9px] text-slate-600">{report.reconstruction ? `${report.reconstruction.vehicles.length} participant(s) · ${report.reconstruction.evidenceRecords.length} evidence record(s)` : "No reconstruction linked"}</p>
                     </td>
-                    <td className="px-4 py-3"><Link to={`/cases/${report.accidentCase.id}`} className="font-semibold text-[#8db8fb]">{report.accidentCase.caseNumber}</Link><p className="mt-1 text-slate-500">{report.accidentCase.location}</p></td>
+                    <td className="px-4 py-3"><Link to={`/cases/${report.accidentCase.id}`} className="font-semibold text-[#80ACFF]">{report.accidentCase.caseNumber}</Link><p className="mt-1 text-slate-500">{report.accidentCase.location}</p></td>
                     <td className="px-4 py-3 text-slate-500">{formatDate(report.generatedAt)}</td>
                     <td className="px-4 py-3 text-slate-400">{report.accidentCase.investigatingOfficer || "Not recorded"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 overflow-hidden rounded bg-[#17243d]"><div className="h-full bg-[#4f8ce6]" style={{ width: `${report.readiness}%` }} /></div>
+                        <div className="h-1.5 w-24 overflow-hidden rounded bg-[#202020]"><div className="h-full bg-[#4f8ce6]" style={{ width: `${report.readiness}%` }} /></div>
                         <span className="text-slate-400">{report.readiness}%</span>
                       </div>
                     </td>
@@ -139,7 +139,7 @@ export default function ReportsPage() {
           <article className="ui-panel p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#79adfa]">Selected report</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">Selected report</p>
                 <h2 className="mt-2 text-lg font-semibold text-slate-200">{selected.accidentCase.caseNumber}</h2>
                 <p className="mt-1 text-[10px] text-slate-500">{selected.accidentCase.title}</p>
               </div>

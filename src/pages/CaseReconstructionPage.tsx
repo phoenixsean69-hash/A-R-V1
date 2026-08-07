@@ -19,7 +19,7 @@ import {
   Orbit,
   RefreshCw,
   ScanLine,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import AccidentReconstructionEditor from "../components/reconstruction/AccidentReconstructionEditor";
 import { AccidentCaseService } from "../services/accidentCaseService";

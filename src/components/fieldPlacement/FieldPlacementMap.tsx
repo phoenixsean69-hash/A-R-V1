@@ -4,7 +4,7 @@ import {
   Focus,
   MapPinned,
   Navigation,
-} from "lucide-react";
+} from "../icons/materialIcons";
 import maplibregl from "maplibre-gl";
 import type {
   GeoJSONSource,

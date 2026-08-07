@@ -1,0 +1,29 @@
+RoadSafe Material Icon Repair
+Generated: 2026-08-06T23:55:11.899Z
+
+Component exports: 121
+Type exports: 1
+Previously unmigrated source files repaired: 0
+
+Fallback icon names:
+CalendarDays
+CarFront
+Clock3
+CloudSun
+Expand
+FileClock
+FileJson
+Film
+Focus
+KeyRound
+Layers3
+LoaderCircle
+LockKeyhole
+MicOff
+Pentagon
+Satellite
+ScanEye
+ShieldX
+SkipBack
+SkipForward
+Skull

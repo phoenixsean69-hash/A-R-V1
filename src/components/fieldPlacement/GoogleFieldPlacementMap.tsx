@@ -8,7 +8,7 @@ import {
   ScanEye,
   X,
   ZoomIn,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import {
   latLngLiteral,

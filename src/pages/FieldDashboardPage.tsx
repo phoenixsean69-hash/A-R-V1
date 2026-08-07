@@ -6,7 +6,7 @@ import {
   Plus,
   RadioTower,
   ShieldCheck,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -54,7 +54,7 @@ export default function FieldDashboardPage() {
               <RadioTower size={21} />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#79adfa]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
                 Field Client
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">

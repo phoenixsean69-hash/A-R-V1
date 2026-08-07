@@ -20,7 +20,7 @@ import {
   ShieldCheck,
   Users,
   Video,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import { AccidentCaseService } from "../services/accidentCaseService";
 import { AccidentReportService } from "../services/accidentReportService";

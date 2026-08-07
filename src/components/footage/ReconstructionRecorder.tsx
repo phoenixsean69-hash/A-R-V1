@@ -12,7 +12,7 @@ import {
   Square,
   Video,
   X,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import { ReconstructionFootageService } from "../../services/reconstructionFootageService";
 import type { AccidentReconstruction } from "../../types/reconstruction";

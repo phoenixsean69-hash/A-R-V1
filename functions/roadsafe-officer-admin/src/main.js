@@ -304,6 +304,15 @@ async function upsertOfficerProfile({
   teamName,
   statusOverride,
 }) {
+  /*
+   * Officer Management can request a list automatically while an administrator
+   * also presses Refresh. Those executions may overlap. A separate
+   * "get, then create" flow is therefore unsafe because both executions can
+   * observe a missing profile before one creates it.
+   *
+   * Appwrite upsertRow performs the create-or-update operation atomically, so
+   * repeated and concurrent refreshes remain idempotent.
+   */
   const existingProfile =
     await getRowOrNull({
       tablesDB,
@@ -321,23 +330,7 @@ async function upsertOfficerProfile({
       statusOverride,
     });
 
-  if (existingProfile) {
-    return tablesDB.updateRow({
-      databaseId:
-        ROADSAFE_DATABASE_ID,
-      tableId:
-        OFFICER_PROFILES_TABLE_ID,
-      rowId:
-        user.$id,
-      data,
-      permissions:
-        profilePermissions(
-          membership.teamId,
-        ),
-    });
-  }
-
-  return tablesDB.createRow({
+  return tablesDB.upsertRow({
     databaseId:
       ROADSAFE_DATABASE_ID,
     tableId:

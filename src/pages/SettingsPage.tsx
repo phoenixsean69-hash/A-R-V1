@@ -3,7 +3,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Users,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -120,7 +120,7 @@ export default function SettingsPage() {
                   defaultChecked={
                     index !== 1
                   }
-                  className="h-4 w-4 accent-[#4d8cf5]"
+                  className="h-4 w-4 accent-[#80ACFF]"
                 />
               </label>
             ),

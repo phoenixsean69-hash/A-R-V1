@@ -1,0 +1,183 @@
+/*
+ * [RoadSafe:NavigationRailFixV1]
+ *
+ * Keeps the desktop navigation collapse control fully inside the navigation
+ * rail. The previous implementation positioned the button beyond the rail
+ * boundary, where overflow clipping and the centre workspace covered it.
+ */
+
+.roadsafe-navigation {
+  z-index: 70 !important;
+  isolation: isolate;
+}
+
+.roadsafe-center {
+  position: relative;
+  z-index: 1;
+}
+
+.roadsafe-navigation-brand {
+  position: relative;
+  z-index: 72;
+}
+
+.roadsafe-navigation-collapse {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 75 !important;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  flex: 0 0 28px;
+  overflow: visible;
+}
+
+.roadsafe-navigation-collapse-mark {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 1024px) {
+  /*
+   * Expanded navigation:
+   * keep the toggle in the brand toolbar instead of allowing an old absolute
+   * positioning rule to push it over the workspace.
+   */
+  .roadsafe-workstation:not(.is-navigation-collapsed)
+    .roadsafe-navigation-collapse {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    margin: 0 !important;
+  }
+
+  /*
+   * Collapsed navigation:
+   * the top row becomes a dedicated rail-toggle slot. The normal brand link is
+   * hidden because the combined shield + arrow button now represents both the
+   * application identity and the expand action.
+   */
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-brand {
+    display: grid !important;
+    min-height: var(--js-header-height) !important;
+    height: var(--js-header-height) !important;
+    place-items: center !important;
+    padding: 4px !important;
+    overflow: visible !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-brand-link {
+    display: none !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    inset: auto !important;
+    z-index: 80 !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 4px !important;
+    overflow: visible !important;
+    border: 1px solid #555 !important;
+    border-radius: 2px !important;
+    background:
+      linear-gradient(
+        180deg,
+        #414141 0%,
+        #303030 100%
+      ) !important;
+    color: #dedede !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse:hover,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse:focus-visible {
+    border-color: var(--blender-orange, #e8872d) !important;
+    background:
+      linear-gradient(
+        180deg,
+        #4a4a4a 0%,
+        #363636 100%
+      ) !important;
+    color: #fff !important;
+    outline: none !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-collapse
+    svg {
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  /*
+   * Keep every rail icon aligned to the same centre line.
+   */
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-station,
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-footer {
+    justify-content: center !important;
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-groups {
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+    overflow-x: hidden;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-link {
+    width: 100%;
+    min-width: 0;
+    justify-content: center !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /*
+   * Preserve the orange active marker without drawing it through the rail
+   * toggle or outside the collapsed navigation boundary.
+   */
+  .roadsafe-workstation.is-navigation-collapsed
+    .roadsafe-navigation-link.is-active {
+    box-shadow:
+      inset 2px 0 0 var(--blender-orange, #e8872d),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.35) !important;
+  }
+}
+
+/*
+ * Mobile navigation uses its own close button and does not need the desktop
+ * collapse control.
+ */
+@media (max-width: 1023px) {
+  .roadsafe-navigation-collapse {
+    display: none !important;
+  }
+}

@@ -55,7 +55,7 @@ export default function AccidentCasePage() {
         <header className="ui-panel flex flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-[10px] font-bold tracking-[0.08em] text-[#79adfa]">
+              <p className="text-[10px] font-bold tracking-[0.08em] text-[#80ACFF]">
                 {record.caseNumber}
               </p>
               <CaseStatusBadge status={record.status} />

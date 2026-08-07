@@ -9,7 +9,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import CaseStatusBadge from "../components/cases/CaseStatusBadge";
 import { AccidentCaseService } from "../services/accidentCaseService";
@@ -133,7 +133,7 @@ export default function AccidentReconstructionPage() {
           </div>
 
           <div className="flex items-center justify-center gap-2 p-4 text-[9px] font-semibold text-[#8ebcff]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4d8cf5]" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#80ACFF]" />
             Loading the last selected scene
           </div>
         </section>
@@ -151,7 +151,7 @@ export default function AccidentReconstructionPage() {
             </div>
 
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#79adfa]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
                 Reconstruction workspace
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">
@@ -281,7 +281,7 @@ export default function AccidentReconstructionPage() {
                     <div className="min-w-0 border-b border-[#18243f] p-4">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#79adfa]">
+                          <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#80ACFF]">
                             {record.caseNumber}
                           </p>
                           <h3

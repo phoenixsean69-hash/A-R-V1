@@ -506,7 +506,7 @@
 
 .field-mode-checkbox input {
   margin-top: 0.1rem;
-  accent-color: #4d8cf5;
+  accent-color: #80ACFF;
 }
 
 .field-mode-track-metrics,
@@ -597,7 +597,7 @@
 .field-mode-shell .maplibregl-ctrl-group,
 .field-mode-shell .maplibregl-popup-content {
   border-color: #1d2c4b !important;
-  background: #080e1c !important;
+  background: #292929 !important;
   color: #dbe4f0 !important;
 }
 

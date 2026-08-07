@@ -7,7 +7,7 @@ import {
   Route,
   Timer,
   Zap,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import type {
   CollisionKinematicsSummary,

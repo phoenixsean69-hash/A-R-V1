@@ -10,7 +10,7 @@ import {
   MapPin,
   ShieldAlert,
   X,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import { JunctionAnalysisService } from "../../services/junctionAnalysisService";
 import type {
@@ -146,7 +146,7 @@ function BreakdownChart({
 
               <div className="h-1.5 overflow-hidden rounded-full border border-[#182849] bg-[#040918]">
                 <div
-                  className="h-full rounded-full bg-[#4d8cf5]"
+                  className="h-full rounded-full bg-[#80ACFF]"
                   style={{
                     width: `${Math.max(item.percentage, 3)}%`,
                   }}
@@ -480,7 +480,7 @@ export default function JunctionAnalysisModal({
                         key={action}
                         className="flex min-w-0 items-start gap-2 text-[8px] leading-4 text-slate-400"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4d8cf5]" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#80ACFF]" />
                         <span className="min-w-0 break-words">{action}</span>
                       </div>
                     ))}

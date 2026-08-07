@@ -26,7 +26,7 @@ body.roadsafe-case-wizard-open {
   --rs-border-strong: #29446f;
   --rs-blue-border: #315b91;
   --rs-blue-bg: #0b1b38;
-  --rs-blue: #4d8cf5;
+  --rs-blue: #80ACFF;
   --rs-blue-text: #8ebcff;
   --rs-text: #edf4ff;
   --rs-muted: #94a7c2;
@@ -176,7 +176,7 @@ body.roadsafe-case-wizard-open {
 }
 
 .roadsafe-wizard-heading p {
-  color: #79adfa;
+  color: #80ACFF;
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.12em;

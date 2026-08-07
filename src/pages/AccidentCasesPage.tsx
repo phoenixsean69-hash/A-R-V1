@@ -16,7 +16,7 @@ import {
   Search,
   Trash2,
   Upload,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import CaseStatusBadge from "../components/cases/CaseStatusBadge";
 import { useAuth } from "../context/AuthContext";
@@ -166,7 +166,7 @@ export default function AccidentCasesPage() {
       <section className="ui-panel min-w-0 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#1d2c4b] bg-[#080e1c] text-[#8db8fb]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#1d2c4b] bg-[#292929] text-[#80ACFF]">
               {caseSync.status === "error" ? (
                 <AlertTriangle size={16} />
               ) : caseSync.status === "loading" ||
@@ -275,7 +275,7 @@ export default function AccidentCasesPage() {
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="flex rounded-md border border-[#1d2c4b] bg-[#080e1c] p-1">
+            <div className="flex rounded-md border border-[#1d2c4b] bg-[#292929] p-1">
               <button
                 type="button"
                 className={
@@ -366,7 +366,7 @@ export default function AccidentCasesPage() {
                 <col className="w-[22%]" />
               </colgroup>
 
-              <thead className="bg-[#0c1426] text-slate-500">
+              <thead className="bg-[#383838] text-slate-500">
                 <tr>
                   {[
                     "Case",
@@ -386,19 +386,19 @@ export default function AccidentCasesPage() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-[#17243d]">
+              <tbody className="divide-y divide-[#202020]">
                 {filteredCases.map((record) => {
                   const stats = AccidentCaseService.getStats(record);
 
                   return (
                     <tr
                       key={record.id}
-                      className="transition-colors hover:bg-[#0c1426]"
+                      className="transition-colors hover:bg-[#383838]"
                     >
                       <td className="min-w-0 px-3 py-3">
                         <Link
                           to={`/cases/${record.id}`}
-                          className="block truncate font-semibold text-[#8db8fb] hover:text-white"
+                          className="block truncate font-semibold text-[#80ACFF] hover:text-white"
                           title={record.caseNumber}
                         >
                           {record.caseNumber}
@@ -558,7 +558,7 @@ export default function AccidentCasesPage() {
                 >
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-[10px] font-bold text-[#8db8fb]">
+                      <p className="truncate text-[10px] font-bold text-[#80ACFF]">
                         {record.caseNumber}
                       </p>
                       <h3 className="mt-1 truncate text-sm font-semibold text-slate-200">
@@ -572,7 +572,7 @@ export default function AccidentCasesPage() {
                     {record.location}
                   </p>
 
-                  <div className="mt-4 grid grid-cols-4 gap-2 border-y border-[#17243d] py-3 text-center">
+                  <div className="mt-4 grid grid-cols-4 gap-2 border-y border-[#202020] py-3 text-center">
                     {[
                       ["P", stats.participantCount],
                       ["E", stats.evidenceCount],

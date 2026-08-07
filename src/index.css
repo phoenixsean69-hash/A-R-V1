@@ -18,7 +18,7 @@
   .ui-panel-header { @apply flex items-center justify-between border-b border-[#18243f] px-4 py-3; }
   .ui-panel-title { @apply text-[11px] font-bold uppercase tracking-[0.12em] text-slate-300; }
   .ui-button { @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#29446f] bg-[#111b35] px-3 py-2 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-[#152445] focus:outline-none focus:ring-2 focus:ring-[#315d9d]/60 active:bg-[#0e1930]; }
-  .ui-button-primary { @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#29548d] bg-[#163a73] px-3 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#1b4789] focus:outline-none focus:ring-2 focus:ring-[#4d8cf5]/60 active:bg-[#143565]; }
+  .ui-button-primary { @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#29548d] bg-[#163a73] px-3 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#1b4789] focus:outline-none focus:ring-2 focus:ring-[#80ACFF]/60 active:bg-[#143565]; }
   .ui-icon-button { @apply grid h-9 w-9 place-items-center rounded-md border border-[#1d2c4b] bg-[#0b1122] text-slate-400 transition-colors duration-150 hover:bg-[#10182d] hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#315d9d]/50 active:bg-[#0d1529]; }
   .ui-input { @apply rounded-md border border-[#1d2c4b] bg-[#0b1122] px-3 py-2 text-xs text-slate-200 outline-none placeholder:text-slate-600 focus:border-[#203f67] focus:ring-1 focus:ring-[#3f6daa]/40; }
   .ui-badge { @apply inline-flex items-center rounded border border-[#162f52] bg-[#112241] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-[#6b98e0]; }
@@ -127,9 +127,9 @@
 .reconstruction-editor [class*="bg-cyan-"] { background-color: #102a36 !important; }
 .reconstruction-editor [class*="text-cyan-"] { color: #79b8d0 !important; }
 .reconstruction-editor input[type="checkbox"],
-.reconstruction-editor input[type="radio"] { accent-color: #4d8cf5; }
+.reconstruction-editor input[type="radio"] { accent-color: #80ACFF; }
 
-.roadsafe-range { accent-color: #4d8cf5; }
+.roadsafe-range { accent-color: #80ACFF; }
 .roadsafe-range::-webkit-slider-runnable-track { height: 3px; border-radius: 999px; background: #203554; }
 .roadsafe-range::-webkit-slider-thumb { margin-top: -5px; }
 
@@ -140,11 +140,11 @@
 .maplibregl-ctrl-group,
 .maplibregl-popup-content {
   border: 1px solid #1d2c4b !important;
-  background: #080e1c !important;
+  background: #292929 !important;
   color: #dbe4f0 !important;
   box-shadow: 0 12px 32px rgba(0,0,0,.35) !important;
 }
-.maplibregl-ctrl-group button { background-color: #080e1c !important; }
+.maplibregl-ctrl-group button { background-color: #292929 !important; }
 .maplibregl-ctrl-group button + button { border-top-color: #1d2c4b !important; }
 .maplibregl-ctrl-icon { filter: invert(.8) sepia(.1) saturate(.5); }
 
@@ -2746,9 +2746,9 @@
   z-index: 66;
   flex: 0 0 auto;
   border: 0 !important;
-  border-bottom: 1px solid #182743 !important;
+  border-bottom: 1px solid #171717 !important;
   border-radius: 0;
-  background: #080e1c !important;
+  background: #292929 !important;
   padding: .72rem .85rem !important;
   backdrop-filter: none;
 }

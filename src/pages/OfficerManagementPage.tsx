@@ -19,7 +19,7 @@ import {
   UserCog,
   Users,
   X,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import { useAuth } from "../context/AuthContext";
 import { OfficerManagementService } from "../services/officerManagementService";
@@ -544,7 +544,7 @@ export default function OfficerManagementPage() {
             </div>
 
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#79adfa]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#80ACFF]">
                 Station administration
               </p>
               <h1 className="mt-1 text-xl font-bold text-slate-100">

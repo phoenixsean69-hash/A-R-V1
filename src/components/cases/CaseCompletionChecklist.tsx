@@ -3,7 +3,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   ShieldCheck,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import type { AccidentCaseCompletion } from "../../types/accidentCase";
 
@@ -150,7 +150,7 @@ export default function CaseCompletionChecklist({
               className={`h-full rounded-full transition-[width] duration-300 ${
                 completion.complete
                   ? "bg-[#55b9aa] shadow-[0_0_10px_rgba(85,185,170,0.35)]"
-                  : "bg-[#4d8cf5] shadow-[0_0_10px_rgba(77,140,245,0.38)]"
+                  : "bg-[#80ACFF] shadow-[0_0_10px_rgba(77,140,245,0.38)]"
               }`}
               style={{ width: `${percentage}%` }}
             />

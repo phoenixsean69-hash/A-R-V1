@@ -22,7 +22,7 @@ import {
   Sparkles,
   Square,
   Waypoints,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import {
   getOfficerDisplayName,

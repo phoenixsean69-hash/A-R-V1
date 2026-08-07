@@ -6,7 +6,7 @@ import {
   Search,
   X,
   ZoomIn,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import {
   latLngLiteral,

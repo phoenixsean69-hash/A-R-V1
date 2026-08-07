@@ -3,7 +3,7 @@ import {
   LogOut,
   RefreshCw,
   ShieldAlert,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import {
   Navigate,
 } from "react-router-dom";

@@ -16,7 +16,7 @@ import {
   Truck,
   Users,
   Video,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 
 import AccidentMap, {
   type VisualizationMode,
@@ -342,7 +342,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-3">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="dashboard-material-stat-grid">
         {cards.map(
           ({
             label,
@@ -354,14 +354,14 @@ export default function Dashboard() {
             <Link
               key={label}
               to={to}
-              className="ui-panel group flex min-h-24 items-center gap-3 p-3"
+              className="ui-panel group dashboard-material-stat-card"
             >
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#24395f] bg-[#0c1730] text-[#8bb8ff] transition-colors group-hover:border-[#36598f]">
-                <Icon size={20} strokeWidth={1.55} />
+              <div className="dashboard-material-stat-icon">
+                <Icon size={52} strokeWidth={1.6} />
               </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              <div className="dashboard-material-stat-content">
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-[#7fa7d0]">
                   {label}
                 </p>
 
@@ -369,7 +369,7 @@ export default function Dashboard() {
                   {value}
                 </p>
 
-                <p className="mt-1 truncate text-[9px] text-[#6e9fe8]">
+                <p className="mt-1 truncate text-[9px] text-[#80ACFF]">
                   {note}
                 </p>
               </div>
@@ -411,7 +411,7 @@ export default function Dashboard() {
 
             <Link
               to="/cases"
-              className="text-[10px] font-semibold text-[#79adfa]"
+              className="text-[10px] font-semibold text-[#80ACFF]"
             >
               View all
             </Link>
@@ -438,12 +438,12 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-[#15233d]">
+            <div className="divide-y divide-[#171717]">
               {summary.cases.slice(0, 6).map((record) => (
                 <Link
                   key={record.id}
                   to={`/cases/${record.id}`}
-                  className="grid grid-cols-[1.05fr_1fr_auto] items-center gap-2 px-4 py-3.5 text-[10px] hover:bg-[#0c1426]"
+                  className="grid grid-cols-[1.05fr_1fr_auto] items-center gap-2 px-4 py-3.5 text-[10px] hover:bg-[#383838]"
                 >
                   <span className="font-semibold text-slate-300">
                     {record.caseNumber}
@@ -453,7 +453,7 @@ export default function Dashboard() {
                     {record.location}
                   </span>
 
-                  <span className="text-[#70a8ff]">
+                  <span className="text-[#80ACFF]">
                     {record.status}
                   </span>
                 </Link>
@@ -488,7 +488,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="mt-4 flex min-h-0 flex-1 items-end">
-                <div className="flex h-28 w-full items-end justify-around gap-2 border-b border-l border-[#233453] px-2 pb-2">
+                <div className="flex h-28 w-full items-end justify-around gap-2 border-b border-l border-[#4A4A4A] px-2 pb-2">
                   {monthlyTotals.map((record) => {
                     const height = Math.max(
                       10,
@@ -506,7 +506,7 @@ export default function Dashboard() {
                         </span>
 
                         <div
-                          className="w-2 rounded-t-sm bg-[#4d8cf5]"
+                          className="w-2 rounded-t-sm bg-[#80ACFF]"
                           style={{
                             height: `${height}px`,
                           }}
@@ -544,7 +544,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                <div className="mt-3 rounded-md border border-[#182743] bg-[#0a1223] px-2 py-2">
+                <div className="mt-3 rounded-md border border-[#171717] bg-[#303030] px-2 py-2">
                   <svg
                     viewBox="0 0 100 40"
                     className="h-28 w-full"
@@ -557,7 +557,7 @@ export default function Dashboard() {
                       y1="36"
                       x2="96"
                       y2="36"
-                      stroke="#24395f"
+                      stroke="#80ACFF"
                       strokeWidth="0.8"
                     />
                     <line
@@ -565,7 +565,7 @@ export default function Dashboard() {
                       y1="26"
                       x2="96"
                       y2="26"
-                      stroke="#1a2c49"
+                      stroke="#4A4A4A"
                       strokeWidth="0.5"
                       strokeDasharray="1.5 1.5"
                     />
@@ -574,19 +574,19 @@ export default function Dashboard() {
                       y1="16"
                       x2="96"
                       y2="16"
-                      stroke="#1a2c49"
+                      stroke="#4A4A4A"
                       strokeWidth="0.5"
                       strokeDasharray="1.5 1.5"
                     />
                     <path
                       d={analyticsAreaPath}
-                      fill="#4d8cf5"
+                      fill="#80ACFF"
                       opacity="0.16"
                     />
                     <path
                       d={analyticsLinePath}
                       fill="none"
-                      stroke="#7fb0ff"
+                      stroke="#80ACFF"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -597,7 +597,7 @@ export default function Dashboard() {
                           cx={point.x}
                           cy={point.y}
                           r="1.4"
-                          fill="#7fb0ff"
+                          fill="#80ACFF"
                         />
                       </g>
                     ))}
@@ -616,32 +616,32 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[9px]">
-                  <div className="rounded-md border border-[#182743] bg-[#0a1223] p-2.5">
+                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Peak month</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsPeak?.label ?? "N/A"}
                     </p>
-                    <p className="mt-1 text-[#79adfa]">
+                    <p className="mt-1 text-[#80ACFF]">
                       {analyticsPeak?.total ?? 0} records
                     </p>
                   </div>
 
-                  <div className="rounded-md border border-[#182743] bg-[#0a1223] p-2.5">
+                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Average</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsAverage}
                     </p>
-                    <p className="mt-1 text-[#79adfa]">
+                    <p className="mt-1 text-[#80ACFF]">
                       per month
                     </p>
                   </div>
 
-                  <div className="rounded-md border border-[#182743] bg-[#0a1223] p-2.5">
+                  <div className="rounded-md border border-[#171717] bg-[#303030] p-2.5">
                     <p className="text-slate-600">Latest</p>
                     <p className="mt-1 font-semibold text-slate-200">
                       {analyticsLatest}
                     </p>
-                    <p className="mt-1 text-[#79adfa]">
+                    <p className="mt-1 text-[#80ACFF]">
                       current month
                     </p>
                   </div>
@@ -673,7 +673,7 @@ export default function Dashboard() {
           {activeCase ? (
             <div className="flex flex-1 flex-col p-4">
               <div>
-                <p className="text-[10px] font-bold text-[#79adfa]">
+                <p className="text-[10px] font-bold text-[#80ACFF]">
                   {activeCase.caseNumber}
                 </p>
 
@@ -688,7 +688,7 @@ export default function Dashboard() {
               </div>
 
               <dl className="mt-5 grid grid-cols-2 gap-3 text-[10px]">
-                <div className="rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Accident date
                   </dt>
@@ -698,7 +698,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Officer
                   </dt>
@@ -709,7 +709,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Police station
                   </dt>
@@ -720,7 +720,7 @@ export default function Dashboard() {
                   </dd>
                 </div>
 
-                <div className="rounded-md border border-[#182743] bg-[#0a1223] p-3">
+                <div className="rounded-md border border-[#171717] bg-[#303030] p-3">
                   <dt className="text-slate-600">
                     Reconstruction
                   </dt>
@@ -782,7 +782,7 @@ export default function Dashboard() {
             <span className="ui-badge">2D only</span>
           </div>
 
-          <div className="min-h-0 flex-1 bg-[#070b13]">
+          <div className="min-h-0 flex-1 bg-[#202020]">
             {!previewReconstruction ? (
               <div className="grid h-full place-items-center p-8 text-center">
                 <div>
@@ -815,7 +815,7 @@ export default function Dashboard() {
           </div>
 
           {previewReconstruction && (
-            <div className="flex items-center justify-between gap-3 border-t border-[#182743] bg-[#080e1c] px-4 py-2.5 text-[9px]">
+            <div className="flex items-center justify-between gap-3 border-t border-[#171717] bg-[#292929] px-4 py-2.5 text-[9px]">
               <span className="text-slate-500">
                 {participantCount} participant
                 {participantCount === 1 ? "" : "s"} ·{" "}
@@ -825,7 +825,7 @@ export default function Dashboard() {
 
               <Link
                 to={reconstructionLink}
-                className="font-semibold text-[#79adfa]"
+                className="font-semibold text-[#80ACFF]"
               >
                 Open reconstruction
               </Link>
@@ -844,7 +844,7 @@ export default function Dashboard() {
             {previewReconstruction && (
               <Link
                 to={reconstructionLink}
-                className="text-[9px] font-semibold text-[#79adfa]"
+                className="text-[9px] font-semibold text-[#80ACFF]"
               >
                 Edit
               </Link>
@@ -868,9 +868,9 @@ export default function Dashboard() {
                 return (
                   <div
                     key={participant.id}
-                    className="flex items-center gap-3 rounded-md border border-[#182743] bg-[#0a1223] p-3"
+                    className="flex items-center gap-3 rounded-md border border-[#171717] bg-[#303030] p-3"
                   >
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#2b456f] bg-[#0c1730] text-[#8db8fb]">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[#80ACFF]">
                       <ParticipantIcon
                         type={participant.type}
                       />
@@ -894,7 +894,7 @@ export default function Dashboard() {
                         points
                       </p>
 
-                      <p className="mt-1 truncate text-[8px] text-[#6e9fe8]">
+                      <p className="mt-1 truncate text-[8px] text-[#80ACFF]">
                         {actions || "No movement actions"}
                       </p>
                     </div>
@@ -932,13 +932,13 @@ export default function Dashboard() {
 
             <Link
               to="/evidence"
-              className="text-[9px] font-semibold text-[#79adfa]"
+              className="text-[9px] font-semibold text-[#80ACFF]"
             >
               View all
             </Link>
           </div>
 
-          <div className="mt-3 max-h-[300px] divide-y divide-[#17243d] overflow-y-auto pr-1">
+          <div className="mt-3 max-h-[300px] divide-y divide-[#202020] overflow-y-auto pr-1">
             {previewReconstruction?.evidenceRecords
               .slice(0, 6)
               .map((item) => (
@@ -946,7 +946,7 @@ export default function Dashboard() {
                   key={item.id}
                   className="flex items-center gap-3 py-3"
                 >
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#2a3e64] bg-[#0a1223] text-[9px] font-semibold text-[#8db8fb]">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#80ACFF] bg-[#303030] text-[9px] font-semibold text-[#80ACFF]">
                     E{item.evidenceNumber}
                   </div>
 
@@ -983,7 +983,7 @@ export default function Dashboard() {
             Scene conditions
           </h2>
 
-          <div className="mt-4 divide-y divide-[#17243d] text-[10px]">
+          <div className="mt-4 divide-y divide-[#202020] text-[10px]">
             {sceneConditions.map(([label, value]) => (
               <div
                 key={label}

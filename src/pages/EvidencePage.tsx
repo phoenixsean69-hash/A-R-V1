@@ -7,7 +7,7 @@ import {
   Image as ImageIcon,
   MapPin,
   Search,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import ForensicScenePreview from "../components/reconstruction/ForensicScenePreview";
 import { WorkspaceDataService } from "../services/workspaceDataService";
 
@@ -128,7 +128,7 @@ export default function EvidencePage() {
                   <p className="mt-3 line-clamp-2 min-h-8 text-[9px] leading-4 text-slate-600">
                     {item.evidence.description || item.evidence.notes || "No description recorded."}
                   </p>
-                  <div className="mt-3 flex items-center gap-2 border-t border-[#17243d] pt-3 text-[9px] text-slate-500">
+                  <div className="mt-3 flex items-center gap-2 border-t border-[#202020] pt-3 text-[9px] text-slate-500">
                     <MapPin size={12} />
                     <span className="truncate">{item.accidentCase?.location || item.reconstruction.title}</span>
                   </div>

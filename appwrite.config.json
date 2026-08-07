@@ -1,0 +1,1207 @@
+{
+    "organizationId": "68b01662001d9a9a83f6",
+    "projectId": "6a64f4c0000e6e742cd6",
+    "projectName": "RoadSafe AR",
+    "endpoint": "https://syd.cloud.appwrite.io/v1",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "protocols": {
+            "rest": true,
+            "graphql": true,
+            "websocket": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": null,
+                "sessionsLimit": null,
+                "passwordHistory": null,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    },
+    "functions": [
+        {
+            "$id": "roadsafe-officer-admin",
+            "name": "RoadSafe Officer Admin",
+            "runtime": "node-25",
+            "path": "functions/roadsafe-officer-admin",
+            "entrypoint": "src/main.js",
+            "execute": [
+                "users",
+                "team:bindura-central99"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "",
+            "timeout": 30,
+            "commands": "npm install",
+            "scopes": [
+                "users.read",
+                "users.write",
+                "teams.read",
+                "teams.write",
+                "rows.read",
+                "rows.write"
+            ],
+            "buildSpecification": "s-2vcpu-2gb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "deploymentRetention": 0
+        },
+        {
+            "$id": "roadsafe-case-service",
+            "name": "RoadSafe Case Service",
+            "runtime": "node-25",
+            "path": "functions/roadsafe-case-service",
+            "entrypoint": "src/main.js",
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "",
+            "timeout": 30,
+            "commands": "npm install",
+            "scopes": [
+                "users.read",
+                "teams.read",
+                "rows.read",
+                "rows.write"
+            ],
+            "buildSpecification": "s-2vcpu-2gb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "deploymentRetention": 0
+        }
+    ],
+    "tablesDB": [
+        {
+            "$id": "6a65ba680015d256c655",
+            "name": "roadsafe",
+            "enabled": true
+        }
+    ],
+    "tables": [
+        {
+            "$id": "6a65baad0030250bf9b9",
+            "$permissions": [],
+            "databaseId": "6a65ba680015d256c655",
+            "name": "officer_profiles",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "stationTeamId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "avatarFileId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "stationName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "fullName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "email"
+                },
+                {
+                    "key": "phone",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "serviceNumber",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "rank",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "role",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "field_officer",
+                        "supervisor",
+                        "station_admin"
+                    ]
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "active",
+                        "blocked",
+                        "removed"
+                    ]
+                },
+                {
+                    "key": "mustChangePassword",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "uniq_user",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "uniq_service",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "serviceNumber"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "uniq_email",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "email"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_role",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "role"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "dx_station_status",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "status"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "6a65bade00064a38d2d1",
+            "$permissions": [],
+            "databaseId": "6a65ba680015d256c655",
+            "name": "cases",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "stationTeamId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "stationName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "caseNumber",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "title",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "accidentDate",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "accidentTime",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "location",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "junctionId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "createdByUserId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "assignedOfficerUserId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "assignedOfficerName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "Open",
+                        "Under_Investigation",
+                        "Reconstruction_Complete",
+                        "Closed",
+                        "Archived"
+                    ]
+                },
+                {
+                    "key": "reviewStatus",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "draft",
+                        "in_progress",
+                        "submitted",
+                        "changes_requested",
+                        "approved"
+                    ]
+                },
+                {
+                    "key": "summary",
+                    "type": "mediumtext",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "siteCoordinate",
+                    "type": "point",
+                    "required": false,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "siteAccuracyMetres",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "siteCapturedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "roadLayoutJson",
+                    "type": "mediumtext",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "reconstructionId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "primaryFootageId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "lastUpdatedByUserId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "version",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "assignedSupervisorUserId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "footageIds",
+                    "type": "varchar",
+                    "required": false,
+                    "array": true,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "uniq_station_case",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "caseNumber"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_status",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "status"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_officer",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "assignedOfficerUserId"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_review",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "reviewStatus"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_date",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "accidentDate"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "ft_case_title",
+                    "type": "fulltext",
+                    "status": "available",
+                    "columns": [
+                        "title"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "ft_case_location",
+                    "type": "fulltext",
+                    "status": "available",
+                    "columns": [
+                        "location"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "6a65bafc002d192bf43a",
+            "$permissions": [],
+            "databaseId": "6a65ba680015d256c655",
+            "name": "case_events",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "stationTeamId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "caseId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "caseNumber",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "eventType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "case_created",
+                        "case_updated",
+                        "location_confirmed",
+                        "road_geometry_detected",
+                        "scene_generated",
+                        "evidence_added",
+                        "evidence_removed",
+                        "reconstruction_started",
+                        "reconstruction_saved",
+                        "footage_recorded",
+                        "case_submitted",
+                        "changes_requested",
+                        "comment_added",
+                        "case_approved",
+                        "case_closed",
+                        "case_archived",
+                        "officer_assigned",
+                        "supervisor_assigned",
+                        "status_changed"
+                    ]
+                },
+                {
+                    "key": "sourceClient",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "field",
+                        "station",
+                        "system"
+                    ]
+                },
+                {
+                    "key": "actorUserId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actorName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actorRole",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "field_officer",
+                        "supervisor",
+                        "station_admin",
+                        "system"
+                    ]
+                },
+                {
+                    "key": "title",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "message",
+                    "type": "mediumtext",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "payloadJson",
+                    "type": "mediumtext",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "targetUserId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "requiresAction",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "resolved",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "caseVersion",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "occurredAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_case_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "caseId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_event",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "eventType"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_action",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "requiresAction",
+                        "resolved"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_actor_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "targetUserId",
+                        "requiresAction",
+                        "resolved"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "6a65bb1400100c00ad6f",
+            "$permissions": [],
+            "databaseId": "6a65ba680015d256c655",
+            "name": "audit_logs",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "stationTeamId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actorUserId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actorName",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actorRole",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "field_officer",
+                        "supervisor",
+                        "station_admin",
+                        "system"
+                    ]
+                },
+                {
+                    "key": "action",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "entityType",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "officer_profile",
+                        "case",
+                        "case_event",
+                        "reconstruction",
+                        "evidence",
+                        "footage",
+                        "report",
+                        "authentication",
+                        "system"
+                    ]
+                },
+                {
+                    "key": "entityId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "entityLabel",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "targetUserId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "outcome",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "success",
+                        "denied",
+                        "failed"
+                    ]
+                },
+                {
+                    "key": "severity",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "info",
+                        "warning",
+                        "critical"
+                    ]
+                },
+                {
+                    "key": "sourceClient",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "field",
+                        "station",
+                        "function",
+                        "system"
+                    ]
+                },
+                {
+                    "key": "requestId",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "ipAddress",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userAgent",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "detailsJson",
+                    "type": "mediumtext",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "occurredAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_station_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_actor_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "actorUserId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_target_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "targetUserId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_entity_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "entityType",
+                        "entityId",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_action_time",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "action",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_outcome",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "outcome",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_station_severity",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "stationTeamId",
+                        "severity",
+                        "occurredAt"
+                    ],
+                    "orders": [
+                        "asc",
+                        "asc",
+                        "asc"
+                    ]
+                },
+                {
+                    "key": "idx_request",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "requestId"
+                    ],
+                    "orders": [
+                        "asc"
+                    ]
+                }
+            ]
+        }
+    ],
+    "buckets": [
+        {
+            "$id": "6a65c16a002d8726e611",
+            "$permissions": [],
+            "fileSecurity": false,
+            "name": "officer-avatars",
+            "enabled": true,
+            "maximumFileSize": 50000000,
+            "allowedFileExtensions": [
+                "jpg",
+                "png",
+                "svg",
+                "gif",
+                "html",
+                "pdf",
+                "mp4"
+            ],
+            "compression": "none",
+            "encryption": true,
+            "antivirus": true
+        }
+    ],
+    "teams": [
+        {
+            "$id": "bindura-central99",
+            "$createdAt": "2026-07-25T18:09:47.013+00:00",
+            "$updatedAt": "2026-07-26T07:28:53.372+00:00",
+            "name": "Bindura Central Police Station",
+            "total": 2,
+            "prefs": {}
+        }
+    ]
+}

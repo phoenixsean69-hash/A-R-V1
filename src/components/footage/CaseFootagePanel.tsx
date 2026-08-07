@@ -9,7 +9,7 @@ import {
   Star,
   Trash2,
   Video,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import { AccidentCaseService } from "../../services/accidentCaseService";
 import { ReconstructionFootageService } from "../../services/reconstructionFootageService";

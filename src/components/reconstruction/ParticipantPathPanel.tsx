@@ -19,7 +19,7 @@ import {
   Route,
   Satellite,
   Trash2,
-} from "lucide-react";
+} from "../icons/materialIcons";
 
 import type {
   MovementAction,
@@ -1756,7 +1756,7 @@ export default function ParticipantPathPanel(
 
         .roadsafe-route-inspector__speed-grid input[type="range"] {
           width: 100%;
-          accent-color: #4d8cf5;
+          accent-color: #80ACFF;
         }
 
         .roadsafe-route-inspector__number-wrap {

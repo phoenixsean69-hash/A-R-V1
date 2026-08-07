@@ -1,0 +1,1521 @@
+/* RoadSafe precise new-scene construction workspace */
+
+body.roadsafe-case-wizard-open {
+  background: #030714;
+}
+
+.roadsafe-case-page-shell {
+  min-height: 100%;
+  background: #030714 !important;
+  color: #dbe7f7;
+}
+
+.roadsafe-case-page-shell > :first-child,
+.roadsafe-case-page-shell > header {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-case-wizard {
+  --rs-bg: #030714;
+  --rs-panel: #070d1a;
+  --rs-panel-raised: #091326;
+  --rs-panel-soft: #050b17;
+  --rs-border: #18243f;
+  --rs-border-strong: #29446f;
+  --rs-blue-border: #315b91;
+  --rs-blue-bg: #0b1b38;
+  --rs-blue: #4d8cf5;
+  --rs-blue-text: #8ebcff;
+  --rs-text: #edf4ff;
+  --rs-muted: #94a7c2;
+  --rs-subtle: #60728f;
+  --rs-green-border: #28645e;
+  --rs-green-bg: #0d2928;
+  --rs-green-text: #8ed6ca;
+  --rs-amber-border: #6d5523;
+  --rs-amber-bg: #241d10;
+  --rs-amber-text: #d9bd78;
+  --rs-red-border: #713646;
+  --rs-red-bg: #321722;
+  --rs-red-text: #e28b9d;
+
+  width: min(100%, 1520px);
+  margin: 0 auto;
+  padding: 12px 14px 40px;
+  color: var(--rs-text);
+}
+
+.roadsafe-case-wizard *,
+.roadsafe-case-wizard *::before,
+.roadsafe-case-wizard *::after {
+  box-sizing: border-box;
+}
+
+.roadsafe-case-wizard button,
+.roadsafe-case-wizard input,
+.roadsafe-case-wizard select,
+.roadsafe-case-wizard textarea {
+  font: inherit;
+}
+
+.roadsafe-case-wizard button {
+  min-width: 0;
+}
+
+.roadsafe-wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid var(--rs-border);
+  border-radius: 8px;
+  background: var(--rs-panel);
+}
+
+.roadsafe-wizard-progress > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid var(--rs-border);
+  border-radius: 6px;
+  background: var(--rs-panel-soft);
+}
+
+.roadsafe-wizard-progress > div.is-active {
+  border-color: var(--rs-blue-border);
+  background: var(--rs-blue-bg);
+}
+
+.roadsafe-wizard-progress > div.is-complete {
+  border-color: var(--rs-green-border);
+  background: var(--rs-green-bg);
+}
+
+.roadsafe-wizard-progress > div > span {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 5px;
+  background: #0a162b;
+  color: var(--rs-blue-text);
+}
+
+.roadsafe-wizard-progress > div.is-complete > span {
+  border-color: var(--rs-green-border);
+  background: #13423e;
+  color: var(--rs-green-text);
+}
+
+.roadsafe-wizard-progress > div > div {
+  min-width: 0;
+}
+
+.roadsafe-wizard-progress small,
+.roadsafe-wizard-progress strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-wizard-progress small {
+  color: var(--rs-subtle);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roadsafe-wizard-progress strong {
+  margin-top: 2px;
+  color: #cbd8eb;
+  font-size: 11px;
+}
+
+.roadsafe-wizard-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 8px;
+  background: var(--rs-panel);
+  padding: clamp(16px, 2vw, 26px);
+}
+
+.roadsafe-wizard-heading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rs-border);
+}
+
+.roadsafe-wizard-heading__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--rs-blue-border);
+  border-radius: 6px;
+  background: var(--rs-blue-bg);
+  color: var(--rs-blue-text);
+}
+
+.roadsafe-wizard-heading > div {
+  min-width: 0;
+}
+
+.roadsafe-wizard-heading p {
+  color: #79adfa;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.roadsafe-wizard-heading h2 {
+  margin: 4px 0 0;
+  color: var(--rs-text);
+  font-size: clamp(19px, 2vw, 26px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.roadsafe-wizard-heading > div > span {
+  display: block;
+  max-width: 900px;
+  margin-top: 6px;
+  color: var(--rs-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.roadsafe-wizard-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.roadsafe-wizard-field {
+  display: block;
+  min-width: 0;
+}
+
+.roadsafe-wizard-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.roadsafe-wizard-field > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #a9bdd7;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roadsafe-case-wizard input,
+.roadsafe-case-wizard select,
+.roadsafe-case-wizard textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid var(--rs-border);
+  border-radius: 6px;
+  outline: none;
+  background: #050f20;
+  color: var(--rs-text);
+  padding: 10px 12px;
+  box-shadow: none;
+  font-size: 12px;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.roadsafe-case-wizard textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.65;
+}
+
+.roadsafe-case-wizard input::placeholder,
+.roadsafe-case-wizard textarea::placeholder {
+  color: #586c87;
+}
+
+.roadsafe-case-wizard input:focus,
+.roadsafe-case-wizard select:focus,
+.roadsafe-case-wizard textarea:focus {
+  border-color: #4c84e7;
+  outline: 2px solid rgba(77, 140, 245, 0.15);
+  outline-offset: 1px;
+}
+
+.roadsafe-case-wizard input[readonly],
+.roadsafe-case-wizard input:disabled,
+.roadsafe-case-wizard select:disabled,
+.roadsafe-case-wizard textarea:disabled {
+  background: #071326;
+  color: #70839e;
+  cursor: not-allowed;
+}
+
+.roadsafe-case-wizard option {
+  background: #081426;
+  color: var(--rs-text);
+}
+
+.roadsafe-wizard-field > small.is-error {
+  display: block;
+  margin-top: 5px;
+  color: var(--rs-red-text);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.roadsafe-summary-workspace {
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+}
+
+.roadsafe-summary-workspace__header {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border-bottom: 1px solid var(--rs-border);
+  background: #081225;
+}
+
+.roadsafe-summary-workspace__header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.roadsafe-summary-workspace__header p {
+  color: #dce8f8;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.roadsafe-summary-workspace__header span {
+  display: block;
+  margin-top: 3px;
+  color: var(--rs-subtle);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.roadsafe-summary-workspace__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.roadsafe-summary-workspace__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 5px;
+  background: #0b1930;
+  color: #bfd0e8;
+  padding: 7px 10px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.roadsafe-summary-workspace__actions button:hover {
+  border-color: #3f6da8;
+  background: #10213d;
+}
+
+.roadsafe-summary-workspace__actions button.is-recording {
+  border-color: var(--rs-red-border);
+  background: var(--rs-red-bg);
+  color: var(--rs-red-text);
+}
+
+.roadsafe-summary-workspace__actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.roadsafe-summary-workspace > textarea {
+  min-height: 300px;
+  border: 0;
+  border-radius: 0;
+  background: #050b17;
+  padding: 15px;
+}
+
+.roadsafe-summary-workspace > textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px #4c84e7;
+}
+
+.roadsafe-summary-workspace__footer {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border-top: 1px solid var(--rs-border);
+  color: var(--rs-subtle);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.roadsafe-summary-workspace__footer > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.roadsafe-summary-workspace__footer .is-listening {
+  color: var(--rs-red-text);
+}
+
+.roadsafe-summary-workspace__footer .is-listening > span {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #ef5f79;
+  animation: roadsafe-pulse 1s ease-in-out infinite;
+}
+
+@keyframes roadsafe-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.roadsafe-location-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.roadsafe-location-sidebar,
+.roadsafe-location-main,
+.roadsafe-review-column,
+.roadsafe-review-preview {
+  min-width: 0;
+}
+
+.roadsafe-location-sidebar {
+  display: grid;
+  gap: 10px;
+}
+
+.roadsafe-info-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+}
+
+.roadsafe-info-card > header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--rs-border);
+  background: #081225;
+}
+
+.roadsafe-info-card > header > span {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--rs-blue-border);
+  border-radius: 5px;
+  background: var(--rs-blue-bg);
+  color: var(--rs-blue-text);
+}
+
+.roadsafe-info-card > header > strong {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #d7e4f5;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-info-card > header > em {
+  flex: 0 0 auto;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 4px;
+  background: #0a162b;
+  color: #8095b2;
+  padding: 4px 6px;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.roadsafe-info-card > header > em.is-good,
+.roadsafe-status-metric.is-good,
+.roadsafe-inline-alert.is-good {
+  border-color: var(--rs-green-border);
+  background: var(--rs-green-bg);
+  color: var(--rs-green-text);
+}
+
+.roadsafe-info-card > header > em.is-warning,
+.roadsafe-status-metric.is-warning,
+.roadsafe-inline-alert.is-warning {
+  border-color: var(--rs-amber-border);
+  background: var(--rs-amber-bg);
+  color: var(--rs-amber-text);
+}
+
+.roadsafe-info-card > header > em.is-danger,
+.roadsafe-status-metric.is-danger,
+.roadsafe-inline-alert.is-danger {
+  border-color: var(--rs-red-border);
+  background: var(--rs-red-bg);
+  color: var(--rs-red-text);
+}
+
+.roadsafe-info-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  padding: 11px;
+}
+
+.roadsafe-data-row {
+  min-width: 0;
+}
+
+.roadsafe-data-row > span {
+  display: block;
+  color: var(--rs-subtle);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.roadsafe-data-row > strong {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: #cbd8eb;
+  font-size: 10px;
+}
+
+.roadsafe-data-row > strong.is-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 9px;
+}
+
+.roadsafe-card-note {
+  color: var(--rs-muted);
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.roadsafe-coordinate-value {
+  overflow-wrap: anywhere;
+  color: var(--rs-blue-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.roadsafe-stacked-actions {
+  display: grid;
+  gap: 7px;
+}
+
+.roadsafe-coordinate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.roadsafe-coordinate-grid label > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--rs-subtle);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.roadsafe-inline-alert {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid var(--rs-blue-border);
+  border-radius: 6px;
+  background: var(--rs-blue-bg);
+  color: var(--rs-blue-text);
+  padding: 10px 11px;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.roadsafe-location-main {
+  display: grid;
+  gap: 10px;
+}
+
+.roadsafe-extraction-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(250px, 0.75fr);
+  gap: 10px;
+}
+
+.roadsafe-scene-dimensions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.roadsafe-confirm-button {
+  width: 100%;
+}
+
+.roadsafe-confirm-button.is-confirmed {
+  border-color: var(--rs-green-border) !important;
+  background: var(--rs-green-bg) !important;
+  color: var(--rs-green-text) !important;
+}
+
+.roadsafe-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.roadsafe-metric,
+.roadsafe-status-metric {
+  min-width: 0;
+  border: 1px solid var(--rs-border);
+  border-radius: 5px;
+  background: #050b17;
+  padding: 9px;
+}
+
+.roadsafe-metric > span,
+.roadsafe-status-metric > span {
+  display: block;
+  overflow: hidden;
+  color: var(--rs-subtle);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.roadsafe-metric > strong,
+.roadsafe-status-metric > strong {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: #d7e4f5;
+  font-size: 12px;
+}
+
+.roadsafe-anchor-readout {
+  border: 1px solid var(--rs-blue-border);
+  border-radius: 5px;
+  background: var(--rs-blue-bg);
+  padding: 9px;
+}
+
+.roadsafe-anchor-readout span,
+.roadsafe-anchor-readout strong {
+  display: block;
+}
+
+.roadsafe-anchor-readout span {
+  color: #6689bd;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roadsafe-anchor-readout strong {
+  margin-top: 4px;
+  color: var(--rs-blue-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 9px;
+}
+
+.roadsafe-geometry-source-banner {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  border: 1px solid var(--rs-green-border);
+  border-radius: 7px;
+  background: var(--rs-green-bg);
+  padding: 11px 13px;
+  color: var(--rs-green-text);
+}
+
+.roadsafe-geometry-source-banner > svg {
+  flex: 0 0 auto;
+}
+
+.roadsafe-geometry-source-banner > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.roadsafe-geometry-source-banner strong,
+.roadsafe-geometry-source-banner span {
+  display: block;
+}
+
+.roadsafe-geometry-source-banner strong {
+  font-size: 10px;
+}
+
+.roadsafe-geometry-source-banner span {
+  margin-top: 2px;
+  color: #6faea5;
+  font-size: 8px;
+}
+
+.roadsafe-environment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.roadsafe-environment-grid > button {
+  position: relative;
+  min-height: 118px;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+  padding: 14px;
+  color: var(--rs-muted);
+  text-align: left;
+}
+
+.roadsafe-environment-grid > button:hover {
+  border-color: #3d659b;
+  background: #0a162b;
+}
+
+.roadsafe-environment-grid > button.is-selected {
+  border-color: var(--rs-blue-border);
+  background: var(--rs-blue-bg);
+}
+
+.roadsafe-environment-grid__check {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 4px;
+  background: #091326;
+  color: var(--rs-blue-text);
+}
+
+.roadsafe-environment-grid > button strong,
+.roadsafe-environment-grid > button small {
+  display: block;
+}
+
+.roadsafe-environment-grid > button strong {
+  margin-top: 10px;
+  color: #dce7f6;
+  font-size: 10px;
+}
+
+.roadsafe-environment-grid > button small {
+  margin-top: 5px;
+  color: var(--rs-subtle);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.roadsafe-geometry-workspace {
+  display: grid;
+  gap: 11px;
+  margin-top: 12px;
+}
+
+.roadsafe-geometry-summary,
+.roadsafe-detection-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roadsafe-settings-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 330px);
+  gap: 9px;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+  padding: 11px;
+}
+
+.roadsafe-preview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+  align-items: start;
+  gap: 10px;
+}
+
+.roadsafe-preview-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.roadsafe-road-settings {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+  padding: 12px;
+}
+
+.roadsafe-road-settings > div:first-child > p {
+  color: #d7e4f5;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roadsafe-road-settings > div:first-child > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--rs-subtle);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.roadsafe-road-settings__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.roadsafe-number-field {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.roadsafe-number-field input {
+  min-width: 0;
+  flex: 1;
+}
+
+.roadsafe-number-field small {
+  flex: 0 0 auto;
+  color: var(--rs-subtle);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.roadsafe-review-grid {
+  display: grid;
+  grid-template-columns: minmax(290px, 390px) minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+  margin-top: 16px;
+}
+
+.roadsafe-review-column,
+.roadsafe-review-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.roadsafe-summary-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-panel-soft);
+}
+
+.roadsafe-summary-card > h3 {
+  margin: 0;
+  border-bottom: 1px solid var(--rs-border);
+  background: #081225;
+  color: #d7e4f5;
+  padding: 10px 12px;
+  font-size: 10px;
+}
+
+.roadsafe-summary-card > div {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.roadsafe-summary-row > span,
+.roadsafe-summary-row > strong {
+  display: block;
+}
+
+.roadsafe-summary-row > span {
+  color: var(--rs-subtle);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.roadsafe-summary-row > strong {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: #cbd8eb;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.roadsafe-review-summary {
+  max-height: 210px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  color: #b8c8dd;
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.roadsafe-precision-checklist {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--rs-green-border);
+  border-radius: 7px;
+  background: var(--rs-green-bg);
+  padding: 12px;
+}
+
+.roadsafe-precision-checklist > div {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--rs-green-text);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.roadsafe-precision-checklist svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.roadsafe-neutral-preview {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: #020611;
+}
+
+.roadsafe-neutral-preview__scene {
+  position: relative;
+  min-height: 330px;
+  overflow: hidden;
+}
+
+.roadsafe-neutral-preview__anchor {
+  position: absolute;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.roadsafe-neutral-preview__anchor > span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 4px solid white;
+  border-radius: 999px;
+  background: #dc2626;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+.roadsafe-neutral-preview__anchor > small {
+  display: block;
+  margin-top: 5px;
+  transform: translateX(-38%);
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 4px;
+  background: #050b17;
+  color: #f4cad3;
+  padding: 4px 7px;
+  font-size: 7px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.roadsafe-neutral-preview > footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  border-top: 1px solid var(--rs-border);
+  background: #070d1a;
+  padding: 11px;
+}
+
+.roadsafe-wizard-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rs-border);
+}
+
+.roadsafe-case-wizard .ui-button,
+.roadsafe-case-wizard .ui-button-primary {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 6px;
+  padding: 9px 13px;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.roadsafe-case-wizard .ui-button {
+  border: 1px solid var(--rs-border-strong);
+  background: #0a162b;
+  color: #c3d2e7;
+}
+
+.roadsafe-case-wizard .ui-button:hover {
+  border-color: #3e6eaf;
+  background: #10213d;
+}
+
+.roadsafe-case-wizard .ui-button-primary {
+  border: 1px solid #3f78c5;
+  background: #173c78;
+  color: white;
+}
+
+.roadsafe-case-wizard .ui-button-primary:hover {
+  background: #1b4789;
+}
+
+.roadsafe-case-wizard button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Map */
+.roadsafe-scene-map {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border);
+  border-radius: 7px;
+  background: var(--rs-bg);
+}
+
+.roadsafe-scene-map__viewport {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: #020611;
+}
+
+.roadsafe-scene-map .maplibregl-canvas {
+  outline: none;
+}
+
+.roadsafe-scene-map__accident-marker {
+  width: 29px;
+  height: 29px;
+  border: 5px solid white;
+  border-radius: 999px;
+  background: #dc152d;
+  box-shadow: 0 0 0 2px rgba(3, 7, 18, 0.6);
+  cursor: grab;
+}
+
+.roadsafe-scene-map__accident-marker:active {
+  cursor: grabbing;
+}
+
+.roadsafe-scene-map__live-marker {
+  width: 16px;
+  height: 16px;
+  border: 3px solid white;
+  border-radius: 999px;
+  background: #2563eb;
+  box-shadow: 0 0 0 1px rgba(3, 7, 18, 0.55);
+}
+
+.roadsafe-scene-map__search {
+  position: absolute;
+  z-index: 35;
+  top: 10px;
+  left: 10px;
+  width: min(420px, calc(100% - 150px));
+}
+
+.roadsafe-scene-map__search-form {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 6px;
+  background: rgba(5, 11, 23, 0.96);
+  padding: 5px 6px 5px 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.roadsafe-scene-map__search-form > svg {
+  flex: 0 0 auto;
+  color: #7facf0;
+}
+
+.roadsafe-scene-map__search-form input {
+  min-height: 31px;
+  flex: 1;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 4px 2px !important;
+  font-size: 10px !important;
+  outline: none !important;
+}
+
+.roadsafe-scene-map__search-form > button:not(.roadsafe-scene-map__search-submit) {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #7286a3;
+}
+
+.roadsafe-scene-map__search-submit {
+  display: inline-flex;
+  min-width: 54px;
+  min-height: 29px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3f78c5;
+  border-radius: 4px;
+  background: #173c78;
+  color: white;
+  padding: 6px 9px;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.roadsafe-scene-map__search-results {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 6px;
+  margin-top: 5px;
+  background: #050b17;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.44);
+}
+
+.roadsafe-scene-map__search-results > button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid #111e36;
+  border-radius: 0;
+  background: transparent;
+  color: #c7d5e8;
+  padding: 10px;
+  text-align: left;
+}
+
+.roadsafe-scene-map__search-results > button:last-child {
+  border-bottom: 0;
+}
+
+.roadsafe-scene-map__search-results > button:hover {
+  background: #0a162b;
+}
+
+.roadsafe-scene-map__search-results > button > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #7facf0;
+}
+
+.roadsafe-scene-map__search-results > button > span {
+  min-width: 0;
+}
+
+.roadsafe-scene-map__search-results strong,
+.roadsafe-scene-map__search-results small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roadsafe-scene-map__search-results strong {
+  color: #dce8f8;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.roadsafe-scene-map__search-results small {
+  margin-top: 2px;
+  color: var(--rs-subtle);
+  font-size: 7px;
+  line-height: 1.4;
+}
+
+.roadsafe-scene-map__search-error {
+  color: var(--rs-red-text);
+  padding: 10px;
+  font-size: 8px;
+}
+
+.roadsafe-scene-map__modes {
+  position: absolute;
+  z-index: 30;
+  top: 10px;
+  right: 48px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 5px;
+  background: rgba(5, 11, 23, 0.96);
+}
+
+.roadsafe-scene-map__modes button {
+  min-height: 31px;
+  border: 0;
+  border-right: 1px solid var(--rs-border);
+  border-radius: 0;
+  background: transparent;
+  color: #879ab5;
+  padding: 6px 9px;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.roadsafe-scene-map__modes button:last-child {
+  border-right: 0;
+}
+
+.roadsafe-scene-map__modes button.is-active {
+  background: #173c78;
+  color: white;
+}
+
+.roadsafe-scene-map__instruction {
+  position: absolute;
+  z-index: 25;
+  top: 60px;
+  left: 10px;
+  display: flex;
+  max-width: 390px;
+  align-items: flex-start;
+  gap: 7px;
+  border: 1px solid var(--rs-blue-border);
+  border-radius: 5px;
+  background: rgba(5, 11, 23, 0.93);
+  color: #c3d2e7;
+  padding: 8px 10px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.roadsafe-scene-map__instruction svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--rs-blue-text);
+}
+
+.roadsafe-scene-map__area-controls {
+  position: absolute;
+  z-index: 30;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roadsafe-scene-map__area-controls button {
+  min-height: 32px;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 5px;
+  background: rgba(5, 11, 23, 0.96);
+  color: #c3d2e7;
+  padding: 7px 10px;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.roadsafe-scene-map__area-controls button.is-active {
+  border-color: #3f78c5;
+  background: #173c78;
+  color: white;
+}
+
+.roadsafe-scene-map__dimensions {
+  position: absolute;
+  z-index: 25;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid var(--rs-border-strong);
+  border-radius: 5px;
+  background: rgba(5, 11, 23, 0.94);
+  color: #cbd8eb;
+  padding: 7px 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 8px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.roadsafe-scene-map__loading {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(3, 7, 20, 0.5);
+  color: #d9e6f8;
+  font-size: 9px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.roadsafe-scene-map__footer {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  min-height: 42px;
+  border-top: 1px solid var(--rs-border);
+  background: #070d1a;
+  color: var(--rs-subtle);
+  padding: 8px 11px;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid var(--rs-border-strong);
+  background: #050b17;
+  box-shadow: none;
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-group button {
+  min-height: 29px;
+  background-color: #050b17;
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-group button + button {
+  border-top-color: var(--rs-border);
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.72);
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-attrib {
+  background: rgba(5, 11, 23, 0.86);
+  color: #788ca7;
+}
+
+.roadsafe-scene-map .maplibregl-ctrl-attrib a {
+  color: #8ebcff;
+}
+
+@media (max-width: 1180px) {
+  .roadsafe-environment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roadsafe-preview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-road-settings__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .roadsafe-location-layout,
+  .roadsafe-review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-location-sidebar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roadsafe-extraction-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .roadsafe-case-wizard {
+    padding: 8px 8px 28px;
+  }
+
+  .roadsafe-wizard-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roadsafe-wizard-form-grid,
+  .roadsafe-location-sidebar,
+  .roadsafe-extraction-grid,
+  .roadsafe-geometry-summary,
+  .roadsafe-detection-metrics,
+  .roadsafe-road-settings__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-environment-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-neutral-preview > footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-scene-map__search {
+    width: calc(100% - 20px);
+  }
+
+  .roadsafe-scene-map__modes {
+    top: 57px;
+    right: auto;
+    left: 10px;
+  }
+
+  .roadsafe-scene-map__instruction {
+    top: 102px;
+    max-width: calc(100% - 20px);
+  }
+
+  .roadsafe-scene-map__dimensions {
+    display: none;
+  }
+
+  .roadsafe-wizard-actions > * {
+    flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 520px) {
+  .roadsafe-wizard-panel {
+    padding: 13px;
+  }
+
+  .roadsafe-wizard-progress > div {
+    min-height: 50px;
+    padding: 7px;
+  }
+
+  .roadsafe-wizard-progress > div > span {
+    width: 25px;
+    height: 25px;
+  }
+
+  .roadsafe-summary-workspace__actions,
+  .roadsafe-summary-workspace__actions button {
+    width: 100%;
+  }
+
+  .roadsafe-coordinate-grid,
+  .roadsafe-scene-dimensions,
+  .roadsafe-metric-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roadsafe-scene-map__area-controls {
+    right: 10px;
+  }
+
+  .roadsafe-scene-map__area-controls button {
+    flex: 1;
+  }
+}

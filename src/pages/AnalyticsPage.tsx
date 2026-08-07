@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { Bar, Doughnut, Line, PolarArea, Radar } from "react-chartjs-2";
-import { Activity, AlertTriangle, Gauge, MapPinned, type LucideIcon } from "lucide-react";
+import { Activity, AlertTriangle, Gauge, MapPinned, type LucideIcon } from "../components/icons/materialIcons";
 import type { ReactNode } from "react";
 import { WorkspaceDataService } from "../services/workspaceDataService";
 
@@ -177,12 +177,12 @@ export default function AnalyticsPage() {
 
       <section className="ui-panel overflow-hidden">
         <div className="ui-panel-header"><div><h2 className="ui-panel-title">Junction risk ranking</h2><p className="mt-1 text-[9px] text-slate-600">Accident volume, casualties and registered risk level</p></div></div>
-        <div className="divide-y divide-[#17243d]">
+        <div className="divide-y divide-[#202020]">
           {junctions.map((junction, index) => (
             <div key={junction.id} className="grid gap-3 px-4 py-3 text-[10px] md:grid-cols-[32px_1fr_160px_100px_100px_90px] md:items-center">
               <span className="text-slate-600">#{index + 1}</span>
               <div><p className="font-semibold text-slate-300">{junction.name}</p><p className="mt-1 text-[8px] text-slate-600">{junction.roadType} · {junction.city}</p></div>
-              <div className="h-1.5 overflow-hidden rounded bg-[#17243d]"><div className="h-full bg-[#4f8ce6]" style={{ width: `${(junction.accidents / maxJunctionAccidents) * 100}%` }} /></div>
+              <div className="h-1.5 overflow-hidden rounded bg-[#202020]"><div className="h-full bg-[#4f8ce6]" style={{ width: `${(junction.accidents / maxJunctionAccidents) * 100}%` }} /></div>
               <span className="text-slate-400">{junction.accidents} accidents</span>
               <span className="text-slate-400">{junction.injuries} injuries</span>
               <span className={junction.riskLevel === "High" ? "text-red-400" : junction.riskLevel === "Medium" ? "text-amber-400" : "text-slate-400"}>{junction.riskLevel}</span>

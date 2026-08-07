@@ -7,7 +7,7 @@ import {
   Star,
   Trash2,
   Video,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import FootagePlayer from "../components/footage/FootagePlayer";
 import { AccidentCaseService } from "../services/accidentCaseService";
 import { ReconstructionFootageService } from "../services/reconstructionFootageService";
@@ -99,7 +99,7 @@ export default function FootagePage() {
 
           <aside className="ui-panel overflow-hidden">
             <div className="ui-panel-header"><h2 className="ui-panel-title">Saved recordings</h2></div>
-            <div className="max-h-[700px] divide-y divide-[#17243d] overflow-y-auto">
+            <div className="max-h-[700px] divide-y divide-[#202020] overflow-y-auto">
               {footage.map((record) => {
                 const accidentCase = AccidentCaseService.getById(record.caseId);
                 const active = record.id === selected?.id;
@@ -108,7 +108,7 @@ export default function FootagePage() {
                     <button
                       type="button"
                       onClick={() => setSelectedId(record.id)}
-                      className="flex w-full gap-3 p-3 text-left hover:bg-[#0c1426]"
+                      className="flex w-full gap-3 p-3 text-left hover:bg-[#383838]"
                     >
                       <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md border border-[#1d2c4b] bg-[#060a13]">
                         {record.thumbnailDataUrl ? (

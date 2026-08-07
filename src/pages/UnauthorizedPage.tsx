@@ -1,7 +1,7 @@
 import {
   ArrowLeft,
   ShieldX,
-} from "lucide-react";
+} from "../components/icons/materialIcons";
 import { Link } from "react-router-dom";
 
 export default function UnauthorizedPage() {
