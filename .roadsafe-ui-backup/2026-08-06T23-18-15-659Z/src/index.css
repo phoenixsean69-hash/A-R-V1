@@ -1663,7 +1663,7 @@
 .reconstruction-module :is(div, section, aside, article, label)[class*="bg-indigo-"],
 .reconstruction-module :is(div, section, aside, article, label)[class*="bg-violet-"],
 .reconstruction-module :is(div, section, aside, article, label)[class*="bg-purple-"] {
-  background: #071326 !important;
+  background: #292929 !important;
 }
 
 .reconstruction-module [class*="bg-gradient-"] {
@@ -2191,7 +2191,7 @@
   height: 32px;
   border: 1px solid #1a304f;
   border-radius: .28rem;
-  background: #071326;
+  background: #292929;
   padding: 0 .4rem;
   color: #dce7f7;
   font-size: .5rem;
@@ -2282,7 +2282,7 @@
   border: 1px solid #142a46;
   border-radius: .34rem;
   overflow: hidden;
-  background: #071326;
+  background: #292929;
 }
 
 .premium-physics-card__metrics > div {
@@ -2343,7 +2343,7 @@
   overflow: hidden;
   border: 1px solid #1a304e;
   border-radius: .36rem;
-  background: #071326;
+  background: #292929;
   padding: .48rem;
 }
 
@@ -2401,7 +2401,7 @@
   overflow: hidden;
   border: 1px solid #182d49;
   border-radius: .34rem;
-  background: #071326;
+  background: #292929;
 }
 
 .premium-hypotheses-card__row {
@@ -2478,7 +2478,7 @@
   overflow: hidden;
   border: 1px solid #182d49;
   border-radius: .34rem;
-  background: #071326;
+  background: #292929;
 }
 
 .premium-documentation-card__rows > div {
@@ -2593,7 +2593,7 @@
 .reconstruction-detail-modal__body :is(section, article, aside, div)[class*="bg-white"],
 .reconstruction-detail-modal__body :is(section, article, aside, div)[class*="bg-gray-"],
 .reconstruction-detail-modal__body :is(section, article, aside, div)[class*="bg-slate-"] {
-  background-color: #071326 !important;
+  background-color: #292929 !important;
 }
 
 .attached-officer-notes {
@@ -2602,7 +2602,7 @@
   margin-bottom: .75rem !important;
   border: 1px solid #1b3153;
   border-radius: .45rem;
-  background: #071326;
+  background: #292929;
   padding: .7rem;
 }
 

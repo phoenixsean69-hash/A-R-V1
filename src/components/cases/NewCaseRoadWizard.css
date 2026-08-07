@@ -264,7 +264,7 @@ body.roadsafe-case-wizard-open {
 .roadsafe-case-wizard input:disabled,
 .roadsafe-case-wizard select:disabled,
 .roadsafe-case-wizard textarea:disabled {
-  background: #071326;
+  background: #292929;
   color: #70839e;
   cursor: not-allowed;
 }

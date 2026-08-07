@@ -1,0 +1,12 @@
+{
+  "backupRoot": "C:\\Users\\nooklyweb\\Desktop\\A-R-V1\\.roadsafe-ui-backup\\2026-08-07T07-11-40-219Z",
+  "files": [
+    "src/components/reconstruction/SceneSettingsPanel.tsx",
+    "src/components/reconstruction/SceneSettingsPanel.css"
+  ],
+  "existedBefore": {
+    "src/components/reconstruction/SceneSettingsPanel.tsx": true,
+    "src/components/reconstruction/SceneSettingsPanel.css": false
+  },
+  "installedAt": "2026-08-07T07:12:14.054Z"
+}
