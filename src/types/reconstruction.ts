@@ -104,6 +104,11 @@ export interface ReconstructionEntity {
    */
 
   assetId?: ReconstructionParticipantAssetId;
+  /**
+   * Visual/model scale controlled by the reconstruction gizmo.
+   * This does NOT change participant physics dimensions or mass.
+   */
+  visualScale?: number;
   type: ReconstructionEntityType;
   colour: ReconstructionEntityColour;
   estimatedSpeedKmh: number;

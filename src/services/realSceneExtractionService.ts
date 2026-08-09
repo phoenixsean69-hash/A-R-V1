@@ -19,7 +19,8 @@ const OVERPASS_ENDPOINTS = Array.from(
   new Set(
     [
       import.meta.env.VITE_OVERPASS_URL,
-      "https://overpass.kumi.systems/api/interpreter",
+      "https://overpass.private.coffee/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
       "https://overpass-api.de/api/interpreter",
     ].filter(
       (value): value is string =>
@@ -31,7 +32,7 @@ const OVERPASS_ENDPOINTS = Array.from(
 const RESPONSE_CACHE_KEY =
   "roadsafe-real-scene-overpass-cache-v3";
 const CACHE_MAX_AGE_MS = 20 * 60 * 1000;
-const REQUEST_TIMEOUT_MS = 13_000;
+const REQUEST_TIMEOUT_MS = 30_000;
 const ENDPOINT_STAGGER_MS = 220;
 
 interface OverpassElement {
@@ -2104,6 +2105,24 @@ export const RealSceneExtractionService = {
       geometry,
       warnings,
     };
+  },
+
+  /**
+   * Seed the exact source response already acquired and archived by the
+   * forensic pipeline. This prevents a second Overpass request during
+   * normalisation and guarantees that archived evidence and rendered geometry
+   * come from the same payload.
+   */
+  seedResponse(
+    selection: RealSceneAreaSelection,
+    response: OverpassResponse,
+  ): void {
+    writeCache(
+      cacheKey(
+        selection,
+      ),
+      response,
+    );
   },
 
   clearCache(): void {

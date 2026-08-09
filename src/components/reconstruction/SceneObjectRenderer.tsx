@@ -236,7 +236,7 @@ export default function SceneObjectRenderer({
       tracePoints,
       object.traceSmoothing ?? 0.85,
     );
-    const width = Math.max(0.2, object.traceWidth ?? 0.75) * object.scale;
+    const width = Math.max(0.2, object.traceWidth ?? 0.75);
     const doubleTrace = object.traceStyle === "Double";
     const offset = Math.max(0.45, width * 1.8);
     const secondPath = doubleTrace
@@ -253,6 +253,10 @@ export default function SceneObjectRenderer({
         preserveAspectRatio="none"
         aria-label={object.label}
       >
+<g
+  data-roadsafe-trace-transform="true"
+  transform={`translate(${object.position.x} ${object.position.y}) rotate(${object.rotation}) scale(${object.scale}) translate(${-object.position.x} ${-object.position.y})`}
+>
         <path
           data-scene-interactive="true"
           d={primaryPath}
@@ -292,7 +296,7 @@ export default function SceneObjectRenderer({
             pointerEvents="none"
             opacity="0.82"
           />
-        )}
+        )}</g>
       </svg>
     );
   }

@@ -1,0 +1,332 @@
+.roadsafe-transform-gizmo {
+  position: absolute;
+  z-index: 88;
+
+  width: 0;
+  height: 0;
+
+  pointer-events: none;
+
+  transform:
+    translate(-50%, -50%);
+
+  transform-origin:
+    center center;
+
+  --gizmo-orange:
+    #e8872d;
+
+  --gizmo-x:
+    #b5534f;
+
+  --gizmo-y:
+    #5d9b66;
+}
+
+.roadsafe-transform-gizmo__label {
+  position: absolute;
+
+  left: 15px;
+  top: 15px;
+
+  min-width: max-content;
+
+  padding:
+    3px 6px;
+
+  border:
+    1px solid #494949;
+
+  border-left:
+    2px solid #e8872d;
+
+  border-radius:
+    2px;
+
+  background:
+    rgba(41,41,41,.94);
+
+  color:
+    #d4d4d4;
+
+  font-size:
+    7px;
+
+  font-weight:
+    760;
+
+  letter-spacing:
+    .035em;
+
+  pointer-events:
+    none;
+}
+
+.roadsafe-transform-gizmo__axis {
+  position: absolute;
+
+  display: block;
+
+  pointer-events:
+    none;
+}
+
+.roadsafe-transform-gizmo__axis--x {
+  left: -4px;
+  top: -1px;
+
+  width: 44px;
+  height: 2px;
+
+  background:
+    var(--gizmo-x);
+
+  box-shadow:
+    36px 0 0 -1px
+    var(--gizmo-x);
+}
+
+.roadsafe-transform-gizmo__axis--x::after {
+  content: "";
+
+  position: absolute;
+
+  right: -1px;
+  top: -4px;
+
+  border-left:
+    8px solid
+    var(--gizmo-x);
+
+  border-top:
+    5px solid
+    transparent;
+
+  border-bottom:
+    5px solid
+    transparent;
+}
+
+.roadsafe-transform-gizmo__axis--y {
+  left: -1px;
+  top: -40px;
+
+  width: 2px;
+  height: 44px;
+
+  background:
+    var(--gizmo-y);
+}
+
+.roadsafe-transform-gizmo__axis--y::after {
+  content: "";
+
+  position: absolute;
+
+  left: -4px;
+  top: -1px;
+
+  border-bottom:
+    8px solid
+    var(--gizmo-y);
+
+  border-left:
+    5px solid
+    transparent;
+
+  border-right:
+    5px solid
+    transparent;
+}
+
+.roadsafe-transform-gizmo__handle {
+  position: absolute;
+
+  display: block;
+
+  padding: 0;
+
+  border:
+    1px solid #171717;
+
+  background:
+    #eeeeee;
+
+  pointer-events:
+    auto;
+
+  touch-action:
+    none;
+
+  cursor:
+    grab;
+
+  box-shadow:
+    0 1px 3px
+    rgba(0,0,0,.5);
+}
+
+.roadsafe-transform-gizmo__handle:active {
+  cursor:
+    grabbing;
+}
+
+.roadsafe-transform-gizmo__handle--move {
+  left: -6px;
+  top: -6px;
+
+  width: 12px;
+  height: 12px;
+
+  border-radius:
+    2px;
+
+  border-color:
+    #e8872d;
+
+  background:
+    #303030;
+}
+
+.roadsafe-transform-gizmo__rotate-ring {
+  position: absolute;
+
+  left: -27px;
+  top: -27px;
+
+  width: 54px;
+  height: 54px;
+
+  border:
+    2px solid
+    rgba(232,135,45,.82);
+
+  border-radius:
+    50%;
+
+  background:
+    transparent;
+
+  pointer-events:
+    none;
+}
+
+.roadsafe-transform-gizmo__rotate-ring::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 5px;
+
+  border:
+    1px dashed
+    rgba(232,135,45,.28);
+
+  border-radius:
+    50%;
+}
+
+.roadsafe-transform-gizmo__handle--rotate {
+  left: 19px;
+  top: -5px;
+
+  width: 11px;
+  height: 11px;
+
+  border-radius:
+    50%;
+
+  border-color:
+    #e8872d;
+
+  background:
+    #e8872d;
+}
+
+.roadsafe-transform-gizmo__scale-box {
+  position: absolute;
+
+  left: -18px;
+  top: -18px;
+
+  width: 36px;
+  height: 36px;
+
+  border:
+    1px solid
+    rgba(232,135,45,.86);
+
+  background:
+    rgba(232,135,45,.035);
+
+  pointer-events:
+    none;
+}
+
+.roadsafe-transform-gizmo__scale-box::before,
+.roadsafe-transform-gizmo__scale-box::after {
+  content: "";
+
+  position: absolute;
+
+  background:
+    rgba(232,135,45,.45);
+}
+
+.roadsafe-transform-gizmo__scale-box::before {
+  left: 50%;
+  top: 0;
+
+  width: 1px;
+  height: 100%;
+}
+
+.roadsafe-transform-gizmo__scale-box::after {
+  left: 0;
+  top: 50%;
+
+  width: 100%;
+  height: 1px;
+}
+
+.roadsafe-transform-gizmo__handle--scale {
+  left: 14px;
+  top: 14px;
+
+  width: 10px;
+  height: 10px;
+
+  border-radius:
+    1px;
+
+  border-color:
+    #e8872d;
+
+  background:
+    #e8872d;
+
+  cursor:
+    nwse-resize;
+}
+
+.roadsafe-transform-gizmo.is-disabled {
+  opacity:
+    .38;
+
+  filter:
+    grayscale(.35);
+}
+
+.roadsafe-transform-gizmo.is-disabled
+.roadsafe-transform-gizmo__handle {
+  cursor:
+    not-allowed;
+}
+
+[data-roadsafe-real-feature-selected="true"] {
+  filter:
+    drop-shadow(
+      0 0 1px
+      #e8872d
+    );
+}

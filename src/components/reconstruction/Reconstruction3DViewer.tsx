@@ -1,8 +1,11 @@
 import { memo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";import {
-  disposeObjectTree,  loadRealisticSceneObjectModel,
+import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import {
+  disposeObjectTree,
+  loadRealisticSceneObjectModel,
 } from "../../services/realisticSceneAssetService";
 import {
   usesGeneratedRoad,
@@ -60,6 +63,26 @@ interface Reconstruction3DViewerProps {
   workspaceMode?: boolean;
   selectedParticipantId?: string | null;
   onSelectParticipant?: (participantId: string) => void;
+  selectedSceneObjectId?: string | null;
+  onSelectSceneObject?: (objectId: string) => void;
+
+  onTransformParticipant?: (
+    participantId: string,
+    next: {
+      position: ReconstructionPosition;
+      rotationDegrees: number;
+      visualScale: number;
+    },
+  ) => void;
+
+  onTransformSceneObject?: (
+    objectId: string,
+    next: {
+      position: ReconstructionPosition;
+      rotationDegrees: number;
+      scaleMultiplier: number;
+    },
+  ) => void;
   cameraCycleToken?: number;
   workspaceTimeSeconds?: number;
   workspaceTimeSourceRef?: { readonly current: number };
@@ -392,6 +415,10 @@ function Reconstruction3DViewer({
   workspaceMode = false,
   selectedParticipantId = null,
   onSelectParticipant,
+  selectedSceneObjectId = null,
+  onSelectSceneObject,
+  onTransformParticipant,
+  onTransformSceneObject,
   cameraCycleToken = 0,
   workspaceTimeSeconds,
   workspaceTimeSourceRef,
@@ -412,6 +439,16 @@ function Reconstruction3DViewer({
   const cameraModeRef = useRef<CameraMode>("Orbit");
   const selectedRef = useRef<string | null>(selectedParticipantId);
   const onSelectRef = useRef(onSelectParticipant);
+  const selectedSceneObjectRef =
+    useRef<string | null>(
+      selectedSceneObjectId,
+    );
+  const onSelectSceneObjectRef =
+    useRef(onSelectSceneObject);
+  const onTransformParticipantRef =
+    useRef(onTransformParticipant);
+  const onTransformSceneObjectRef =
+    useRef(onTransformSceneObject);
   const onDropParticipantAssetRef =
     useRef(onDropParticipantAsset);
   const onDropSceneObjectRef =
@@ -467,6 +504,25 @@ function Reconstruction3DViewer({
     onSelectRef.current = onSelectParticipant;
   }, [onSelectParticipant]);
   useEffect(() => {
+    selectedSceneObjectRef.current =
+      selectedSceneObjectId;
+  }, [selectedSceneObjectId]);
+
+  useEffect(() => {
+    onSelectSceneObjectRef.current =
+      onSelectSceneObject;
+  }, [onSelectSceneObject]);
+
+  useEffect(() => {
+    onTransformParticipantRef.current =
+      onTransformParticipant;
+  }, [onTransformParticipant]);
+
+  useEffect(() => {
+    onTransformSceneObjectRef.current =
+      onTransformSceneObject;
+  }, [onTransformSceneObject]);
+  useEffect(() => {
     if (!controlledWorkspace || workspaceTimeSeconds === undefined) return;
     workspaceTimeRef.current = workspaceTimeSeconds;
     timeRef.current = workspaceTimeSeconds;
@@ -515,13 +571,12 @@ function Reconstruction3DViewer({
     controls.minDistance = 4;
     controls.maxDistance = Math.max(width, height) * 1.7;
     controls.maxPolarAngle = Math.PI / 2.02;
-    if (workspaceTool === "Move") {
-      controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
-    } else if (workspaceTool === "Scale") {
-      controls.mouseButtons.LEFT = THREE.MOUSE.DOLLY;
-    } else {
-      controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
-    }
+    /*
+     * G / R / S belong to the selected entity, not the camera.
+     * Camera navigation keeps ordinary OrbitControls behaviour.
+     */
+    controls.mouseButtons.LEFT =
+      THREE.MOUSE.ROTATE;
 
     scene.add(
       new THREE.HemisphereLight(
@@ -565,6 +620,16 @@ function Reconstruction3DViewer({
     }
 
     const participantEntries = new Map<string, ParticipantRenderEntry>();
+    const sceneObjectEntries =
+      new Map<
+        string,
+        {
+          object:
+            ReconstructionSceneObject;
+          holder:
+            THREE.Group;
+        }
+      >();
     let disposed = false;
     let loadedAssets = 0;
     let failedAssets = 0;
@@ -582,6 +647,18 @@ function Reconstruction3DViewer({
 
     reconstruction.vehicles.forEach((participant) => {
       const entry = createParticipantHolder(participant);
+
+      entry.holder.scale.setScalar(
+        Math.max(
+          0.2,
+          Math.min(
+            5,
+            participant.visualScale ??
+              1,
+          ),
+        ),
+      );
+
       scene.add(entry.holder);
       participantEntries.set(participant.id, entry);
       void loadPremiumParticipantModel(participant)
@@ -669,15 +746,80 @@ function Reconstruction3DViewer({
         .filter((object) => object.visible)
         .forEach((object) => {
           if (object.tracePoints && object.tracePoints.length > 1) {
-            const line = new THREE.Line(
-              new THREE.BufferGeometry().setFromPoints(
-                object.tracePoints.map((point) =>
-                  worldPosition(point, width, height, 0.12),
+            const holder =
+              new THREE.Group();
+
+            holder.userData.sceneObjectId =
+              object.id;
+
+            const origin =
+              worldPosition(
+                object.position,
+                width,
+                height,
+                0.12,
+              );
+
+            const line =
+              new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(
+                  object.tracePoints.map(
+                    (point) =>
+                      worldPosition(
+                        point,
+                        width,
+                        height,
+                        0.12,
+                      ).sub(
+                        origin,
+                      ),
+                  ),
                 ),
+                new THREE.LineBasicMaterial({
+                  color:
+                    0x292929,
+                }),
+              );
+
+            line.scale.setScalar(
+              Math.max(
+                0.2,
+                object.scale,
               ),
-              new THREE.LineBasicMaterial({ color: 0x292929 }),
             );
-            scene.add(line);
+
+            holder.position.copy(
+              origin,
+            );
+
+            holder.rotation.y =
+              -THREE.MathUtils.degToRad(
+                object.rotation,
+              );
+
+            holder.add(
+              line,
+            );
+
+            holder.traverse(
+              (child) => {
+                child.userData.sceneObjectId =
+                  object.id;
+              },
+            );
+
+            scene.add(
+              holder,
+            );
+
+            sceneObjectEntries.set(
+              object.id,
+              {
+                object,
+                holder,
+              },
+            );
+
             settleAsset(false);
             return;
           }
@@ -686,7 +828,23 @@ function Reconstruction3DViewer({
           holder.add(fallback);
           holder.position.copy(worldPosition(object.position, width, height));
           holder.rotation.y = -THREE.MathUtils.degToRad(object.rotation);
+          holder.traverse(
+            (child) => {
+              child.userData.sceneObjectId =
+                object.id;
+            },
+          );
+
           scene.add(holder);
+
+          sceneObjectEntries.set(
+            object.id,
+            {
+              object,
+              holder,
+            },
+          );
+
           void loadRealisticSceneObjectModel(object)
             .then((model) => {
               if (!model) {
@@ -762,6 +920,323 @@ function Reconstruction3DViewer({
     impactLight.position.copy(collisionPoint).add(new THREE.Vector3(0, 2, 0));
     scene.add(impactLight);
 
+    let gizmoDragging =
+      false;
+
+    const transformControls =
+      new TransformControls(
+        camera,
+        renderer.domElement,
+      );
+
+    const transformHelper =
+      transformControls.getHelper();
+
+    transformHelper.visible =
+      false;
+
+    scene.add(
+      transformHelper,
+    );
+
+    const selectedParticipantEntry =
+      selectedRef.current
+        ? participantEntries.get(
+            selectedRef.current,
+          )
+        : undefined;
+
+    const selectedSceneObjectEntry =
+      selectedSceneObjectRef.current
+        ? sceneObjectEntries.get(
+            selectedSceneObjectRef.current,
+          )
+        : undefined;
+
+    const transformModeActive =
+      workspaceTool === "Move" ||
+      workspaceTool === "Rotate" ||
+      workspaceTool === "Scale";
+
+    let transformTarget:
+      THREE.Object3D |
+      null =
+      null;
+
+    let transformTargetKind:
+      "participant" |
+      "scene-object" |
+      null =
+      null;
+
+    if (
+      transformModeActive &&
+      selectedSceneObjectEntry &&
+      !selectedSceneObjectEntry.object.locked
+    ) {
+      transformTarget =
+        selectedSceneObjectEntry.holder;
+
+      transformTargetKind =
+        "scene-object";
+    } else if (
+      transformModeActive &&
+      selectedParticipantEntry
+    ) {
+      const selectedState =
+        getParticipantStateAtTime(
+          selectedParticipantEntry.participant,
+          timeRef.current,
+          {
+            widthMetres:
+              width,
+            heightMetres:
+              height,
+          },
+        );
+
+      const selectedPoint =
+        selectedParticipantEntry.participant.pathPoints.find(
+          (point) =>
+            point.id ===
+            selectedState.activePointId,
+        );
+
+      const participantRouteEditable =
+        workspaceTool === "Scale" ||
+        Boolean(
+          selectedPoint &&
+          !isPhysicsGeneratedPathPoint(
+            selectedPoint,
+          ) &&
+          selectedPoint.action !==
+            "Impact",
+        );
+
+      if (
+        participantRouteEditable
+      ) {
+        transformTarget =
+          selectedParticipantEntry.holder;
+
+        transformTargetKind =
+          "participant";
+      }
+    }
+
+    if (
+      transformTarget
+    ) {
+      transformHelper.visible =
+        true;
+
+      transformControls.attach(
+        transformTarget,
+      );
+
+      transformControls.setSpace(
+        "world",
+      );
+
+      if (
+        workspaceTool ===
+        "Move"
+      ) {
+        transformControls.setMode(
+          "translate",
+        );
+
+        transformControls.showX =
+          true;
+
+        transformControls.showY =
+          false;
+
+        transformControls.showZ =
+          true;
+      } else if (
+        workspaceTool ===
+        "Rotate"
+      ) {
+        transformControls.setMode(
+          "rotate",
+        );
+
+        transformControls.showX =
+          false;
+
+        transformControls.showY =
+          true;
+
+        transformControls.showZ =
+          false;
+      } else {
+        transformControls.setMode(
+          "scale",
+        );
+
+        transformControls.showX =
+          true;
+
+        transformControls.showY =
+          true;
+
+        transformControls.showZ =
+          true;
+      }
+    }
+
+    transformControls.addEventListener(
+      "dragging-changed",
+      (
+        event,
+      ) => {
+        gizmoDragging =
+          Boolean(
+            event.value,
+          );
+
+        controls.enabled =
+          cameraModeRef.current ===
+            "Orbit" &&
+          !gizmoDragging;
+      },
+    );
+
+    transformControls.addEventListener(
+      "objectChange",
+      () => {
+        if (
+          workspaceTool !==
+            "Scale" ||
+          !transformTarget
+        ) {
+          return;
+        }
+
+        /*
+         * RoadSafe scale is deliberately uniform. Three's individual axis
+         * scale handles are normalized into one scalar immediately.
+         */
+        const activeAxis =
+          transformControls.axis ??
+          "XYZ";
+
+        const scalar =
+          activeAxis.includes(
+            "X",
+          )
+            ? transformTarget.scale.x
+            : activeAxis.includes(
+                "Y",
+              )
+              ? transformTarget.scale.y
+              : transformTarget.scale.z;
+
+        transformTarget.scale.setScalar(
+          Math.max(
+            0.2,
+            scalar,
+          ),
+        );
+      },
+    );
+
+    const commitTransform =
+      () => {
+        if (
+          !transformTarget ||
+          !transformTargetKind
+        ) {
+          return;
+        }
+
+        const position: ReconstructionPosition = {
+          x:
+            clamp(
+              (
+                transformTarget.position.x /
+                  width +
+                0.5
+              ) *
+                100,
+              0,
+              100,
+            ),
+
+          y:
+            clamp(
+              (
+                transformTarget.position.z /
+                  height +
+                0.5
+              ) *
+                100,
+              0,
+              100,
+            ),
+        };
+
+        const rotationDegrees =
+          (
+            -THREE.MathUtils.radToDeg(
+              transformTarget.rotation.y,
+            ) +
+            360
+          ) %
+          360;
+
+        if (
+          transformTargetKind ===
+            "scene-object" &&
+          selectedSceneObjectEntry
+        ) {
+          onTransformSceneObjectRef.current?.(
+            selectedSceneObjectEntry.object.id,
+            {
+              position,
+              rotationDegrees,
+
+              /*
+               * Scene-object dimensions already consume object.scale.
+               * TransformControls therefore contributes a multiplier.
+               */
+              scaleMultiplier:
+                Math.max(
+                  0.2,
+                  transformTarget.scale.x,
+                ),
+            },
+          );
+
+          return;
+        }
+
+        if (
+          transformTargetKind ===
+            "participant" &&
+          selectedParticipantEntry
+        ) {
+          onTransformParticipantRef.current?.(
+            selectedParticipantEntry.participant.id,
+            {
+              position,
+              rotationDegrees,
+              visualScale:
+                Math.max(
+                  0.2,
+                  transformTarget.scale.x,
+                ),
+            },
+          );
+        }
+      };
+
+    transformControls.addEventListener(
+      "mouseUp",
+      commitTransform,
+    );
+
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const handlePointerDown = (event: PointerEvent) => {
@@ -772,22 +1247,84 @@ function Reconstruction3DViewer({
       raycaster.setFromCamera(pointer, camera);
       const hit = raycaster
         .intersectObjects(
-          [...participantEntries.values()].map((entry) => entry.holder),
+          [
+            ...Array.from(
+              participantEntries.values(),
+            ).map(
+              (entry) => entry.holder,
+            ),
+            ...Array.from(
+              sceneObjectEntries.values(),
+            ).map(
+              (entry) => entry.holder,
+            ),
+          ],
           true,
         )
         .find((intersection) => {
-          let current: THREE.Object3D | null = intersection.object;
+          let current:
+            THREE.Object3D |
+            null =
+            intersection.object;
+
           while (current) {
-            if (current.userData.participantId) return true;
-            current = current.parent;
+            if (
+              current.userData.participantId ||
+              current.userData.sceneObjectId
+            ) {
+              return true;
+            }
+
+            current =
+              current.parent;
           }
+
           return false;
         });
+
       if (!hit) return;
-      let current: THREE.Object3D | null = hit.object;
-      while (current && !current.userData.participantId) current = current.parent;
-      const id = current?.userData.participantId as string | undefined;
-      if (id) onSelectRef.current(id);
+
+      let current:
+        THREE.Object3D |
+        null =
+        hit.object;
+
+      while (
+        current &&
+        !current.userData.participantId &&
+        !current.userData.sceneObjectId
+      ) {
+        current =
+          current.parent;
+      }
+
+      const sceneObjectId =
+        current?.userData.sceneObjectId as
+          | string
+          | undefined;
+
+      if (
+        sceneObjectId
+      ) {
+        onSelectSceneObjectRef.current?.(
+          sceneObjectId,
+        );
+
+        return;
+      }
+
+      const participantId =
+        current?.userData.participantId as
+          | string
+          | undefined;
+
+      if (
+        participantId
+      ) {
+        onSelectRef.current?.(
+          participantId,
+        );
+      }
     };
     const handleSceneAssetDragOver = (
       event: DragEvent,
@@ -964,6 +1501,14 @@ function Reconstruction3DViewer({
       }
 
       participantEntries.forEach((entry) => {
+        if (
+          gizmoDragging &&
+          selectedRef.current ===
+            entry.participant.id
+        ) {
+          return;
+        }
+
         const state = getParticipantStateAtTime(
                         entry.participant,
                         timeRef.current,
@@ -1022,7 +1567,7 @@ function Reconstruction3DViewer({
           : 0;
 
       const mode = cameraModeRef.current;
-      controls.enabled = mode === "Orbit";
+      controls.enabled = mode === "Orbit" && !gizmoDragging;
       if (mode === "Overhead") {
         camera.position.lerp(
           new THREE.Vector3(0, Math.max(width, height) * 1.05, 0.01),
@@ -1088,6 +1633,9 @@ function Reconstruction3DViewer({
         "drop",
         handleSceneAssetDrop,
       );
+      transformControls.detach();
+      transformControls.dispose();
+      scene.remove(transformHelper);
       controls.dispose();
       scene.traverse((object) => {
         if (
@@ -1113,6 +1661,8 @@ function Reconstruction3DViewer({
     effectiveShowPaths,
     effectiveShowPhysics,
     reconstruction,
+    selectedSceneObjectId,
+    selectedParticipantId,
     workspaceMode,
     workspaceTimeSourceRef,
     workspaceTool,

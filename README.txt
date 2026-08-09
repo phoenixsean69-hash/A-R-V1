@@ -1,103 +1,104 @@
-RoadSafe AR — FORENSIC MAP HYBRID + SEARCH V2
-================================================
+RoadSafe AR — GIZMO ONLY V3
+==============================
 
-CHANGES
+PURPOSE
 -------
+V2 added actual Three.js TransformControls, but only one helper was rendered
+and it was hidden while the workspace tool was Select.
 
-1. HYBRID MAP
+That does not match the requested Blender-style viewport behaviour.
 
-Previous Phase 1 Hybrid:
-  Esri satellite imagery only.
+V3 makes the 3D gizmo PERSISTENT and COMPOSITE.
 
-New Hybrid:
-  Esri World Imagery
-      +
-  Esri World Transportation reference
-      +
-  Esri World Boundaries and Places reference
+SELECT A PARTICIPANT OR SCENE OBJECT
+------------------------------------
+The selected model immediately receives:
 
-This keeps the satellite background while restoring visible road/transport
-reference information and city/place labels.
+  Move arrows
+  Rotation ring
+  Scale handles
 
-2. LOCATION SEARCH
+inside the 3D viewport.
 
-The map now reuses:
+The three helpers are attached to the same selected object at the same time.
 
-  src/services/locationSearchService.ts
+Only one controller is enabled for pointer interaction at once so the controls
+do not fight each other.
 
-That service already uses OpenStreetMap Nominatim and scopes queries to
-Zimbabwe.
+ACTIVE MODE
+-----------
+Select = Move
+G      = Move
+R      = Rotate
+S      = Scale
 
-Search accepts:
-- road names;
-- street names;
-- cities;
-- towns;
-- junction/place names;
-- landmarks supported by Nominatim.
+So merely selecting an object is enough to make the gizmo appear.
 
-Up to 7 search results are shown.
+CANONICAL ROADSAFE CONSTRAINTS
+------------------------------
+Move:
+  X/Z ground plane.
+  Vertical Y authoring is not persisted because current participant and scene
+  object data models do not store a separate height coordinate.
 
-Selecting a result:
-- moves the accident anchor to the returned coordinate;
-- flies/fits the map to the returned place;
-- clears the previous forensic core;
-- tells the investigator to draw a new core around the actual crash scene.
+Rotate:
+  Y/yaw ring.
+  This maps exactly to participant heading and scene-object rotation.
 
-The core is cleared deliberately. A search may jump hundreds of kilometres,
-and RoadSafe must never retain a stale boundary from the old anchor.
+Scale:
+  Three.js scale handles are shown.
+  The result is normalized to RoadSafe's canonical uniform scalar.
+
+Participants:
+  Scale remains visual/model scale only.
+  Physics mass/dimensions are not silently changed.
+
+Point Z / physics-generated route points:
+  Move/Rotate remain protected.
+  Scale remains available.
+
+SCOPE
+-----
+V3 touches ONLY:
+
+  src/components/reconstruction/Reconstruction3DViewer.tsx
+
+It does NOT touch:
+- OSM
+- Overpass
+- extraction
+- buildings
+- vegetation
+- terrain
+- RoadSceneEnvironment
+- RealSceneGeometryLayer
+- forensic scene pipeline
+
+PREREQUISITE
+------------
+Install Gizmo Only V2 successfully first.
 
 INSTALL
 -------
-
 cd C:\Users\nooklyweb\Desktop\A-R-V1
 
-node .\install-forensic-map-hybrid-search-v2.mjs
+node .\install-gizmo-only-v3.mjs
 
-The installer runs:
-
-npm run build
-
-and restores the original map/CSS automatically if the build fails.
-
-START / REFRESH
----------------
-
-npm run dev
+The installer runs the full project build and restores Reconstruction3DViewer
+automatically if the build fails.
 
 TEST
 ----
-
-1. New Case -> Area.
-2. Choose Hybrid.
-3. Confirm satellite imagery is visible.
-4. Zoom toward a city/road and confirm transport/place labels overlay it.
-5. Search for a Zimbabwe city/road/place.
-6. Select a result.
-7. Confirm the map flies there.
-8. Confirm the red accident anchor moves there.
-9. Confirm any old forensic core is cleared.
-10. Draw a new forensic core.
+1. npm run dev
+2. Open 3D reconstruction.
+3. Click Sedan 1.
+4. Without pressing G/R/S, a combined gizmo should now be visible on Sedan 1.
+5. Drag Move arrows.
+6. Press R and drag the rotation ring.
+7. Press S and drag scale handles.
+8. Select a scene object and repeat.
+9. Switch to 2D and confirm committed transforms match.
 
 ROLLBACK
 --------
-
-node .\revoke-forensic-map-hybrid-search-v2.mjs
-
-
-V2 BUILD FIX
-------------
-V1 reached the project TypeScript build but failed with TS1484 because
-FormEvent was imported as a runtime value while verbatimModuleSyntax is
-enabled.
-
-V2 changes:
-
-  import { FormEvent, ... } from "react";
-
-to:
-
-  import { ... } from "react";
-  import type { FormEvent } from "react";
-
-No hybrid/search behavior changed.
+node .\revoke-gizmo-only-v3.mjs

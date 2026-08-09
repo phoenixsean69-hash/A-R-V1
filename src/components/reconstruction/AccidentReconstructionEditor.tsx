@@ -85,6 +85,7 @@ import SceneSettingsPanel from "./SceneSettingsPanel";
 import SceneCollectionAssetBrowser from "./SceneCollectionAssetBrowser";
 import Participant2DModel from "./Participant2DModel";
 import ReconstructionGuide from "./ReconstructionGuide";
+import TransformGizmo2D from "./TransformGizmo2D";
 import ReconstructionValidationPanel from "./ReconstructionValidationPanel";
 import ReconstructionScenarioWorkspace from "./ReconstructionScenarioWorkspace";
 
@@ -159,6 +160,7 @@ import { paintReconstructionPlaybackDomFrame } from "../../utils/reconstructionP
 
 import "./reconstructionPlaybackFixes.css";
 import "./participantPlacement.css";
+import "./orthographic2D.css";
 
 const Reconstruction3DViewer = lazy(() => import("./Reconstruction3DViewer"));
 
@@ -841,6 +843,15 @@ export default function AccidentReconstructionEditor({
 
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const sceneViewportRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * The actual metric 2D sheet. Unlike sceneRef/sceneViewportRef (the browser
+   * workspace), this element preserves the real scene aspect ratio.
+   */
+  const sceneMetricPlaneRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
   const sceneGestureRef = useRef<SceneGestureState | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number | null>(null);
@@ -925,6 +936,15 @@ export default function AccidentReconstructionEditor({
   const [activeInvestigationDetail, setActiveInvestigationDetail] =
     useState<InvestigationDetailView>(null);
   const [sceneView, setSceneView] = useState({ zoom: MIN_SCENE_ZOOM, panX: 0, panY: 0 });
+
+  const [
+    sceneMetricFrame,
+    setSceneMetricFrame,
+  ] = useState({
+    widthPx: 1,
+    heightPx: 1,
+    pixelsPerMetre: 1,
+  });
   const [basemapMode, setBasemapMode] = useState<ReconstructionBasemapMode>(reconstruction.fieldCalibration ? "Satellite" : "Diagram");
   const [routeDrawingParticipantId, setRouteDrawingParticipantId] = useState<string | null>(null);
   const [historyAvailability, setHistoryAvailability] = useState({
@@ -965,16 +985,194 @@ export default function AccidentReconstructionEditor({
   >(null);
   const [collisionPlacementActive, setCollisionPlacementActive] = useState(false);
 
-  const clientToScenePosition = useCallback((clientX: number, clientY: number) => {
-    const rectangle = sceneRef.current?.getBoundingClientRect();
-    if (!rectangle) return null;
-    const localX = (clientX - rectangle.left - rectangle.width / 2 - sceneView.panX) / sceneView.zoom + rectangle.width / 2;
-    const localY = (clientY - rectangle.top - rectangle.height / 2 - sceneView.panY) / sceneView.zoom + rectangle.height / 2;
-    return {
-      x: clamp((localX / rectangle.width) * 100, 0, 100),
-      y: clamp((localY / rectangle.height) * 100, 0, 100),
+  const sceneWorldDimensions2D =
+    getReconstructionWorldDimensions(
+      reconstruction,
+    );
+
+  useEffect(() => {
+    if (
+      activeReconstructionView !==
+      "2D"
+    ) {
+      return;
+    }
+
+    const viewport =
+      sceneViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const updateOrthographicMetricFrame =
+      () => {
+        const rectangle =
+          viewport.getBoundingClientRect();
+
+        const availableWidth =
+          Math.max(
+            1,
+            rectangle.width,
+          );
+
+        const availableHeight =
+          Math.max(
+            1,
+            rectangle.height,
+          );
+
+        /*
+         * ONE scale for both axes. This is the defining property of an
+         * orthographic plan view and eliminates the old wide-screen stretch.
+         */
+        const pixelsPerMetre =
+          Math.max(
+            0.0001,
+            Math.min(
+              availableWidth /
+                sceneWorldDimensions2D.widthMetres,
+              availableHeight /
+                sceneWorldDimensions2D.heightMetres,
+            ),
+          );
+
+        const widthPx =
+          sceneWorldDimensions2D.widthMetres *
+          pixelsPerMetre;
+
+        const heightPx =
+          sceneWorldDimensions2D.heightMetres *
+          pixelsPerMetre;
+
+        setSceneMetricFrame(
+          (
+            current,
+          ) => {
+            if (
+              Math.abs(
+                current.widthPx -
+                  widthPx,
+              ) <
+                0.5 &&
+              Math.abs(
+                current.heightPx -
+                  heightPx,
+              ) <
+                0.5 &&
+              Math.abs(
+                current.pixelsPerMetre -
+                  pixelsPerMetre,
+              ) <
+                0.0001
+            ) {
+              return current;
+            }
+
+            return {
+              widthPx,
+              heightPx,
+              pixelsPerMetre,
+            };
+          },
+        );
+      };
+
+    updateOrthographicMetricFrame();
+
+    const observer =
+      typeof ResizeObserver !==
+      "undefined"
+        ? new ResizeObserver(
+            updateOrthographicMetricFrame,
+          )
+        : null;
+
+    observer?.observe(
+      viewport,
+    );
+
+    window.addEventListener(
+      "resize",
+      updateOrthographicMetricFrame,
+    );
+
+    return () => {
+      observer?.disconnect();
+
+      window.removeEventListener(
+        "resize",
+        updateOrthographicMetricFrame,
+      );
     };
-  }, [sceneView]);
+  }, [
+    activeReconstructionView,
+    sceneWorldDimensions2D.heightMetres,
+    sceneWorldDimensions2D.widthMetres,
+  ]);
+
+  const clientToScenePosition = useCallback(
+    (
+      clientX: number,
+      clientY: number,
+    ) => {
+      /*
+       * getBoundingClientRect() includes the current pan + uniform zoom.
+       * Mapping directly through this transformed rectangle keeps pointer
+       * placement exactly aligned with the orthographic metric sheet.
+       */
+      const rectangle =
+        sceneMetricPlaneRef.current
+          ?.getBoundingClientRect();
+
+      if (
+        !rectangle ||
+        rectangle.width <= 0 ||
+        rectangle.height <= 0
+      ) {
+        return null;
+      }
+
+      const xProgress =
+        (
+          clientX -
+          rectangle.left
+        ) /
+        rectangle.width;
+
+      const yProgress =
+        (
+          clientY -
+          rectangle.top
+        ) /
+        rectangle.height;
+
+      /*
+       * Letterboxed viewport space is NOT forensic scene space. Ignore
+       * placement/drawing clicks outside the metric sheet instead of clamping
+       * them onto a fake scene edge.
+       */
+      if (
+        xProgress < 0 ||
+        xProgress > 1 ||
+        yProgress < 0 ||
+        yProgress > 1
+      ) {
+        return null;
+      }
+
+      return {
+        x:
+          xProgress *
+          100,
+
+        y:
+          yProgress *
+          100,
+      };
+    },
+    [],
+  );
 
   const zoomSceneAtClientPoint = useCallback(
     (clientX: number, clientY: number, zoomDelta: number) => {
@@ -2339,7 +2537,7 @@ export default function AccidentReconstructionEditor({
 
       if (
         !isInteractive &&
-        (event.button === 1 || activeWorkspaceTool === "Move")
+        event.button === 1
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -2355,56 +2553,11 @@ export default function AccidentReconstructionEditor({
         return;
       }
 
-      if (!isInteractive && activeWorkspaceTool === "Rotate") {
-        if (!selectedParticipant || !selectedParticipantState) {
-          showSaveMessage(
-            "Select a participant before using Rotate.",
-            "info",
-            2600,
-          );
-          return;
-        }
-
-        const activePoint = selectedParticipant.pathPoints.find(
-          (point) => point.id === selectedParticipantState.activePointId,
-        );
-
-        if (!activePoint || !canBeginRoutePointDrag(activePoint)) {
-          showSaveMessage(
-            "Point Z and physics-generated points cannot be rotated independently.",
-            "info",
-            3000,
-          );
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        sceneGestureRef.current = {
-          kind: "rotate",
-          pointerId: event.pointerId,
-          startClientX: event.clientX,
-          participantId: selectedParticipant.id,
-          pointId: selectedParticipantState.activePointId,
-          startRotation: selectedParticipantState.rotation,
-        };
-        return;
-      }
-
-      if (!isInteractive && activeWorkspaceTool === "Scale") {
-        event.preventDefault();
-        event.stopPropagation();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        sceneGestureRef.current = {
-          kind: "scale",
-          pointerId: event.pointerId,
-          startClientY: event.clientY,
-          startZoom: sceneView.zoom,
-        };
-        return;
-      }
-
+      /*
+       * G / R / S are entity transform modes.
+       * Empty viewport drags no longer pan/rotate/zoom the camera.
+       * Middle mouse and map controls remain navigation controls.
+       */
       if (event.button !== 0) return;
 
       const position = clientToScenePosition(event.clientX, event.clientY);
@@ -3469,13 +3622,8 @@ export default function AccidentReconstructionEditor({
     measurementToolActive ||
     activeEvidencePlacementId
       ? "cursor-crosshair"
-      : activeWorkspaceTool === "Move"
-        ? "reconstruction-workspace__2d-viewport--pan"
-        : activeWorkspaceTool === "Rotate"
-          ? "reconstruction-workspace__2d-viewport--rotate"
-          : activeWorkspaceTool === "Scale"
-            ? "reconstruction-workspace__2d-viewport--scale"
-            : "";
+      : "";
+
 
   const resetPlacementTools = () => {
     setMeasurementToolActive(false);
@@ -4250,6 +4398,138 @@ export default function AccidentReconstructionEditor({
                   onSelectParticipant={(participantId) =>
                     handleSelectParticipant(participantId)
                   }
+                  selectedSceneObjectId={selectedSceneObjectId}
+                  onSelectSceneObject={(objectId) =>
+                    handleSelectSceneObject(objectId)
+                  }
+                  onTransformSceneObject={(objectId, next) => {
+                    setIsPlaying(false);
+
+                    const object =
+                      reconstruction.sceneObjects.find(
+                        (item) =>
+                          item.id ===
+                          objectId,
+                      );
+
+                    if (!object) {
+                      return;
+                    }
+
+                    if (activeWorkspaceTool === "Move") {
+                      updateSceneObject(
+                        objectId,
+                        {
+                          position:
+                            next.position,
+                        },
+                      );
+
+                      return;
+                    }
+
+                    if (activeWorkspaceTool === "Rotate") {
+                      updateSceneObject(
+                        objectId,
+                        {
+                          rotation:
+                            next.rotationDegrees,
+                        },
+                      );
+
+                      return;
+                    }
+
+                    if (activeWorkspaceTool === "Scale") {
+                      updateSceneObject(
+                        objectId,
+                        {
+                          scale:
+                            clamp(
+                              object.scale *
+                                next.scaleMultiplier,
+                              0.2,
+                              5,
+                            ),
+                        },
+                      );
+                    }
+                  }}
+                  onTransformParticipant={(participantId, next) => {
+                    setIsPlaying(false);
+
+                    const participant =
+                      reconstruction.vehicles.find(
+                        (item) =>
+                          item.id ===
+                          participantId,
+                      );
+
+                    if (!participant) {
+                      return;
+                    }
+
+                    if (activeWorkspaceTool === "Scale") {
+                      updateParticipant(
+                        participantId,
+                        {
+                          visualScale:
+                            clamp(
+                              next.visualScale,
+                              0.2,
+                              5,
+                            ),
+                        },
+                      );
+
+                      return;
+                    }
+
+                    const state =
+                      getParticipantStateAtTime(
+                        participant,
+                        currentTime,
+                        getReconstructionWorldDimensions(
+                          reconstruction,
+                        ),
+                      );
+
+                    const activePoint =
+                      participant.pathPoints.find(
+                        (point) =>
+                          point.id ===
+                          state.activePointId,
+                      );
+
+                    if (
+                      !activePoint ||
+                      !canBeginRoutePointDrag(
+                        activePoint,
+                      )
+                    ) {
+                      showSaveMessage(
+                        "Point Z and physics-generated points cannot be transformed independently.",
+                        "info",
+                        3000,
+                      );
+
+                      return;
+                    }
+
+                    updatePathPoint(
+                      participantId,
+                      activePoint.id,
+                      activeWorkspaceTool === "Move"
+                        ? {
+                            position:
+                              next.position,
+                          }
+                        : {
+                            rotation:
+                              next.rotationDegrees,
+                          },
+                    );
+                  }}
                   cameraCycleToken={cameraCycleToken}
                   workspaceTimeSeconds={currentTime}
                   workspaceTimeSourceRef={currentTimeRef}
@@ -4465,6 +4745,12 @@ export default function AccidentReconstructionEditor({
                                     }
                                   />
                                 </label>
+                                <div>
+                                  <span>Model Scale</span>
+                                  <strong>
+                                    {(selectedParticipant.visualScale ?? 1).toFixed(2)}×
+                                  </strong>
+                                </div>
                               </div>
                             </details>
 
@@ -4827,7 +5113,19 @@ export default function AccidentReconstructionEditor({
                   −
                 </button>
                 <button type="button" title="Pan map south" aria-label="Pan map south" onClick={() => setSceneView((view) => ({ ...view, panY: view.panY - 40 }))} className="rounded bg-white/15 p-2 font-black">↓</button>
-                <span className="self-center text-center text-[9px] font-black" title="Current map zoom">{Math.round(sceneView.zoom * 100)}%</span>
+                <span
+                  data-roadsafe-orthographic-scale="true"
+                  className="self-center text-center text-[8px] font-black"
+                  title={`Orthographic fit · ${(
+                    sceneMetricFrame.pixelsPerMetre *
+                    sceneView.zoom
+                  ).toFixed(2)} px/m`}
+                >
+                  {Math.round(
+                    sceneView.zoom *
+                    100,
+                  )}%
+                </span>
               </div>
 
               {routeDrawingParticipantId && (
@@ -4837,9 +5135,27 @@ export default function AccidentReconstructionEditor({
               )}
 
               <div
-                className="absolute inset-0 origin-center"
-                style={{ transform: `translate(${sceneView.panX}px, ${sceneView.panY}px) scale(${sceneView.zoom})` }}
-              >
+                ref={
+                  sceneMetricPlaneRef
+                }
+                data-roadsafe-2d-projection="true-orthographic-metric"
+                className="roadsafe-2d-orthographic-plane origin-center"
+                style={{
+                  width:
+                    `${sceneMetricFrame.widthPx}px`,
+
+                  height:
+                    `${sceneMetricFrame.heightPx}px`,
+
+                  /*
+                   * The base sheet is centred in the viewport. Pan is applied
+                   * in screen pixels; zoom remains uniform on both axes.
+                   */
+                  transform:
+                    `translate(calc(-50% + ${sceneView.panX}px), calc(-50% + ${sceneView.panY}px)) scale(${sceneView.zoom})`,
+                }}
+              
+                data-roadsafe-gizmo-plane="true">
               {basemapMode === "Diagram" ? (
                 <RoadSceneEnvironment settings={reconstruction.scene} />
               ) : (
@@ -4884,6 +5200,109 @@ export default function AccidentReconstructionEditor({
               </button>
 
               <ImpactEffectOverlay effect={impactEffect} />
+            {!isPlaying &&
+              (
+                activeWorkspaceTool === "Move" ||
+                activeWorkspaceTool === "Rotate" ||
+                activeWorkspaceTool === "Scale"
+              ) &&
+              (() => {
+                if (selectedSceneObject) {
+                  return (
+                    <TransformGizmo2D
+                      mode={activeWorkspaceTool}
+                      label={selectedSceneObject.label}
+                      disabled={selectedSceneObject.locked}
+                      value={{
+                        position: selectedSceneObject.position,
+                        rotationDegrees: selectedSceneObject.rotation,
+                        scale: selectedSceneObject.scale,
+                      }}
+                      onChange={(next) => {
+                        if (activeWorkspaceTool === "Move") {
+                          updateSceneObject(
+                            selectedSceneObject.id,
+                            { position: next.position },
+                          );
+                          return;
+                        }
+            
+                        if (activeWorkspaceTool === "Rotate") {
+                          updateSceneObject(
+                            selectedSceneObject.id,
+                            { rotation: next.rotationDegrees },
+                          );
+                          return;
+                        }
+            
+                        updateSceneObject(
+                          selectedSceneObject.id,
+                          { scale: next.scale },
+                        );
+                      }}
+                    />
+                  );
+                }
+            
+                if (
+                  selectedParticipant &&
+                  selectedParticipantState
+                ) {
+                  const activePoint =
+                    selectedParticipant.pathPoints.find(
+                      (point) =>
+                        point.id ===
+                        selectedParticipantState.activePointId,
+                    );
+            
+                  const routeTransformLocked =
+                    !activePoint ||
+                    !canBeginRoutePointDrag(activePoint);
+            
+                  return (
+                    <TransformGizmo2D
+                      mode={activeWorkspaceTool}
+                      label={selectedParticipant.name}
+                      disabled={
+                        activeWorkspaceTool !== "Scale" &&
+                        routeTransformLocked
+                      }
+                      value={{
+                        position: selectedParticipantState.position,
+                        rotationDegrees: selectedParticipantState.rotation,
+                        scale: selectedParticipant.visualScale ?? 1,
+                      }}
+                      onChange={(next) => {
+                        if (activeWorkspaceTool === "Scale") {
+                          updateParticipant(
+                            selectedParticipant.id,
+                            { visualScale: next.scale },
+                          );
+                          return;
+                        }
+            
+                        if (
+                          !activePoint ||
+                          routeTransformLocked
+                        ) {
+                          return;
+                        }
+            
+                        updatePathPoint(
+                          selectedParticipant.id,
+                          activePoint.id,
+                          activeWorkspaceTool === "Move"
+                            ? { position: next.position }
+                            : { rotation: next.rotationDegrees },
+                        );
+                      }}
+                    />
+                  );
+                }
+            
+                return null;
+              })()}
+
 
               {measurementToolActive && (
                 <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-[#303030] px-4 py-2 text-xs font-bold text-white shadow-lg">

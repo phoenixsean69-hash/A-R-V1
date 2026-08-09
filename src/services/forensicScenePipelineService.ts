@@ -23,21 +23,223 @@ interface BuildOptions {
   onProgress?: ProgressCallback;
 }
 
+interface OverpassElement {
+  type: "node" | "way" | "relation";
+  id: number;
+  tags?: Record<string, string | undefined>;
+  geometry?: Array<{
+    lat: number;
+    lon: number;
+  }>;
+  lat?: number;
+  lon?: number;
+}
+
 interface OverpassRaw {
   version?: number;
   generator?: string;
-  elements?: unknown[];
+  elements?: OverpassElement[];
+}
+
+function isRecord(
+  value: unknown,
+): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null
+  );
+}
+
+function sanitiseOverpassPayload(
+  value: unknown,
+): OverpassRaw {
+  if (!isRecord(value)) {
+    throw new Error(
+      "OpenStreetMap source returned a non-object payload.",
+    );
+  }
+
+  const rawElements =
+    value.elements;
+
+  if (
+    rawElements !== undefined &&
+    !Array.isArray(rawElements)
+  ) {
+    throw new Error(
+      "OpenStreetMap source returned an invalid elements collection.",
+    );
+  }
+
+  const elements: OverpassElement[] =
+    [];
+
+  for (
+    const candidate of
+      rawElements ?? []
+  ) {
+    if (!isRecord(candidate)) {
+      continue;
+    }
+
+    const type =
+      candidate.type;
+
+    const id =
+      candidate.id;
+
+    if (
+      (
+        type !== "node" &&
+        type !== "way" &&
+        type !== "relation"
+      ) ||
+      typeof id !== "number" ||
+      !Number.isFinite(id)
+    ) {
+      continue;
+    }
+
+    const element:
+      OverpassElement =
+      {
+        type,
+        id,
+      };
+
+    if (
+      isRecord(
+        candidate.tags,
+      )
+    ) {
+      element.tags =
+        Object.fromEntries(
+          Object.entries(
+            candidate.tags,
+          )
+            .filter(
+              (
+                entry,
+              ): entry is [
+                string,
+                string,
+              ] =>
+                typeof entry[1] ===
+                "string",
+            ),
+        );
+    }
+
+    if (
+      typeof candidate.lat ===
+        "number" &&
+      Number.isFinite(
+        candidate.lat,
+      )
+    ) {
+      element.lat =
+        candidate.lat;
+    }
+
+    if (
+      typeof candidate.lon ===
+        "number" &&
+      Number.isFinite(
+        candidate.lon,
+      )
+    ) {
+      element.lon =
+        candidate.lon;
+    }
+
+    if (
+      Array.isArray(
+        candidate.geometry,
+      )
+    ) {
+      const geometry =
+        candidate.geometry
+          .filter(
+            (
+              point,
+            ): point is Record<
+              string,
+              unknown
+            > =>
+              isRecord(
+                point,
+              ) &&
+              typeof point.lat ===
+                "number" &&
+              Number.isFinite(
+                point.lat,
+              ) &&
+              typeof point.lon ===
+                "number" &&
+              Number.isFinite(
+                point.lon,
+              ),
+          )
+          .map(
+            (point) => ({
+              lat:
+                point.lat as number,
+              lon:
+                point.lon as number,
+            }),
+          );
+
+      if (
+        geometry.length >
+        0
+      ) {
+        element.geometry =
+          geometry;
+      }
+    }
+
+    elements.push(
+      element,
+    );
+  }
+
+  return {
+    version:
+      typeof value.version ===
+        "number"
+        ? value.version
+        : undefined,
+    generator:
+      typeof value.generator ===
+        "string"
+        ? value.generator
+        : undefined,
+    elements,
+  };
 }
 
 const OVERPASS_ENDPOINTS = Array.from(
   new Set(
     [
       import.meta.env.VITE_OVERPASS_URL,
-      "https://overpass.kumi.systems/api/interpreter",
+
+      // Current global public instances listed by OpenStreetMap.
+      // private.coffee is the current replacement for the retired Kumi endpoint.
+      "https://overpass.private.coffee/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
       "https://overpass-api.de/api/interpreter",
     ].filter((value): value is string => Boolean(value)),
   ),
 );
+
+const OVERPASS_CLIENT_TIMEOUT_MS =
+  36_000;
+
+const OSM_MAIN_API_TIMEOUT_MS =
+  34_000;
+
+const OSM_MAIN_API_MAP_ENDPOINT =
+  "https://api.openstreetmap.org/api/0.6/map.json";
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -69,46 +271,395 @@ function updateStage(
 
 function overpassQuery(area: RealSceneAreaSelection): string {
   const b = area.bounds;
-  return `[out:json][timeout:18];
+
+  /*
+   * Keep acquisition forensic-relevant. Broad natural/leisure/waterway
+   * selectors can explode result size around towns and are unnecessary for
+   * the geometry normalizer.
+   */
+  return `[out:json][timeout:30];
 (
   way["highway"]["area"!="yes"](${b.south},${b.west},${b.north},${b.east});
   way["building"](${b.south},${b.west},${b.north},${b.east});
   way["barrier"](${b.south},${b.west},${b.north},${b.east});
   way["landuse"](${b.south},${b.west},${b.north},${b.east});
-  way["natural"](${b.south},${b.west},${b.north},${b.east});
-  way["leisure"](${b.south},${b.west},${b.north},${b.east});
-  way["waterway"](${b.south},${b.west},${b.north},${b.east});
-  node["highway"](${b.south},${b.west},${b.north},${b.east});
-  node["traffic_sign"](${b.south},${b.west},${b.north},${b.east});
+  way["natural"~"wood|scrub|grassland|wetland|bare_rock|sand|scree|water"](${b.south},${b.west},${b.north},${b.east});
+  way["leisure"~"park|garden|nature_reserve"](${b.south},${b.west},${b.north},${b.east});
+  way["waterway"="riverbank"](${b.south},${b.west},${b.north},${b.east});
   node["natural"~"tree|shrub"](${b.south},${b.west},${b.north},${b.east});
 );
 out tags geom qt;`;
 }
 
-async function fetchRawOsm(area: RealSceneAreaSelection): Promise<{ payload: OverpassRaw; endpoint: string }> {
-  const body = new URLSearchParams({ data: overpassQuery(area) }).toString();
-  const failures: string[] = [];
+interface OsmApiElement {
+  type: "node" | "way" | "relation";
+  id: number;
+  lat?: number;
+  lon?: number;
+  nodes?: number[];
+  tags?: Record<string, string | undefined>;
+}
 
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 18_000);
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-        body,
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return { payload: (await response.json()) as OverpassRaw, endpoint };
-    } catch (error) {
-      failures.push(`${endpoint}: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      window.clearTimeout(timeout);
+interface OsmApiResponse {
+  version?: number;
+  generator?: string;
+  elements?: OsmApiElement[];
+}
+
+function formatAcquisitionError(
+  endpoint: string,
+  error: unknown,
+): string {
+  if (
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  ) {
+    return `${endpoint}: timed out`;
+  }
+
+  return `${endpoint}: ${
+    error instanceof Error
+      ? error.message
+      : String(error)
+  }`;
+}
+
+function osmApiToOverpass(
+  response: OsmApiResponse,
+): OverpassRaw {
+  const nodes =
+    new Map<
+      number,
+      {
+        lat: number;
+        lon: number;
+        tags?: Record<string, string | undefined>;
+      }
+    >();
+
+  for (
+    const element of
+      response.elements ?? []
+  ) {
+    if (
+      element.type === "node" &&
+      Number.isFinite(element.lat) &&
+      Number.isFinite(element.lon)
+    ) {
+      nodes.set(
+        element.id,
+        {
+          lat: element.lat as number,
+          lon: element.lon as number,
+          tags: element.tags,
+        },
+      );
     }
   }
 
-  throw new Error(`All configured OpenStreetMap/Overpass sources failed. ${failures.join(" | ")}`);
+  const elements: Array<{
+    type: "node" | "way" | "relation";
+    id: number;
+    tags?: Record<string, string | undefined>;
+    lat?: number;
+    lon?: number;
+    geometry?: Array<{
+      lat: number;
+      lon: number;
+    }>;
+  }> = [];
+
+  for (
+    const element of
+      response.elements ?? []
+  ) {
+    if (
+      element.type === "node"
+    ) {
+      const node =
+        nodes.get(
+          element.id,
+        );
+
+      /*
+       * The geometry normalizer only needs tagged point features such as
+       * mapped trees/shrubs. Way support nodes do not need to be duplicated.
+       */
+      if (
+        node &&
+        element.tags &&
+        Object.keys(
+          element.tags,
+        ).length > 0
+      ) {
+        elements.push({
+          type: "node",
+          id: element.id,
+          tags: element.tags,
+          lat: node.lat,
+          lon: node.lon,
+        });
+      }
+
+      continue;
+    }
+
+    if (
+      element.type === "way"
+    ) {
+      const geometry =
+        (element.nodes ?? [])
+          .map(
+            (nodeId) =>
+              nodes.get(
+                nodeId,
+              ),
+          )
+          .filter(
+            (
+              node,
+            ): node is {
+              lat: number;
+              lon: number;
+              tags?: Record<string, string | undefined>;
+            } =>
+              Boolean(node),
+          )
+          .map(
+            (node) => ({
+              lat: node.lat,
+              lon: node.lon,
+            }),
+          );
+
+      if (
+        geometry.length > 0
+      ) {
+        elements.push({
+          type: "way",
+          id: element.id,
+          tags: element.tags,
+          geometry,
+        });
+      }
+
+      continue;
+    }
+
+    /*
+     * Current RoadSafe V2 normalisation does not consume relations directly.
+     * They remain available only in the original OSM API response during a
+     * future relation-aware normalisation phase.
+     */
+  }
+
+  return {
+    version:
+      response.version,
+    generator:
+      response.generator ??
+      "OpenStreetMap API 0.6 fallback",
+    elements,
+  };
+}
+
+async function fetchOsmMainApiFallback(
+  area: RealSceneAreaSelection,
+): Promise<{
+  payload: OverpassRaw;
+  endpoint: string;
+}> {
+  const b =
+    area.bounds;
+
+  const url =
+    new URL(
+      OSM_MAIN_API_MAP_ENDPOINT,
+    );
+
+  url.searchParams.set(
+    "bbox",
+    [
+      b.west,
+      b.south,
+      b.east,
+      b.north,
+    ].join(","),
+  );
+
+  const controller =
+    new AbortController();
+
+  const timeout =
+    window.setTimeout(
+      () =>
+        controller.abort(),
+      OSM_MAIN_API_TIMEOUT_MS,
+    );
+
+  try {
+    const response =
+      await fetch(
+        url,
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/json",
+          },
+          signal:
+            controller.signal,
+        },
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        `OpenStreetMap API returned HTTP ${response.status}.`,
+      );
+    }
+
+    const payload =
+      osmApiToOverpass(
+        (
+          await response.json()
+        ) as OsmApiResponse,
+      );
+
+    if (
+      !payload.elements ||
+      payload.elements.length === 0
+    ) {
+      throw new Error(
+        "OpenStreetMap API returned no usable map elements.",
+      );
+    }
+
+    return {
+      payload,
+      endpoint:
+        "https://api.openstreetmap.org/api/0.6/map.json (small-area fallback)",
+    };
+  } finally {
+    window.clearTimeout(
+      timeout,
+    );
+  }
+}
+
+async function fetchRawOsm(
+  area: RealSceneAreaSelection,
+): Promise<{
+  payload: OverpassRaw;
+  endpoint: string;
+}> {
+  const body =
+    new URLSearchParams({
+      data:
+        overpassQuery(
+          area,
+        ),
+    }).toString();
+
+  const failures:
+    string[] =
+    [];
+
+  for (
+    const endpoint of
+      OVERPASS_ENDPOINTS
+  ) {
+    const controller =
+      new AbortController();
+
+    const timeout =
+      window.setTimeout(
+        () =>
+          controller.abort(),
+        OVERPASS_CLIENT_TIMEOUT_MS,
+      );
+
+    try {
+      const response =
+        await fetch(
+          endpoint,
+          {
+            method:
+              "POST",
+            headers: {
+              Accept:
+                "application/json",
+              "Content-Type":
+                "application/x-www-form-urlencoded;charset=UTF-8",
+            },
+            body,
+            signal:
+              controller.signal,
+          },
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP ${response.status}`,
+        );
+      }
+
+      const payload =
+        sanitiseOverpassPayload(
+          await response.json(),
+        );
+
+      if (
+        !payload.elements
+      ) {
+        throw new Error(
+          "Response did not contain an elements array.",
+        );
+      }
+
+      return {
+        payload,
+        endpoint,
+      };
+    } catch (error) {
+      failures.push(
+        formatAcquisitionError(
+          endpoint,
+          error,
+        ),
+      );
+    } finally {
+      window.clearTimeout(
+        timeout,
+      );
+    }
+  }
+
+  /*
+   * Public Overpass is the preferred source, but a forensic case should not
+   * become impossible merely because public Overpass instances are congested.
+   *
+   * The OSM Editing API bbox endpoint is used only as a LAST-RESORT,
+   * user-initiated, small-area fallback. It is not used for bulk/background
+   * downloads.
+   */
+  try {
+    return await fetchOsmMainApiFallback(
+      area,
+    );
+  } catch (fallbackError) {
+    failures.push(
+      formatAcquisitionError(
+        "OpenStreetMap API 0.6 bbox fallback",
+        fallbackError,
+      ),
+    );
+  }
+
+  throw new Error(
+    `OpenStreetMap acquisition failed after all providers and the small-area fallback. ${failures.join(
+      " | ",
+    )}`,
+  );
 }
 
 function sourceRecords(
@@ -233,10 +784,23 @@ export const ForensicScenePipelineService = {
     stages = updateStage(stages, "archive-osm", { status: "running", progressPercent: 20, message: "Acquiring raw OpenStreetMap context data…" }, onProgress);
     const raw = await fetchRawOsm(area.contextArea);
     const rawArchive = await ForensicSourceArchiveService.saveJson("osm-raw", { endpoint: raw.endpoint, capturedAt: new Date().toISOString(), area: area.contextArea, payload: raw.payload });
-    stages = updateStage(stages, "archive-osm", { status: "complete", progressPercent: 100, message: `Raw map source archived · ${rawArchive.sha256.slice(0, 12)}` }, onProgress);
+    stages = updateStage(stages, "archive-osm", { status: "complete", progressPercent: 100, message: `Raw map source archived via ${raw.endpoint.includes("fallback") ? "OSM bbox fallback" : "Overpass"} · ${rawArchive.sha256.slice(0, 12)}` }, onProgress);
 
     stages = updateStage(stages, "normalize-geometry", { status: "running", progressPercent: 35, message: "Normalizing roads, buildings, paths and environment…" }, onProgress);
-    const extracted = await RealSceneExtractionService.extract(area.coreArea);
+    /*
+     * Use the SAME frozen source payload for normalisation.
+     * The context query covers the core, so seeding it under the core cache key
+     * eliminates the previous duplicate network request.
+     */
+    RealSceneExtractionService.seedResponse(
+      area.coreArea,
+      raw.payload,
+    );
+
+    const extracted =
+      await RealSceneExtractionService.extract(
+        area.coreArea,
+      );
     const geometry: RealSceneGeometry = {
       ...extracted.geometry,
       warnings: extracted.geometry.warnings.filter((warning) => !warning.toLowerCase().includes("map snapshot")),

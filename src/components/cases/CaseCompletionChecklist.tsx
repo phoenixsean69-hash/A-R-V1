@@ -53,7 +53,7 @@ export default function CaseCompletionChecklist({
             className={`hidden items-center gap-1.5 rounded border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.08em] sm:inline-flex ${
               completion.complete
                 ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
-                : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
+                : "border-[#67513c] bg-[#362f28] text-[#d6a06c]"
             }`}
           >
             {completion.complete ? (
@@ -67,7 +67,7 @@ export default function CaseCompletionChecklist({
           <span
             className={`min-w-[50px] rounded-md border px-2.5 py-1.5 text-center font-mono text-[11px] font-bold ${
               completion.complete
-                ? "border-[#494949] bg-[#303030] text-[#9ae0d4]"
+                ? "border-[#494949] bg-[#303030] text-[#b7c3cc]"
                 : "border-[#494949] bg-[#303030] text-[#c4c4c4]"
             }`}
           >
@@ -100,7 +100,7 @@ export default function CaseCompletionChecklist({
               <div className="mt-1.5 flex items-end gap-1.5">
                 <span
                   className={`font-mono text-lg font-bold leading-none ${
-                    remainingCount === 0 ? "text-[#c4c4c4]" : "text-[#d9bd78]"
+                    remainingCount === 0 ? "text-[#c4c4c4]" : "text-[#d6a06c]"
                   }`}
                 >
                   {remainingCount}
@@ -149,8 +149,8 @@ export default function CaseCompletionChecklist({
             <div
               className={`h-full rounded-full transition-[width] duration-300 ${
                 completion.complete
-                  ? "bg-[#55b9aa] shadow-[0_0_10px_rgba(85,185,170,0.35)]"
-                  : "bg-[#e8872d] shadow-[0_0_10px_rgba(77,140,245,0.38)]"
+                  ? "bg-[#879baa] shadow-[0_0_10px_rgba(135,155,170,0.22)]"
+                  : "bg-[#e8872d] shadow-[0_0_10px_rgba(232,135,45,0.24)]"
               }`}
               style={{ width: `${percentage}%` }}
             />
@@ -167,13 +167,13 @@ export default function CaseCompletionChecklist({
               key={check.key}
               className={`group relative overflow-hidden rounded-md border px-3 py-3 transition-colors duration-150 ${
                 check.complete
-                  ? "border-[#494949] bg-[linear-gradient(135deg,#081918_0%,#091321_74%)] hover:border-[#494949]"
-                  : "border-[#4d4023] bg-[linear-gradient(135deg,#18150d_0%,#091321_74%)] hover:border-[#705c2b]"
+                  ? "border-[#494949] bg-[linear-gradient(135deg,#303030_0%,#292929_100%)] hover:border-[#494949]"
+                  : "border-[#50473f] bg-[linear-gradient(135deg,#302d29_0%,#292929_100%)] hover:border-[#6b5541]"
               }`}
             >
               <span
                 className={`absolute inset-y-0 left-0 w-0.5 ${
-                  check.complete ? "bg-[#55b9aa]" : "bg-[#c49a46]"
+                  check.complete ? "bg-[#879baa]" : "bg-[#e8872d]"
                 }`}
                 aria-hidden="true"
               />
@@ -183,7 +183,7 @@ export default function CaseCompletionChecklist({
                   className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border ${
                     check.complete
                       ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
-                      : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
+                      : "border-[#67513c] bg-[#362f28] text-[#d6a06c]"
                   }`}
                   aria-hidden="true"
                 >
@@ -209,7 +209,7 @@ export default function CaseCompletionChecklist({
                       className={`rounded border px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.08em] ${
                         check.complete
                           ? "border-[#494949] bg-[#303030] text-[#c4c4c4]"
-                          : "border-[#6d5523] bg-[#241d10] text-[#d9bd78]"
+                          : "border-[#67513c] bg-[#362f28] text-[#d6a06c]"
                       }`}
                     >
                       {check.complete ? "Verified" : "Pending"}
@@ -232,10 +232,10 @@ export default function CaseCompletionChecklist({
             <AlertCircle
               size={13}
               strokeWidth={1.8}
-              className="mt-0.5 shrink-0 text-[#d9bd78]"
+              className="mt-0.5 shrink-0 text-[#d6a06c]"
               aria-hidden="true"
             />
-            <p className="text-[8px] leading-4 text-[#bba56f]">
+            <p className="text-[8px] leading-4 text-[#c3a486]">
               Complete every pending requirement before changing the case to
               Reconstruction Complete.
             </p>

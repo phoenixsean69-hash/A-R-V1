@@ -1,0 +1,118 @@
+/*
+ * RoadSafe True Orthographic 2D V1
+ *
+ * The reconstruction viewport itself may be any browser aspect ratio, but the
+ * analytical scene plane must preserve one uniform pixels-per-metre scale.
+ */
+
+.reconstruction-workspace__2d-viewport {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.018) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      rgba(255,255,255,.018) 1px,
+      transparent 1px
+    ),
+    #1f1f1f !important;
+
+  background-size:
+    20px 20px !important;
+}
+
+/*
+ * This element's width/height are calculated from the real scene dimensions
+ * and the available viewport. Its aspect ratio therefore equals:
+ *
+ *     sceneWidthMetres / sceneHeightMetres
+ *
+ * Every child continues to use RoadSafe's canonical 0..100 scene positions,
+ * but both axes now resolve to the SAME number of screen pixels per metre.
+ */
+.roadsafe-2d-orthographic-plane {
+  position: absolute !important;
+
+  left: 50% !important;
+  top: 50% !important;
+
+  min-width: 1px !important;
+  min-height: 1px !important;
+
+  overflow: hidden !important;
+
+  background: #272727;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  outline:
+    1px solid #4a4a4a;
+
+  box-shadow:
+    0 10px 28px rgba(0,0,0,.26) !important;
+
+  perspective: none !important;
+  transform-style: flat !important;
+
+  contain:
+    layout paint;
+
+  will-change:
+    transform;
+}
+
+/*
+ * Prevent an ancestor/descendant 3D transform context from making the plan
+ * view look pitched. Normal 2D translate/rotate/scale transforms still work.
+ */
+.roadsafe-2d-orthographic-plane,
+.roadsafe-2d-orthographic-plane
+  [data-roadsafe-view="orthographic-top-down"] {
+  transform-style:
+    flat !important;
+
+  perspective:
+    none !important;
+}
+
+/*
+ * The geometry layer deliberately fills the metric plane. The old
+ * preserveAspectRatio="none" SVG is now safe because its parent has the exact
+ * real-world scene aspect ratio; X and Y therefore resolve at equal px/m.
+ */
+.roadsafe-2d-orthographic-plane
+  [data-roadsafe-view="orthographic-top-down"] {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/*
+ * Subtle sheet edge: the dark viewport outside this boundary is not part of
+ * the forensic scene. It also makes FIT visually obvious.
+ */
+.roadsafe-2d-orthographic-plane::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 200;
+
+  border:
+    1px solid rgba(255,255,255,.055);
+
+  pointer-events: none;
+}
+
+/*
+ * Interaction is rejected outside the metric sheet in TS. Keep the pointer
+ * cursor neutral there instead of implying that the dark letterbox area is
+ * valid scene geometry.
+ */
+.reconstruction-workspace__2d-viewport:not(
+  .reconstruction-workspace__2d-viewport--pan
+) {
+  cursor: default;
+}

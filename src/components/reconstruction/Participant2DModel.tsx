@@ -808,7 +808,17 @@ export default function Participant2DModel({
   const dimensions =
     getParticipantPhysicalDimensions(participant);
 
-  const display =
+  const visualScale =
+    Math.max(
+      0.2,
+      Math.min(
+        5,
+        participant.visualScale ??
+          1,
+      ),
+    );
+
+const display =
     getParticipant2DDisplaySize(participant);
 
   const filter = selected
@@ -819,6 +829,8 @@ export default function Participant2DModel({
     width: display.widthPixels,
     height: display.heightPixels,
     filter,
+    transform: `scale(${visualScale})`,
+    transformOrigin: "center center",
   };
 
   return (
@@ -888,7 +900,7 @@ export function Participant2DSceneGlyph({
 
   return (
     <g
-      transform={`translate(${position.x} ${position.y}) rotate(${rotation})`}
+      transform={`translate(${position.x} ${position.y}) rotate(${rotation}) scale(${participant.visualScale ?? 1})`}
       data-participant-asset={asset.id}
     >
       <svg
