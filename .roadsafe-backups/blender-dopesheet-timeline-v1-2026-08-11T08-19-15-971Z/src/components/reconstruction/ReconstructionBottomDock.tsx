@@ -67,9 +67,9 @@ interface ReconstructionBottomDockProps {
   ): void;
 }
 
-const DEFAULT_HEIGHT = 248;
-const MIN_HEIGHT = 150;
-const MAX_HEIGHT = 420;
+const DEFAULT_HEIGHT = 184;
+const MIN_HEIGHT = 126;
+const MAX_HEIGHT = 360;
 const COLLAPSED_HEIGHT = 28;
 
 function clamp(
