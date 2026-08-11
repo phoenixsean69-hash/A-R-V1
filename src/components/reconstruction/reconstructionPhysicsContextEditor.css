@@ -1,0 +1,147 @@
+/*
+ * [RoadSafe:PhysicsContextEditorV1]
+ */
+.rs-physics-context {
+  width: 100%;
+  min-width: 0;
+  margin: 8px 0;
+  overflow: hidden;
+  border: 1px solid #474747;
+  border-radius: 3px;
+  background: #252525;
+  color: #d4d4d4;
+}
+.rs-physics-context > summary {
+  min-height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 1px solid #191919;
+  background: #303030;
+  font-size: 9px;
+  font-weight: 750;
+}
+.rs-physics-context > summary::-webkit-details-marker { display: none; }
+.rs-physics-context > summary strong {
+  padding: 2px 5px;
+  border: 1px solid #555;
+  border-radius: 2px;
+  font-size: 7.5px;
+  letter-spacing: .08em;
+}
+.rs-physics-context > summary strong.is-baked { color: #9bd1a2; }
+.rs-physics-context > summary strong.is-dirty { color: #e7a465; }
+.rs-physics-context__body {
+  display: grid;
+  gap: 7px;
+  padding: 7px;
+}
+.rs-physics-context__section {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #414141;
+  border-radius: 3px;
+  background: #292929;
+}
+.rs-physics-context__section > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 7px;
+  border-bottom: 1px solid #1c1c1c;
+}
+.rs-physics-context__section > header strong {
+  color: #d8d8d8;
+  font-size: 8.5px;
+}
+.rs-physics-context__section > header small {
+  min-width: 0;
+  overflow: hidden;
+  color: #7f7f7f;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rs-physics-context__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 6px;
+}
+.rs-physics-context__grid label {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  color: #8d8d8d;
+  font-size: 7.5px;
+}
+.rs-physics-context__grid label.is-check {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.rs-physics-context__grid input:not([type="checkbox"]),
+.rs-physics-context__grid select {
+  width: 100%;
+  height: 24px;
+  min-height: 24px;
+  padding: 2px 5px;
+  border: 1px solid #4a4a4a;
+  border-radius: 2px;
+  outline: none;
+  background: #202020;
+  color: #d5d5d5;
+  font-size: 8px;
+}
+.rs-physics-context__grid input:focus,
+.rs-physics-context__grid select:focus { border-color: #8a633f; }
+.rs-physics-context__grid input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+.rs-physics-context__stack {
+  display: grid;
+  gap: 4px;
+  padding: 5px;
+}
+.rs-physics-context__entity {
+  overflow: hidden;
+  border: 1px solid #414141;
+  border-radius: 2px;
+  background: #242424;
+}
+.rs-physics-context__entity > summary {
+  min-height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  padding: 4px 7px;
+  cursor: pointer;
+  list-style: none;
+}
+.rs-physics-context__entity > summary::-webkit-details-marker { display: none; }
+.rs-physics-context__entity > summary span {
+  min-width: 0;
+  overflow: hidden;
+  color: #cdcdcd;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rs-physics-context__entity > summary small {
+  color: #777;
+  font-size: 7.5px;
+  white-space: nowrap;
+}
+.rs-physics-context__empty {
+  margin: 0;
+  padding: 8px;
+  color: #777;
+  font-size: 8px;
+}

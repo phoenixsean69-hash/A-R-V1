@@ -1,104 +1,92 @@
-RoadSafe AR — GIZMO ONLY V3
-==============================
-
-PURPOSE
--------
-V2 added actual Three.js TransformControls, but only one helper was rendered
-and it was hidden while the workspace tool was Select.
-
-That does not match the requested Blender-style viewport behaviour.
-
-V3 makes the 3D gizmo PERSISTENT and COMPOSITE.
-
-SELECT A PARTICIPANT OR SCENE OBJECT
-------------------------------------
-The selected model immediately receives:
-
-  Move arrows
-  Rotation ring
-  Scale handles
-
-inside the 3D viewport.
-
-The three helpers are attached to the same selected object at the same time.
-
-Only one controller is enabled for pointer interaction at once so the controls
-do not fight each other.
-
-ACTIVE MODE
------------
-Select = Move
-G      = Move
-R      = Rotate
-S      = Scale
-
-So merely selecting an object is enough to make the gizmo appear.
-
-CANONICAL ROADSAFE CONSTRAINTS
-------------------------------
-Move:
-  X/Z ground plane.
-  Vertical Y authoring is not persisted because current participant and scene
-  object data models do not store a separate height coordinate.
-
-Rotate:
-  Y/yaw ring.
-  This maps exactly to participant heading and scene-object rotation.
-
-Scale:
-  Three.js scale handles are shown.
-  The result is normalized to RoadSafe's canonical uniform scalar.
-
-Participants:
-  Scale remains visual/model scale only.
-  Physics mass/dimensions are not silently changed.
-
-Point Z / physics-generated route points:
-  Move/Rotate remain protected.
-  Scale remains available.
+RoadSafe AR — MAIN 3D VIEW POLISH V1
+=======================================
 
 SCOPE
 -----
-V3 touches ONLY:
+This patch touches ONLY:
 
   src/components/reconstruction/Reconstruction3DViewer.tsx
 
-It does NOT touch:
-- OSM
-- Overpass
-- extraction
-- buildings
-- vegetation
-- terrain
-- RoadSceneEnvironment
-- RealSceneGeometryLayer
-- forensic scene pipeline
+It does not change:
+- the reverted/approved theme;
+- object extraction;
+- OSM;
+- terrain acquisition;
+- physics;
+- 2D reconstruction;
+- AR logic.
 
-PREREQUISITE
-------------
-Install Gizmo Only V2 successfully first.
+1. BOTTOM-RIGHT VIEWPORT GIZMO
+------------------------------
+A small Blender-style gizmo is rendered directly in the SAME Three.js canvas.
+
+It contains:
+- red X arrow + ring;
+- green Y arrow + ring;
+- blue Z arrow + ring;
+- small orange centre pivot.
+
+The widget is rendered in the bottom-right using WebGL viewport/scissor.
+
+There is NO second WebGL renderer/canvas.
+
+Every frame:
+
+  main scene renders
+        ↓
+  depth cleared
+        ↓
+  bottom-right scissor enabled
+        ↓
+  camera orientation copied inversely to gizmo root
+        ↓
+  gizmo renders
+        ↓
+  viewport restored
+
+So rotating/orbiting the main camera rotates the orientation widget exactly as
+a viewport gizmo should.
+
+The existing time badge is moved upward so it does not cover the gizmo.
+
+2. BLENDER-STYLE GRID FLOOR
+---------------------------
+A THREE.GridHelper is added over the scene floor.
+
+Grid:
+- adapts to reconstruction world dimensions;
+- approximately 2 metre cells;
+- capped at 90 divisions for performance;
+- semi-transparent;
+- depthWrite disabled;
+- uses one lightweight GridHelper object.
+
+World reference axes:
+- red line = X
+- green line = Z / ground-plane second axis
+
+The grid is visual/reference only.
+It does not alter reconstruction geometry or physics.
 
 INSTALL
 -------
+Extract into:
+
+C:\Users\nooklyweb\Desktop\A-R-V1
+
+Then:
+
 cd C:\Users\nooklyweb\Desktop\A-R-V1
+node .\install-main-3d-view-polish-v1.mjs
 
-node .\install-gizmo-only-v3.mjs
+The installer runs:
 
-The installer runs the full project build and restores Reconstruction3DViewer
-automatically if the build fails.
+npm run build
 
-TEST
-----
-1. npm run dev
-2. Open 3D reconstruction.
-3. Click Sedan 1.
-4. Without pressing G/R/S, a combined gizmo should now be visible on Sedan 1.
-5. Drag Move arrows.
-6. Press R and drag the rotation ring.
-7. Press S and drag scale handles.
-8. Select a scene object and repeat.
-9. Switch to 2D and confirm committed transforms match.
+After a successful build:
+
+npm run dev
 
 ROLLBACK
 --------
-node .\revoke-gizmo-only-v3.mjs
+node .\revoke-main-3d-view-polish-v1.mjs

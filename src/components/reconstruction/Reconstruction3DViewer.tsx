@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+import { createRoadSafeViewportPolish } from "./roadSafeViewportPolish";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import {
   disposeObjectTree,
@@ -565,12 +566,55 @@ function Reconstruction3DViewer({
     mount.replaceChildren(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
+
+    /*
+     * [RoadSafe:EasyViewportMouseNavigationV2:3D]
+     *
+     * Easy mouse navigation:
+     * - left drag   = orbit
+     * - middle drag = pan
+     * - right drag  = pan
+     * - wheel       = zoom
+     *
+     * TransformControls continues to disable OrbitControls while a selected
+     * entity gizmo is actively being dragged.
+     */
+    controls.enablePan = true;
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.screenSpacePanning = true;
+    controls.panSpeed = 1.2;
+    controls.rotateSpeed = 0.82;
+    controls.zoomSpeed = 1.08;
+
+    controls.mouseButtons.LEFT =
+      THREE.MOUSE.ROTATE;
+
+    controls.mouseButtons.MIDDLE =
+      THREE.MOUSE.PAN;
+
+    controls.mouseButtons.RIGHT =
+      THREE.MOUSE.PAN;
     controlsRef.current = controls;
     controls.enableDamping = true;
     controls.target.set(0, 0, 0);
     controls.minDistance = 4;
     controls.maxDistance = Math.max(width, height) * 1.7;
     controls.maxPolarAngle = Math.PI / 2.02;
+
+    /*
+     * [RoadSafe:Main3DViewportPolishV2]
+     * Pure viewport helpers: floor grid, world axes and orientation gizmo.
+     */
+    const viewportPolish =
+      createRoadSafeViewportPolish({
+        scene,
+        camera,
+        controls,
+        mount,
+        widthMetres: width,
+        heightMetres: height,
+      });
     /*
      * G / R / S belong to the selected entity, not the camera.
      * Camera navigation keeps ordinary OrbitControls behaviour.
@@ -1469,6 +1513,18 @@ function Reconstruction3DViewer({
       handleSceneAssetDrop,
     );
 
+    const handleRoadSafeViewportContextMenu =
+      (
+        event: MouseEvent,
+      ) => {
+        event.preventDefault();
+      };
+
+    renderer.domElement.addEventListener(
+      "contextmenu",
+      handleRoadSafeViewportContextMenu,
+    );
+
     renderer.domElement.addEventListener("pointerdown", handlePointerDown);
 
     const resizeObserver = new ResizeObserver(() => {
@@ -1476,6 +1532,7 @@ function Reconstruction3DViewer({
       renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false);
       camera.aspect = Math.max(1, rect.width) / Math.max(1, rect.height);
       camera.updateProjectionMatrix();
+      viewportPolish.resize();
     });
     resizeObserver.observe(mount);
 
@@ -1613,6 +1670,7 @@ function Reconstruction3DViewer({
         lastUiUpdate = now;
         setDisplayTime(timeRef.current);
       }
+      viewportPolish.update();
       renderer.render(scene, camera);
       animationId = window.requestAnimationFrame(animate);
     };
@@ -1623,6 +1681,11 @@ function Reconstruction3DViewer({
       window.cancelAnimationFrame(animationId);
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+
+      renderer.domElement.removeEventListener(
+        "contextmenu",
+        handleRoadSafeViewportContextMenu,
+      );
 
       renderer.domElement.removeEventListener(
         "dragover",
@@ -1636,6 +1699,7 @@ function Reconstruction3DViewer({
       transformControls.detach();
       transformControls.dispose();
       scene.remove(transformHelper);
+      viewportPolish.dispose();
       controls.dispose();
       scene.traverse((object) => {
         if (
@@ -1782,7 +1846,7 @@ function Reconstruction3DViewer({
         <div className="pointer-events-none absolute right-3 top-3 rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[8px] text-slate-300 backdrop-blur">
           {getReconstructionWorldDimensions(reconstruction).source} Ãƒâ€šÃ‚Â· {effectiveCameraMode}
         </div>
-        <div className="pointer-events-none absolute bottom-3 right-3 rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
+        <div className="pointer-events-none absolute bottom-3 right-[142px] z-20 rounded border border-[#494949] bg-[#303030] px-2.5 py-1.5 text-[9px] text-slate-300 backdrop-blur">
           {visibleTime.toFixed(1)}s
         </div>
         <div

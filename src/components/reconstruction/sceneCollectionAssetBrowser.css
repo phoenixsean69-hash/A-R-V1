@@ -374,3 +374,114 @@
   letter-spacing: .08em;
   pointer-events: none;
 }
+
+/* [RoadSafe:SceneCollectionParticipantPropertiesV1:start] */
+.roadsafe-outliner-participant {
+  min-width: 0;
+  border-bottom: 1px solid #202020;
+}
+
+.roadsafe-outliner-participant > .roadsafe-outliner-row {
+  border-bottom: 0;
+}
+
+.roadsafe-outliner-participant__properties {
+  margin: 0 4px 4px 18px;
+  overflow: hidden;
+  border: 1px solid #414141;
+  border-radius: 2px;
+  background: #202020;
+  box-shadow: inset 2px 0 0 #574533;
+}
+
+.roadsafe-outliner-participant__section-heading {
+  min-height: 21px;
+  display: flex;
+  align-items: center;
+  padding: 3px 6px;
+  border-bottom: 1px solid #181818;
+  background: #292929;
+  color: #929292;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.roadsafe-outliner-participant__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+}
+
+.roadsafe-outliner-participant__grid label {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  color: #818181;
+  font-size: 7px;
+}
+
+.roadsafe-outliner-participant__grid label.is-wide {
+  grid-column: 1 / -1;
+}
+
+.roadsafe-outliner-participant__grid label.is-check {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 23px;
+  padding: 0 5px;
+  border: 1px solid #3d3d3d;
+  border-radius: 2px;
+  background: #242424;
+}
+
+.roadsafe-outliner-participant__grid input:not([type="checkbox"]),
+.roadsafe-outliner-participant__grid select {
+  width: 100%;
+  height: 23px;
+  min-height: 23px;
+  min-width: 0;
+  padding: 1px 4px;
+  border: 1px solid #494949;
+  border-radius: 2px;
+  outline: none;
+  background: #282828;
+  color: #d1d1d1;
+  font-size: 7.8px;
+}
+
+.roadsafe-outliner-participant__grid input:not([type="checkbox"]):focus,
+.roadsafe-outliner-participant__grid select:focus {
+  border-color: #84613e;
+}
+
+.roadsafe-outliner-participant__grid input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: #b66c2b;
+}
+
+.roadsafe-outliner-participant__hint {
+  margin: 0;
+  padding: 5px 6px;
+  border-top: 1px solid #181818;
+  color: #6f6f6f;
+  font-size: 7px;
+  line-height: 1.35;
+}
+
+.roadsafe-outliner-row[aria-expanded="true"] {
+  background: #303030;
+}
+
+.roadsafe-outliner-row[aria-expanded="true"].is-selected {
+  background: #35445d;
+}
+
+.roadsafe-outliner-row[aria-expanded="true"]
+  .roadsafe-outliner-row__twisty {
+  color: #d28a4b;
+}
+/* [RoadSafe:SceneCollectionParticipantPropertiesV1:end] */

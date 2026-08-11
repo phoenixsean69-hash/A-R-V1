@@ -1,0 +1,26 @@
+RoadSafe Palette Hierarchy V2
+==============================
+
+SURFACE ROLES
+-------------
+#181818 deep chrome
+#3C3C3C main workspace + large content cards
+#555555 2D / 3D / AR + restrained raised dark surfaces
+#C1C1C1 compact controls / buttons / form fields
+#C69D56 active / selected / attention
+#8FD1AB success / verified / ready
+#4874CB primary / info / focus / links
+
+EXPLICIT V1 CORRECTIONS
+-----------------------
+Station Overview stat cards: DARK
+Reports panels/register/table: DARK
+Report content text: LIGHT
+Object/model browser rows: DARK
+Selected object/model row: GOLD
+Buttons/controls: LIGHT
+2D/3D/AR viewport: #555555
+
+Final palette import: PASS
+No later CSS import: PASS
+WebGL #555555 seen: PASS

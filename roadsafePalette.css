@@ -1,0 +1,979 @@
+/*
+ * RoadSafe AR — Canonical Palette Hierarchy V2
+ * ==============================================
+ *
+ * V1 correctly introduced the requested palette, but assigned #C1C1C1 to
+ * generic content panels. That inverted large dashboard cards, report bodies,
+ * tables and object-browser rows.
+ *
+ * V2 keeps the palette and corrects the SURFACE ROLES:
+ *
+ * #181818  deep chrome / navigation / headers / separators
+ * #3C3C3C  main workspace / content cards / report bodies / object rows
+ * #555555  2D / 3D / AR viewports + restrained raised dark surface
+ * #C1C1C1  compact controls / buttons / form fields
+ * #C69D56  active / selected / attention
+ * #8FD1AB  success / verified / ready
+ * #4874CB  primary / information / links / focus
+ *
+ * This file is intentionally loaded after all other RoadSafe styles.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --rs-secondary: #181818;
+  --rs-main: #3C3C3C;
+  --rs-viewport: #555555;
+  --rs-control: #C1C1C1;
+  --rs-gold: #C69D56;
+  --rs-mint: #8FD1AB;
+  --rs-blue: #4874CB;
+
+  --rs-text-dark: #181818;
+  --rs-text-light: #C1C1C1;
+
+  /* ------------------------------------------------------------------ */
+  /* Legacy token bridge: dark CONTENT, light CONTROLS.                 */
+  /* ------------------------------------------------------------------ */
+
+  --bg-base: var(--rs-main);
+  --bg-panel: var(--rs-main);
+  --bg-card: var(--rs-main);
+  --bg-control: var(--rs-control);
+  --bg-control-hover: var(--rs-gold);
+
+  --border-strong: var(--rs-secondary);
+  --border-mid: var(--rs-viewport);
+  --border-soft: var(--rs-secondary);
+
+  --text-strong: var(--rs-text-light);
+  --text-main: var(--rs-text-light);
+  --text-muted: var(--rs-text-light);
+  --text-faint: var(--rs-text-light);
+
+  --selection: var(--rs-gold);
+  --context-blue: var(--rs-blue);
+  --success-muted: var(--rs-mint);
+
+  /* darkerTheme.css */
+  --js-shell: var(--rs-secondary);
+  --js-sidebar: var(--rs-secondary);
+  --js-workspace: var(--rs-main);
+  --js-inspector: var(--rs-main);
+  --js-panel: var(--rs-main);
+  --js-panel-raised: var(--rs-viewport);
+  --js-panel-hover: var(--rs-viewport);
+
+  --js-border-subtle: var(--rs-secondary);
+  --js-border-default: var(--rs-viewport);
+  --js-border-strong: var(--rs-secondary);
+
+  --js-blue-muted: var(--rs-blue);
+  --js-blue-active: var(--rs-blue);
+  --js-blue-selected: var(--rs-gold);
+  --js-blue-soft-bg: var(--rs-main);
+
+  --js-text-primary: var(--rs-text-light);
+  --js-text-secondary: var(--rs-text-light);
+  --js-text-muted: var(--rs-text-light);
+  --js-text-disabled: var(--rs-viewport);
+
+  --js-green-muted: var(--rs-mint);
+  --js-green-bg: var(--rs-mint);
+  --js-info-muted: var(--rs-blue);
+  --js-amber-muted: var(--rs-gold);
+  --js-amber-bg: var(--rs-gold);
+
+  /* workstationPanelSystem.css */
+  --workstation-panel-surface: var(--rs-main);
+  --workstation-panel-header: var(--rs-secondary);
+  --workstation-panel-section: var(--rs-main);
+  --workstation-panel-section-header: var(--rs-secondary);
+  --workstation-panel-raised: var(--rs-viewport);
+  --workstation-input: var(--rs-control);
+  --workstation-control-top: var(--rs-control);
+  --workstation-control-bottom: var(--rs-control);
+
+  --workstation-panel-border: var(--rs-secondary);
+  --workstation-panel-border-soft: var(--rs-viewport);
+  --workstation-panel-border-strong: var(--rs-secondary);
+
+  --workstation-panel-text: var(--rs-text-light);
+  --workstation-panel-text-secondary: var(--rs-text-light);
+  --workstation-panel-muted: var(--rs-text-light);
+  --workstation-accent: var(--rs-gold);
+
+  /* blenderColorGuard.css */
+  --roadsafe-ui-accent: var(--rs-gold);
+  --roadsafe-ui-shell: var(--rs-secondary);
+  --roadsafe-ui-workspace: var(--rs-main);
+  --roadsafe-ui-panel: var(--rs-main);
+  --roadsafe-ui-section: var(--rs-main);
+  --roadsafe-ui-raised: var(--rs-viewport);
+  --roadsafe-ui-hover: var(--rs-viewport);
+  --roadsafe-ui-input: var(--rs-control);
+
+  --roadsafe-ui-border: var(--rs-secondary);
+  --roadsafe-ui-border-mid: var(--rs-viewport);
+  --roadsafe-ui-border-strong: var(--rs-secondary);
+
+  --roadsafe-ui-text: var(--rs-text-light);
+  --roadsafe-ui-text-secondary: var(--rs-text-light);
+  --roadsafe-ui-muted: var(--rs-text-light);
+
+  /* blenderTotalUI.css — this is critical for reconstruction chrome. */
+  --blender-shell: var(--rs-secondary);
+  --blender-sidebar: var(--rs-secondary);
+  --blender-workspace: var(--rs-main);
+  --blender-panel: var(--rs-main);
+  --blender-section: var(--rs-main);
+  --blender-section-header: var(--rs-secondary);
+  --blender-raised: var(--rs-viewport);
+  --blender-hover: var(--rs-viewport);
+  --blender-pressed: var(--rs-main);
+  --blender-input: var(--rs-control);
+  --blender-canvas: var(--rs-viewport);
+
+  --blender-border: var(--rs-secondary);
+  --blender-border-soft: var(--rs-viewport);
+  --blender-border-mid: var(--rs-viewport);
+  --blender-border-strong: var(--rs-secondary);
+
+  --blender-text: var(--rs-text-light);
+  --blender-text-secondary: var(--rs-text-light);
+  --blender-muted: var(--rs-text-light);
+  --blender-disabled: var(--rs-viewport);
+
+  --blender-orange: var(--rs-gold);
+  --blender-orange-soft: var(--rs-gold);
+  --blender-orange-surface: var(--rs-gold);
+
+  --blender-success: var(--rs-mint);
+  --blender-success-surface: var(--rs-mint);
+  --blender-warning: var(--rs-gold);
+  --blender-warning-surface: var(--rs-gold);
+}
+
+/* ====================================================================== */
+/* 1. SHELL                                                               */
+/* ====================================================================== */
+
+html,
+body,
+#root {
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.roadsafe-workstation,
+.roadsafe-center,
+.roadsafe-center-content,
+.reconstruction-shell-main,
+.reconstruction-workspace,
+.reconstruction-workspace__body,
+main {
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.roadsafe-navigation,
+.roadsafe-navigation-brand,
+.roadsafe-navigation-footer,
+.roadsafe-header,
+.roadsafe-topbar,
+.reconstruction-workspace__header,
+.reconstruction-workspace__legacy-scene-toolbar,
+.reconstruction-workspace__tool-rail,
+.reconstruction-workspace__blender-properties-tabs,
+.reconstruction-node-editor__toolbar,
+.reconstruction-node-editor__status,
+.roadsafe-bottom-dock__tabs {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-secondary) !important;
+  background-image: none !important;
+  color: var(--rs-text-light) !important;
+}
+
+/* ====================================================================== */
+/* 2. CONTENT SURFACES — DARK AGAIN                                       */
+/* ====================================================================== */
+
+/*
+ * These are content containers, not controls. This is the main V1 correction.
+ */
+.ui-panel,
+.ui-card,
+.workstation-panel,
+.roadsafe-inspector,
+.roadsafe-bottom-panel,
+.roadsafe-navigation-case,
+.reconstruction-workspace__properties,
+.reconstruction-workspace__settings,
+.reconstruction-workspace__timeline,
+.reconstruction-workspace__workspace-card,
+.reconstruction-workspace__context-panel,
+.reconstruction-workspace__blender-properties,
+.reconstruction-workspace__blender-properties-editor,
+.reconstruction-workspace__blender-properties-content,
+.reconstruction-workspace__blender-properties-section,
+.reconstruction-workspace__blender-properties-embedded,
+.reconstruction-node-editor,
+.blender-object-category,
+.blender-placed-objects,
+.scene-settings__section,
+details,
+dialog,
+[role="dialog"] {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  background-image: none !important;
+  color: var(--rs-text-light) !important;
+  box-shadow: none !important;
+}
+
+/* Restore readable text on every dark content surface. */
+:is(
+  .ui-panel,
+  .ui-card,
+  .workstation-panel,
+  .roadsafe-inspector,
+  .roadsafe-bottom-panel,
+  .reconstruction-workspace__properties,
+  .reconstruction-workspace__settings,
+  .reconstruction-workspace__timeline,
+  .reconstruction-workspace__workspace-card,
+  .reconstruction-workspace__blender-properties,
+  .reconstruction-workspace__blender-properties-editor,
+  .reconstruction-node-editor,
+  .scene-settings__section,
+  dialog,
+  [role="dialog"]
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  small,
+  strong,
+  label,
+  dt,
+  dd,
+  th,
+  td,
+  summary,
+  legend
+) {
+  color: var(--rs-text-light) !important;
+}
+
+/* Legacy slate/gray text utilities must remain visible on dark surfaces. */
+:is(
+  .ui-panel,
+  .ui-card,
+  .workstation-panel,
+  .roadsafe-inspector,
+  .roadsafe-bottom-panel,
+  .reconstruction-workspace__properties,
+  .reconstruction-workspace__settings,
+  .reconstruction-workspace__timeline,
+  .reconstruction-workspace__workspace-card,
+  .reconstruction-node-editor
+) :is(
+  .text-white,
+  .text-slate-50,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300,
+  .text-slate-400,
+  .text-slate-500,
+  .text-slate-600,
+  .text-gray-100,
+  .text-gray-200,
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600
+) {
+  color: var(--rs-text-light) !important;
+}
+
+/* Muted text: same palette colour, reduced intensity rather than a new hex. */
+:is(
+  .ui-panel,
+  .ui-card,
+  .workstation-panel,
+  .roadsafe-inspector,
+  .roadsafe-bottom-panel,
+  .reconstruction-workspace__properties,
+  .reconstruction-workspace__settings,
+  .reconstruction-workspace__timeline,
+  .reconstruction-workspace__workspace-card,
+  .reconstruction-node-editor
+) :is(
+  .text-slate-500,
+  .text-slate-600,
+  .text-gray-500,
+  .text-gray-600
+) {
+  opacity: .72;
+}
+
+/* Content headers are deep chrome, not pale blocks. */
+.ui-panel-header,
+.workstation-panel__header,
+.workstation-panel__section-heading,
+.workstation-panel__footer,
+.roadsafe-inspector-header,
+.roadsafe-inspector-section-heading,
+.roadsafe-inspector-footer,
+.roadsafe-bottom-panel__header,
+.roadsafe-bottom-panel__section-heading,
+.roadsafe-bottom-panel__footer,
+.reconstruction-workspace__blender-properties-header,
+.reconstruction-workspace__blender-properties-section > summary,
+.reconstruction-workspace__workspace-card-title,
+.reconstruction-node-editor__panel-header {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-secondary) !important;
+  background-image: none !important;
+  color: var(--rs-text-light) !important;
+}
+
+/* ====================================================================== */
+/* 3. STATION OVERVIEW — EXPLICIT FIX                                     */
+/* ====================================================================== */
+
+.dashboard-material-stat-grid {
+  background: transparent !important;
+}
+
+.dashboard-material-stat-card,
+.dashboard-stat-card {
+  border: 1px solid var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  background-image: none !important;
+  color: var(--rs-text-light) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-material-stat-card:hover,
+.dashboard-stat-card:hover {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-viewport) !important;
+}
+
+.dashboard-material-stat-card:active,
+.dashboard-stat-card:active {
+  border-color: var(--rs-gold) !important;
+}
+
+.dashboard-material-stat-card :is(
+  p,
+  span,
+  strong,
+  small,
+  h2,
+  h3
+),
+.dashboard-stat-card :is(
+  p,
+  span,
+  strong,
+  small,
+  h2,
+  h3
+) {
+  color: var(--rs-text-light) !important;
+  opacity: 1 !important;
+}
+
+.dashboard-material-stat-icon,
+.dashboard-stat-icon {
+  border: 1px solid var(--rs-viewport) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.dashboard-material-stat-icon svg,
+.dashboard-stat-icon svg {
+  color: var(--rs-text-light) !important;
+  stroke: currentColor !important;
+}
+
+/* Dashboard operational panels remain dark. */
+.dashboard-command-grid .ui-panel,
+.dashboard-3d-preview,
+.dashboard-3d-preview .reconstruction-3d {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+/* ====================================================================== */
+/* 4. REPORT REGISTER — EXPLICIT CONTRAST FIX                             */
+/* ====================================================================== */
+
+.ui-panel table {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.ui-panel thead,
+.ui-panel thead tr,
+.ui-panel th {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.ui-panel tbody,
+.ui-panel tbody tr,
+.ui-panel td {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.ui-panel tbody tr:hover,
+.ui-panel tbody tr:hover td {
+  background: var(--rs-viewport) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.ui-panel table a:not(.ui-button):not(.ui-button-primary):not(.ui-icon-button) {
+  color: var(--rs-blue) !important;
+  opacity: 1 !important;
+}
+
+.ui-panel [class*="bg-[#303030]"],
+.ui-panel [class*="bg-[#383838]"] {
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.ui-panel [class*="bg-[#202020]"] {
+  background: var(--rs-secondary) !important;
+}
+
+.ui-panel [class*="bg-[#4f8ce6]"] {
+  background: var(--rs-blue) !important;
+}
+
+/* ====================================================================== */
+/* 5. OBJECT / PARTICIPANT BROWSER — EXPLICIT FIX                         */
+/* ====================================================================== */
+
+.blender-object-palette,
+.blender-object-palette__categories,
+.blender-object-category,
+.blender-object-category__items,
+.blender-placed-objects,
+.blender-placed-objects__list {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.blender-object-palette__intro,
+.blender-object-category > summary,
+.blender-placed-objects__header,
+.blender-placed-objects__footer {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.blender-object-option,
+.blender-placed-object {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+  box-shadow: none !important;
+}
+
+.blender-object-option:hover,
+.blender-placed-object:hover {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-viewport) !important;
+}
+
+.blender-object-option.is-active,
+.blender-placed-object.is-selected {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  color: var(--rs-text-dark) !important;
+  box-shadow: inset 3px 0 0 var(--rs-secondary) !important;
+}
+
+.blender-object-option :is(
+  strong,
+  small,
+  span
+),
+.blender-placed-object :is(
+  strong,
+  small,
+  span
+) {
+  color: var(--rs-text-light) !important;
+}
+
+.blender-object-option.is-active :is(
+  strong,
+  small,
+  span
+),
+.blender-placed-object.is-selected :is(
+  strong,
+  small,
+  span
+) {
+  color: var(--rs-text-dark) !important;
+  opacity: 1 !important;
+}
+
+.blender-object-option__icon,
+.blender-object-option__check,
+.blender-object-option__count,
+.blender-object-category > summary small,
+.blender-placed-objects__header small {
+  border-color: var(--rs-viewport) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.blender-object-option.is-active .blender-object-option__check,
+.blender-placed-object.is-selected .blender-object-option__check {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-control) !important;
+}
+
+/*
+ * Premium model cards/rows from the model-library phase. These selectors are
+ * deliberately scoped to reconstruction/object-library regions.
+ */
+.reconstruction-editor :is(
+  [class*="model-card"],
+  [class*="asset-card"],
+  [class*="model-row"],
+  [class*="asset-row"],
+  [class*="participant-option"],
+  [class*="participant-card"]
+) {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+}
+
+.reconstruction-editor :is(
+  [class*="model-card"],
+  [class*="asset-card"],
+  [class*="model-row"],
+  [class*="asset-row"],
+  [class*="participant-option"],
+  [class*="participant-card"]
+).is-active,
+.reconstruction-editor :is(
+  [class*="model-card"],
+  [class*="asset-card"],
+  [class*="model-row"],
+  [class*="asset-row"],
+  [class*="participant-option"],
+  [class*="participant-card"]
+)[aria-selected="true"] {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+/* ====================================================================== */
+/* 6. CONTROLS — #C1C1C1 BELONGS HERE                                    */
+/* ====================================================================== */
+
+button:not([data-scene-interactive="true"]),
+[role="button"]:not([data-scene-interactive="true"]),
+.ui-button,
+.ui-icon-button,
+.reconstruction-workspace__button,
+.reconstruction-workspace__icon-button,
+.reconstruction-workspace__view-switch button,
+.reconstruction-workspace__tools button,
+.reconstruction-workspace__blender-properties-tabs button,
+.reconstruction-workspace__map-controls button,
+.reconstruction-workspace__map-expand-button,
+.roadsafe-navigation button,
+.roadsafe-navigation-link,
+.workstation-panel button,
+.roadsafe-inspector button,
+.roadsafe-bottom-panel button,
+.reconstruction-node-editor button,
+.maplibregl-ctrl-group button {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-control) !important;
+  background-image: none !important;
+  color: var(--rs-text-dark) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+:is(
+  button:not([data-scene-interactive="true"]),
+  [role="button"]:not([data-scene-interactive="true"]),
+  .ui-button,
+  .ui-icon-button,
+  .reconstruction-workspace__button,
+  .reconstruction-workspace__icon-button,
+  .reconstruction-workspace__view-switch button,
+  .reconstruction-workspace__tools button,
+  .reconstruction-workspace__blender-properties-tabs button,
+  .reconstruction-workspace__map-controls button,
+  .roadsafe-navigation button,
+  .roadsafe-navigation-link,
+  .workstation-panel button,
+  .roadsafe-inspector button,
+  .roadsafe-bottom-panel button,
+  .reconstruction-node-editor button,
+  .maplibregl-ctrl-group button
+) :is(
+  span,
+  small,
+  strong,
+  svg
+) {
+  color: var(--rs-text-dark) !important;
+  stroke: currentColor;
+}
+
+:is(
+  button:not([data-scene-interactive="true"]),
+  [role="button"]:not([data-scene-interactive="true"]),
+  .ui-button,
+  .ui-icon-button,
+  .reconstruction-workspace__button,
+  .reconstruction-workspace__icon-button,
+  .reconstruction-workspace__view-switch button,
+  .reconstruction-workspace__tools button,
+  .reconstruction-workspace__blender-properties-tabs button,
+  .reconstruction-workspace__map-controls button,
+  .roadsafe-navigation button,
+  .roadsafe-navigation-link,
+  .workstation-panel button,
+  .roadsafe-inspector button,
+  .roadsafe-bottom-panel button,
+  .reconstruction-node-editor button,
+  .maplibregl-ctrl-group button
+):hover:not(:disabled) {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+/* Primary = RoadSafe blue. */
+.ui-button-primary,
+button[data-variant="primary"],
+a[data-variant="primary"] {
+  border-color: var(--rs-blue) !important;
+  background: var(--rs-blue) !important;
+  background-image: none !important;
+  color: var(--rs-control) !important;
+  box-shadow: none !important;
+}
+
+.ui-button-primary :is(
+  span,
+  small,
+  strong,
+  svg
+),
+button[data-variant="primary"] :is(
+  span,
+  small,
+  strong,
+  svg
+),
+a[data-variant="primary"] :is(
+  span,
+  small,
+  strong,
+  svg
+) {
+  color: var(--rs-control) !important;
+  stroke: currentColor;
+}
+
+.ui-button-primary:hover:not(:disabled),
+button[data-variant="primary"]:hover:not(:disabled),
+a[data-variant="primary"]:hover {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+/* Active/selected = gold. */
+button.is-active,
+[role="button"].is-active,
+[aria-pressed="true"],
+.reconstruction-workspace__view-switch button.is-active,
+.reconstruction-workspace__tools button.is-active,
+.reconstruction-workspace__blender-properties-tabs button.is-active,
+.roadsafe-navigation-link.is-active,
+.workstation-panel__control.is-selected {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  background-image: none !important;
+  color: var(--rs-text-dark) !important;
+  box-shadow: inset 3px 0 0 var(--rs-secondary) !important;
+}
+
+:is(
+  button.is-active,
+  [role="button"].is-active,
+  [aria-pressed="true"],
+  .reconstruction-workspace__view-switch button.is-active,
+  .reconstruction-workspace__tools button.is-active,
+  .reconstruction-workspace__blender-properties-tabs button.is-active,
+  .roadsafe-navigation-link.is-active
+) :is(
+  span,
+  small,
+  strong,
+  svg
+) {
+  color: var(--rs-text-dark) !important;
+  stroke: currentColor;
+}
+
+/* ====================================================================== */
+/* 7. FORM CONTROLS                                                       */
+/* ====================================================================== */
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea,
+.ui-input,
+.workstation-panel__control {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-control) !important;
+  background-image: none !important;
+  color: var(--rs-text-dark) !important;
+  caret-color: var(--rs-blue) !important;
+  box-shadow: none !important;
+  color-scheme: light;
+}
+
+select option {
+  background: var(--rs-control) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--rs-text-dark) !important;
+  opacity: .62;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  border-color: var(--rs-blue) !important;
+  outline: 1px solid var(--rs-blue) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px var(--rs-blue) !important;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+.roadsafe-range {
+  accent-color: var(--rs-gold) !important;
+}
+
+/* ====================================================================== */
+/* 8. BADGES / COMPACT UTILITY CHIPS                                      */
+/* ====================================================================== */
+
+.ui-badge,
+[class*="quality-badge"],
+[class*="hq-badge"],
+[class*="model-badge"] {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-control) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+/* ====================================================================== */
+/* 9. VIEWPORTS — KEEP #555555                                            */
+/* ====================================================================== */
+
+.reconstruction-workspace__2d-viewport,
+.reconstruction-workspace__stage-main,
+.reconstruction-3d,
+.reconstruction-3d--workspace,
+.reconstruction-3d--compact,
+[data-reconstruction-view="2d"] .reconstruction-workspace__canvas,
+[data-reconstruction-view="3d"] .reconstruction-workspace__stage-main,
+[data-reconstruction-view="ar"],
+[data-reconstruction-view="AR"],
+[data-view="ar"],
+[data-view="AR"],
+.ar-viewer,
+.ar-viewport,
+.ar-scene,
+[class*="ar-viewer"],
+[class*="ar-viewport"],
+[class*="ar-scene"],
+[class*="xr-viewport"],
+[class*="xr-view"] {
+  background: var(--rs-viewport) !important;
+}
+
+/* Keep small overlays readable over the view. */
+.reconstruction-3d [class*="absolute"][class*="bg-"],
+.reconstruction-workspace__2d-viewport > [class*="absolute"][class*="bg-"] {
+  border-color: var(--rs-viewport) !important;
+  background: var(--rs-secondary) !important;
+  color: var(--rs-text-light) !important;
+}
+
+/* ====================================================================== */
+/* 10. MAPLIBRE                                                           */
+/* ====================================================================== */
+
+/* Tiles / satellite imagery are never recoloured. */
+.maplibregl-ctrl-group,
+.maplibregl-popup-content {
+  border: 1px solid var(--rs-secondary) !important;
+  background: var(--rs-main) !important;
+  color: var(--rs-text-light) !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-popup-content :is(
+  p,
+  span,
+  strong,
+  small,
+  h1,
+  h2,
+  h3
+) {
+  color: var(--rs-text-light) !important;
+}
+
+.maplibregl-ctrl-group button {
+  border-color: var(--rs-secondary) !important;
+  background: var(--rs-control) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: var(--rs-gold) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--rs-main) !important;
+  border-bottom-color: var(--rs-main) !important;
+}
+
+/* ====================================================================== */
+/* 11. SUCCESS / INFO / ATTENTION                                         */
+/* ====================================================================== */
+
+:is(
+  .is-success,
+  .is-verified,
+  .is-ready,
+  [data-status="success"],
+  [data-status="verified"],
+  [data-status="ready"]
+) {
+  border-color: var(--rs-mint) !important;
+  background: var(--rs-mint) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+:is(
+  .is-info,
+  [data-status="info"],
+  [data-tone="info"]
+) {
+  border-color: var(--rs-blue) !important;
+  background: var(--rs-blue) !important;
+  color: var(--rs-control) !important;
+}
+
+:is(
+  .is-warning,
+  .is-pending,
+  [data-status="warning"],
+  [data-status="pending"],
+  [data-tone="warning"]
+) {
+  border-color: var(--rs-gold) !important;
+  background: var(--rs-gold) !important;
+  color: var(--rs-text-dark) !important;
+}
+
+/* ====================================================================== */
+/* 12. SCROLLBARS                                                         */
+/* ====================================================================== */
+
+* {
+  scrollbar-color: var(--rs-viewport) var(--rs-secondary);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--rs-secondary);
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid var(--rs-secondary);
+  background: var(--rs-viewport);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--rs-gold);
+}
+
+/* ====================================================================== */
+/* 13. DISABLED                                                           */
+/* ====================================================================== */
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+  opacity: .48 !important;
+}
+
+/* ====================================================================== */
+/* 14. PRINT                                                              */
+/* ====================================================================== */
+
+/* Do not sabotage the repo's existing print-specific white-paper report CSS. */
+@media print {
+  .roadsafe-shell,
+  .roadsafe-shell main,
+  .roadsafe-shell .ui-panel {
+    print-color-adjust: economical;
+  }
+}
+
+/* ====================================================================== */
+/* CONTRACT                                                               */
+/* ====================================================================== */
+
+#root {
+  --roadsafe-canonical-palette-version: "RoadSafe Palette Hierarchy V2";
+}

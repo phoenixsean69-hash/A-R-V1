@@ -1,0 +1,21 @@
+RoadSafe Palette Everywhere V1
+===============================
+
+Canonical palette:
+  #181818 secondary / deep chrome
+  #3C3C3C main application surface
+  #555555 2D / 3D / AR viewports
+  #C1C1C1 buttons / panels / controls
+  #C69D56 warm selection / attention
+  #8FD1AB verified / success
+  #4874CB primary blue / information / focus
+
+Final palette imported: YES
+Final palette after Blender guard: YES
+3D #555555 background: YES
+2D selection accent migrated: YES
+Optional gizmo palette files found: 1
+
+NOTE:
+Scene-semantic colours (traffic signs, vegetation artwork, evidence meaning,
+hazard meaning, etc.) are intentionally not blanket-replaced by the UI theme.

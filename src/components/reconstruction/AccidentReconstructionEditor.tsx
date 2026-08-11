@@ -46,6 +46,7 @@ import {
   DEFAULT_PHYSICS_SETTINGS,
   applyPhysicsSimulation,
   derivePrimaryCollisionPoint,
+  getDefaultParticipantPhysics,
   preparePhysicsForPlayback,
 } from "../../services/reconstructionPhysicsService";
 import {
@@ -82,6 +83,7 @@ import SceneObjectPalette from "./SceneObjectPalette";
 import SceneObjectRenderer from "./SceneObjectRenderer";
 import SceneObjectSettingsPanel from "./SceneObjectSettingsPanel";
 import SceneSettingsPanel from "./SceneSettingsPanel";
+import ReconstructionPhysicsContextEditor from "./ReconstructionPhysicsContextEditor";
 import SceneCollectionAssetBrowser from "./SceneCollectionAssetBrowser";
 import Participant2DModel from "./Participant2DModel";
 import ReconstructionGuide from "./ReconstructionGuide";
@@ -1769,9 +1771,24 @@ export default function AccidentReconstructionEditor({
           vehicles: current.vehicles.map((participant) => {
             if (participant.id !== participantId) return participant;
 
-            const updated = {
+            const updated: ReconstructionVehicle = {
               ...participant,
               ...updates,
+              ...(updates.estimatedSpeedKmh !== undefined
+                ? {
+                    physics: {
+                      ...getDefaultParticipantPhysics({
+                        type:
+                          updates.type ??
+                          participant.type,
+                      }),
+                      ...(participant.physics ?? {}),
+                      ...(updates.physics ?? {}),
+                      inputSpeedKmh:
+                        updates.estimatedSpeedKmh,
+                    },
+                  }
+                : {}),
             };
 
             if (
@@ -1855,8 +1872,21 @@ export default function AccidentReconstructionEditor({
       updates: Partial<ReconstructionSceneObject>,
     ) => {
       setReconstruction((current) => {
+        const affectsPhysics = Boolean(
+          updates.physics !== undefined ||
+          updates.position !== undefined ||
+          updates.rotation !== undefined ||
+          updates.scale !== undefined ||
+          updates.severity !== undefined ||
+          updates.widthMetres !== undefined ||
+          updates.lengthMetres !== undefined,
+        );
+
         const updated: AccidentReconstruction = {
           ...current,
+          lastPhysicsSimulation: affectsPhysics
+            ? undefined
+            : current.lastPhysicsSimulation,
           sceneObjects: current.sceneObjects.map((object) => {
             if (object.id !== objectId) return object;
 
@@ -2528,16 +2558,41 @@ export default function AccidentReconstructionEditor({
 
   const handleScenePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!sceneRef.current || (event.button !== 0 && event.button !== 1)) return;
+      /*
+       * [RoadSafe:EasyViewportMouseNavigationV2:2D]
+       *
+       * Natural viewport navigation:
+       * - left-drag empty space = pan
+       * - middle-drag = pan
+       * - right-drag = pan
+       * - interactive handles keep their normal editing behaviour
+       */
+      if (
+        !sceneRef.current ||
+        (
+          event.button !== 0 &&
+          event.button !== 1 &&
+          event.button !== 2
+        )
+      ) {
+        return;
+      }
 
       const target = event.target as HTMLElement;
       const isInteractive = Boolean(
         target.closest('[data-scene-interactive="true"]'),
       );
 
+      const wantsViewportPan =
+        event.button === 1 ||
+        event.button === 2 ||
+        (
+          event.button === 0 &&
+          !isInteractive
+        );
+
       if (
-        !isInteractive &&
-        event.button === 1
+        wantsViewportPan
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -3694,12 +3749,12 @@ export default function AccidentReconstructionEditor({
     Select: {
       title: "Select and inspect",
       twoD: "Click a participant, route point, object, evidence marker or measurement.",
-      threeD: "Click a participant to select it; drag the scene normally to orbit.",
+      threeD: "Left-drag to orbit. Middle/right-drag to pan. Use the wheel to zoom.",
     },
     Move: {
       title: "Move / pan",
-      twoD: "Drag empty map space to pan. Drag editable route points and scene handles to reposition them.",
-      threeD: "Drag the 3D scene to pan the camera target.",
+      twoD: "Left-drag empty space to pan. Middle/right-drag also pan. Drag editable route points and scene handles normally to reposition them.",
+      threeD: "Middle/right-drag pans the camera target. Left-drag continues to orbit.",
     },
     Rotate: {
       title: "Rotate",
@@ -4635,6 +4690,7 @@ export default function AccidentReconstructionEditor({
                             selectedSceneObjectId={selectedSceneObjectId}
                             onSelectParticipant={handleSelectParticipant}
                             onSelectSceneObject={handleSelectSceneObject}
+                            onUpdateParticipant={updateParticipant}
                             onArmParticipantPlacement={
                               handleArmLibraryParticipantPlacement
                             }
@@ -5015,6 +5071,7 @@ export default function AccidentReconstructionEditor({
               onPointerMove={handleSceneGesturePointerMove}
               onPointerUp={handleSceneGesturePointerEnd}
               onPointerCancel={handleSceneGesturePointerEnd}
+              onContextMenu={(event) => event.preventDefault()}
               onDragOver={handleLibrarySceneDragOver}
               onDragEnter={handleLibrarySceneDragOver}
               onDragLeave={(event) => {
@@ -5712,6 +5769,7 @@ export default function AccidentReconstructionEditor({
                         selectedSceneObjectId={selectedSceneObjectId}
                         onSelectParticipant={handleSelectParticipant}
                         onSelectSceneObject={handleSelectSceneObject}
+                            onUpdateParticipant={updateParticipant}
                         onArmParticipantPlacement={
                           handleArmLibraryParticipantPlacement
                         }
@@ -6712,6 +6770,11 @@ export default function AccidentReconstructionEditor({
                 <div><span>Gravity</span><strong>9.81 m/s²</strong></div>
                 <div><span>Friction Model</span><strong>Advanced</strong></div>
               </div>
+              <ReconstructionPhysicsContextEditor
+                reconstruction={reconstruction}
+                onChange={handleReconstructionChange}
+              />
+
               <button
                 type="button"
                 className="premium-investigation-card__action"
@@ -7031,6 +7094,63 @@ export default function AccidentReconstructionEditor({
         onSelectSceneObject={
           handleSelectSceneObject
         }
+        onReconstructionChange={
+          handleReconstructionChange
+        }
+        onRunPhysics={() => {
+          handleRunPhysics();
+        }}
+        onSwitchView={(view) => {
+          setIsPlaying(false);
+          setActiveReconstructionView(view);
+        }}
+        onOpenNodeTarget={(target) => {
+          setIsPlaying(false);
+          setWorkspaceSettingsOpen(true);
+
+          const targetMap = {
+            case: [
+              "case",
+              "Case Setup",
+            ],
+            scene: [
+              "scene",
+              "Scene Environment",
+            ],
+            objects: [
+              "objects",
+              "Objects",
+            ],
+            evidence: [
+              "evidence",
+              "Evidence",
+            ],
+            collision: [
+              "impact",
+              "Primary Impact",
+            ],
+            physics: [
+              "physics",
+              "Deterministic Simulation",
+            ],
+          } as const;
+
+          const [
+            tab,
+            heading,
+          ] =
+            targetMap[
+              target
+            ];
+
+          window.requestAnimationFrame(
+            () =>
+              handleWorkspaceInvestigationTab(
+                tab,
+                heading,
+              ),
+          );
+        }}
       />
 
     </div>

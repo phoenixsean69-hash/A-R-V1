@@ -20,9 +20,15 @@ import {
 
 import type {
   AccidentReconstruction,
+  ParticipantPhysicsProfile,
   ReconstructionParticipantAssetId,
+  ReconstructionVehicle,
   ReconstructionVehicleType,
 } from "../../types/reconstruction";
+
+import {
+  getDefaultParticipantPhysics,
+} from "../../services/reconstructionPhysicsService";
 
 import {
   writeParticipantAssetDrag,
@@ -50,6 +56,11 @@ interface SceneCollectionAssetBrowserProps {
     objectId: string,
   ): void;
 
+  onUpdateParticipant(
+    participantId: string,
+    updates: Partial<ReconstructionVehicle>,
+  ): void;
+
   onArmParticipantPlacement(
     assetId: ReconstructionParticipantAssetId,
     type: ReconstructionVehicleType,
@@ -62,6 +73,7 @@ export default function SceneCollectionAssetBrowser({
   selectedSceneObjectId,
   onSelectParticipant,
   onSelectSceneObject,
+  onUpdateParticipant,
   onArmParticipantPlacement,
 }: SceneCollectionAssetBrowserProps) {
   const participantAssets =
@@ -86,6 +98,47 @@ export default function SceneCollectionAssetBrowser({
 
   const [objectsOpen, setObjectsOpen] =
     useState(true);
+
+  /*
+   * [RoadSafe:SceneCollectionParticipantPropertiesV1]
+   *
+   * Each participant can expose a compact properties drawer directly in the
+   * Scene Collection Outliner. The values are not duplicated state: updates
+   * are sent back through AccidentReconstructionEditor.updateParticipant(...).
+   */
+  const [
+    expandedParticipantIds,
+    setExpandedParticipantIds,
+  ] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleParticipantExpanded = (
+    participantId: string,
+  ) => {
+    setExpandedParticipantIds(
+      (current) => {
+        const next =
+          new Set(current);
+
+        if (
+          next.has(
+            participantId,
+          )
+        ) {
+          next.delete(
+            participantId,
+          );
+        } else {
+          next.add(
+            participantId,
+          );
+        }
+
+        return next;
+      },
+    );
+  };
 
   const [selectedAssetId, setSelectedAssetId] =
     useState<ReconstructionParticipantAssetId>(
@@ -214,9 +267,40 @@ export default function SceneCollectionAssetBrowser({
                           assetId
                         ];
 
+                      const expanded =
+                        expandedParticipantIds.has(
+                          participant.id,
+                        );
+
+                      const physics:
+                        ParticipantPhysicsProfile = {
+                          ...getDefaultParticipantPhysics(
+                            participant,
+                          ),
+                          ...(participant.physics ?? {}),
+                        };
+
+                      const updatePhysics = (
+                        updates:
+                          Partial<ParticipantPhysicsProfile>,
+                      ) => {
+                        onUpdateParticipant(
+                          participant.id,
+                          {
+                            physics: {
+                              ...physics,
+                              ...updates,
+                            },
+                          },
+                        );
+                      };
+
                       return (
-                        <button
+                        <div
                           key={participant.id}
+                          className="roadsafe-outliner-participant"
+                        >
+                        <button
                           type="button"
                           className={`roadsafe-outliner-row is-item ${
                             selectedParticipantId ===
@@ -224,13 +308,29 @@ export default function SceneCollectionAssetBrowser({
                               ? "is-selected"
                               : ""
                           }`}
-                          onClick={() =>
+                          onClick={() => {
                             onSelectParticipant(
                               participant.id,
-                            )
+                            );
+
+                            toggleParticipantExpanded(
+                              participant.id,
+                            );
+                          }}
+                          aria-expanded={
+                            expanded
+                          }
+                          title={
+                            expanded
+                              ? "Collapse participant properties"
+                              : "Expand participant properties"
                           }
                         >
-                          <span className="roadsafe-outliner-row__twisty" />
+                          <span className="roadsafe-outliner-row__twisty">
+                            {expanded
+                              ? "▾"
+                              : "▸"}
+                          </span>
 
                           <span className="roadsafe-outliner-row__icon is-participant">
                             ◈
@@ -248,6 +348,406 @@ export default function SceneCollectionAssetBrowser({
                             ◉
                           </span>
                         </button>
+
+                        {expanded && (
+                          <div
+                            className="roadsafe-outliner-participant__properties"
+                            onClick={(event) =>
+                              event.stopPropagation()
+                            }
+                            onPointerDown={(event) =>
+                              event.stopPropagation()
+                            }
+                          >
+                            <div className="roadsafe-outliner-participant__section-heading">
+                              Core
+                            </div>
+
+                            <div className="roadsafe-outliner-participant__grid">
+                              <label className="is-wide">
+                                <span>Name</span>
+
+                                <input
+                                  value={
+                                    participant.name
+                                  }
+                                  onChange={(event) =>
+                                    onUpdateParticipant(
+                                      participant.id,
+                                      {
+                                        name:
+                                          event.target.value,
+                                      },
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Speed km/h
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={250}
+                                  step={1}
+                                  value={
+                                    participant.estimatedSpeedKmh
+                                  }
+                                  onChange={(event) =>
+                                    onUpdateParticipant(
+                                      participant.id,
+                                      {
+                                        estimatedSpeedKmh:
+                                          Math.max(
+                                            0,
+                                            Math.min(
+                                              250,
+                                              Number(
+                                                event.target.value,
+                                              ),
+                                            ),
+                                          ),
+                                      },
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Visual scale
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.25}
+                                  max={4}
+                                  step={0.05}
+                                  value={
+                                    participant.visualScale ??
+                                    1
+                                  }
+                                  onChange={(event) =>
+                                    onUpdateParticipant(
+                                      participant.id,
+                                      {
+                                        visualScale:
+                                          Math.max(
+                                            0.25,
+                                            Math.min(
+                                              4,
+                                              Number(
+                                                event.target.value,
+                                              ),
+                                            ),
+                                          ),
+                                      },
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+
+                            <div className="roadsafe-outliner-participant__section-heading">
+                              Physics
+                            </div>
+
+                            <div className="roadsafe-outliner-participant__grid">
+                              <label className="is-check">
+                                <span>Enabled</span>
+
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    physics.enabled
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      enabled:
+                                        event.target.checked,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>Mass kg</span>
+
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={100000}
+                                  step={5}
+                                  value={
+                                    physics.massKg
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      massKg:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Restitution
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={
+                                    physics.restitution
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      restitution:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Collision μ
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={2}
+                                  step={0.05}
+                                  value={
+                                    physics.collisionFriction ??
+                                    0.65
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      collisionFriction:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Rolling μ
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.05}
+                                  max={3}
+                                  step={0.05}
+                                  value={
+                                    physics.rollingFriction
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      rollingFriction:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>Grip</span>
+
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={2}
+                                  step={0.05}
+                                  value={
+                                    physics.lateralGrip
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      lateralGrip:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Brake m/s²
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.1}
+                                  max={18}
+                                  step={0.1}
+                                  value={
+                                    physics.brakingDecelerationMps2
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      brakingDecelerationMps2:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Radius m
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.05}
+                                  max={15}
+                                  step={0.05}
+                                  value={
+                                    physics.collisionRadiusMetres
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      collisionRadiusMetres:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Length m
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.2}
+                                  max={30}
+                                  step={0.05}
+                                  value={
+                                    physics.lengthMetres ??
+                                    asset.dimensions.lengthMetres
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      lengthMetres:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Width m
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.15}
+                                  max={5}
+                                  step={0.05}
+                                  value={
+                                    physics.widthMetres ??
+                                    asset.dimensions.widthMetres
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      widthMetres:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                <span>
+                                  Inertia scale
+                                </span>
+
+                                <input
+                                  type="number"
+                                  min={0.05}
+                                  max={5}
+                                  step={0.05}
+                                  value={
+                                    physics.momentOfInertiaScale ??
+                                    1
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      momentOfInertiaScale:
+                                        Number(
+                                          event.target.value,
+                                        ),
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label className="is-wide">
+                                <span>
+                                  Collision shape
+                                </span>
+
+                                <select
+                                  value={
+                                    physics.collisionShape ??
+                                    "Oriented Box"
+                                  }
+                                  onChange={(event) =>
+                                    updatePhysics({
+                                      collisionShape:
+                                        event.target.value as
+                                          ParticipantPhysicsProfile["collisionShape"],
+                                    })
+                                  }
+                                >
+                                  <option value="Oriented Box">
+                                    Oriented Box
+                                  </option>
+
+                                  <option value="Circle">
+                                    Circle
+                                  </option>
+                                </select>
+                              </label>
+                            </div>
+
+                            <p className="roadsafe-outliner-participant__hint">
+                              Visual scale changes the model only. Physics dimensions and mass remain independent.
+                            </p>
+                          </div>
+                        )}
+                        </div>
                       );
                     },
                   )
