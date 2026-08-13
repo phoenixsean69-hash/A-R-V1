@@ -3,6 +3,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -829,8 +830,13 @@ export default function FieldPlacementPanel({
       ? "Review"
       : "Ready";
 
-  return (
-    <div className="field-mode-backdrop">
+  return createPortal(
+    <div
+      className="field-mode-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="RoadSafe field mode"
+    >
       <div className="field-mode-shell">
         <header className="field-mode-header">
           <div className="field-mode-heading">
@@ -1522,6 +1528,7 @@ export default function FieldPlacementPanel({
           </aside>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

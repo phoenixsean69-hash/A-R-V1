@@ -1157,6 +1157,36 @@ function generateRoadCurveIfNeeded(
     return authored;
   }
 
+  /*
+   * [RoadSafe:ManualBezierRouteOwnershipV1]
+   *
+   * Once an investigator explicitly shapes any segment, automatic road-curve
+   * generation must not replace those anchors/handles.
+   */
+  const hasManualBezier =
+    authored.some(
+      (point) =>
+        point.pathInterpolation ===
+          "Bezier" ||
+        Boolean(
+          point.bezierIn,
+        ) ||
+        Boolean(
+          point.bezierOut,
+        ),
+    );
+
+  if (
+    hasManualBezier
+  ) {
+    learnFromInvestigatorRoadRoute(
+      authored,
+      participantType,
+    );
+
+    return authored;
+  }
+
   const pointOne = authored[0];
 
   const pointZ =
@@ -1614,6 +1644,18 @@ export function normalisePointZRoute({
     collisionPosition ??
     pointZSource.position;
 
+  const pointZHandleDelta = {
+    x:
+      pointZPosition.x -
+      pointZSource
+        .position.x,
+
+    y:
+      pointZPosition.y -
+      pointZSource
+        .position.y,
+  };
+
   const pointZ:
     MovementPathPoint = {
       ...pointZSource,
@@ -1631,6 +1673,33 @@ export function normalisePointZRoute({
       position: {
         ...pointZPosition,
       },
+
+      bezierIn:
+        pointZSource
+          .bezierIn
+          ? {
+              x:
+                clamp(
+                  pointZSource
+                    .bezierIn
+                    .x +
+                  pointZHandleDelta.x,
+                  0,
+                  100,
+                ),
+
+              y:
+                clamp(
+                  pointZSource
+                    .bezierIn
+                    .y +
+                  pointZHandleDelta.y,
+                  0,
+                  100,
+                ),
+            }
+          : undefined,
+
       action: "Impact",
       notes: normaliseNotes(
         pointZSource.notes,

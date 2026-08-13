@@ -827,6 +827,14 @@ function stabiliseAuthoredVehiclePlaybackPath(
         VEHICLE_ROUTE_ANCHOR_ACTIONS.has(
           point.action,
         ) ||
+        point.pathInterpolation ===
+          "Bezier" ||
+        Boolean(
+          point.bezierIn,
+        ) ||
+        Boolean(
+          point.bezierOut,
+        ) ||
         Boolean(point.linkedSceneObjectId),
     )
     .map(({ index }) => index);
@@ -1515,6 +1523,18 @@ function createSegmentMotionSpline(
       AUTO_ROAD_CURVE_NOTE_MARKER,
     ) === true;
 
+  /*
+   * [RoadSafe:ManualBezierSplineV1]
+   *
+   * The segment mode lives on the start anchor. Physics-generated segments
+   * remain authoritative/linear; otherwise an investigator-controlled Bezier
+   * overrides automatic straight/wobble suppression.
+   */
+  const manualBezierControlled =
+    startPoint
+      .pathInterpolation ===
+    "Bezier";
+
   const maximumTurnSeverity =
     Math.max(
       startTurnSeverityDegrees,
@@ -1548,8 +1568,13 @@ function createSegmentMotionSpline(
 
   const linear =
     physicsControlled ||
-    effectivelyStraight ||
-    looksLikeMinorRouteNoise ||
+    (
+      !manualBezierControlled &&
+      (
+        effectivelyStraight ||
+        looksLikeMinorRouteNoise
+      )
+    ) ||
     segmentLength < 0.001;
 
   if (linear) {
@@ -1582,7 +1607,7 @@ function createSegmentMotionSpline(
     };
   }
 
-  const controls =
+  const automaticControls =
     getSmoothSegmentControls(
       points.map(
         (point) =>
@@ -1593,6 +1618,57 @@ function createSegmentMotionSpline(
       roadGraphControlled,
       maximumTurnSeverity,
     );
+
+  const controls =
+    manualBezierControlled
+      ? {
+          controlOne:
+            startPoint.bezierOut
+              ? {
+                  x:
+                    clamp(
+                      startPoint
+                        .bezierOut
+                        .x,
+                      0,
+                      100,
+                    ),
+                  y:
+                    clamp(
+                      startPoint
+                        .bezierOut
+                        .y,
+                      0,
+                      100,
+                    ),
+                }
+              : automaticControls
+                  .controlOne,
+
+          controlTwo:
+            endPoint.bezierIn
+              ? {
+                  x:
+                    clamp(
+                      endPoint
+                        .bezierIn
+                        .x,
+                      0,
+                      100,
+                    ),
+                  y:
+                    clamp(
+                      endPoint
+                        .bezierIn
+                        .y,
+                      0,
+                      100,
+                    ),
+                }
+              : automaticControls
+                  .controlTwo,
+        }
+      : automaticControls;
 
   return {
     linear: false,
