@@ -4821,8 +4821,8 @@ export default function ForensicInvestigationWorkspace({
                     </section>
                   </div>
 
-                  <div className="fv2-analysis-row fv2-analysis-row-scan">
-                    <section className="fv2-panel fv2-analysis-scan-panel">
+                  <div className="fv2-analysis-row fv2-analysis-row-split">
+                    <section className="fv2-panel">
                       <header>
                         <div>
                           <span>Automatic consistency scan</span>
