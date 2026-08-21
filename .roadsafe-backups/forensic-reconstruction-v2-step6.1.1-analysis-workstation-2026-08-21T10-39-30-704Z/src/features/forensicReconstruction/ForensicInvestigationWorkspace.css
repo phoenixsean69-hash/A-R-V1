@@ -1,0 +1,119 @@
+.fv2-root{min-height:100dvh;background:#202020;color:#d7d7d7}.fv2-root *{box-sizing:border-box}.fv2-topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px;padding:6px 10px;background:#292929;border-bottom:1px solid #454545}.fv2-topbar>div{display:grid;grid-template-columns:auto auto;column-gap:10px;align-items:center}.fv2-topbar b{grid-row:1/3;color:#e8872d;font-size:10px;letter-spacing:.12em;border-right:1px solid #4b4b4b;padding-right:10px}.fv2-topbar span{font-size:10px;font-weight:800}.fv2-topbar small{font-size:8px;color:#858585}.fv2-topbar button,.fv2-panel button{border:1px solid #4b4b4b;background:#303030;color:#d0d0d0;min-height:29px;padding:0 9px;font:inherit;font-size:8px;cursor:pointer}.fv2-layout{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:calc(100dvh - 52px)}.fv2-sidebar{background:#262626;border-right:1px solid #414141;padding:5px}.fv2-sidebar-title{padding:7px 6px 10px;color:#ccc;font-size:9px;font-weight:800}.fv2-sidebar-title small{display:block;margin-top:2px;color:#707070;font-size:7px}.fv2-sidebar>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px;border:0;border-left:2px solid transparent;background:transparent;color:#a4a4a4;padding:0 7px;text-align:left;cursor:pointer}.fv2-sidebar>button span{font-size:8px;font-weight:700}.fv2-sidebar>button small{font-size:6px;color:#666;text-transform:uppercase}.fv2-sidebar>button.is-active{border-left-color:#e8872d;background:#34302c;color:#efd0ad}.fv2-sidebar>button.is-future{opacity:.58}.fv2-main{min-width:0;padding:12px}.fv2-stack{display:grid;gap:10px}.fv2-message{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:7px 9px;border:1px solid #70512f;background:#352c22;color:#e5bc8a;font-size:8px}.fv2-message button{border:0;background:transparent;color:inherit;cursor:pointer}.fv2-hero,.fv2-panel{border:1px solid #444;background:#292929}.fv2-hero{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:18px}.fv2-hero small,.fv2-coming>small{color:#e8872d;font-size:7px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.fv2-hero h1,.fv2-coming h1{margin:4px 0 8px;font-size:20px;color:#eee}.fv2-hero p,.fv2-coming p{max-width:760px;margin:0;color:#979797;font-size:9px;line-height:1.7}.fv2-hero>strong{min-width:140px;border-left:2px solid #e8872d;background:#242424;padding:10px 12px;color:#8d8d8d;font-size:7px;letter-spacing:.08em}.fv2-hero>strong span{display:block;margin-top:5px;color:#e6e6e6;font-size:9px}.fv2-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.fv2-stats article{min-height:80px;border:1px solid #424242;background:#292929;padding:10px}.fv2-stats article>span,.fv2-panel header>span,.fv2-panel header div>span{display:block;color:#7f7f7f;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.fv2-stats article>strong{display:block;margin-top:6px;color:#eee;font-size:20px}.fv2-stats article>small{display:block;margin-top:4px;color:#707070;font-size:7px}.fv2-panel>header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;border-bottom:1px solid #424242;background:#303030;padding:7px 9px}.fv2-panel header>strong,.fv2-panel header div>strong{display:block;margin-top:2px;color:#d5d5d5;font-size:9px}.fv2-tags{display:flex;flex-wrap:wrap;gap:5px;padding:10px}.fv2-tags span,.tag{border:1px solid #4b4b4b;background:#303030;color:#b5b5b5;padding:4px 6px;font-size:7px;font-weight:750}.fv2-tags span.derived,.tag.derived{border-color:#70512f;background:#342b22;color:#e1b681}.fv2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px}.fv2-field{display:grid;gap:4px}.fv2-field.full{grid-column:1/-1}.fv2-field>span{color:#969696;font-size:7px;font-weight:750}.fv2-field input,.fv2-field select,.fv2-field textarea{width:100%;border:1px solid #494949;border-radius:2px;background:#222;color:#d7d7d7;padding:7px 8px;font:inherit;font-size:8px;outline:0}.fv2-field input:focus,.fv2-field select:focus,.fv2-field textarea:focus{border-color:#a7672f}.fv2-field textarea{resize:vertical}.fv2-panel footer{display:flex;justify-content:flex-end;border-top:1px solid #3f3f3f;padding:8px 10px}.fv2-panel button.primary{border-color:#8b592f;background:#3a2d22;color:#efbd87;font-weight:800}.fv2-empty{padding:20px;color:#777;text-align:center;font-size:8px}.fv2-tablewrap{overflow:auto}.fv2-tablewrap table{width:100%;min-width:850px;border-collapse:collapse}.fv2-tablewrap th{padding:7px;background:#262626;border-bottom:1px solid #434343;color:#777;font-size:7px;text-align:left;text-transform:uppercase}.fv2-tablewrap td{padding:7px;border-bottom:1px solid #3b3b3b;color:#b5b5b5;font-size:8px;vertical-align:top}.fv2-tablewrap td small{display:block;margin-top:2px;color:#6f6f6f;font-size:6px}.fv2-panel button.danger{border-color:#70414a;background:#332426;color:#d79aa5;min-height:24px;font-size:7px}.fv2-coming{min-height:320px;display:grid;place-content:center;justify-items:start;padding:30px}@media(max-width:760px){.fv2-layout{grid-template-columns:1fr}.fv2-sidebar{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid #414141}.fv2-sidebar-title{display:none}.fv2-sidebar>button{width:auto;min-width:max-content;border-left:0;border-bottom:2px solid transparent}.fv2-sidebar>button.is-active{border-left-color:transparent;border-bottom-color:#e8872d}.fv2-main{padding:8px}.fv2-grid{grid-template-columns:1fr}.fv2-field.full{grid-column:auto}.fv2-stats{grid-template-columns:1fr}.fv2-hero{align-items:flex-start;flex-direction:column}.fv2-hero>strong{width:100%}}
+
+/* Forensic Reconstruction V2 — Step 2 */
+.fv2-coordinates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.fv2-coordinates label{display:grid;gap:4px}.fv2-coordinates label>span{color:#777;font-size:7px;font-weight:750}
+.fv2-coordinates input{width:100%;min-width:0;border:1px solid #494949;border-radius:2px;background:#222;color:#d7d7d7;padding:7px 8px;font:inherit;font-size:8px;outline:0}
+.fv2-help{color:#777;font-size:7px;line-height:1.4}
+.fv2-evidence-select{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;max-height:180px;overflow:auto;border:1px solid #414141;background:#232323;padding:5px}
+.fv2-evidence-select label{display:flex;align-items:flex-start;gap:6px;border:1px solid #383838;background:#292929;padding:6px;cursor:pointer}
+.fv2-evidence-select input{margin-top:1px;accent-color:#e8872d}.fv2-evidence-select span{color:#949494;font-size:7px;line-height:1.4}.fv2-evidence-select b{color:#dedede;margin-right:4px}
+.fv2-empty-select{border:1px dashed #464646;color:#777;padding:9px;font-size:7px}
+.fv2-plan-datum{color:#8a8a8a;font-size:7px}.fv2-plan-wrap{position:relative;overflow:hidden;min-height:360px;background:#242424}
+.fv2-plan{display:block;width:100%;height:min(52vh,520px);min-height:360px}.fv2-plan-empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:#777;font-size:8px}
+.fv2-plan-footer{display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid #414141;background:#272727;padding:7px 9px;color:#7f7f7f;font-size:7px}
+.fv2-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.fv2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.fv2-coordinates{grid-template-columns:repeat(2,minmax(0,1fr))}.fv2-evidence-select{grid-template-columns:1fr}.fv2-plan{height:360px}.fv2-stats{grid-template-columns:1fr}}
+
+/* Forensic Reconstruction V2 — Step 2.0.2 persistence */
+.fv2-topbar-actions{display:flex;align-items:center;gap:7px}
+.fv2-save-status{display:inline-flex;align-items:center;gap:5px;min-height:27px;border:1px solid #474747;background:#272727;color:#9f9f9f;padding:0 7px;font-size:7px;font-weight:700;white-space:nowrap}
+.fv2-save-status>span{width:6px;height:6px;border-radius:50%;background:#777}.fv2-save-status.saving>span{background:#d6b46b}.fv2-save-status.saved>span{background:#6f9f96}
+.fv2-save-status.error{border-color:#70414a;background:#332426;color:#d99aa6}.fv2-save-status.error>span{background:#cf6578}
+.fv2-persistence-error{display:flex;align-items:center;gap:8px;margin-bottom:8px;border:1px solid #70414a;border-left:2px solid #cf6578;background:#332426;color:#d99aa6;padding:8px 9px;font-size:8px}
+.fv2-persistence-error strong{color:#efb0bc}.fv2-persistence-error span{color:#b88891}
+
+/* Forensic Reconstruction V2 — Step 3 vehicle examination */
+.fv2-check-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;border:1px solid #414141;background:#232323;padding:5px}
+.fv2-check-grid label{display:flex;align-items:center;gap:6px;min-height:30px;border:1px solid #383838;background:#292929;padding:6px;cursor:pointer}
+.fv2-check-grid input{accent-color:#e8872d}.fv2-check-grid span{color:#a4a4a4;font-size:7px}
+.fv2-notice{border-left:2px solid #e8872d;padding:10px 12px}.fv2-notice b{color:#d8d8d8;font-size:8px}.fv2-notice p{margin:4px 0 0;color:#8f8f8f;font-size:8px;line-height:1.55}
+@media(max-width:1000px){.fv2-check-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.fv2-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Forensic Reconstruction V2 — Step 3.0.2 vehicle damage photographs */
+.fv2-damage-photo-section{gap:7px}.fv2-damage-photo-upload{display:flex;align-items:center;gap:10px;border:1px dashed #494949;background:#242424;padding:8px}.fv2-damage-photo-upload>small{color:#838383;font-size:7px;line-height:1.5}.fv2-photo-picker{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:132px;min-height:30px;border:1px solid #71502f;background:#342b22;color:#e7b783;padding:0 10px;font-size:8px;font-weight:800;cursor:pointer}.fv2-photo-picker:hover{background:#3a3025}.fv2-photo-picker input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.fv2-damage-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.fv2-damage-photo-card{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:7px;border:1px solid #414141;background:#252525;padding:6px;min-width:0}.fv2-damage-photo-card>div:nth-child(2){min-width:0}.fv2-damage-photo-card strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfcfcf;font-size:7px}.fv2-damage-photo-card small{display:block;margin-top:2px;color:#777;font-size:6px}.fv2-damage-photo-thumb{width:76px;height:54px;overflow:hidden;border:1px solid #454545;background:#1d1d1d}.fv2-damage-photo-thumb img{display:block;width:100%;height:100%;object-fit:cover}.fv2-damage-photo-loading{display:grid;place-items:center;width:100%;height:100%;color:#666;font-size:6px;text-align:center}.fv2-damage-photo-mini-grid{display:flex;gap:3px;margin-top:5px}.fv2-damage-photo-mini-grid .fv2-damage-photo-thumb{width:38px;height:28px}.fv2-damage-photo-mini-grid .fv2-damage-photo-loading{font-size:0}.fv2-damage-photo-card button:disabled,.fv2-photo-picker:has(input:disabled){opacity:.55;cursor:wait}
+@media(max-width:1000px){.fv2-damage-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.fv2-damage-photo-upload{align-items:flex-start;flex-direction:column}.fv2-damage-photo-grid{grid-template-columns:1fr}.fv2-damage-photo-card{grid-template-columns:68px minmax(0,1fr) auto}.fv2-damage-photo-thumb{width:68px;height:50px}}
+
+
+/* Forensic Reconstruction V2 — Step 3.0.3 damage-area photo evidence */
+.fv2-damage-area-grid label{justify-content:space-between;align-items:center;gap:10px}
+.fv2-damage-area-grid label.selected{border-color:#8a5b28;background:#31281f}
+.fv2-damage-area-grid .fv2-damage-area-text{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.fv2-damage-area-grid .fv2-damage-area-text span{font-size:7px;color:#d0d0d0}
+.fv2-damage-area-grid .fv2-damage-area-text small{font-size:6px;color:#9f855d;text-align:right}
+.fv2-damage-area-panel-wrap{gap:8px}
+.fv2-damage-area-panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fv2-damage-area-panel{border:1px solid #404040;background:#262626;padding:8px}
+.fv2-damage-area-panel-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.fv2-damage-area-panel-header strong{display:block;color:#e1e1e1;font-size:8px}
+.fv2-damage-area-panel-header small{display:block;margin-top:3px;color:#898989;font-size:7px;line-height:1.45}
+.fv2-inline-hint{border:1px dashed #474747;background:#232323;padding:8px;color:#8a8a8a;font-size:7px;line-height:1.45}
+.fv2-action-button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:152px;min-height:32px;border:1px solid #666;background:linear-gradient(180deg,#4b4b4b 0%,#2f2f2f 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);color:#ececec;padding:0 12px;font-size:8px;font-weight:800;cursor:pointer;white-space:nowrap}
+.fv2-action-button:hover{background:linear-gradient(180deg,#555 0%,#353535 100%)}
+.fv2-action-button input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.fv2-photo-action-button{min-width:170px}
+.fv2-damage-photo-upload{display:flex;align-items:center;gap:10px;border:1px dashed #494949;background:#242424;padding:8px}
+.fv2-damage-photo-upload>small{color:#838383;font-size:7px;line-height:1.5}
+.fv2-photo-picker{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:152px;min-height:32px;border:1px solid #666;background:linear-gradient(180deg,#4b4b4b 0%,#2f2f2f 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);color:#ececec;padding:0 12px;font-size:8px;font-weight:800;cursor:pointer}
+.fv2-photo-picker:hover{background:linear-gradient(180deg,#555 0%,#353535 100%)}
+.fv2-photo-picker input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.fv2-damage-photo-grid-single{grid-template-columns:1fr}
+.fv2-damage-photo-card button:disabled,.fv2-photo-picker:has(input:disabled),.fv2-action-button:has(input:disabled){opacity:.55;cursor:wait}
+@media(max-width:1000px){.fv2-damage-area-panel-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.fv2-damage-area-panel-header{flex-direction:column;align-items:flex-start}.fv2-action-button,.fv2-photo-action-button{width:100%}.fv2-damage-area-grid .fv2-damage-area-text{flex-direction:column;align-items:flex-start}.fv2-damage-area-grid .fv2-damage-area-text small{text-align:left}}
+
+
+/* Forensic Reconstruction V2 — Step 4 persons */
+.fv2-person-note{border-left:2px solid #e8872d;border-bottom:1px solid #404040;background:#292929;color:#999;padding:8px 10px;font-size:7px;line-height:1.55}
+.fv2-person-injury-grid label.selected{border-color:#8a5b28;background:#31281f;color:#e4c19a}
+.fv2-person-injury-grid label{min-height:36px}
+.fv2-person-injury-grid label span{font-size:7px;color:#c7c7c7}
+@media(max-width:720px){.fv2-person-injury-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Forensic Reconstruction V2 — Step 4.0.2 National Driver Registry */
+.fv2-driver-registry-card{grid-column:1/-1;border:1px solid #4b4b4b;background:#262626;padding:10px}
+.fv2-driver-registry-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fv2-driver-registry-head>div{min-width:0}.fv2-driver-registry-head span{display:block;color:#9b9b9b;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.fv2-driver-registry-head strong{display:block;margin-top:3px;color:#e2e2e2;font-size:9px}.fv2-driver-registry-head small{display:block;margin-top:4px;max-width:720px;color:#828282;font-size:7px;line-height:1.5}
+.fv2-driver-registry-connection{margin-top:8px;border-top:1px solid #3d3d3d;padding-top:7px;color:#8c8c8c;font-size:7px}
+.fv2-driver-registry-empty{margin-top:8px;border:1px dashed #494949;background:#232323;padding:10px;color:#858585;font-size:8px}
+.fv2-driver-registry-result{margin-top:8px;border:1px solid #555;background:#222;padding:9px}.fv2-driver-registry-result.is-valid{border-color:#486a62;background:#22302d}.fv2-driver-registry-result.is-warning{border-color:#765c31;background:#322a20}.fv2-driver-registry-result.is-unavailable{border-color:#70414a;background:#332426}
+.fv2-driver-registry-status{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:7px}.fv2-driver-registry-status span{color:#8f8f8f;font-size:7px}.fv2-driver-registry-status strong{color:#ededed;font-size:9px}
+.fv2-driver-registry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.fv2-driver-registry-grid>div{border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.12);padding:7px}.fv2-driver-registry-grid span{display:block;color:#7f7f7f;font-size:6px;text-transform:uppercase;letter-spacing:.05em}.fv2-driver-registry-grid strong{display:block;margin-top:3px;color:#d8d8d8;font-size:8px;overflow-wrap:anywhere}
+.fv2-driver-registry-restriction{margin-top:7px;border-left:2px solid #d1a04d;background:#2c271f;color:#d7b171;padding:7px 8px;font-size:7px;line-height:1.45}.fv2-driver-registry-result p{margin:8px 0 4px;color:#a6a6a6;font-size:7px;line-height:1.5}.fv2-driver-registry-result>small{color:#707070;font-size:6px}.fv2-registry-table-status{display:inline-block;border:1px solid #5b5b5b;background:#292929;padding:3px 5px;color:#c4c4c4;font-size:7px}.fv2-registry-table-status.is-valid{border-color:#486a62;background:#22302d;color:#a8d0c7}
+@media(max-width:900px){.fv2-driver-registry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.fv2-driver-registry-head{align-items:flex-start;flex-direction:column}.fv2-driver-registry-head .fv2-action-button{width:100%}.fv2-driver-registry-grid{grid-template-columns:1fr}}
+
+/* Forensic Reconstruction V2 — Step 4.0.3 registration-to-driver identification */
+.fv2-driver-identification-card{grid-column:1/-1;border:1px solid #4b4b4b;background:#262626;padding:10px}
+.fv2-driver-identification-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+.fv2-registry-search-actions{display:flex;align-items:center;gap:10px;margin-top:8px}
+.fv2-registry-search-actions .fv2-driver-registry-connection{margin-top:0;border-top:0;padding-top:0;flex:1}
+.fv2-driver-candidate-warning{margin-top:8px;border-left:2px solid #d1a04d;background:#2d281f;color:#d7b171;padding:8px 9px;font-size:7px;line-height:1.5}
+.fv2-driver-candidate-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px}
+.fv2-driver-candidate-status{display:inline-flex;align-items:center;min-height:28px;border:1px solid #765c31;background:#322a20;color:#e0bd82;padding:0 9px;font-size:7px;letter-spacing:.02em}
+.fv2-known-driver-check{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;border-top:1px solid #404040;padding-top:9px}
+.fv2-known-driver-check>div{min-width:0}.fv2-known-driver-check strong{display:block;color:#d8d8d8;font-size:8px}.fv2-known-driver-check small{display:block;margin-top:3px;max-width:720px;color:#7f7f7f;font-size:7px;line-height:1.45}
+.fv2-driver-candidate-table{color:#d7b171!important;font-weight:800}
+@media(max-width:800px){.fv2-driver-identification-grid{grid-template-columns:1fr}.fv2-registry-search-actions,.fv2-driver-candidate-actions,.fv2-known-driver-check{align-items:flex-start;flex-direction:column}.fv2-registry-search-actions .fv2-action-button,.fv2-driver-candidate-actions .fv2-action-button,.fv2-known-driver-check .fv2-action-button{width:100%}}
+
+/* Forensic Reconstruction V2 — Step 5 witness statements */
+.fv2-witness-note{border-left:2px solid #e8872d;border-bottom:1px solid #404040;background:#292929;color:#999;padding:8px 10px;font-size:7px;line-height:1.55}
+.fv2-witness-topic-grid label{min-height:38px}
+.fv2-witness-topic-grid label.selected{border-color:#8a5b28;background:#31281f}
+.fv2-witness-topic-grid label.selected span{color:#e4c19a}
+.fv2-witness-topic-grid span{line-height:1.35}
+@media(max-width:720px){.fv2-witness-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Forensic Reconstruction V2 — Step 6 analysis */
+.fv2-analysis-rule{margin:10px;border-left:2px solid #e8872d;background:#252525;color:#8f8f8f;padding:9px 10px;font-size:7px;line-height:1.55}
+.fv2-analysis-summary{display:flex;align-items:center;gap:5px}.fv2-analysis-summary span{border:1px solid #4b4b4b;background:#292929;padding:4px 6px;color:#8d8d8d;font-size:6px;font-weight:800;text-transform:uppercase}.fv2-analysis-summary .conflict{border-color:#70414a;background:#332426;color:#d99aa6}.fv2-analysis-summary .attention{border-color:#70512f;background:#352c22;color:#ddb17f}
+.fv2-analysis-signal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:0 10px 10px}.fv2-analysis-signal{min-height:90px;border:1px solid #414141;border-left:2px solid #666;background:#262626;padding:9px}.fv2-analysis-signal>span{display:block;color:#777;font-size:6px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.fv2-analysis-signal>strong{display:block;margin-top:5px;color:#d0d0d0;font-size:8px}.fv2-analysis-signal>p{margin:5px 0 0;color:#858585;font-size:7px;line-height:1.5}.fv2-analysis-signal.conflict{border-left-color:#cf6578}.fv2-analysis-signal.conflict>strong{color:#e0a1ad}.fv2-analysis-signal.attention{border-left-color:#d6a35f}.fv2-analysis-signal.clear{border-left-color:#6f9f96}.fv2-analysis-signal.clear>strong{color:#9bc7bf}
+.fv2-analysis-scene-basis{align-content:start}.fv2-toggle-row{display:flex!important;align-items:center;gap:7px;min-height:31px;border:1px solid #494949;background:#222;color:#b3b3b3!important;padding:6px 8px;font-size:7px!important;font-weight:600!important}.fv2-toggle-row input{width:auto!important;margin:0;accent-color:#e8872d}
+.fv2-analysis-limitations{grid-template-columns:repeat(3,minmax(0,1fr))}.fv2-analysis-limitations span{line-height:1.35}
+@media(max-width:1000px){.fv2-analysis-signal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fv2-analysis-limitations{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.fv2-analysis-signal-grid{grid-template-columns:1fr}.fv2-analysis-limitations{grid-template-columns:1fr}}
