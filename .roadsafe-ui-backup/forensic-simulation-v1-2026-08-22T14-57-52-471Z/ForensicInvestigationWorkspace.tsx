@@ -70,10 +70,6 @@ import {
   buildForensicAnalysisSignals,
 } from "./forensicAnalysisRules";
 import HypothesesWorkspace from "./HypothesesWorkspace";
-import SimulationWorkspace from "./SimulationWorkspace";
-import ForensicReconstructionWorkspace from "./ForensicReconstructionWorkspace";
-import FindingsWorkspace from "./FindingsWorkspace";
-import ReportWorkspace from "./ReportWorkspace";
 import "./ForensicInvestigationWorkspace.css";
 
 interface Props {
@@ -123,10 +119,6 @@ const ACTIVE = new Set<Section>([
   "Witnesses",
   "Analysis",
   "Hypotheses",
-  "Simulation",
-  "2D / 3D / AR",
-  "Findings",
-  "Report",
 ]);
 const isDerived = (value: ForensicProvenance) =>
   ["Calculated", "AI Derived", "Investigator Assumption", "Simulated"].includes(value);
@@ -2572,14 +2564,24 @@ export default function ForensicInvestigationWorkspace({
       <div className="fv2-layout">
         <aside className="fv2-sidebar">
           <div className="fv2-sidebar-title">Investigation <small>V2 evidence-first workflow</small></div>
-          {SECTIONS.map((item, index) => (
+          {SECTIONS.map((item) => (
             <button
               key={item}
               className={`${section === item ? "is-active" : ""} ${ACTIVE.has(item) ? "" : "is-future"}`}
               onClick={() => setSection(item)}
             >
               <span>{item}</span>
-              <small>Step {index + 1}</small>
+              <small>
+                {ACTIVE.has(item)
+                  ? item === "Analysis"
+                    ? "Step 6"
+                    : item === "Witnesses"
+                      ? "Step 5"
+                      : item === "Persons"
+                        ? "Step 4"
+                        : "Ready"
+                  : "Later"}
+              </small>
             </button>
           ))}
         </aside>
@@ -5079,34 +5081,6 @@ export default function ForensicInvestigationWorkspace({
             <HypothesesWorkspace
               investigation={investigation}
               onInvestigationChange={setInvestigation}
-              onMessage={setMessage}
-            />
-          )}
-
-          {section === "Simulation" && (
-            <SimulationWorkspace
-              investigation={investigation}
-              onMessage={setMessage}
-            />
-          )}
-
-          {section === "2D / 3D / AR" && (
-            <ForensicReconstructionWorkspace
-              investigation={investigation}
-              onMessage={setMessage}
-            />
-          )}
-
-          {section === "Findings" && (
-            <FindingsWorkspace
-              investigation={investigation}
-              onMessage={setMessage}
-            />
-          )}
-
-          {section === "Report" && (
-            <ReportWorkspace
-              investigation={investigation}
               onMessage={setMessage}
             />
           )}

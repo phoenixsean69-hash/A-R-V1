@@ -2572,14 +2572,24 @@ export default function ForensicInvestigationWorkspace({
       <div className="fv2-layout">
         <aside className="fv2-sidebar">
           <div className="fv2-sidebar-title">Investigation <small>V2 evidence-first workflow</small></div>
-          {SECTIONS.map((item, index) => (
+          {SECTIONS.map((item) => (
             <button
               key={item}
               className={`${section === item ? "is-active" : ""} ${ACTIVE.has(item) ? "" : "is-future"}`}
               onClick={() => setSection(item)}
             >
               <span>{item}</span>
-              <small>Step {index + 1}</small>
+              <small>
+                {ACTIVE.has(item)
+                  ? item === "Analysis"
+                    ? "Step 6"
+                    : item === "Witnesses"
+                      ? "Step 5"
+                      : item === "Persons"
+                        ? "Step 4"
+                        : "Ready"
+                  : "Later"}
+              </small>
             </button>
           ))}
         </aside>

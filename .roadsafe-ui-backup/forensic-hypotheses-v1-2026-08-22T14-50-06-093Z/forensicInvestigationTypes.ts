@@ -392,52 +392,6 @@ export interface ForensicAnalysisFinding {
   updatedAt: string;
 }
 
-export type HypothesisStatus =
-  | "Draft"
-  | "Under review"
-  | "Ready for simulation"
-  | "Rejected"
-  | "Superseded";
-
-export interface ForensicHypothesisImpactRegion {
-  xMetres: number;
-  yMetres: number;
-  radiusMetres: number;
-  description: string;
-}
-
-export interface ForensicHypothesisEvent {
-  id: string;
-  order: number;
-  description: string;
-}
-
-export interface ForensicCrashHypothesis {
-  id: string;
-  code: string;
-  title: string;
-  summary: string;
-  status: HypothesisStatus;
-  confidence: ForensicConfidence;
-  provenance: "Investigator Assumption";
-  supportingFindingIds: string[];
-  conflictingFindingIds: string[];
-  supportingEvidenceIds: string[];
-  conflictingEvidenceIds: string[];
-  sourceMeasurementIds: string[];
-  sourceVehicleIds: string[];
-  sourcePersonIds: string[];
-  sourceWitnessIds: string[];
-  assumptions: string[];
-  missingEvidence: string[];
-  impactRegion?: ForensicHypothesisImpactRegion;
-  eventSequence: ForensicHypothesisEvent[];
-  selectedForSimulation: boolean;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ForensicAccidentInvestigation {
   version: 2;
   id: string;
@@ -453,18 +407,9 @@ export interface ForensicAccidentInvestigation {
   persons: ForensicPersonRecord[];
   witnesses: ForensicWitnessRecord[];
   analysisFindings: ForensicAnalysisFinding[];
-  hypotheses: ForensicCrashHypothesis[];
   createdAt: string;
   updatedAt: string;
 }
-
-export const HYPOTHESIS_STATUS_OPTIONS: HypothesisStatus[] = [
-  "Draft",
-  "Under review",
-  "Ready for simulation",
-  "Rejected",
-  "Superseded",
-];
 
 export const FORENSIC_PROVENANCE_OPTIONS: ForensicProvenance[] = [
   "Observed",

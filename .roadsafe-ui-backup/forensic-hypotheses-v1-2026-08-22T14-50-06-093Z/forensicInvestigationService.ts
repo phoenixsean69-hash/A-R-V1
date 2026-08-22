@@ -2,7 +2,6 @@ import type { AccidentCase } from "../../types/accidentCase";
 import type {
   ForensicAccidentInvestigation,
   ForensicAnalysisFinding,
-  ForensicCrashHypothesis,
   ForensicEvidenceRecord,
   ForensicMeasurementRecord,
   ForensicPersonRecord,
@@ -88,25 +87,6 @@ function normalise(
           usesSceneIntake: Boolean(finding.usesSceneIntake),
         }))
       : [],
-    hypotheses: Array.isArray(record.hypotheses)
-      ? record.hypotheses.map((hypothesis) => ({
-          ...hypothesis,
-          provenance: "Investigator Assumption" as const,
-          supportingFindingIds: Array.isArray(hypothesis.supportingFindingIds) ? hypothesis.supportingFindingIds : [],
-          conflictingFindingIds: Array.isArray(hypothesis.conflictingFindingIds) ? hypothesis.conflictingFindingIds : [],
-          supportingEvidenceIds: Array.isArray(hypothesis.supportingEvidenceIds) ? hypothesis.supportingEvidenceIds : [],
-          conflictingEvidenceIds: Array.isArray(hypothesis.conflictingEvidenceIds) ? hypothesis.conflictingEvidenceIds : [],
-          sourceMeasurementIds: Array.isArray(hypothesis.sourceMeasurementIds) ? hypothesis.sourceMeasurementIds : [],
-          sourceVehicleIds: Array.isArray(hypothesis.sourceVehicleIds) ? hypothesis.sourceVehicleIds : [],
-          sourcePersonIds: Array.isArray(hypothesis.sourcePersonIds) ? hypothesis.sourcePersonIds : [],
-          sourceWitnessIds: Array.isArray(hypothesis.sourceWitnessIds) ? hypothesis.sourceWitnessIds : [],
-          assumptions: Array.isArray(hypothesis.assumptions) ? hypothesis.assumptions : [],
-          missingEvidence: Array.isArray(hypothesis.missingEvidence) ? hypothesis.missingEvidence : [],
-          eventSequence: Array.isArray(hypothesis.eventSequence) ? hypothesis.eventSequence : [],
-          selectedForSimulation: Boolean(hypothesis.selectedForSimulation),
-          notes: typeof hypothesis.notes === "string" ? hypothesis.notes : "",
-        }))
-      : [],
   };
 }
 
@@ -185,7 +165,6 @@ function createFromCase(accidentCase: AccidentCase): ForensicAccidentInvestigati
     persons: [],
     witnesses: [],
     analysisFindings: [],
-    hypotheses: [],
     createdAt: now,
     updatedAt: now,
   };
@@ -486,68 +465,6 @@ export const ForensicInvestigationService = {
     return this.save({
       ...investigation,
       analysisFindings: investigation.analysisFindings.filter((item) => item.id !== findingId),
-      hypotheses: investigation.hypotheses.map((hypothesis) => ({
-        ...hypothesis,
-        supportingFindingIds: hypothesis.supportingFindingIds.filter((id) => id !== findingId),
-        conflictingFindingIds: hypothesis.conflictingFindingIds.filter((id) => id !== findingId),
-      })),
-    });
-  },
-
-  addHypothesis(
-    investigation: ForensicAccidentInvestigation,
-    input: Omit<ForensicCrashHypothesis, "id" | "code" | "createdAt" | "updatedAt">,
-  ): ForensicAccidentInvestigation {
-    const now = nowIso();
-    const record: ForensicCrashHypothesis = {
-      ...input,
-      provenance: "Investigator Assumption",
-      id: createId("crash-hypothesis"),
-      code: `H-${String(investigation.hypotheses.length + 1).padStart(3, "0")}`,
-      createdAt: now,
-      updatedAt: now,
-    };
-    return this.save({ ...investigation, hypotheses: [...investigation.hypotheses, record] });
-  },
-
-  updateHypothesis(
-    investigation: ForensicAccidentInvestigation,
-    hypothesisId: string,
-    patch: Partial<Omit<ForensicCrashHypothesis, "id" | "code" | "createdAt" | "updatedAt" | "provenance">>,
-  ): ForensicAccidentInvestigation {
-    return this.save({
-      ...investigation,
-      hypotheses: investigation.hypotheses.map((hypothesis) =>
-        hypothesis.id === hypothesisId
-          ? { ...hypothesis, ...patch, provenance: "Investigator Assumption", updatedAt: nowIso() }
-          : hypothesis,
-      ),
-    });
-  },
-
-  setHypothesisSimulationSelected(
-    investigation: ForensicAccidentInvestigation,
-    hypothesisId: string,
-    selectedForSimulation: boolean,
-  ): ForensicAccidentInvestigation {
-    const current = investigation.hypotheses.find((item) => item.id === hypothesisId);
-    return this.updateHypothesis(investigation, hypothesisId, {
-      selectedForSimulation,
-      status: selectedForSimulation
-        ? "Ready for simulation"
-        : current?.status === "Ready for simulation"
-          ? "Under review"
-          : current?.status,
-    });
-  },
-
-  deleteHypothesis(
-    investigation: ForensicAccidentInvestigation,
-    hypothesisId: string,
-  ): ForensicAccidentInvestigation {
-    return this.save({
-      ...investigation,
-      hypotheses: investigation.hypotheses.filter((item) => item.id !== hypothesisId),
     });
   },
 };

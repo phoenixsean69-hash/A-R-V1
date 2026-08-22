@@ -1,9 +1,8 @@
 @import "tailwindcss";
-@import "./styles/saira.css";
 
 @theme {
-  --font-sans: "Saira", sans-serif;
-  --font-mono: "Saira", sans-serif;
+  --font-sans: "Rajdhani", sans-serif;
+  --font-mono: "Rajdhani", sans-serif;
 }
 
 @layer base {
@@ -3370,39 +3369,3 @@
   }
 }
 /* [RoadSafe:BlenderSingleTopbarV1:end] */
-
-/* ROADSAFE SAIRA FORCE V2 BEGIN */
-:root {
-  --font-sans: "Saira", sans-serif;
-  --font-mono: "Saira", sans-serif;
-}
-
-html,
-body,
-#root,
-.roadsafe-shell,
-.reconstruction-editor,
-.reconstruction-workspace,
-.fv2-root,
-.maplibregl-map,
-button,
-input,
-select,
-textarea,
-table {
-  font-family: "Saira", sans-serif !important;
-}
-
-/*
- * Force the application subtree to Saira so old component-level
- * font declarations cannot silently keep Rajdhani/Inter/system fonts.
- * Material Symbols is explicitly excluded so icon glyphs remain intact.
- */
-#root *:not(.material-symbols-outlined) {
-  font-family: "Saira", sans-serif !important;
-}
-
-.material-symbols-outlined {
-  font-family: "Material Symbols Outlined" !important;
-}
-/* ROADSAFE SAIRA FORCE V2 END */

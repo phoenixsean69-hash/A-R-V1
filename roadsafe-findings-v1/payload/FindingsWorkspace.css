@@ -1,0 +1,573 @@
+.fv2-findings-workstation {
+  --find-orange: #e8872d;
+  --find-support: #8cc6ae;
+  --find-conflict: #dd9292;
+  --find-attention: #d5b46c;
+}
+
+.fv2-findings-hero > header {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.fv2-findings-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .4rem;
+}
+
+.fv2-findings-summary span,
+.fv2-finding-badges span {
+  border: 1px solid #494949;
+  border-radius: .35rem;
+  background: #303030;
+  padding: .36rem .52rem;
+  color: #c8c8c8;
+  font-size: .72rem;
+  font-weight: 600;
+}
+
+.fv2-findings-rule {
+  border-top: 1px solid #3b3b3b;
+  background: #202020;
+  padding: .9rem 1rem;
+  color: #b4b4b4;
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+.fv2-findings-flow {
+  display: grid;
+  grid-template-columns: minmax(0,.8fr) auto minmax(0,.8fr) auto minmax(0,.9fr) auto minmax(0,1.25fr) auto minmax(0,.8fr) auto minmax(0,.7fr);
+  align-items: center;
+  gap: .4rem;
+  padding: .85rem 1rem 1rem;
+}
+
+.fv2-findings-flow > div {
+  border: 1px solid #444;
+  border-radius: .4rem;
+  background: #292929;
+  padding: .55rem;
+  color: #a4a4a4;
+  text-align: center;
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.fv2-findings-flow > div.active {
+  border-color: var(--find-orange);
+  background: #34281f;
+  color: #efc295;
+}
+
+.fv2-findings-flow > span {
+  color: #666;
+}
+
+.fv2-findings-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1.45fr) minmax(380px,.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.fv2-findings-main,
+.fv2-findings-composer {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.fv2-findings-composer {
+  position: sticky;
+  top: 1rem;
+}
+
+.fv2-findings-empty {
+  display: grid;
+  gap: .35rem;
+  padding: 1.2rem;
+  color: #929292;
+}
+
+.fv2-findings-empty strong {
+  color: #d4d4d4;
+}
+
+.fv2-findings-card-grid {
+  display: grid;
+  gap: .75rem;
+  padding: .75rem;
+}
+
+.fv2-finding-card {
+  display: grid;
+  gap: .75rem;
+  border: 1px solid #414141;
+  border-radius: .48rem;
+  background: linear-gradient(180deg,#2a2a2a,#232323);
+  padding: .8rem;
+}
+
+.fv2-finding-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .8rem;
+}
+
+.fv2-finding-card-head > div:first-child {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.fv2-finding-card-head > div:first-child > span {
+  color: var(--find-orange);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+
+.fv2-finding-card-head strong {
+  color: #e2e2e2;
+  font-size: .94rem;
+  line-height: 1.4;
+}
+
+.fv2-finding-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .3rem;
+}
+
+.fv2-finding-metrics {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: .45rem;
+}
+
+.fv2-finding-metrics > div {
+  display: grid;
+  gap: .1rem;
+  border: 1px solid #3d3d3d;
+  border-radius: .35rem;
+  background: #292929;
+  padding: .5rem;
+}
+
+.fv2-finding-metrics span {
+  color: #828282;
+  font-size: .64rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.fv2-finding-metrics strong {
+  color: #d5d5d5;
+  font-size: .95rem;
+}
+
+.fv2-finding-metrics .conflict {
+  border-color: rgba(221,146,146,.5);
+}
+
+.fv2-finding-metrics .conflict strong {
+  color: var(--find-conflict);
+}
+
+.fv2-finding-metrics .attention {
+  border-color: rgba(213,180,108,.45);
+}
+
+.fv2-finding-metrics .attention strong {
+  color: var(--find-attention);
+}
+
+.fv2-finding-rationale,
+.fv2-finding-list,
+.fv2-finding-report-state {
+  display: grid;
+  gap: .25rem;
+  border-left: 3px solid #555;
+  background: #292929;
+  padding: .55rem .65rem;
+}
+
+.fv2-finding-rationale > span,
+.fv2-finding-list > span,
+.fv2-finding-report-state > span {
+  color: #858585;
+  font-size: .64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.fv2-finding-rationale p {
+  margin: 0;
+  color: #b6b6b6;
+  font-size: .77rem;
+  line-height: 1.48;
+}
+
+.fv2-finding-source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+
+.fv2-finding-source-chips span {
+  border: 1px solid #464646;
+  border-radius: 999px;
+  background: #2e2e2e;
+  padding: .27rem .45rem;
+  color: #a9a9a9;
+  font-size: .65rem;
+  font-weight: 600;
+}
+
+.fv2-finding-source-chips span.support {
+  border-color: #46645a;
+  color: #a4d1c0;
+}
+
+.fv2-finding-source-chips span.conflict {
+  border-color: #6d484b;
+  color: #e3a6a6;
+}
+
+.fv2-finding-list ul {
+  display: grid;
+  gap: .25rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: #a7a7a7;
+  font-size: .72rem;
+  line-height: 1.42;
+}
+
+.fv2-finding-list.unresolved {
+  border-left-color: var(--find-attention);
+}
+
+.fv2-finding-readiness {
+  display: grid;
+  gap: .35rem;
+}
+
+.fv2-finding-readiness > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  color: #949494;
+  font-size: .69rem;
+}
+
+.fv2-finding-readiness-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #181818;
+}
+
+.fv2-finding-readiness-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--find-orange);
+}
+
+.fv2-finding-report-state {
+  border-left-color: #6f9f96;
+}
+
+.fv2-finding-report-state strong {
+  color: #d4d4d4;
+  font-size: .78rem;
+}
+
+.fv2-finding-report-state small {
+  color: #8c8c8c;
+}
+
+.fv2-finding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  border-top: 1px solid #393939;
+  padding-top: .65rem;
+}
+
+.fv2-finding-actions button,
+.fv2-findings-link-actions button {
+  border: 1px solid #494949;
+  border-radius: .33rem;
+  background: #303030;
+  padding: .42rem .55rem;
+  color: #bfbfbf;
+  font-size: .69rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fv2-finding-actions button.active {
+  border-color: var(--find-orange);
+  background: #392c21;
+  color: #efc59e;
+}
+
+.fv2-finding-actions button.danger {
+  margin-left: auto;
+  color: #df9999;
+}
+
+.fv2-findings-matrix {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr .8fr .55fr .55fr .65fr;
+  overflow: auto;
+}
+
+.fv2-findings-matrix > .head {
+  border-bottom: 1px solid #444;
+  background: #262626;
+  padding: .55rem;
+  color: #8c8c8c;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.fv2-findings-matrix .row-group {
+  display: contents;
+}
+
+.fv2-findings-matrix .row-group > div {
+  min-width: 0;
+  border-bottom: 1px solid #383838;
+  padding: .55rem;
+  color: #aaa;
+  font-size: .7rem;
+}
+
+.fv2-findings-matrix .row-group > div:first-child {
+  display: grid;
+  gap: .1rem;
+}
+
+.fv2-findings-matrix .row-group strong {
+  color: #d2d2d2;
+}
+
+.fv2-findings-matrix .row-group span {
+  color: #777;
+  font-size: .63rem;
+}
+
+.fv2-findings-matrix-empty {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  color: #777;
+  text-align: center;
+}
+
+.fv2-findings-form {
+  display: grid;
+  gap: .8rem;
+  padding: .8rem;
+}
+
+.fv2-findings-two {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .6rem;
+}
+
+.fv2-findings-link-section,
+.fv2-findings-source-grid > div {
+  display: grid;
+  gap: .4rem;
+}
+
+.fv2-findings-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.fv2-findings-section-title > span,
+.fv2-findings-source-grid > div > span {
+  color: #969696;
+  font-size: .67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.fv2-findings-section-title small {
+  color: #777;
+  font-size: .66rem;
+}
+
+.fv2-findings-link-list {
+  display: grid;
+  gap: .4rem;
+  max-height: 230px;
+  overflow: auto;
+}
+
+.fv2-findings-link-list article {
+  display: grid;
+  gap: .45rem;
+  border: 1px solid #3f3f3f;
+  border-radius: .4rem;
+  background: #292929;
+  padding: .55rem;
+}
+
+.fv2-findings-link-list article > div:first-child {
+  display: grid;
+  gap: .15rem;
+}
+
+.fv2-findings-link-list strong {
+  color: #d0d0d0;
+  font-size: .73rem;
+}
+
+.fv2-findings-link-list article > div:first-child span {
+  overflow: hidden;
+  color: #909090;
+  font-size: .69rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+}
+
+.fv2-findings-link-actions {
+  display: flex;
+  gap: .35rem;
+}
+
+.fv2-findings-link-actions .support.active {
+  border-color: #648f7e;
+  background: #22332d;
+  color: #a8d4c3;
+}
+
+.fv2-findings-link-actions .conflict.active {
+  border-color: #8a555b;
+  background: #392729;
+  color: #ecacac;
+}
+
+.fv2-findings-source-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .6rem;
+}
+
+.fv2-findings-source-grid .fv2-evidence-select {
+  max-height: 150px;
+  overflow: auto;
+}
+
+.fv2-findings-canonical-source {
+  border: 1px solid #3e3e3e;
+  border-radius: .35rem;
+  background: #292929;
+  padding: .5rem;
+}
+
+.fv2-findings-canonical-source label,
+.fv2-findings-report-check {
+  display: flex;
+  align-items: flex-start;
+  gap: .45rem;
+}
+
+.fv2-findings-canonical-source input,
+.fv2-findings-report-check input {
+  margin-top: .15rem;
+  accent-color: var(--find-orange);
+}
+
+.fv2-findings-canonical-source span,
+.fv2-findings-report-check span {
+  color: #b8b8b8;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+
+.fv2-findings-report-check {
+  border: 1px solid #4a4035;
+  border-radius: .4rem;
+  background: #2f2822;
+  padding: .6rem;
+}
+
+.fv2-findings-report-check span {
+  display: grid;
+  gap: .1rem;
+}
+
+.fv2-findings-report-check b {
+  color: #e2c09f;
+}
+
+.fv2-findings-report-check small {
+  color: #948372;
+}
+
+.fv2-findings-legal-rule {
+  border-color: #614c3a;
+  background: #2b2621;
+  padding: .75rem;
+}
+
+.fv2-findings-legal-rule b {
+  color: #e2bd95;
+}
+
+.fv2-findings-legal-rule p {
+  margin: .35rem 0 0;
+  color: #9d9185;
+  font-size: .72rem;
+  line-height: 1.48;
+}
+
+@media (max-width: 1250px) {
+  .fv2-findings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-findings-composer {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .fv2-findings-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-findings-flow > span {
+    transform: rotate(90deg);
+    text-align: center;
+  }
+
+  .fv2-findings-source-grid,
+  .fv2-findings-two {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-finding-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .fv2-findings-matrix {
+    grid-template-columns: 150px 130px 100px 70px 70px 80px;
+  }
+}
