@@ -8,6 +8,7 @@ import {
   NavLink,
   Outlet,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import {
   AppWindow,
@@ -24,6 +25,8 @@ import {
   LogOut,
   Map,
   Menu,
+  Pin,
+  PinOff,
   RadioTower,
   Settings,
   ShieldCheck,
@@ -241,9 +244,109 @@ function readStoredBoolean(
   }
 }
 
+interface RecentWorkspaceTab {
+  pathname: string;
+  label: string;
+  pinned: boolean;
+}
+
+const RECENT_TABS_STORAGE_KEY = "roadsafe:recent-tabs-v1";
+const RECENT_TABS_LIMIT = 12;
+
+function tabLabelForPath(pathname: string): string {
+  if (pathname === "/field") {
+    return "Field Home";
+  }
+
+  if (pathname === "/station") {
+    return "Station Overview";
+  }
+
+  if (pathname === "/cases") {
+    return "Cases";
+  }
+
+  if (pathname === "/scene-map") {
+    return "Scene Map";
+  }
+
+  if (pathname === "/evidence") {
+    return "Evidence";
+  }
+
+  if (pathname === "/reconstruction") {
+    return "Reconstruction";
+  }
+
+  if (pathname === "/footage") {
+    return "Footage";
+  }
+
+  if (pathname === "/reports") {
+    return "Reports";
+  }
+
+  if (pathname === "/analytics") {
+    return "Analytics";
+  }
+
+  if (pathname === "/officers") {
+    return "Officers";
+  }
+
+  if (pathname === "/settings") {
+    return "Settings";
+  }
+
+  const [title] = pageMeta(pathname);
+  return title || "Workspace";
+}
+
+function readStoredTabs(): RecentWorkspaceTab[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(RECENT_TABS_STORAGE_KEY);
+
+    if (!rawValue) {
+      return [];
+    }
+
+    const parsed = JSON.parse(rawValue) as RecentWorkspaceTab[];
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((tab) => typeof tab?.pathname === "string")
+      .map((tab) => ({
+        pathname: tab.pathname,
+        label: typeof tab.label === "string" ? tab.label : tabLabelForPath(tab.pathname),
+        pinned: Boolean(tab.pinned),
+      }))
+      .slice(0, RECENT_TABS_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function sortRecentTabs(tabs: RecentWorkspaceTab[]): RecentWorkspaceTab[] {
+  return [...tabs].sort((left, right) => {
+    if (left.pinned !== right.pinned) {
+      return left.pinned ? -1 : 1;
+    }
+
+    return 0;
+  });
+}
+
 export default function AppShell() {
   const auth = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
@@ -270,6 +373,10 @@ export default function AppShell() {
         true,
       ),
     );
+  const [recentTabs, setRecentTabs] =
+    useState<RecentWorkspaceTab[]>(() =>
+      readStoredTabs(),
+    );
   const [
     workspaceRightPanelHost,
     setWorkspaceRightPanelHost,
@@ -277,6 +384,71 @@ export default function AppShell() {
   const [now, setNow] = useState(
     () => new Date(),
   );
+
+  useEffect(() => {
+    setRecentTabs((currentTabs) => {
+      const sanitized = currentTabs.filter((tab) => tab.pathname !== location.pathname);
+      const existingTab = currentTabs.find((tab) => tab.pathname === location.pathname);
+      const nextTabs = [
+        {
+          pathname: location.pathname,
+          label: tabLabelForPath(location.pathname),
+          pinned: existingTab?.pinned ?? false,
+        },
+        ...sanitized,
+      ].slice(0, RECENT_TABS_LIMIT);
+
+      return sortRecentTabs(nextTabs);
+    });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        RECENT_TABS_STORAGE_KEY,
+        JSON.stringify(recentTabs),
+      );
+    } catch {
+      // Recent tabs are a convenience preference and should not break the workspace.
+    }
+  }, [recentTabs]);
+
+  const orderedRecentTabs = useMemo(
+    () => sortRecentTabs(recentTabs),
+    [recentTabs],
+  );
+
+  function handleTogglePin(tabPath: string): void {
+    setRecentTabs((currentTabs) =>
+      sortRecentTabs(
+        currentTabs.map((tab) =>
+          tab.pathname === tabPath
+            ? { ...tab, pinned: !tab.pinned }
+            : tab,
+        ),
+      ),
+    );
+  }
+
+  function handleCloseTab(tabPath: string): void {
+    const remainingTabs = recentTabs.filter((tab) => tab.pathname !== tabPath);
+
+    if (tabPath === location.pathname) {
+      const nextTarget =
+        remainingTabs[0]?.pathname ?? homePath;
+      navigate(nextTarget);
+    }
+
+    setRecentTabs(remainingTabs);
+  }
+
+  function handleTabSwitch(tabPath: string): void {
+    if (tabPath === location.pathname) {
+      return;
+    }
+
+    navigate(tabPath);
+  }
 
   const [title, description] = useMemo(
     () => pageMeta(location.pathname),
@@ -791,6 +963,54 @@ export default function AppShell() {
               </div>
             </div>
           </header>
+        )}
+
+        {!isReconstructionWorkspace && orderedRecentTabs.length > 0 && (
+          <div className="roadsafe-tabbar" aria-label="Recent workspaces">
+            <div className="roadsafe-tabbar-scroll">
+              {orderedRecentTabs.map((tab) => {
+                const isActive = tab.pathname === location.pathname;
+
+                return (
+                  <div
+                    key={tab.pathname}
+                    className={`roadsafe-tab ${isActive ? "is-active" : ""} ${tab.pinned ? "is-pinned" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="roadsafe-tab-label"
+                      onClick={() => handleTabSwitch(tab.pathname)}
+                    >
+                      <span className="roadsafe-tab-dot" aria-hidden="true" />
+                      <span>{tab.label}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="roadsafe-tab-action"
+                      aria-label={tab.pinned ? "Unpin tab" : "Pin tab"}
+                      onClick={() => handleTogglePin(tab.pathname)}
+                    >
+                      {tab.pinned ? (
+                        <PinOff size={12} strokeWidth={1.8} />
+                      ) : (
+                        <Pin size={12} strokeWidth={1.8} />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="roadsafe-tab-action roadsafe-tab-close"
+                      aria-label={`Close ${tab.label}`}
+                      onClick={() => handleCloseTab(tab.pathname)}
+                    >
+                      <X size={12} strokeWidth={1.8} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         <main

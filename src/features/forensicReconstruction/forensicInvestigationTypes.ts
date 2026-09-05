@@ -71,6 +71,28 @@ export type MeasurementCategory =
   | "Damage Height"
   | "Other";
 
+export interface ForensicSceneDatum {
+  label: string;
+  latitude: number;
+  longitude: number;
+  accuracyMetres: number;
+  bestAccuracyMetres?: number;
+  worstAccuracyMetres?: number;
+  altitudeMetres?: number;
+  altitudeAccuracyMetres?: number;
+  sampleCount: number;
+  captureDurationSeconds: number;
+  positionTimestamp: string;
+  selectedAt: string;
+  capturedBy: string;
+  source: "Browser Geolocation API";
+  method: "Device GNSS - field captured";
+  xPercent?: number;
+  yPercent?: number;
+  xMetres?: number;
+  yMetres?: number;
+}
+
 export interface ForensicSceneIntake {
   location: string;
   accidentDate: string;
@@ -81,6 +103,7 @@ export interface ForensicSceneIntake {
   trafficControlState: string;
   roadGeometry: string;
   sceneDatumLabel: string;
+  sceneDatum?: ForensicSceneDatum;
   coordinateNotes: string;
   preservationNotes: string;
   lastUpdatedAt: string;

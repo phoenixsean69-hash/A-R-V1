@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import JunctionAnalysisModal from "./JunctionAnalysisModal";
+import JunctionQuickCard from "./JunctionQuickCard";
 
 import maplibregl from "maplibre-gl";
 
@@ -19,6 +20,7 @@ import type {
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import AreaAnalysisResults from "./AreaAnalysisResults";
+import SelectedAreaWorkbench from "./SelectedAreaWorkbench";
 
 import {
   addJunctionMarkers,
@@ -346,8 +348,7 @@ function ensureSelectionLayers(
         SELECTION_SOURCE_ID,
 
       paint: {
-        "fill-color":
-          "#2563eb",
+        "fill-color": "#e8872d",
 
         "fill-opacity":
           0.14,
@@ -370,8 +371,7 @@ function ensureSelectionLayers(
         SELECTION_SOURCE_ID,
 
       paint: {
-        "line-color":
-          "#1d4ed8",
+        "line-color": "#e8872d",
 
         "line-width": 3,
       },
@@ -453,20 +453,50 @@ export default function AccidentMap({
   setSelectedJunctionId,
 ] = useState<string | null>(null);
 
-const handleOpenJunctionAnalysis =
-  useCallback(
-    (junctionId: string) => {
-      setSelectedJunctionId(
-        junctionId,
-      );
-    },
-    [],
+  const [
+    quickJunctionId,
+    setQuickJunctionId,
+  ] = useState<string | null>(
+    null,
   );
+
+
 
 const handleCloseJunctionAnalysis =
   useCallback(() => {
     setSelectedJunctionId(null);
   }, []);
+
+  const handleOpenJunctionQuickCard =
+    useCallback(
+      (junctionId: string) => {
+        setQuickJunctionId(
+          junctionId,
+        );
+      },
+      [],
+    );
+
+  const handleCloseJunctionQuickCard =
+    useCallback(() => {
+      setQuickJunctionId(
+        null,
+      );
+    }, []);
+
+  const handleQuickCardFullAnalysis =
+    useCallback(
+      (junctionId: string) => {
+        setQuickJunctionId(
+          null,
+        );
+
+        setSelectedJunctionId(
+          junctionId,
+        );
+      },
+      [],
+    );
 
   const [
     selectedBounds,
@@ -493,6 +523,46 @@ const handleCloseJunctionAnalysis =
   ] = useState<string | null>(
     null,
   );
+
+  const [
+    selectedAreaWorkbenchOpen,
+    setSelectedAreaWorkbenchOpen,
+  ] = useState(false);
+
+  useEffect(() => {
+    if (!selectedBounds) {
+      setSelectedAreaWorkbenchOpen(false);
+    }
+  }, [selectedBounds]);
+
+  useEffect(() => {
+    if (
+      !selectedBounds ||
+      !showAnalysis
+    ) {
+      return;
+    }
+
+    try {
+      const refreshed =
+        AreaAnalysisService.analyse(
+          selectedBounds,
+          heatmapFilters,
+        );
+
+      setAnalysis(refreshed);
+      setAnalysisError(null);
+    } catch (error) {
+      console.error(
+        "Selected area filter refresh failed:",
+        error,
+      );
+    }
+  }, [
+    heatmapFilters,
+    selectedBounds,
+    showAnalysis,
+  ]);
 
   useEffect(() => {
     selectedBoundsRef.current =
@@ -680,7 +750,7 @@ const handleCloseJunctionAnalysis =
             addJunctionMarkers(
   map,
   undefined,
-  handleOpenJunctionAnalysis,
+  handleOpenJunctionQuickCard,
 );
         }
 
@@ -715,7 +785,7 @@ const handleCloseJunctionAnalysis =
 
       mapRef.current = null;
     };
-  }, [handleOpenJunctionAnalysis]);
+  }, [handleOpenJunctionQuickCard]);
 
   useEffect(() => {
     visualizationModeRef.current =
@@ -756,7 +826,7 @@ const handleCloseJunctionAnalysis =
           addJunctionMarkers(
   map,
   undefined,
-  handleOpenJunctionAnalysis,
+  handleOpenJunctionQuickCard,
 );
       }
 
@@ -768,7 +838,7 @@ const handleCloseJunctionAnalysis =
 
     junctionMarkersCleanupRef.current =
       null;
-  }, [handleOpenJunctionAnalysis, visualizationMode]);
+  }, [handleOpenJunctionQuickCard, visualizationMode]);
 
   useEffect(() => {
     heatmapFiltersRef.current =
@@ -871,7 +941,7 @@ const handleCloseJunctionAnalysis =
             addJunctionMarkers(
   map,
   undefined,
-  handleOpenJunctionAnalysis,
+  handleOpenJunctionQuickCard,
 );
         }
 
@@ -893,7 +963,7 @@ const handleCloseJunctionAnalysis =
         handleStyleLoad,
       );
     };
-  }, [handleOpenJunctionAnalysis, mapType]);
+  }, [handleOpenJunctionQuickCard, mapType]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1089,6 +1159,7 @@ const handleCloseJunctionAnalysis =
         const result =
           AreaAnalysisService.analyse(
             selectedBounds,
+            heatmapFiltersRef.current,
           );
 
         setAnalysis(result);
@@ -1233,78 +1304,89 @@ const handleCloseJunctionAnalysis =
         </div>
       )}
 
-      {selectedBounds && compactSelectionPanel && (
-        <div className="absolute bottom-3 right-3 z-20 w-[min(270px,calc(100%-24px))] overflow-hidden rounded-md border border-[#494949] bg-[#303030] shadow-[0_14px_34px_rgba(0,0,0,.45)] backdrop-blur-sm">
-          <div className="flex items-start justify-between gap-3 border-b border-[#494949] px-3 py-2.5">
+            {selectedBounds && compactSelectionPanel && (
+        <div className="absolute bottom-3 right-3 z-20 w-[min(390px,calc(100%-24px))] overflow-hidden rounded-md border border-[#494949] bg-[#202020]/[0.97] shadow-[0_18px_42px_rgba(0,0,0,.55)] backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3 border-b border-[#494949] bg-[#303030] px-3 py-2.5">
             <div className="min-w-0">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-100">
                 Selected area
               </h3>
               <p className="mt-0.5 truncate text-[8px] text-slate-500">
-                Focused road-safety analysis zone
+                Filter-aware spatial analysis zone
               </p>
             </div>
+
             <button
               type="button"
               onClick={handleCloseSelectedArea}
-              className="rounded border border-[#494949] px-2 py-1 text-[8px] font-semibold text-slate-300 hover:bg-[#303030]"
+              className="rounded border border-[#494949] bg-[#292929] px-2 py-1 text-[8px] font-semibold text-slate-300"
             >
               Close
             </button>
           </div>
 
-          <div className="space-y-2.5 px-3 py-3">
+          <div className="p-3">
             {showAnalysis && analysis ? (
-              <>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    ["Junctions", analysis.totalJunctions],
-                    ["Crashes", analysis.totalAccidents],
-                    ["Fatal", analysis.totalFatalities],
-                    ["Injured", analysis.totalInjuries],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded border border-[#494949] bg-[#303030] px-1.5 py-2 text-center">
-                      <p className="text-[12px] font-bold text-slate-100">{value}</p>
-                      <p className="mt-0.5 text-[7px] uppercase tracking-[0.06em] text-slate-500">{label}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between rounded border border-[#494949] bg-[#303030] px-2.5 py-2">
-                  <span className="text-[8px] uppercase tracking-[0.08em] text-slate-500">Overall risk</span>
-                  <span className="text-[9px] font-bold text-[#c4c4c4]">{analysis.overallRiskLevel}</span>
-                </div>
-              </>
+              <SelectedAreaWorkbench
+                analysis={analysis}
+                bounds={selectedBounds}
+                filters={heatmapFilters}
+                compact
+                onExpand={() =>
+                  setSelectedAreaWorkbenchOpen(true)
+                }
+                onClose={handleCloseSelectedArea}
+                onSelectAgain={handleSelectArea}
+              />
             ) : analysisError ? (
-              <p className="rounded border border-[#623044] bg-[#2a101b] px-2.5 py-2 text-[8px] text-[#ff9db0]">
-                {analysisError}
-              </p>
-            ) : (
-              <p className="text-[8px] leading-4 text-slate-400">
-                Analyse this selection for junctions, recorded crashes, casualties and overall risk.
-              </p>
-            )}
+              <div className="space-y-2">
+                <p className="rounded border border-[#713646] bg-[#321722] px-2.5 py-2 text-[8px] text-[#e28b9d]">
+                  {analysisError}
+                </p>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSelectArea}
-                className="flex-1 rounded border border-[#494949] bg-[#303030] px-2 py-1.5 text-[8px] font-semibold text-slate-300 hover:bg-[#303030]"
-              >
-                Select again
-              </button>
-              <button
-                type="button"
-                onClick={showAnalysis && analysis ? () => setShowAnalysis(false) : handleAnalyseArea}
-                className="flex-1 rounded border border-[#494949] bg-[#303030] px-2 py-1.5 text-[8px] font-semibold text-[#d8e9ff] hover:bg-[#303030]"
-              >
-                {showAnalysis && analysis ? "Hide analysis" : "Analyse area"}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleAnalyseArea}
+                  className="ui-button w-full"
+                >
+                  Retry analysis
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <div className="rounded border border-[#494949] bg-[#292929] p-2.5">
+                  <p className="text-[8px] leading-4 text-slate-400">
+                    Analyse this rectangle using the current date, severity,
+                    weather and cause filters. RoadSafe will calculate severity,
+                    casualty intensity, density, recurring causes, peak times,
+                    junction risk contribution and network comparison.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSelectArea}
+                    className="ui-button"
+                  >
+                    Select again
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAnalyseArea}
+                    className="ui-button-primary"
+                  >
+                    Analyse area
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {selectedBounds && !compactSelectionPanel && (
+{selectedBounds && !compactSelectionPanel && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
           <div className="flex max-h-[95%] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="flex items-center justify-between gap-4 border-b border-gray-200 p-5">
@@ -1333,7 +1415,7 @@ const handleCloseJunctionAnalysis =
                 mapType={mapType}
                 visualizationMode={visualizationMode}
                 heatmapFilters={heatmapFilters}
-                onViewFullAnalysis={handleOpenJunctionAnalysis}
+                onViewFullAnalysis={handleOpenJunctionQuickCard}
               />
 
               {showAnalysis && analysis && (
@@ -1379,6 +1461,64 @@ const handleCloseJunctionAnalysis =
             </div>
           </div>
         </div>
+      )}
+
+            {selectedAreaWorkbenchOpen &&
+        selectedBounds &&
+        analysis && (
+          <div className="absolute inset-0 z-[70] flex min-w-0 flex-col bg-black/80 p-2 sm:p-4">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-[#494949] bg-[#202020] shadow-[0_26px_80px_rgba(0,0,0,.65)]">
+              <header className="flex min-w-0 items-start justify-between gap-3 border-b border-[#494949] bg-[#303030] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#e8872d]">
+                    Spatial analysis
+                  </p>
+                  <h3 className="mt-1 text-sm font-bold text-slate-100">
+                    Selected Area Workbench
+                  </h3>
+                  <p className="mt-1 text-[8px] text-slate-500">
+                    {analysis.areaSquareKilometres.toFixed(3)} km² · {analysis.totalJunctions} junction(s) · active map filters applied
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedAreaWorkbenchOpen(false)
+                  }
+                  className="ui-button shrink-0"
+                >
+                  Return to map
+                </button>
+              </header>
+
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 [scrollbar-color:#555555_#202020] [scrollbar-width:thin]">
+                <SelectedAreaWorkbench
+                  analysis={analysis}
+                  bounds={selectedBounds}
+                  filters={heatmapFilters}
+                  onSelectAgain={() => {
+                    setSelectedAreaWorkbenchOpen(false);
+                    handleSelectArea();
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+{quickJunctionId && (
+        <JunctionQuickCard
+          junctionId={quickJunctionId}
+          onClose={
+            handleCloseJunctionQuickCard
+          }
+          onViewFullAnalysis={() =>
+            handleQuickCardFullAnalysis(
+              quickJunctionId,
+            )
+          }
+        />
       )}
 
       {selectedJunctionId && (

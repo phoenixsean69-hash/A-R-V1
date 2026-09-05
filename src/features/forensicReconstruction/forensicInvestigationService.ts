@@ -1,4 +1,5 @@
 import type { AccidentCase } from "../../types/accidentCase";
+import { ReconstructionService } from "../../services/reconstructionService";
 import type {
   ForensicAccidentInvestigation,
   ForensicAnalysisFinding,
@@ -18,6 +19,158 @@ function createId(prefix: string): string {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function mapWizardWeather(value: string | undefined): string {
+  switch (value) {
+    case "Clear":
+      return "Clear";
+    case "Rain":
+      return "Rain";
+    case "Fog":
+      return "Fog / mist";
+    case "Dust":
+      return "Dust / haze";
+    default:
+      return value ?? "";
+  }
+}
+
+function mapWizardLighting(value: string | undefined): string {
+  switch (value) {
+    case "Day":
+      return "Daylight";
+    case "Dawn":
+      return "Dawn";
+    case "Dusk":
+      return "Dusk";
+    case "Night":
+      return "Night - street-lighting state not yet verified";
+    default:
+      return value ?? "";
+  }
+}
+
+function mapWizardRoadCondition(value: string | undefined): string {
+  switch (value) {
+    case "Dry":
+      return "Dry";
+    case "Wet":
+      return "Wet";
+    case "Damaged":
+      return "Uneven / damaged";
+    default:
+      return value ?? "";
+  }
+}
+
+function mapWizardTrafficControl(value: string | undefined): string {
+  switch (value) {
+    case "None":
+      return "No traffic control";
+    case "Stop Signs":
+      return "Stop sign";
+    case "Give Way Signs":
+      return "Give Way / Yield sign";
+    case "Traffic Lights":
+      return "Traffic lights present - operating state not yet verified";
+    default:
+      return value ?? "";
+  }
+}
+
+function mapWizardRoadGeometry(value: string | undefined): string {
+  switch (value) {
+    case "Straight Road":
+      return "Straight road";
+    case "T-Junction":
+      return "T-junction";
+    case "Four-way Intersection":
+      return "Crossroads / 4-way junction";
+    case "Roundabout":
+      return "Roundabout";
+    case "Pedestrian Crossing":
+      return "Pedestrian crossing";
+    case "Transport Terminus":
+      return "Transport Terminus";
+    default:
+      return value ?? "";
+  }
+}
+
+function getWizardSceneSeed(accidentCase: AccidentCase): {
+  weather: string;
+  lighting: string;
+  roadCondition: string;
+  trafficControlState: string;
+  roadGeometry: string;
+} {
+  const reconstruction =
+    accidentCase.reconstructionId
+      ? ReconstructionService.getById(accidentCase.reconstructionId)
+      : null;
+
+  const sceneSettings =
+    reconstruction?.scene ??
+    accidentCase.roadLayoutDetection?.suggestedSceneSettings;
+
+  return {
+    weather: mapWizardWeather(sceneSettings?.weather),
+    lighting: mapWizardLighting(sceneSettings?.timeOfDay),
+    roadCondition: mapWizardRoadCondition(sceneSettings?.roadSurface),
+    trafficControlState: mapWizardTrafficControl(sceneSettings?.trafficControl),
+    roadGeometry: mapWizardRoadGeometry(sceneSettings?.roadLayout),
+  };
+}
+
+function hydrateFromCaseAndWizard(
+  investigation: ForensicAccidentInvestigation,
+  accidentCase: AccidentCase,
+): ForensicAccidentInvestigation {
+  const wizard = getWizardSceneSeed(accidentCase);
+
+  return {
+    ...investigation,
+    caseNumber:
+      investigation.caseNumber.trim() ||
+      accidentCase.caseNumber,
+    caseTitle:
+      investigation.caseTitle.trim() ||
+      accidentCase.title,
+    investigatingOfficer:
+      investigation.investigatingOfficer.trim() ||
+      accidentCase.investigatingOfficer,
+    policeStation:
+      investigation.policeStation.trim() ||
+      accidentCase.policeStation,
+    scene: {
+      ...investigation.scene,
+      location:
+        investigation.scene.location.trim() ||
+        accidentCase.location,
+      accidentDate:
+        investigation.scene.accidentDate ||
+        accidentCase.accidentDate,
+      accidentTime:
+        investigation.scene.accidentTime ||
+        accidentCase.accidentTime,
+      weather:
+        investigation.scene.weather.trim() ||
+        wizard.weather,
+      lighting:
+        investigation.scene.lighting.trim() ||
+        wizard.lighting,
+      roadCondition:
+        investigation.scene.roadCondition.trim() ||
+        wizard.roadCondition,
+      trafficControlState:
+        investigation.scene.trafficControlState.trim() ||
+        wizard.trafficControlState,
+      roadGeometry:
+        investigation.scene.roadGeometry.trim() ||
+        wizard.roadGeometry,
+    },
+  };
 }
 
 function normalise(
@@ -157,6 +310,8 @@ function writeAll(records: ForensicAccidentInvestigation[]): void {
 
 function createFromCase(accidentCase: AccidentCase): ForensicAccidentInvestigation {
   const now = nowIso();
+  const wizard = getWizardSceneSeed(accidentCase);
+
   return {
     version: 2,
     id: createId("forensic-investigation"),
@@ -169,11 +324,11 @@ function createFromCase(accidentCase: AccidentCase): ForensicAccidentInvestigati
       location: accidentCase.location,
       accidentDate: accidentCase.accidentDate,
       accidentTime: accidentCase.accidentTime,
-      weather: "",
-      lighting: "",
-      roadCondition: "",
-      trafficControlState: "",
-      roadGeometry: "",
+      weather: wizard.weather,
+      lighting: wizard.lighting,
+      roadCondition: wizard.roadCondition,
+      trafficControlState: wizard.trafficControlState,
+      roadGeometry: wizard.roadGeometry,
       sceneDatumLabel: "",
       coordinateNotes: "",
       preservationNotes: "",
@@ -236,8 +391,28 @@ export const ForensicInvestigationService = {
       this.getByCaseId(
         accidentCase.id,
       );
-    if (existing) return existing;
-    const created = createFromCase(accidentCase);
+
+    if (existing) {
+      const hydrated =
+        hydrateFromCaseAndWizard(
+          existing,
+          accidentCase,
+        );
+
+      const changed =
+        JSON.stringify(hydrated) !==
+        JSON.stringify(existing);
+
+      return changed
+        ? this.save(hydrated)
+        : existing;
+    }
+
+    const created =
+      createFromCase(
+        accidentCase,
+      );
+
     return this.save(created);
   },
 

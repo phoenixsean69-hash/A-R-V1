@@ -11,7 +11,7 @@ export default function CaseFootagePage() {
     return (
       <div className="min-h-screen bg-slate-100 p-8">
         <div className="mx-auto max-w-3xl rounded-2xl bg-white p-10 text-center shadow-sm">
-          <h1 className="text-2xl font-black text-slate-900">Case not found</h1>
+          <h1 className="text-2xl font-black text-slate-300">Case not found</h1>
           <Link to="/cases" className="mt-5 inline-block font-bold text-[#c4c4c4]">
             Return to cases
           </Link>

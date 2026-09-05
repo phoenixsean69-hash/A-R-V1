@@ -245,7 +245,7 @@ function Field({
 }
 
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-sm border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 ${
+  return `w-full rounded-sm border bg-white px-4 py-3 text-sm text-slate-300 outline-none transition focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-100"
       : "border-slate-300 focus:border-[#494949] focus:ring-[#e8872d]"

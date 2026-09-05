@@ -55,7 +55,7 @@ export default function RoadDetectionPreview({
     <div className="grid gap-5 lg:grid-cols-2">
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-4 py-3">
-          <h3 className="font-black text-slate-900">Detected map geometry</h3>
+          <h3 className="font-black text-slate-300">Detected map geometry</h3>
           <p className="mt-1 text-xs text-slate-500">
             Nearby OpenStreetMap roads normalised around the officer’s confirmed position.
           </p>
@@ -128,7 +128,7 @@ export default function RoadDetectionPreview({
           {detection.roads.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
               <div className="rounded-2xl bg-white/90 p-5 shadow">
-                <p className="font-black text-slate-900">No road geometry available</p>
+                <p className="font-black text-slate-300">No road geometry available</p>
                 <p className="mt-2 text-sm text-slate-600">
                   Use the manual layout controls to create the scene.
                 </p>
@@ -140,7 +140,7 @@ export default function RoadDetectionPreview({
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-4 py-3">
-          <h3 className="font-black text-slate-900">Generated 2D scene</h3>
+          <h3 className="font-black text-slate-300">Generated 2D scene</h3>
           <p className="mt-1 text-xs text-slate-500">
             This is the editable reconstruction template that will be created.
           </p>

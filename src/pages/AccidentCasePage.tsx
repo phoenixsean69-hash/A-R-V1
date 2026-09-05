@@ -26,7 +26,7 @@ export default function AccidentCasePage() {
   if (!record) {
     return (
       <div className="ui-panel mx-auto max-w-3xl p-10 text-center">
-        <h1 className="text-2xl font-black text-slate-900">Case not found</h1>
+        <h1 className="text-2xl font-black text-slate-300">Case not found</h1>
         <Link to="/cases" className="mt-5 inline-block font-bold text-[#c4c4c4]">
           Return to cases
         </Link>
@@ -130,7 +130,7 @@ export default function AccidentCasePage() {
               <dl className="mt-4 min-w-0 space-y-3 text-[10px]">
                 <div className="min-w-0">
                   <dt className="font-semibold text-slate-500">Officer</dt>
-                  <dd className="mt-0.5 break-words text-slate-900">
+                  <dd className="mt-0.5 break-words text-slate-300">
                     {record.investigatingOfficer || "Not recorded"}
                   </dd>
                 </div>
@@ -138,13 +138,13 @@ export default function AccidentCasePage() {
                   <dt className="font-semibold text-slate-500">
                     Police station
                   </dt>
-                  <dd className="mt-0.5 break-words text-slate-900">
+                  <dd className="mt-0.5 break-words text-slate-300">
                     {record.policeStation || "Not recorded"}
                   </dd>
                 </div>
                 <div className="min-w-0">
                   <dt className="font-semibold text-slate-500">Junction ID</dt>
-                  <dd className="mt-0.5 break-all text-slate-900">
+                  <dd className="mt-0.5 break-all font-mono text-slate-400">
                     {record.junctionId || "Not linked"}
                   </dd>
                 </div>
@@ -152,7 +152,7 @@ export default function AccidentCasePage() {
                   <dt className="font-semibold text-slate-500">
                     Reconstruction ID
                   </dt>
-                  <dd className="mt-0.5 break-all text-[10px] text-slate-900">
+                  <dd className="mt-0.5 break-all font-mono text-[10px] text-slate-400">
                     {record.reconstructionId || "Not linked"}
                   </dd>
                 </div>

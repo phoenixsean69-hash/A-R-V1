@@ -74,6 +74,7 @@ import SimulationWorkspace from "./SimulationWorkspace";
 import ForensicReconstructionWorkspace from "./ForensicReconstructionWorkspace";
 import FindingsWorkspace from "./FindingsWorkspace";
 import ReportWorkspace from "./ReportWorkspace";
+import ForensicDatumPicker from "./ForensicDatumPicker";
 import "./ForensicInvestigationWorkspace.css";
 
 interface Props {
@@ -356,6 +357,7 @@ export default function ForensicInvestigationWorkspace({
   const [investigation, setInvestigation] = useState(initialInvestigation);
   const [section, setSection] = useState<Section>("Overview");
   const [message, setMessage] = useState("");
+  const [datumPickerOpen, setDatumPickerOpen] = useState(false);
   const [persistenceStatus, setPersistenceStatus] =
     useState<"saving" | "saved" | "error">("saved");
   const [persistenceError, setPersistenceError] =
@@ -2546,6 +2548,33 @@ export default function ForensicInvestigationWorkspace({
 
   return (
     <div className="fv2-root">
+      {datumPickerOpen && (
+        <ForensicDatumPicker
+          accidentCase={accidentCase}
+          currentDatum={investigation.scene.sceneDatum}
+          onCancel={() => setDatumPickerOpen(false)}
+          onConfirm={(datum) => {
+            setInvestigation((current) => ({
+              ...current,
+              scene: {
+                ...current.scene,
+                sceneDatumLabel: datum.label,
+                sceneDatum: datum,
+                lastUpdatedAt: new Date().toISOString(),
+              },
+            }));
+
+            setDatumPickerOpen(false);
+            setMessage(
+              `Fixed reference point field-captured: ${datum.label} at ${datum.latitude.toFixed(
+                7,
+              )}, ${datum.longitude.toFixed(7)} with ±${datum.accuracyMetres.toFixed(
+                1,
+              )} m reported GNSS accuracy.`,
+            );
+          }}
+        />
+      )}
       <header className="fv2-topbar">
         <div>
           <b>ROADSAFE</b>
@@ -2658,21 +2687,44 @@ export default function ForensicInvestigationWorkspace({
                 )}
                 <div className="fv2-field">
                   <span>Fixed reference point</span>
-                  <input
-                    value={String(investigation.scene.sceneDatumLabel ?? "")}
-                    placeholder="e.g. Base of lamp post beside the junction"
-                    onChange={(event) =>
-                      setInvestigation((current) => ({
-                        ...current,
-                        scene: {
-                          ...current.scene,
-                          sceneDatumLabel: event.target.value,
-                        },
-                      }))
-                    }
-                  />
+
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={String(investigation.scene.sceneDatumLabel ?? "")}
+                      placeholder="No field datum captured"
+                      className="min-w-0 flex-1"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setDatumPickerOpen(true)}
+                      className="shrink-0 rounded border border-[#8c6039] bg-[#3a2c21] px-3 text-[9px] font-bold text-[#f0c49a]"
+                    >
+                      {investigation.scene.sceneDatum
+                        ? "Recapture at point"
+                        : "Set reference point"}
+                    </button>
+                  </div>
+
+                  {investigation.scene.sceneDatum && (
+                    <small className="fv2-help">
+                      {investigation.scene.sceneDatum.latitude.toFixed(7)},{" "}
+                      {investigation.scene.sceneDatum.longitude.toFixed(7)}
+                      {" · "}GNSS accuracy ±
+                      {typeof investigation.scene.sceneDatum.accuracyMetres === "number"
+                        ? investigation.scene.sceneDatum.accuracyMetres.toFixed(1)
+                        : "?"} m
+                      {" · "}
+                      {investigation.scene.sceneDatum.sampleCount ?? 1} sample(s)
+                      {" · "}Device GNSS field capture
+                    </small>
+                  )}
+
                   <small className="fv2-help">
-                    Choose one permanent object at the scene that all distances will be measured from.
+                    Officer physically walks to a permanent scene feature, stands
+                    at the exact point, then lets RoadSafe capture several live
+                    device GNSS fixes. No map clicking is used.
                   </small>
                 </div>
 

@@ -26,9 +26,6 @@ import {
   isHumanReconstructionParticipant,
 } from "../../../utils/reconstructionReactionModel";
 import {
-  getGroundedHumanKnockdownPose,
-} from "../../../utils/reconstructionHumanKnockdown";
-import {
   animateHumanParticipantModel,
   createAnimatedHumanParticipantModel,
 } from "../../../engine/assets/participantHumanMotionModel";
@@ -45,6 +42,10 @@ interface ParticipantEntry {
   participant: ReconstructionVehicle;
   holder: THREE.Group;
   modelRoot: THREE.Group;
+  pathStart: THREE.Vector3;
+  connectionLine?: THREE.Line;
+  originMarker?: THREE.Mesh;
+  impactMarker?: THREE.Mesh;
 }
 
 export interface ARLayerVisibility {
@@ -144,27 +145,6 @@ function getParticipantRapierContactTime(
   )
     ? globalTime
     : undefined;
-}
-
-function alignImpactResponseToRapierContact(
-  response:
-    ParticipantImpactResponse | undefined,
-  contactTimeSeconds:
-    number | undefined,
-): ParticipantImpactResponse | undefined {
-  if (
-    !response ||
-    contactTimeSeconds ===
-      undefined
-  ) {
-    return response;
-  }
-
-  return {
-    ...response,
-    timeSeconds:
-      contactTimeSeconds,
-  };
 }
 
 function participantDimensions(
@@ -1062,15 +1042,6 @@ export function createARReconstructionScene({
     holder.add(modelRoot);
     offsetRoot.add(holder);
 
-    participantEntries.set(
-      participant.id,
-      {
-        participant,
-        holder,
-        modelRoot,
-      },
-    );
-
     const authoredPoints =
       getParticipantPlaybackPathPoints(
         participant,
@@ -1091,6 +1062,102 @@ export function createARReconstructionScene({
             0.12,
           ),
       );
+
+    const startPoint =
+      positions.length > 0
+        ? positions[0].clone().sub(collisionWorld)
+        : new THREE.Vector3();
+
+    const originMarker =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          0.12,
+          14,
+          14,
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            PARTICIPANT_COLOURS[
+              participant.colour
+            ] ??
+            0xffffff,
+          transparent: true,
+          opacity: 0.9,
+        }),
+      );
+
+    originMarker.position.copy(
+      startPoint,
+    );
+
+    const connectionLine =
+      new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          startPoint,
+          new THREE.Vector3(
+            0,
+            0.18,
+            0,
+          ),
+        ]),
+        new THREE.LineDashedMaterial({
+          color:
+            PARTICIPANT_COLOURS[
+              participant.colour
+            ] ??
+            0xffffff,
+          transparent: true,
+          opacity: 0.7,
+          dashSize: 0.24,
+          gapSize: 0.16,
+        }),
+      );
+
+    connectionLine.computeLineDistances();
+    pathGroup.add(
+      originMarker,
+      connectionLine,
+    );
+
+    const impactMarker =
+      new THREE.Mesh(
+        new THREE.TorusGeometry(
+          0.22,
+          0.04,
+          10,
+          30,
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            PARTICIPANT_COLOURS[
+              participant.colour
+            ] ??
+            0xffffff,
+          transparent: true,
+          opacity: 0.82,
+        }),
+      );
+
+    impactMarker.rotation.x =
+      Math.PI / 2;
+    impactMarker.visible = false;
+    collisionGroup.add(
+      impactMarker,
+    );
+
+    participantEntries.set(
+      participant.id,
+      {
+        participant,
+        holder,
+        modelRoot,
+        pathStart:
+          startPoint,
+        connectionLine,
+        originMarker,
+        impactMarker,
+      },
+    );
 
     if (
       positions.length >
@@ -1403,14 +1470,11 @@ export function createARReconstructionScene({
             state.rotation,
             state.speedKmh,
             rapierContactTime ??
-              reconstruction
-                .lastPhysicsSimulation
-                ?.primaryImpactTimeSeconds,
+              undefined,
           );
 
         const displayHeading =
-          reaction
-            .suggestedHeadingDegrees;
+          reaction.suggestedHeadingDegrees;
 
         entry.holder.rotation.set(
           0,
@@ -1421,11 +1485,8 @@ export function createARReconstructionScene({
         );
 
         const impact =
-          alignImpactResponseToRapierContact(
-            impactByParticipant.get(
-              entry.participant.id,
-            ),
-            rapierContactTime,
+          impactByParticipant.get(
+            entry.participant.id,
           );
 
         applyImpactPose(
@@ -1436,104 +1497,39 @@ export function createARReconstructionScene({
           physicsEffects,
         );
 
-        if (
-          isHumanReconstructionParticipant(
-            entry.participant,
-          ) &&
-          impact &&
-          physicsEffects
-        ) {
-          const dimensions =
-            participantDimensions(
-              entry.participant,
-            );
-
-          const knockdown =
-            getGroundedHumanKnockdownPose({
-              response:
-                impact,
-              currentTimeSeconds:
-                timeSeconds,
-              participantHeadingDegrees:
-                displayHeading,
-              participantHeightMetres:
-                dimensions[1],
-            });
-
-          if (
-            knockdown.active
-          ) {
-            entry.modelRoot.position.set(
-              0,
-              knockdown
-                .verticalMetres,
-              0,
-            );
-
-            entry.modelRoot.rotation.set(
-              THREE.MathUtils.degToRad(
-                knockdown
-                  .rotationXDegrees,
-              ),
-              THREE.MathUtils.degToRad(
-                knockdown
-                  .rotationYDegrees,
-              ),
-              THREE.MathUtils.degToRad(
-                knockdown
-                  .rotationZDegrees,
-              ),
-            );
-
-            entry.modelRoot.scale.set(
-              1,
-              1,
-              1,
-            );
-          }
-        }
-
         const postImpact =
-          reaction
-            .impactTimeSeconds !==
+          reaction.impactTimeSeconds !==
             undefined &&
           timeSeconds >=
-            reaction
-              .impactTimeSeconds;
+            reaction.impactTimeSeconds;
 
         animateHumanParticipantModel(
           entry.modelRoot,
           {
             timeSeconds,
             speedKmh:
-              reaction
-                .adjustedSpeedKmh,
+              reaction.adjustedSpeedKmh,
             reactionIntensity:
-              reaction
-                .reactionIntensity,
+              reaction.reactionIntensity,
             lookYawDegrees:
-              reaction
-                .lookYawDegrees,
+              reaction.lookYawDegrees,
             postImpact,
           },
         );
 
         if (
-          reaction
-            .emergencyBraking &&
+          reaction.emergencyBraking &&
           !postImpact
         ) {
           entry.modelRoot.rotation.z -=
             THREE.MathUtils.degToRad(
               2.1 *
-              reaction
-                .emergencyBrakeIntensity,
+                reaction.emergencyBrakeIntensity,
             );
 
           entry.modelRoot.position.y -=
             0.018 *
-            reaction
-              .emergencyBrakeIntensity;
+              reaction.emergencyBrakeIntensity;
         }
 
         const potholeEffect =
@@ -1561,6 +1557,77 @@ export function createARReconstructionScene({
             THREE.MathUtils.degToRad(
               potholeEffect.rollDegrees,
             );
+        }
+
+        if (entry.connectionLine) {
+          const currentLocal =
+            entry.holder.position.clone();
+
+          entry.connectionLine.geometry.setFromPoints([
+            entry.pathStart,
+            new THREE.Vector3(
+              currentLocal.x,
+              0.18,
+              currentLocal.z,
+            ),
+          ]);
+
+          const material =
+            entry.connectionLine.material as THREE.LineDashedMaterial;
+          material.opacity =
+            0.45 +
+            Math.max(
+              0,
+              0.35 *
+                Math.sin(
+                  timeSeconds *
+                    2.5 +
+                    entry.participant.id.length,
+                ),
+            );
+
+          entry.connectionLine.computeLineDistances();
+        }
+
+        if (entry.impactMarker) {
+          const impact =
+            impactByParticipant.get(
+              entry.participant.id,
+            );
+
+          if (impact) {
+            const impactWorld =
+              worldPosition(
+                impact.impactPosition,
+                width,
+                height,
+                0.18,
+              );
+
+            const impactLocal =
+              impactWorld.clone().sub(collisionWorld);
+
+            entry.impactMarker.position.copy(
+              impactLocal,
+            );
+            entry.impactMarker.visible =
+              Math.abs(
+                timeSeconds -
+                  impact.timeSeconds,
+              ) < 1.6;
+
+            const pulse =
+              1 +
+              0.3 *
+                Math.sin(
+                  timeSeconds *
+                    12,
+                );
+
+            entry.impactMarker.scale.setScalar(pulse);
+          } else {
+            entry.impactMarker.visible = false;
+          }
         }
       }
     },

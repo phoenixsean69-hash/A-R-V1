@@ -36,7 +36,7 @@
 .roadsafe-shell .border-slate-200,
 .roadsafe-shell .border-slate-300 { border-color: #3c3c3c !important; }
 .roadsafe-shell .text-gray-900,
-.roadsafe-shell .text-slate-900,
+.roadsafe-shell .text-slate-300,
 .roadsafe-shell .text-slate-950 { color: #eeeeee !important; }
 .roadsafe-shell .text-gray-700,
 .roadsafe-shell .text-slate-700 { color: #c4c4c4 !important; }
@@ -94,7 +94,7 @@
 .reconstruction-editor .border-slate-200,
 .reconstruction-editor .border-slate-300 { border-color: #3c3c3c !important; }
 .reconstruction-editor .text-gray-900,
-.reconstruction-editor .text-slate-900,
+.reconstruction-editor .text-slate-300,
 .reconstruction-editor .text-slate-950 { color: #eeeeee !important; }
 .reconstruction-editor .text-gray-700,
 .reconstruction-editor .text-slate-700 { color: #c4c4c4 !important; }
