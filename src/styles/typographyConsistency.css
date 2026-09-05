@@ -408,3 +408,110 @@ body,
     font-size: 12px !important;
   }
 }
+
+/* ==========================================================
+   ROADSAFE HEADER COMPACT TYPOGRAPHY FIX
+   Prevent global typography normalization from breaking
+   the Blender-style workstation header.
+   ========================================================== */
+
+.roadsafe-workspace-header {
+  container-type: inline-size;
+  container-name: roadsafe-header;
+}
+
+/* Restore intentional compact header controls */
+.roadsafe-workspace-header button,
+.roadsafe-workspace-header .ui-button,
+.roadsafe-workspace-header .ui-icon-button {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-eyebrow {
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-workspace-title h1 {
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-header-clock strong {
+  font-size: 14px !important;
+  line-height: 1.1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-header-clock span {
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-profile-copy small {
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-profile-copy strong {
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+}
+
+.roadsafe-workspace-header .roadsafe-profile-copy {
+  width: 116px;
+  min-width: 0;
+}
+
+.roadsafe-workspace-header .roadsafe-profile-trigger {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-header .roadsafe-inspector-toggle {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.roadsafe-workspace-header-right {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/*
+ * Important:
+ * When the docked inspector steals horizontal space,
+ * react to the HEADER'S actual width rather than only
+ * the browser viewport width.
+ */
+@container roadsafe-header (max-width: 860px) {
+  .roadsafe-active-case-chip,
+  .roadsafe-header-clock,
+  .roadsafe-header-icon,
+  .roadsafe-inspector-toggle > span,
+  .roadsafe-profile-copy {
+    display: none !important;
+  }
+
+  .roadsafe-inspector-toggle {
+    width: 34px !important;
+    min-width: 34px !important;
+    padding: 0 !important;
+    justify-content: center;
+  }
+
+  .roadsafe-inspector-toggle svg:last-child {
+    display: none;
+  }
+
+  .roadsafe-profile-trigger {
+    padding: 3px !important;
+  }
+}
+
+@container roadsafe-header (max-width: 620px) {
+  .roadsafe-workspace-title > p:last-child,
+  .roadsafe-workspace-title .roadsafe-eyebrow {
+    display: none !important;
+  }
+}
