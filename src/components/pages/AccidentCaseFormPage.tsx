@@ -110,14 +110,11 @@ export default function AccidentCaseFormPage() {
             </span>
 
             <h1>
-              Create a Location-Based Accident Case
+              Create Accident Case
             </h1>
 
             <p>
-              RoadSafe freezes the forensic core and context boundary,
-              archives source payloads, builds metric geometry and terrain
-              evidence, runs quality assurance, and creates the linked
-              reconstruction only after investigator review.
+              Record the case, define the forensic area, build the scene package, then review and confirm it for reconstruction.
             </p>
           </div>
 

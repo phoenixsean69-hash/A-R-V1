@@ -1147,17 +1147,15 @@ export default function ForensicCaseAreaWizard({
       <header className="roadsafe-forensic-wizard__header">
         <div>
           <span>
-            RoadSafe Forensic Geospatial Pipeline
+            RoadSafe Case Workflow
           </span>
 
           <h2>
-            Create investigation scene
+            Four-step forensic case setup
           </h2>
 
           <p>
-            Freeze the forensic core and context, archive sources, normalize
-            metric geometry, acquire macro terrain and run QA before
-            reconstruction.
+            Case record, forensic area, scene build and investigator review.
           </p>
         </div>
 
@@ -1261,7 +1259,7 @@ export default function ForensicCaseAreaWizard({
           <Heading
             eyebrow="Case identity"
             title="Establish the investigation record"
-            text="Case metadata identifies the investigation. Geospatial evidence is frozen separately in the next stages."
+            text="Record the case identity, time, location and investigating unit."
           />
 
           <div className="roadsafe-forensic-form-grid">
@@ -1491,7 +1489,7 @@ export default function ForensicCaseAreaWizard({
           <Heading
             eyebrow="Area selection"
             title="Freeze the forensic core"
-            text="Place the exact accident anchor, then draw the high-detail forensic core. RoadSafe generates a surrounding context buffer automatically."
+            text="Set the accident anchor and draw the forensic core. RoadSafe adds the context boundary automatically."
           />
 
           <div className="roadsafe-forensic-area-layout">
@@ -1793,7 +1791,7 @@ export default function ForensicCaseAreaWizard({
           <Heading
             eyebrow="Source acquisition"
             title="Build the forensic scene package"
-            text="This is not a screenshot export. RoadSafe archives source payloads, builds normalized metric geometry, acquires macro terrain and runs QA."
+            text="Archive source data, build metric geometry and terrain, then run scene quality assurance."
           />
 
           <div className="roadsafe-forensic-pipeline">
@@ -1887,7 +1885,7 @@ export default function ForensicCaseAreaWizard({
           <Heading
             eyebrow="Investigator review"
             title="Review the frozen scene package"
-            text="Automatic extraction carries uncertainty. Review source provenance, terrain state and QA before handing the scene to reconstruction."
+            text="Verify source provenance, geometry and QA before creating the case."
           />
 
           <div className="roadsafe-forensic-review-metrics">

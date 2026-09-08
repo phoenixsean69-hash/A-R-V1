@@ -191,3 +191,84 @@
     align-self: flex-start;
   }
 }
+
+/* ROADSAFE_NEW_CASE_PAGE_COMPACT_START */
+
+.roadsafe-new-case-page__header {
+  min-height: 58px;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    9px
+    14px
+    8px;
+
+  border-bottom-color: #3c3c3c;
+
+  background: #242424;
+}
+
+.roadsafe-new-case-page__eyebrow {
+  margin-bottom: 3px;
+
+  color: #8d8d8d;
+
+  font-size: 8px;
+  letter-spacing: .08em;
+}
+
+.roadsafe-new-case-page__header h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.roadsafe-new-case-page__header p {
+  max-width: 850px;
+
+  margin-top: 3px;
+
+  color: #8f8f8f;
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.roadsafe-new-case-page__back {
+  min-width: 68px;
+  min-height: 29px;
+
+  padding:
+    5px
+    9px;
+
+  border-color: #454545;
+  border-left-width: 1px;
+
+  background: #2b2b2b;
+
+  font-size: 9px;
+}
+
+.roadsafe-new-case-page__back:hover {
+  border-color: #5a5a5a;
+
+  background: #323232;
+}
+
+.roadsafe-new-case-page__back > span:first-child {
+  color: #e8872d;
+}
+
+@media (max-width: 720px) {
+  .roadsafe-new-case-page__header {
+    min-height: 0;
+
+    padding: 10px;
+  }
+}
+
+/* ROADSAFE_NEW_CASE_PAGE_COMPACT_END */
