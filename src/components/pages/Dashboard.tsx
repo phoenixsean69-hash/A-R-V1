@@ -22,6 +22,7 @@ import AccidentMap, {
   type VisualizationMode,
 } from "../../components/map/AccidentMap";
 import ForensicScenePreview from "../../components/reconstruction/ForensicScenePreview";
+import StationOverviewCharts from "../../components/dashboard/StationOverviewCharts";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
 import { createDefaultHeatmapFilters } from "../../types/heatmap";
 import {
@@ -157,8 +158,7 @@ export default function Dashboard() {
 
   const [mapMode, setMapMode] =
     useState<VisualizationMode>("heatmap");
-
-  const previewReconstruction =
+const previewReconstruction =
     summary.reconstructions.find(
       (reconstruction) => reconstruction.vehicles.length > 0,
     ) ??
@@ -170,8 +170,7 @@ export default function Dashboard() {
       ["Open", "Under Investigation"].includes(record.status),
     ) ??
     summary.latestCase;
-
-  const previewCase =
+const previewCase =
     previewReconstruction
       ? summary.cases.find(
           (record) =>
@@ -231,8 +230,7 @@ export default function Dashboard() {
 
   const analyticsLatest =
     monthlyTotals[monthlyTotals.length - 1]?.total ?? 0;
-
-  const previewTimeSeconds = useMemo(() => {
+const previewTimeSeconds = useMemo(() => {
     if (!previewReconstruction) {
       return 0;
     }
@@ -378,7 +376,11 @@ export default function Dashboard() {
             </Link>
           ),
         )}
-      </section>
+      
+        <StationOverviewCharts
+          data={monthlyTotals}
+        />
+</section>
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <article className="ui-panel overflow-hidden">
