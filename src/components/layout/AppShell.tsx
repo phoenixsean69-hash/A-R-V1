@@ -4,89 +4,26 @@ import {
   useState,
 } from "react";
 import {
-  Link,
-  NavLink,
   Outlet,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
 import {
-  BarChart3,
-  Boxes,
-  Building2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardList,
-  FileText,
-  FolderKanban,
-  Map,
-  Pin,
-  PinOff,
-  RadioTower,
-  Settings,
-  ShieldCheck,
-  Video,
-  X,
 } from "../icons/materialIcons";
 
 import { useAuth } from "../../context/AuthContext";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
 import {
   isStationRole,
-  roleLabel,
 } from "../../types/auth";
-import WorkspaceInspector from "./WorkspaceInspector";
+
 import WorkspaceHeader from "../WorkspaceHeader";
+import WorkspaceInspector from "./WorkspaceInspector";
+import WorkspaceNavigation from "./WorkspaceNavigation";
+import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
 import {
   WorkspaceRightPanelProvider,
 } from "./WorkspaceRightPanelContext";
-
-interface AppNavigationItem {
-  to: string;
-  label: string;
-  section: "Workspace" | "Investigation" | "Outputs" | "Administration";
-  icon: typeof Building2;
-  end?: boolean;
-}
-
-const sharedNavItems: AppNavigationItem[] = [
-  {
-    to: "/cases",
-    label: "Cases",
-    section: "Workspace",
-    icon: FolderKanban,
-  },
-  {
-    to: "/scene-map",
-    label: "Scene Map",
-    section: "Workspace",
-    icon: Map,
-  },
-  {
-    to: "/evidence",
-    label: "Evidence",
-    section: "Investigation",
-    icon: ClipboardList,
-  },
-  {
-    to: "/reconstruction",
-    label: "Reconstruction",
-    section: "Investigation",
-    icon: Boxes,
-  },
-  {
-    to: "/footage",
-    label: "Footage",
-    section: "Investigation",
-    icon: Video,
-  },
-  {
-    to: "/reports",
-    label: "Reports",
-    section: "Outputs",
-    icon: FileText,
-  },
-];
 
 function pageMeta(
   pathname: string,
@@ -112,14 +49,22 @@ function pageMeta(
     ];
   }
 
-  if (pathname.endsWith("/reconstruction/ar")) {
+  if (
+    pathname.endsWith(
+      "/reconstruction/ar",
+    )
+  ) {
     return [
       "AR Reconstruction Review",
       "Align and inspect the reconstruction against the real scene",
     ];
   }
 
-  if (pathname.includes("/reconstruction")) {
+  if (
+    pathname.includes(
+      "/reconstruction",
+    )
+  ) {
     return [
       "Accident Reconstruction",
       "Build, simulate and validate the collision sequence",
@@ -218,220 +163,71 @@ function readStoredBoolean(
   }
 
   try {
-    const value = window.localStorage.getItem(key);
-    if (value === null) return fallback;
+    const value =
+      window.localStorage.getItem(key);
+
+    if (value === null) {
+      return fallback;
+    }
+
     return value === "true";
   } catch {
     return fallback;
   }
 }
 
-interface RecentWorkspaceTab {
-  pathname: string;
-  label: string;
-  pinned: boolean;
-}
-
-const RECENT_TABS_STORAGE_KEY = "roadsafe:recent-tabs-v1";
-const RECENT_TABS_LIMIT = 12;
-
-function tabLabelForPath(pathname: string): string {
-  if (pathname === "/field") {
-    return "Field Home";
-  }
-
-  if (pathname === "/station") {
-    return "Station Overview";
-  }
-
-  if (pathname === "/cases") {
-    return "Cases";
-  }
-
-  if (pathname === "/scene-map") {
-    return "Scene Map";
-  }
-
-  if (pathname === "/evidence") {
-    return "Evidence";
-  }
-
-  if (pathname === "/reconstruction") {
-    return "Reconstruction";
-  }
-
-  if (pathname === "/footage") {
-    return "Footage";
-  }
-
-  if (pathname === "/reports") {
-    return "Reports";
-  }
-
-  if (pathname === "/analytics") {
-    return "Analytics";
-  }
-
-  if (pathname === "/officers") {
-    return "Officers";
-  }
-
-  if (pathname === "/settings") {
-    return "Settings";
-  }
-
-  const [title] = pageMeta(pathname);
-  return title || "Workspace";
-}
-
-function readStoredTabs(): RecentWorkspaceTab[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(RECENT_TABS_STORAGE_KEY);
-
-    if (!rawValue) {
-      return [];
-    }
-
-    const parsed = JSON.parse(rawValue) as RecentWorkspaceTab[];
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .filter((tab) => typeof tab?.pathname === "string")
-      .map((tab) => ({
-        pathname: tab.pathname,
-        label: typeof tab.label === "string" ? tab.label : tabLabelForPath(tab.pathname),
-        pinned: Boolean(tab.pinned),
-      }))
-      .slice(0, RECENT_TABS_LIMIT);
-  } catch {
-    return [];
-  }
-}
-
-function sortRecentTabs(tabs: RecentWorkspaceTab[]): RecentWorkspaceTab[] {
-  return [...tabs].sort((left, right) => {
-    if (left.pinned !== right.pinned) {
-      return left.pinned ? -1 : 1;
-    }
-
-    return 0;
-  });
-}
-
 export default function AppShell() {
   const auth = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] =
-    useState(() =>
-      readStoredBoolean(
-        "roadsafe:navigation-collapsed",
-        false,
-      ),
-    );
-  const [inspectorOpen, setInspectorOpen] =
-    useState(() =>
-      readStoredBoolean(
-        "roadsafe:inspector-open",
-        true,
-      ),
-    );
-  const [inspectorDocked, setInspectorDocked] =
-    useState(() =>
-      readStoredBoolean(
-        "roadsafe:inspector-docked",
-        true,
-      ),
-    );
-  const [recentTabs, setRecentTabs] =
-    useState<RecentWorkspaceTab[]>(() =>
-      readStoredTabs(),
-    );
+
+  const [
+    desktopCollapsed,
+    setDesktopCollapsed,
+  ] = useState(() =>
+    readStoredBoolean(
+      "roadsafe:navigation-collapsed",
+      false,
+    ),
+  );
+
+  const [
+    inspectorOpen,
+    setInspectorOpen,
+  ] = useState(() =>
+    readStoredBoolean(
+      "roadsafe:inspector-open",
+      true,
+    ),
+  );
+
+  const [
+    inspectorDocked,
+    setInspectorDocked,
+  ] = useState(() =>
+    readStoredBoolean(
+      "roadsafe:inspector-docked",
+      true,
+    ),
+  );
+
   const [
     workspaceRightPanelHost,
     setWorkspaceRightPanelHost,
-  ] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setRecentTabs((currentTabs) => {
-      const sanitized = currentTabs.filter((tab) => tab.pathname !== location.pathname);
-      const existingTab = currentTabs.find((tab) => tab.pathname === location.pathname);
-      const nextTabs = [
-        {
-          pathname: location.pathname,
-          label: tabLabelForPath(location.pathname),
-          pinned: existingTab?.pinned ?? false,
-        },
-        ...sanitized,
-      ].slice(0, RECENT_TABS_LIMIT);
-
-      return sortRecentTabs(nextTabs);
-    });
-  }, [location.pathname]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        RECENT_TABS_STORAGE_KEY,
-        JSON.stringify(recentTabs),
-      );
-    } catch {
-      // Recent tabs are a convenience preference and should not break the workspace.
-    }
-  }, [recentTabs]);
-
-  const orderedRecentTabs = useMemo(
-    () => sortRecentTabs(recentTabs),
-    [recentTabs],
+  ] = useState<HTMLElement | null>(
+    null,
   );
 
-  function handleTogglePin(tabPath: string): void {
-    setRecentTabs((currentTabs) =>
-      sortRecentTabs(
-        currentTabs.map((tab) =>
-          tab.pathname === tabPath
-            ? { ...tab, pinned: !tab.pinned }
-            : tab,
+  const [title, description] =
+    useMemo(
+      () =>
+        pageMeta(
+          location.pathname,
         ),
-      ),
+      [location.pathname],
     );
-  }
-
-  function handleCloseTab(tabPath: string): void {
-    const remainingTabs = recentTabs.filter((tab) => tab.pathname !== tabPath);
-
-    if (tabPath === location.pathname) {
-      const nextTarget =
-        remainingTabs[0]?.pathname ?? homePath;
-      navigate(nextTarget);
-    }
-
-    setRecentTabs(remainingTabs);
-  }
-
-  function handleTabSwitch(tabPath: string): void {
-    if (tabPath === location.pathname) {
-      return;
-    }
-
-    navigate(tabPath);
-  }
-
-  const [title, description] = useMemo(
-    () => pageMeta(location.pathname),
-    [location.pathname],
-  );
-
 
   useEffect(() => {
     try {
@@ -471,95 +267,49 @@ export default function AppShell() {
   }, [location.pathname]);
 
   const identity = auth.identity;
-  const role = identity?.role ?? "unassigned";
-  const stationClient = isStationRole(role);
-  const stationAdmin = role === "station_admin";
-  const homePath = stationClient
-    ? "/station"
-    : "/field";
+  const role =
+    identity?.role ??
+    "unassigned";
 
-  const navItems = useMemo<AppNavigationItem[]>(
-    () => {
-      const items: AppNavigationItem[] = [
-        {
-          to: homePath,
-          label: stationClient
-            ? "Station Overview"
-            : "Field Home",
-          section: "Workspace",
-          icon: stationClient
-            ? Building2
-            : RadioTower,
-          end: true,
-        },
-        ...sharedNavItems,
-      ];
+  const stationClient =
+    isStationRole(role);
 
-      if (stationClient) {
-        items.push({
-          to: "/analytics",
-          label: "Analytics",
-          section: "Outputs",
-          icon: BarChart3,
-        });
-      }
+  const stationAdmin =
+    role === "station_admin";
 
-      if (stationAdmin) {
-        items.push({
-          to: "/officers",
-          label: "Officers",
-          section: "Administration",
-          icon: Building2,
-        });
-      }
+  const homePath =
+    stationClient
+      ? "/station"
+      : "/field";
 
-      if (stationClient) {
-        items.push({
-          to: "/settings",
-          label: "Settings",
-          section: "Administration",
-          icon: Settings,
-        });
-      }
+  const summary =
+    WorkspaceDataService.getSummary();
 
-      return items;
-    }, [homePath, stationAdmin, stationClient]);
+  const activeCase =
+    summary.latestCase;
 
-  const navGroups = useMemo(
-    () =>
-      [
-        "Workspace",
-        "Investigation",
-        "Outputs",
-        "Administration",
-      ]
-        .map((section) => ({
-          section,
-          items: navItems.filter(
-            (item) => item.section === section,
-          ),
-        }))
-        .filter((group) => group.items.length > 0),
-    [navItems],
-  );
-
-  const summary = WorkspaceDataService.getSummary();
-  const activeCase = summary.latestCase;
-  const activeReconstruction = activeCase
-    ? WorkspaceDataService.getReconstructions().find(
-        (item) =>
-          item.id === activeCase.reconstructionId,
-      ) ?? summary.latestReconstruction
-    : summary.latestReconstruction;
-
+  const activeReconstruction =
+    activeCase
+      ? WorkspaceDataService
+          .getReconstructions()
+          .find(
+            (item) =>
+              item.id ===
+              activeCase.reconstructionId,
+          ) ??
+        summary.latestReconstruction
+      : summary.latestReconstruction;
 
   const isDashboard =
     location.pathname === "/field" ||
     location.pathname === "/station";
 
   const isReconstructionWorkspace =
-    location.pathname === "/reconstruction" ||
-    location.pathname.includes("/reconstruction");
+    location.pathname ===
+      "/reconstruction" ||
+    location.pathname.includes(
+      "/reconstruction",
+    );
 
   const usesReconstructionContextPanel =
     isReconstructionWorkspace &&
@@ -575,7 +325,8 @@ export default function AppShell() {
     desktopCollapsed
       ? "is-navigation-collapsed"
       : "",
-    inspectorOpen && inspectorAvailable
+    inspectorOpen &&
+    inspectorAvailable
       ? "is-inspector-open"
       : "",
     inspectorOpen &&
@@ -602,7 +353,9 @@ export default function AppShell() {
     .join(" ");
 
   function toggleInspector(): void {
-    setInspectorOpen((value) => !value);
+    setInspectorOpen(
+      (value) => !value,
+    );
   }
 
   function closeInspector(): void {
@@ -611,232 +364,64 @@ export default function AppShell() {
 
   function toggleInspectorDock(): void {
     setInspectorOpen(true);
-    setInspectorDocked((value) => !value);
+    setInspectorDocked(
+      (value) => !value,
+    );
   }
 
   return (
     <div className={shellClassName}>
-      <aside
-        className="roadsafe-navigation"
-        aria-label="Primary navigation"
-      >
-        <div className="roadsafe-navigation-brand">
-          <Link
-            to={homePath}
-            className="roadsafe-brand-link"
-          >
-            <span className="roadsafe-brand-mark">
-              <ShieldCheck
-                size={22}
-                strokeWidth={1.6}
-              />
-            </span>
-            <span className="roadsafe-brand-copy">
-              <strong>RoadSafe AR</strong>
-              <small>
-                {stationClient
-                  ? "Station Client"
-                  : "Field Client"}
-              </small>
-            </span>
-          </Link>
-
-          <button
-            type="button"
-            className="ui-icon-button roadsafe-navigation-mobile-close"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation"
-          >
-            <X size={17} />
-          </button>
-
-          <button
-            type="button"
-            className="ui-icon-button roadsafe-navigation-collapse"
-            onClick={() =>
-              setDesktopCollapsed(
-                (value) => !value,
-              )
-            }
-            aria-label={
-              desktopCollapsed
-                ? "Expand navigation"
-                : "Collapse navigation"
-            }
-          >
-            {desktopCollapsed ? (
-              <>
-                <ShieldCheck
-                  className="roadsafe-navigation-collapse-mark"
-                  size={16}
-                  strokeWidth={1.6}
-                />
-                <ChevronRight
-                  size={12}
-                  strokeWidth={1.8}
-                />
-              </>
-            ) : (
-              <ChevronLeft size={16} />
-            )}
-          </button>
-        </div>
-
-        <div className="roadsafe-navigation-station">
-          <span className="roadsafe-station-symbol">
-            <Building2 size={15} />
-          </span>
-          <span className="roadsafe-station-copy">
-            <strong>
-              {identity?.stationTeam?.name ??
-                "No station assigned"}
-            </strong>
-            <small>{roleLabel(role)}</small>
-          </span>
-        </div>
-
-        <nav className="roadsafe-navigation-groups">
-          {navGroups.map((group) => (
-            <section
-              key={group.section}
-              className="roadsafe-navigation-group"
-            >
-              <p className="roadsafe-navigation-group-label">
-                {group.section}
-              </p>
-
-              <div className="roadsafe-navigation-links">
-                {group.items.map(
-                  ({
-                    to,
-                    label,
-                    icon: Icon,
-                    end,
-                  }) => (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      end={end}
-                      title={
-                        desktopCollapsed
-                          ? label
-                          : undefined
-                      }
-                      className={({ isActive }) =>
-                        `roadsafe-navigation-link ${
-                          isActive
-                            ? "is-active"
-                            : ""
-                        }`
-                      }
-                    >
-                      <Icon
-                        size={16}
-                        strokeWidth={1.65}
-                      />
-                      <span className="roadsafe-navigation-link-label">
-                        {label}
-                      </span>
-                    </NavLink>
-                  ),
-                )}
-              </div>
-            </section>
-          ))}
-        </nav>
-
-        {activeCase && (
-          <Link
-            to={`/cases/${activeCase.id}`}
-            className="roadsafe-navigation-case"
-          >
-            <span className="roadsafe-eyebrow">
-              Active case
-            </span>
-            <strong>{activeCase.caseNumber}</strong>
-            <small>
-              {activeCase.location ||
-                "Location not recorded"}
-            </small>
-            <span className="roadsafe-navigation-case-status">
-              {activeCase.status}
-            </span>
-          </Link>
-        )}
-
-        <div className="roadsafe-navigation-footer">
-          <span className="roadsafe-system-indicator" />
-          <span className="roadsafe-navigation-footer-copy">
-            <strong>Session active</strong>
-            <small>Workspace operational</small>
-          </span>
-        </div>
-      </aside>
+      <WorkspaceNavigation
+        homePath={homePath}
+        stationClient={stationClient}
+        stationAdmin={stationAdmin}
+        desktopCollapsed={
+          desktopCollapsed
+        }
+        activeCase={activeCase}
+        onToggleDesktopCollapsed={() =>
+          setDesktopCollapsed(
+            (value) => !value,
+          )
+        }
+        onCloseMobile={() =>
+          setMobileOpen(false)
+        }
+      />
 
       <div className="roadsafe-center">
         {!isReconstructionWorkspace && (
           <WorkspaceHeader
             title={title}
             description={description}
-            stationClient={stationClient}
+            stationClient={
+              stationClient
+            }
             homePath={homePath}
             activeCase={activeCase}
-            activeCases={summary.activeCases}
-            inspectorAvailable={inspectorAvailable}
-            inspectorOpen={inspectorOpen}
-            onToggleInspector={toggleInspector}
+            activeCases={
+              summary.activeCases
+            }
+            inspectorAvailable={
+              inspectorAvailable
+            }
+            inspectorOpen={
+              inspectorOpen
+            }
+            onToggleInspector={
+              toggleInspector
+            }
             onOpenNavigation={() =>
               setMobileOpen(true)
             }
           />
         )}
 
-        {!isReconstructionWorkspace && orderedRecentTabs.length > 0 && (
-          <div className="roadsafe-tabbar" aria-label="Recent workspaces">
-            <div className="roadsafe-tabbar-scroll">
-              {orderedRecentTabs.map((tab) => {
-                const isActive = tab.pathname === location.pathname;
-
-                return (
-                  <div
-                    key={tab.pathname}
-                    className={`roadsafe-tab ${isActive ? "is-active" : ""} ${tab.pinned ? "is-pinned" : ""}`}
-                  >
-                    <button
-                      type="button"
-                      className="roadsafe-tab-label"
-                      onClick={() => handleTabSwitch(tab.pathname)}
-                    >
-                      <span className="roadsafe-tab-dot" aria-hidden="true" />
-                      <span>{tab.label}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="roadsafe-tab-action"
-                      aria-label={tab.pinned ? "Unpin tab" : "Pin tab"}
-                      onClick={() => handleTogglePin(tab.pathname)}
-                    >
-                      {tab.pinned ? (
-                        <PinOff size={12} strokeWidth={1.8} />
-                      ) : (
-                        <Pin size={12} strokeWidth={1.8} />
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="roadsafe-tab-action roadsafe-tab-close"
-                      aria-label={`Close ${tab.label}`}
-                      onClick={() => handleCloseTab(tab.pathname)}
-                    >
-                      <X size={12} strokeWidth={1.8} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {!isReconstructionWorkspace && (
+          <WorkspaceRecentTabs
+            currentTitle={title}
+            homePath={homePath}
+          />
         )}
 
         <main
@@ -858,7 +443,9 @@ export default function AppShell() {
             }`}
           >
             <WorkspaceRightPanelProvider
-              host={workspaceRightPanelHost}
+              host={
+                workspaceRightPanelHost
+              }
             >
               <Outlet />
             </WorkspaceRightPanelProvider>
@@ -872,17 +459,23 @@ export default function AppShell() {
           <button
             type="button"
             className="ui-button roadsafe-editor-inspector-toggle"
-            onClick={toggleInspector}
+            onClick={
+              toggleInspector
+            }
             aria-label="Open active investigation inspector"
           >
-            <ClipboardList size={15} />
+            <ClipboardList
+              size={15}
+            />
             <span>Inspector</span>
           </button>
         )}
 
       {usesReconstructionContextPanel ? (
         <aside
-          ref={setWorkspaceRightPanelHost}
+          ref={
+            setWorkspaceRightPanelHost
+          }
           className="roadsafe-workspace-context-slot"
           aria-label="Reconstruction context inspector"
         />
@@ -894,13 +487,22 @@ export default function AppShell() {
             activeReconstruction={
               activeReconstruction
             }
-            activeCases={summary.activeCases}
-            stationName={
-              identity?.stationTeam?.name ?? ""
+            activeCases={
+              summary.activeCases
             }
-            docked={inspectorDocked}
-            onToggleDock={toggleInspectorDock}
-            onClose={closeInspector}
+            stationName={
+              identity?.stationTeam
+                ?.name ?? ""
+            }
+            docked={
+              inspectorDocked
+            }
+            onToggleDock={
+              toggleInspectorDock
+            }
+            onClose={
+              closeInspector
+            }
           />
         )
       )}
@@ -908,10 +510,11 @@ export default function AppShell() {
       <button
         type="button"
         className="roadsafe-mobile-overlay roadsafe-navigation-overlay"
-        onClick={() => setMobileOpen(false)}
+        onClick={() =>
+          setMobileOpen(false)
+        }
         aria-label="Close navigation"
       />
-
     </div>
   );
 }

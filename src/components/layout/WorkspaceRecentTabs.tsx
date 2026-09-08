@@ -1,0 +1,292 @@
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
+  Pin,
+  PinOff,
+  X,
+} from "../icons/materialIcons";
+
+interface RecentWorkspaceTab {
+  pathname: string;
+  label: string;
+  pinned: boolean;
+}
+
+interface WorkspaceRecentTabsProps {
+  currentTitle: string;
+  homePath: string;
+}
+
+const STORAGE_KEY =
+  "roadsafe:recent-tabs-v1";
+const LIMIT = 12;
+
+function labelForPath(
+  pathname: string,
+  currentTitle: string,
+): string {
+  const known: Record<string, string> = {
+    "/field": "Field Home",
+    "/station": "Station Overview",
+    "/cases": "Cases",
+    "/scene-map": "Scene Map",
+    "/evidence": "Evidence",
+    "/reconstruction": "Reconstruction",
+    "/footage": "Footage",
+    "/reports": "Reports",
+    "/analytics": "Analytics",
+    "/officers": "Officers",
+    "/settings": "Settings",
+  };
+
+  return known[pathname] ??
+    currentTitle ??
+    "Workspace";
+}
+
+function readStoredTabs(): RecentWorkspaceTab[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw =
+      window.localStorage.getItem(
+        STORAGE_KEY,
+      );
+
+    if (!raw) return [];
+
+    const parsed =
+      JSON.parse(raw) as RecentWorkspaceTab[];
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter(
+        (tab) =>
+          typeof tab?.pathname === "string",
+      )
+      .map((tab) => ({
+        pathname: tab.pathname,
+        label:
+          typeof tab.label === "string"
+            ? tab.label
+            : "Workspace",
+        pinned: Boolean(tab.pinned),
+      }))
+      .slice(0, LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function sortTabs(
+  tabs: RecentWorkspaceTab[],
+): RecentWorkspaceTab[] {
+  return [...tabs].sort(
+    (left, right) => {
+      if (left.pinned !== right.pinned) {
+        return left.pinned ? -1 : 1;
+      }
+
+      return 0;
+    },
+  );
+}
+
+export default function WorkspaceRecentTabs({
+  currentTitle,
+  homePath,
+}: WorkspaceRecentTabsProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [tabs, setTabs] =
+    useState<RecentWorkspaceTab[]>(
+      () => readStoredTabs(),
+    );
+
+  useEffect(() => {
+    setTabs((currentTabs) => {
+      const existing =
+        currentTabs.find(
+          (tab) =>
+            tab.pathname ===
+            location.pathname,
+        );
+
+      const withoutCurrent =
+        currentTabs.filter(
+          (tab) =>
+            tab.pathname !==
+            location.pathname,
+        );
+
+      return sortTabs([
+        {
+          pathname: location.pathname,
+          label: labelForPath(
+            location.pathname,
+            currentTitle,
+          ),
+          pinned: existing?.pinned ?? false,
+        },
+        ...withoutCurrent,
+      ]).slice(0, LIMIT);
+    });
+  }, [
+    location.pathname,
+    currentTitle,
+  ]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(tabs),
+      );
+    } catch {
+      // Recent tabs are convenience state.
+    }
+  }, [tabs]);
+
+  const orderedTabs = useMemo(
+    () => sortTabs(tabs),
+    [tabs],
+  );
+
+  function togglePin(
+    pathname: string,
+  ): void {
+    setTabs((current) =>
+      sortTabs(
+        current.map((tab) =>
+          tab.pathname === pathname
+            ? {
+                ...tab,
+                pinned: !tab.pinned,
+              }
+            : tab,
+        ),
+      ),
+    );
+  }
+
+  function closeTab(
+    pathname: string,
+  ): void {
+    const remaining =
+      tabs.filter(
+        (tab) =>
+          tab.pathname !== pathname,
+      );
+
+    if (
+      pathname === location.pathname
+    ) {
+      navigate(
+        remaining[0]?.pathname ??
+          homePath,
+      );
+    }
+
+    setTabs(remaining);
+  }
+
+  if (orderedTabs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="roadsafe-tabbar"
+      aria-label="Recent workspaces"
+    >
+      <div className="roadsafe-tabbar-scroll">
+        {orderedTabs.map((tab) => {
+          const active =
+            tab.pathname ===
+            location.pathname;
+
+          return (
+            <div
+              key={tab.pathname}
+              className={`roadsafe-tab ${
+                active ? "is-active" : ""
+              } ${
+                tab.pinned
+                  ? "is-pinned"
+                  : ""
+              }`}
+            >
+              <button
+                type="button"
+                className="roadsafe-tab-label"
+                onClick={() => {
+                  if (!active) {
+                    navigate(tab.pathname);
+                  }
+                }}
+              >
+                <span
+                  className="roadsafe-tab-dot"
+                  aria-hidden="true"
+                />
+                <span>{tab.label}</span>
+              </button>
+
+              <button
+                type="button"
+                className="roadsafe-tab-action"
+                aria-label={
+                  tab.pinned
+                    ? "Unpin tab"
+                    : "Pin tab"
+                }
+                onClick={() =>
+                  togglePin(tab.pathname)
+                }
+              >
+                {tab.pinned ? (
+                  <PinOff
+                    size={12}
+                    strokeWidth={1.8}
+                  />
+                ) : (
+                  <Pin
+                    size={12}
+                    strokeWidth={1.8}
+                  />
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="roadsafe-tab-action roadsafe-tab-close"
+                aria-label={`Close ${tab.label}`}
+                onClick={() =>
+                  closeTab(tab.pathname)
+                }
+              >
+                <X
+                  size={12}
+                  strokeWidth={1.8}
+                />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
