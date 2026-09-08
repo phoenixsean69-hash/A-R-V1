@@ -1,0 +1,299 @@
+/*
+ * Station Overview left stack.
+ *
+ * Top:
+ *   Evidence Records | Saved Footage
+ *
+ * Bottom:
+ *   Quick Actions
+ *
+ * Right:
+ *   Combined monthly activity chart
+ */
+
+.dashboard-material-stat-grid {
+  display: grid !important;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr)) !important;
+
+  align-items: stretch !important;
+}
+
+.dashboard-material-left-stack {
+  grid-column: span 2;
+
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  gap: 12px;
+}
+
+.dashboard-material-left-stack__cards {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.dashboard-material-left-stack__cards
+  > .dashboard-material-stat-card {
+  min-width: 0;
+  height: 100%;
+}
+
+/* --------------------------------------------------------- */
+/* Quick actions                                              */
+/* --------------------------------------------------------- */
+
+.station-overview-quick-actions {
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  overflow: hidden;
+
+  border: 1px solid #171717;
+  border-radius: 3px;
+
+  background: #252525;
+}
+
+.station-overview-quick-actions__header {
+  min-width: 0;
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding:
+    8px
+    12px;
+
+  border-bottom:
+    1px solid #171717;
+
+  background: #292929;
+}
+
+.station-overview-quick-actions__header p {
+  margin: 0 0 2px;
+
+  color: #929292;
+
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: 0.11em;
+
+  text-transform: uppercase;
+}
+
+.station-overview-quick-actions__header strong {
+  display: block;
+
+  color: #dedede;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.station-overview-quick-actions__header > span {
+  min-width: 23px;
+  height: 23px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #484848;
+  border-radius: 3px;
+
+  background: #303030;
+  color: #bcbcbc;
+
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.station-overview-quick-actions__grid {
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 1px;
+
+  background: #171717;
+}
+
+.station-overview-quick-action {
+  min-width: 0;
+  min-height: 58px;
+
+  display: grid;
+  grid-template-columns:
+    34px
+    minmax(0, 1fr)
+    14px;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    9px
+    11px;
+
+  background: #292929;
+  color: #bdbdbd;
+
+  text-decoration: none;
+
+  transition:
+    background-color 100ms ease,
+    opacity 100ms ease,
+    color 100ms ease;
+}
+
+.station-overview-quick-action:hover {
+  background: #353535;
+  color: #eeeeee;
+}
+
+.station-overview-quick-action:active {
+  opacity: 0.80;
+}
+
+.station-overview-quick-action__icon {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #505050;
+  border-radius: 3px;
+
+  background: #303030;
+  color: #c7c7c7;
+}
+
+.station-overview-quick-action__copy {
+  min-width: 0;
+
+  display: block;
+}
+
+.station-overview-quick-action__copy strong,
+.station-overview-quick-action__copy small {
+  display: block;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-overview-quick-action__copy strong {
+  color: inherit;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.station-overview-quick-action__copy small {
+  margin-top: 3px;
+
+  color: #858585;
+
+  font-size: 8px !important;
+  line-height: 1.2 !important;
+}
+
+.station-overview-quick-action:hover
+  .station-overview-quick-action__copy
+  small {
+  color: #a9a9a9;
+}
+
+.station-overview-quick-action__arrow {
+  color: #747474;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-align: center;
+
+  transition:
+    transform 100ms ease,
+    color 100ms ease;
+}
+
+.station-overview-quick-action:hover
+  .station-overview-quick-action__arrow {
+  color: #d8d8d8;
+
+  transform:
+    translateX(2px);
+}
+
+/* Keep the chart beside the complete left stack. */
+.dashboard-material-stat-grid
+  > .station-overview-combined-chart {
+  grid-column: span 2 !important;
+
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 980px) {
+  .dashboard-material-stat-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-material-left-stack,
+  .dashboard-material-stat-grid
+    > .station-overview-combined-chart {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-material-stat-grid {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .dashboard-material-left-stack {
+    grid-column: 1 !important;
+  }
+
+  .dashboard-material-left-stack__cards,
+  .station-overview-quick-actions__grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .dashboard-material-stat-grid
+    > .station-overview-combined-chart {
+    grid-column: 1 !important;
+  }
+}

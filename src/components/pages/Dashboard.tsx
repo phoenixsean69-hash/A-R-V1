@@ -23,6 +23,7 @@ import AccidentMap, {
 } from "../../components/map/AccidentMap";
 import ForensicScenePreview from "../../components/reconstruction/ForensicScenePreview";
 import StationOverviewCharts from "../../components/dashboard/StationOverviewCharts";
+import StationOverviewQuickActions from "../../components/dashboard/StationOverviewQuickActions";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
 import { createDefaultHeatmapFilters } from "../../types/heatmap";
 import {
@@ -343,7 +344,7 @@ const previewTimeSeconds = useMemo(() => {
     <div className="dashboard-station-page">
       <div className="dashboard-station-page__scroll space-y-3">
       <section className="dashboard-material-stat-grid">
-        {cards.map(
+        {cards.slice(0, 4).map(
           ({
             label,
             value,
@@ -376,11 +377,51 @@ const previewTimeSeconds = useMemo(() => {
             </Link>
           ),
         )}
-      
+
+        <div className="dashboard-material-left-stack">
+          <div className="dashboard-material-left-stack__cards">
+            {cards.slice(4).map(
+              ({
+                label,
+                value,
+                note,
+                icon: Icon,
+                to,
+              }) => (
+                <Link
+                  key={label}
+                  to={to}
+                  className="ui-panel group dashboard-material-stat-card"
+                >
+                  <div className="dashboard-material-stat-icon">
+                    <Icon size={52} strokeWidth={1.6} />
+                  </div>
+
+                  <div className="dashboard-material-stat-content">
+                    <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-[#c4c4c4]">
+                      {label}
+                    </p>
+
+                    <p className="mt-1 text-xl font-bold text-slate-100">
+                      {value}
+                    </p>
+
+                    <p className="mt-1 truncate text-[9px] text-[#c4c4c4]">
+                      {note}
+                    </p>
+                  </div>
+                </Link>
+              ),
+            )}
+          </div>
+
+          <StationOverviewQuickActions />
+        </div>
+
         <StationOverviewCharts
           data={monthlyTotals}
         />
-</section>
+      </section>
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <article className="ui-panel overflow-hidden">
