@@ -1,7 +1,9 @@
 import type {
+  CircleLayerSpecification,
   GeoJSONSource,
   HeatmapLayerSpecification,
   Map as MapLibreMap,
+  MapLayerMouseEvent,
 } from "maplibre-gl";
 
 import {
@@ -41,6 +43,9 @@ const ACCIDENT_HEATMAP_SOURCE_ID =
 
 const ACCIDENT_HEATMAP_LAYER_ID =
   "accident-heatmap-layer";
+
+const ACCIDENT_HEATMAP_HIT_LAYER_ID =
+  "accident-heatmap-hit-layer";
 
 export interface AccidentHeatmapPoint {
   latitude: number;
@@ -346,6 +351,144 @@ function createHeatmapLayer():
   };
 }
 
+function createHeatmapHitLayer():
+  CircleLayerSpecification {
+  return {
+    id:
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+
+    type: "circle",
+
+    source:
+      ACCIDENT_HEATMAP_SOURCE_ID,
+
+    minzoom: 5,
+    maxzoom: 19,
+
+    layout: {
+      visibility: "none",
+    },
+
+    paint: {
+      "circle-radius": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        5, 12,
+        12, 22,
+        15, 35,
+        18, 52,
+      ],
+
+      "circle-color":
+        "#ffffff",
+
+      "circle-opacity":
+        0.01,
+
+      "circle-stroke-width":
+        0,
+    },
+  };
+}
+
+export function bindAccidentHeatmapInteractions(
+  map: MapLibreMap,
+  onSelectJunction: (
+    junctionId: string,
+  ) => void,
+): () => void {
+  const handleClick = (
+    event: MapLayerMouseEvent,
+  ) => {
+    const feature =
+      event.features?.find(
+        (item) =>
+          typeof item.properties
+            ?.junctionId ===
+          "string",
+      );
+
+    const junctionId =
+      feature?.properties
+        ?.junctionId;
+
+    if (
+      typeof junctionId !== "string" ||
+      junctionId.length === 0
+    ) {
+      return;
+    }
+
+    onSelectJunction(
+      junctionId,
+    );
+  };
+
+  const handleMouseEnter =
+    () => {
+      map.getCanvas().style.cursor =
+        "pointer";
+    };
+
+  const handleMouseLeave =
+    () => {
+      if (
+        map.getCanvas().style.cursor ===
+        "pointer"
+      ) {
+        map.getCanvas().style.cursor =
+          "";
+      }
+    };
+
+  map.on(
+    "click",
+    ACCIDENT_HEATMAP_HIT_LAYER_ID,
+    handleClick,
+  );
+
+  map.on(
+    "mouseenter",
+    ACCIDENT_HEATMAP_HIT_LAYER_ID,
+    handleMouseEnter,
+  );
+
+  map.on(
+    "mouseleave",
+    ACCIDENT_HEATMAP_HIT_LAYER_ID,
+    handleMouseLeave,
+  );
+
+  return () => {
+    map.off(
+      "click",
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+      handleClick,
+    );
+
+    map.off(
+      "mouseenter",
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+      handleMouseEnter,
+    );
+
+    map.off(
+      "mouseleave",
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+      handleMouseLeave,
+    );
+
+    if (
+      map.getCanvas().style.cursor ===
+      "pointer"
+    ) {
+      map.getCanvas().style.cursor =
+        "";
+    }
+  };
+}
+
 export function ensureAccidentHeatmapLayers(
   map: MapLibreMap,
   bounds?: MapBounds,
@@ -382,51 +525,77 @@ export function ensureAccidentHeatmapLayers(
     );
   }
 
+  const addLayer = (
+    layer:
+      | HeatmapLayerSpecification
+      | CircleLayerSpecification,
+  ) => {
+    if (
+      beforeLayerId &&
+      map.getLayer(beforeLayerId)
+    ) {
+      map.addLayer(
+        layer,
+        beforeLayerId,
+      );
+
+      return;
+    }
+
+    map.addLayer(layer);
+  };
+
   if (
-    map.getLayer(
+    !map.getLayer(
       ACCIDENT_HEATMAP_LAYER_ID,
     )
   ) {
-    return;
+    addLayer(
+      createHeatmapLayer(),
+    );
   }
-
-  const heatmapLayer =
-    createHeatmapLayer();
 
   if (
-    beforeLayerId &&
-    map.getLayer(beforeLayerId)
+    !map.getLayer(
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+    )
   ) {
-    map.addLayer(
-      heatmapLayer,
-      beforeLayerId,
+    addLayer(
+      createHeatmapHitLayer(),
     );
-
-    return;
   }
-
-  map.addLayer(
-    heatmapLayer,
-  );
 }
 
 export function setAccidentHeatmapVisibility(
   map: MapLibreMap,
   visible: boolean,
 ): void {
+  const visibility =
+    visible
+      ? "visible"
+      : "none";
+
   if (
-    !map.getLayer(
+    map.getLayer(
       ACCIDENT_HEATMAP_LAYER_ID,
     )
   ) {
-    return;
+    map.setLayoutProperty(
+      ACCIDENT_HEATMAP_LAYER_ID,
+      "visibility",
+      visibility,
+    );
   }
 
-  map.setLayoutProperty(
-    ACCIDENT_HEATMAP_LAYER_ID,
-    "visibility",
-    visible
-      ? "visible"
-      : "none",
-  );
+  if (
+    map.getLayer(
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+    )
+  ) {
+    map.setLayoutProperty(
+      ACCIDENT_HEATMAP_HIT_LAYER_ID,
+      "visibility",
+      visibility,
+    );
+  }
 }

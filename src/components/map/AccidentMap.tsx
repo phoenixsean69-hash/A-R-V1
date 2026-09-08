@@ -27,6 +27,7 @@ import {
 } from "./junctionMapLayer";
 
 import {
+  bindAccidentHeatmapInteractions,
   ensureAccidentHeatmapLayers,
   setAccidentHeatmapVisibility,
 } from "./accidentHeatmapLayer";
@@ -440,6 +441,11 @@ export default function AccidentMap({
       null,
     );
 
+  const heatmapInteractionCleanupRef =
+    useRef<(() => void) | null>(
+      null,
+    );
+
   const [mapType, setMapType] =
     useState<MapType>("street");
 
@@ -730,6 +736,15 @@ const handleCloseJunctionAnalysis =
             "heatmap",
         );
 
+        heatmapInteractionCleanupRef
+          .current?.();
+
+        heatmapInteractionCleanupRef.current =
+          bindAccidentHeatmapInteractions(
+            map,
+            handleOpenJunctionQuickCard,
+          );
+
         ensureSelectionLayers(
           map,
         );
@@ -769,6 +784,12 @@ const handleCloseJunctionAnalysis =
         .current?.();
 
       junctionMarkersCleanupRef.current =
+        null;
+
+      heatmapInteractionCleanupRef
+        .current?.();
+
+      heatmapInteractionCleanupRef.current =
         null;
 
       map.off(
@@ -1295,6 +1316,10 @@ const handleCloseJunctionAnalysis =
             <span>Lower</span>
             <span>Higher</span>
           </div>
+
+          <p className="mt-2 border-t border-[#494949] pt-2 text-[8px] text-slate-400">
+            Click a hotspot for junction stats
+          </p>
         </div>
       )}
 
