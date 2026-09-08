@@ -36,6 +36,10 @@ import {
 import {
   AreaAnalysisService,
 } from "../../services/areaAnalysisService";
+import {
+  JunctionService,
+} from "../../services/junctionService";
+
 
 import type {
   AreaAnalysis,
@@ -69,6 +73,10 @@ interface AccidentMapProps {
     AccidentHeatmapFilters;
 
   compactSelectionPanel?: boolean;
+  focusRequest?: {
+    junctionId: string;
+    nonce: number;
+  };
 }
 
 interface SelectionFeatureCollection {
@@ -408,6 +416,7 @@ export default function AccidentMap({
   onVisualizationModeChange,
   heatmapFilters,
   compactSelectionPanel = false,
+  focusRequest,
 }: AccidentMapProps) {
   const mapContainerRef =
     useRef<HTMLDivElement | null>(
@@ -571,6 +580,44 @@ const handleCloseJunctionAnalysis =
     showAnalysis,
   ]);
 
+  // RoadSafe external map focus.
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+
+    const map =
+      mapRef.current;
+
+    const junction =
+      JunctionService.getById(
+        focusRequest.junctionId,
+      );
+
+    if (
+      !map ||
+      !junction
+    ) {
+      return;
+    }
+
+    map.flyTo({
+      center: [
+        junction.longitude,
+        junction.latitude,
+      ],
+      zoom: Math.max(
+        map.getZoom(),
+        16,
+      ),
+      duration: 650,
+      essential: true,
+    });
+
+    setQuickJunctionId(
+      junction.id,
+    );
+  }, [focusRequest]);
   useEffect(() => {
     selectedBoundsRef.current =
       selectedBounds;
@@ -1242,15 +1289,15 @@ const handleCloseJunctionAnalysis =
       />
 
       {/* Compact map controls */}
-      <div className="absolute right-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-col items-end gap-2">
-        <div className="flex overflow-hidden rounded-md border border-[#494949] bg-[#303030] p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+      <div className="roadsafe-map-control-stack absolute right-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-col items-end gap-2">
+        <div className="roadsafe-map-segmented flex overflow-hidden rounded-md border border-[#454545] bg-[#232323] p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
           <button
             type="button"
             onClick={() => setMapType("street")}
             className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               mapType === "street"
-                ? "bg-[#303030] text-white"
-                : "text-slate-300 hover:bg-[#303030]"
+                ? "bg-[#e8872d] text-[#181818]"
+                : "text-[#b7b7b7] hover:bg-[#353535]"
             }`}
           >
             Street
@@ -1261,8 +1308,8 @@ const handleCloseJunctionAnalysis =
             onClick={() => setMapType("hybrid")}
             className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               mapType === "hybrid"
-                ? "bg-[#303030] text-white"
-                : "text-slate-300 hover:bg-[#303030]"
+                ? "bg-[#e8872d] text-[#181818]"
+                : "text-[#b7b7b7] hover:bg-[#353535]"
             }`}
           >
             Hybrid
@@ -1273,22 +1320,22 @@ const handleCloseJunctionAnalysis =
             onClick={handleSelectArea}
             className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               selectionEnabled
-                ? "bg-[#254d82] text-white"
-                : "text-slate-300 hover:bg-[#303030]"
+                ? "bg-[#e8872d] text-[#181818]"
+                : "text-[#b7b7b7] hover:bg-[#353535]"
             }`}
           >
             {selectionEnabled ? "Draw area" : "Select area"}
           </button>
         </div>
 
-        <div className="flex overflow-hidden rounded-md border border-[#494949] bg-[#303030] p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
+        <div className="roadsafe-map-segmented flex overflow-hidden rounded-md border border-[#454545] bg-[#232323] p-1 shadow-[0_10px_28px_rgba(0,0,0,.35)] backdrop-blur-sm">
           <button
             type="button"
             onClick={() => onVisualizationModeChange("markers")}
             className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               visualizationMode === "markers"
-                ? "bg-[#303030] text-white"
-                : "text-slate-300 hover:bg-[#303030]"
+                ? "bg-[#e8872d] text-[#181818]"
+                : "text-[#b7b7b7] hover:bg-[#353535]"
             }`}
           >
             Markers
@@ -1299,8 +1346,8 @@ const handleCloseJunctionAnalysis =
             onClick={() => onVisualizationModeChange("heatmap")}
             className={`rounded px-2.5 py-1.5 text-[10px] font-semibold transition-colors duration-100 ${
               visualizationMode === "heatmap"
-                ? "bg-[#303030] text-white"
-                : "text-slate-300 hover:bg-[#303030]"
+                ? "bg-[#e8872d] text-[#181818]"
+                : "text-[#b7b7b7] hover:bg-[#353535]"
             }`}
           >
             Heatmap
