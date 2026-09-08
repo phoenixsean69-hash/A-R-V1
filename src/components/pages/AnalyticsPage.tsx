@@ -20,10 +20,12 @@ import {
   Line,
 } from "react-chartjs-2";
 import {
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 import {
   Activity,
@@ -148,6 +150,61 @@ const chartSurfacePlugin:
       },
     };
 
+interface DatumAnchor {
+  x: number;
+  y: number;
+  horizontal:
+    | "left"
+    | "right";
+  vertical:
+    | "up"
+    | "down";
+}
+
+const datumTriggerSelector =
+  [
+    ".roadsafe-analytics-chart-card__plot canvas",
+    ".roadsafe-analytics-kpi",
+    ".roadsafe-analytics-finding",
+    ".roadsafe-analytics-time-row",
+    ".roadsafe-analytics-cause-row",
+    ".roadsafe-analytics-junction-list > div",
+    ".roadsafe-analytics-context-card",
+  ].join(",");
+
+function createDatumAnchor(
+  clientX: number,
+  clientY: number,
+): DatumAnchor {
+  const viewportWidth =
+    typeof window !==
+    "undefined"
+      ? window.innerWidth
+      : 1600;
+
+  const viewportHeight =
+    typeof window !==
+    "undefined"
+      ? window.innerHeight
+      : 900;
+
+  return {
+    x:
+      clientX,
+    y:
+      clientY,
+    horizontal:
+      clientX >
+      viewportWidth - 370
+        ? "left"
+        : "right",
+    vertical:
+      clientY >
+      viewportHeight - 280
+        ? "up"
+        : "down",
+  };
+}
 interface AnalyticsInteraction {
   eyebrow: string;
   title: string;
@@ -545,7 +602,84 @@ export default function AnalyticsPage() {
     useState<AnalyticsInteraction | null>(
       null,
     );
+  const [
+    datumAnchor,
+    setDatumAnchor,
+  ] =
+    useState<DatumAnchor | null>(
+      null,
+    );
 
+  useEffect(
+    () => {
+      if (
+        !interaction ||
+        !datumAnchor
+      ) {
+        return;
+      }
+
+      const closeAnchoredDatum =
+        (): void => {
+          setInteraction(
+            null,
+          );
+
+          setDatumAnchor(
+            null,
+          );
+        };
+
+      window.addEventListener(
+        "resize",
+        closeAnchoredDatum,
+      );
+
+      const handleDatumKeyDown = (
+        event: KeyboardEvent,
+      ): void => {
+        if (
+          event.key ===
+          "Escape"
+        ) {
+          closeAnchoredDatum();
+        }
+      };
+
+      window.addEventListener(
+        "scroll",
+        closeAnchoredDatum,
+        true,
+      );
+
+      window.addEventListener(
+        "keydown",
+        handleDatumKeyDown,
+      );
+
+      return () => {
+        window.removeEventListener(
+          "resize",
+          closeAnchoredDatum,
+        );
+
+        window.removeEventListener(
+          "scroll",
+          closeAnchoredDatum,
+          true,
+        );
+
+        window.removeEventListener(
+          "keydown",
+          handleDatumKeyDown,
+        );
+      };
+    },
+    [
+      interaction,
+      datumAnchor,
+    ],
+  );
   const model =
     useMemo(
       () =>
@@ -1743,7 +1877,49 @@ export default function AnalyticsPage() {
     );
 
   return (
-    <div className="roadsafe-analytics-page">
+    <div
+      className="roadsafe-analytics-page"
+      onPointerDownCapture={(event) => {
+        const target =
+          event.target as
+            Element;
+
+        if (
+          target.closest(
+            ".roadsafe-analytics-datum-popover",
+          )
+        ) {
+          return;
+        }
+
+        if (
+          target.closest(
+            datumTriggerSelector,
+          )
+        ) {
+          setInteraction(
+            null,
+          );
+
+          setDatumAnchor(
+            createDatumAnchor(
+              event.clientX,
+              event.clientY,
+            ),
+          );
+
+          return;
+        }
+
+        setInteraction(
+          null,
+        );
+
+        setDatumAnchor(
+          null,
+        );
+      }}
+    >
       <section className="roadsafe-analytics-topbar">
         <div className="roadsafe-analytics-heading">
           <div className="roadsafe-analytics-heading__icon">
@@ -2290,82 +2466,6 @@ export default function AnalyticsPage() {
                 </em>
               </span>
             </button>
-
-            <article className="roadsafe-analytics-selected-datum">
-              <Activity
-                size={17}
-              />
-
-              <div>
-                <small>
-                  {interaction?.eyebrow ?? "Selected datum"}
-                </small>
-
-                <strong>
-                  {interaction?.title ?? "Click a point, bar or slice"}
-                </strong>
-
-                <p>
-                  {interaction?.summary ??
-                    "Chart selections show their supporting statistics here."}
-                </p>
-
-                {interaction && (
-                  <div className="roadsafe-analytics-selected-datum__metrics">
-                    {interaction.metrics.map(
-                      (
-                        metric,
-                      ) => (
-                        <span
-                          key={
-                            metric.label
-                          }
-                        >
-                          <small>
-                            {
-                              metric.label
-                            }
-                          </small>
-
-                          <b>
-                            {
-                              metric.value
-                            }
-                          </b>
-                        </span>
-                      ),
-                    )}
-                  </div>
-                )}
-
-                {interaction?.action && (
-                  <div className="roadsafe-analytics-selected-datum__actions">
-                    <button
-                      type="button"
-                      onClick={
-                        applyInteraction
-                      }
-                    >
-                      {
-                        interaction.action
-                          .label
-                      }
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setInteraction(
-                          null,
-                        )
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-              </div>
-            </article>
           </div>
 </section>
 
@@ -3128,6 +3228,133 @@ export default function AnalyticsPage() {
           </section>
         </div>
       </details>
+
+      {interaction &&
+        datumAnchor &&
+        typeof document !==
+          "undefined" &&
+        createPortal(
+          <aside
+            className={`roadsafe-analytics-datum-popover is-${datumAnchor.horizontal} is-${datumAnchor.vertical}`}
+            style={{
+              left:
+                datumAnchor.x,
+              top:
+                datumAnchor.y,
+            }}
+            role="dialog"
+            aria-label="Selected analytics datum"
+          >
+            <button
+              type="button"
+              className="roadsafe-analytics-datum-popover__close"
+              aria-label="Close selected datum"
+              onClick={() => {
+                setInteraction(
+                  null,
+                );
+
+                setDatumAnchor(
+                  null,
+                );
+              }}
+            >
+              x
+            </button>
+
+            <header className="roadsafe-analytics-datum-popover__header">
+              <Activity
+                size={17}
+              />
+
+              <div>
+                <small>
+                  {
+                    interaction.eyebrow
+                  }
+                </small>
+
+                <strong>
+                  {
+                    interaction.title
+                  }
+                </strong>
+              </div>
+            </header>
+
+            <p className="roadsafe-analytics-datum-popover__summary">
+              {
+                interaction.summary
+              }
+            </p>
+
+            <div className="roadsafe-analytics-datum-popover__metrics">
+              {interaction.metrics.map(
+                (
+                  metric,
+                ) => (
+                  <span
+                    key={
+                      metric.label
+                    }
+                  >
+                    <small>
+                      {
+                        metric.label
+                      }
+                    </small>
+
+                    <b>
+                      {
+                        metric.value
+                      }
+                    </b>
+                  </span>
+                ),
+              )}
+            </div>
+
+            {interaction.action && (
+              <div className="roadsafe-analytics-datum-popover__actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    applyInteraction();
+
+                    setInteraction(
+                      null,
+                    );
+
+                    setDatumAnchor(
+                      null,
+                    );
+                  }}
+                >
+                  {
+                    interaction.action
+                      .label
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInteraction(
+                      null,
+                    );
+
+                    setDatumAnchor(
+                      null,
+                    );
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </aside>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -1771,3 +1771,451 @@
 }
 
 /* ROADSAFE_ANALYTICS_INTERACTION_V4_END */
+
+/* ROADSAFE_ANALYTICS_ANCHORED_DATUM_START */
+
+/*
+ * The related cards remain under the slider,
+ * but the selected datum itself now follows
+ * the exact click location.
+ */
+.roadsafe-analytics-chart-context {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+}
+
+
+/* Floating datum inspector */
+.roadsafe-analytics-datum-popover {
+  position: fixed;
+
+  z-index: 12000;
+
+  width:
+    clamp(
+      270px,
+      28vw,
+      350px
+    );
+
+  max-width:
+    calc(100vw - 24px);
+
+  max-height:
+    min(390px, calc(100vh - 24px));
+
+  overflow: auto;
+
+  padding:
+    11px;
+
+  border:
+    1px
+    solid
+    #555555;
+
+  border-radius:
+    4px;
+
+  background:
+    #242424;
+
+  color:
+    #d4d4d4;
+
+  box-shadow:
+    0
+    10px
+    28px
+    rgba(0, 0, 0, .42);
+
+  font-family:
+    "Saira",
+    sans-serif;
+
+  transform-origin:
+    top left;
+
+  animation:
+    roadsafe-datum-popover-in
+    90ms
+    ease-out;
+}
+
+
+/* Keep the bubble beside the click, not on top of it. */
+.roadsafe-analytics-datum-popover.is-right.is-down {
+  transform:
+    translate(
+      12px,
+      12px
+    );
+}
+
+.roadsafe-analytics-datum-popover.is-left.is-down {
+  transform:
+    translate(
+      calc(-100% - 12px),
+      12px
+    );
+}
+
+.roadsafe-analytics-datum-popover.is-right.is-up {
+  transform:
+    translate(
+      12px,
+      calc(-100% - 12px)
+    );
+}
+
+.roadsafe-analytics-datum-popover.is-left.is-up {
+  transform:
+    translate(
+      calc(-100% - 12px),
+      calc(-100% - 12px)
+    );
+}
+
+
+/* Small anchor marker toward the clicked datum. */
+.roadsafe-analytics-datum-popover::before {
+  content: "";
+
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  border:
+    1px
+    solid
+    #8b5b34;
+
+  background:
+    #e8872d;
+
+  transform:
+    rotate(45deg);
+}
+
+.roadsafe-analytics-datum-popover.is-right.is-down::before {
+  top: -5px;
+  left: -5px;
+}
+
+.roadsafe-analytics-datum-popover.is-left.is-down::before {
+  top: -5px;
+  right: -5px;
+}
+
+.roadsafe-analytics-datum-popover.is-right.is-up::before {
+  bottom: -5px;
+  left: -5px;
+}
+
+.roadsafe-analytics-datum-popover.is-left.is-up::before {
+  right: -5px;
+  bottom: -5px;
+}
+
+
+.roadsafe-analytics-datum-popover__close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+
+  width: 24px;
+  height: 24px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border:
+    1px
+    solid
+    transparent;
+
+  border-radius:
+    3px;
+
+  background:
+    transparent;
+
+  color:
+    #9d9d9d;
+
+  font:
+    inherit;
+
+  font-size:
+    12px;
+  font-weight:
+    700;
+
+  cursor: pointer;
+}
+
+.roadsafe-analytics-datum-popover__close:hover {
+  border-color:
+    #4b4b4b;
+
+  background:
+    #303030;
+
+  color:
+    #eeeeee;
+}
+
+
+.roadsafe-analytics-datum-popover__header {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns:
+    25px
+    minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding-right:
+    28px;
+}
+
+.roadsafe-analytics-datum-popover__header
+  > .roadsafe-material-icon {
+  color:
+    #e8872d;
+}
+
+.roadsafe-analytics-datum-popover__header
+  > div {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 1px;
+}
+
+.roadsafe-analytics-datum-popover__header small,
+.roadsafe-analytics-datum-popover__metrics small {
+  color:
+    #828282;
+
+  font-size:
+    8px;
+  font-weight:
+    650;
+
+  letter-spacing:
+    .04em;
+
+  text-transform:
+    uppercase;
+}
+
+.roadsafe-analytics-datum-popover__header strong {
+  overflow: hidden;
+
+  color:
+    #f0f0f0;
+
+  font-size:
+    12px;
+  font-weight:
+    650;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.roadsafe-analytics-datum-popover__summary {
+  margin:
+    8px
+    0
+    0;
+
+  padding-top:
+    7px;
+
+  border-top:
+    1px
+    solid
+    #3e3e3e;
+
+  color:
+    #a0a0a0;
+
+  font-size:
+    9px;
+
+  line-height:
+    1.4;
+}
+
+
+.roadsafe-analytics-datum-popover__metrics {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 5px;
+
+  margin-top:
+    8px;
+}
+
+.roadsafe-analytics-datum-popover__metrics
+  > span {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 2px;
+
+  padding:
+    6px;
+
+  border:
+    1px
+    solid
+    #414141;
+
+  border-radius:
+    3px;
+
+  background:
+    #202020;
+}
+
+.roadsafe-analytics-datum-popover__metrics b {
+  overflow: hidden;
+
+  color:
+    #dddddd;
+
+  font-size:
+    10px;
+  font-weight:
+    650;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.roadsafe-analytics-datum-popover__actions {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 5px;
+
+  margin-top:
+    8px;
+
+  padding-top:
+    8px;
+
+  border-top:
+    1px
+    solid
+    #3e3e3e;
+}
+
+.roadsafe-analytics-datum-popover__actions button {
+  min-height:
+    28px;
+
+  padding:
+    0
+    9px;
+
+  border:
+    1px
+    solid
+    #4c4c4c;
+
+  border-radius:
+    3px;
+
+  background:
+    #2d2d2d;
+
+  color:
+    #cccccc;
+
+  font:
+    inherit;
+
+  font-size:
+    9px;
+  font-weight:
+    650;
+
+  cursor: pointer;
+}
+
+.roadsafe-analytics-datum-popover__actions
+  button:first-child {
+  border-color:
+    #69482e;
+
+  background:
+    #35291f;
+
+  color:
+    #e8a669;
+}
+
+.roadsafe-analytics-datum-popover__actions
+  button:hover {
+  background:
+    #383838;
+}
+
+
+@keyframes roadsafe-datum-popover-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadsafe-analytics-datum-popover {
+    animation: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .roadsafe-analytics-chart-context {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .roadsafe-analytics-datum-popover {
+    width:
+      min(
+        320px,
+        calc(100vw - 24px)
+      );
+  }
+}
+
+/* ROADSAFE_ANALYTICS_ANCHORED_DATUM_END */
