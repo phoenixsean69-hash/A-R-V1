@@ -30,6 +30,7 @@ import {
   type AccidentReconstruction,
   type ReconstructionVehicle,
 } from "../../types/reconstruction";
+import "./Dashboard.css";
 
 function formatDate(value: string): string {
   const date = new Date(value);
@@ -341,7 +342,8 @@ export default function Dashboard() {
     : "/reconstruction";
 
   return (
-    <div className="space-y-3">
+    <div className="dashboard-station-page">
+      <div className="dashboard-station-page__scroll space-y-3">
       <section className="dashboard-material-stat-grid">
         {cards.map(
           ({
@@ -1008,7 +1010,9 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="flex flex-wrap gap-2">
+      </div>
+
+      <section className="dashboard-station-page__actions">
         <Link to="/cases/new" className="ui-button">
           <Plus size={14} />
           New case

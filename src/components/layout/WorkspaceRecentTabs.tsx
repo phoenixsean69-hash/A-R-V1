@@ -120,31 +120,81 @@ export default function WorkspaceRecentTabs({
 
   useEffect(() => {
     setTabs((currentTabs) => {
-      const existing =
-        currentTabs.find(
+      const existingIndex =
+        currentTabs.findIndex(
           (tab) =>
             tab.pathname ===
             location.pathname,
         );
 
-      const withoutCurrent =
-        currentTabs.filter(
-          (tab) =>
-            tab.pathname !==
-            location.pathname,
+      const nextLabel =
+        labelForPath(
+          location.pathname,
+          currentTitle,
         );
 
-      return sortTabs([
+      /*
+       * Selecting an existing tab must never reorder it.
+       * Only update its label in place if the page title changed.
+       */
+      if (existingIndex >= 0) {
+        const existing =
+          currentTabs[existingIndex];
+
+        if (
+          existing.label === nextLabel
+        ) {
+          return currentTabs;
+        }
+
+        const nextTabs = [
+          ...currentTabs,
+        ];
+
+        nextTabs[existingIndex] = {
+          ...existing,
+          label: nextLabel,
+        };
+
+        return nextTabs;
+      }
+
+      /*
+       * Newly visited pages are appended.
+       * Existing tabs keep their positions.
+       */
+      const nextTabs = [
+        ...currentTabs,
         {
-          pathname: location.pathname,
-          label: labelForPath(
+          pathname:
             location.pathname,
-            currentTitle,
-          ),
-          pinned: existing?.pinned ?? false,
+          label: nextLabel,
+          pinned: false,
         },
-        ...withoutCurrent,
-      ]).slice(0, LIMIT);
+      ];
+
+      if (nextTabs.length <= LIMIT) {
+        return nextTabs;
+      }
+
+      const removableIndex =
+        nextTabs.findIndex(
+          (tab) =>
+            !tab.pinned &&
+            tab.pathname !==
+              location.pathname,
+        );
+
+      if (removableIndex >= 0) {
+        nextTabs.splice(
+          removableIndex,
+          1,
+        );
+      } else {
+        nextTabs.shift();
+      }
+
+      return nextTabs;
     });
   }, [
     location.pathname,
