@@ -1,0 +1,581 @@
+.roadsafe-command-layer,
+.roadsafe-shortcuts-layer {
+  position: fixed;
+  inset: 0;
+
+  z-index: 2200;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: 10vh 20px 20px;
+
+  background:
+    rgba(0, 0, 0, 0.46);
+
+  backdrop-filter:
+    blur(2px);
+}
+
+.roadsafe-command-palette,
+.roadsafe-shortcuts-window {
+  width:
+    min(
+      760px,
+      calc(100vw - 32px)
+    );
+
+  max-height:
+    min(
+      720px,
+      calc(100vh - 40px)
+    );
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border:
+    1px solid #4a4a4a;
+
+  border-radius: 4px;
+
+  background:
+    #202020;
+
+  color:
+    #d7d7d7;
+
+  box-shadow:
+    0 28px 90px
+      rgba(0, 0, 0, 0.68),
+    inset 0 1px 0
+      rgba(255, 255, 255, 0.035);
+}
+
+.roadsafe-command-header,
+.roadsafe-shortcuts-header {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  padding:
+    11px
+    12px;
+
+  border-bottom:
+    1px solid #171717;
+
+  background:
+    linear-gradient(
+      180deg,
+      #323232 0%,
+      #2b2b2b 100%
+    );
+}
+
+.roadsafe-command-header > div,
+.roadsafe-shortcuts-header > div {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 2px;
+}
+
+.roadsafe-command-header span,
+.roadsafe-shortcuts-header span {
+  color:
+    #9b9b9b;
+
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: 0.11em;
+
+  text-transform:
+    uppercase;
+}
+
+.roadsafe-command-header strong,
+.roadsafe-shortcuts-header strong {
+  color:
+    #eeeeee;
+
+  font-size: 14px;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.roadsafe-shortcuts-header small {
+  color:
+    #999999;
+
+  font-size: 9px;
+}
+
+.roadsafe-command-search {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px;
+
+  border-bottom:
+    1px solid #171717;
+
+  background:
+    #252525;
+}
+
+.roadsafe-command-search input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+
+  padding:
+    0
+    11px;
+
+  border:
+    1px solid #4d4d4d;
+
+  border-radius: 3px;
+
+  outline: none;
+
+  background:
+    #1d1d1d;
+
+  color:
+    #ededed;
+
+  font: inherit;
+
+  font-size: 11px;
+
+  box-shadow:
+    inset 0 1px 2px
+      rgba(0, 0, 0, 0.26);
+}
+
+.roadsafe-command-search input::placeholder {
+  color:
+    #777777;
+}
+
+.roadsafe-command-search input:focus {
+  border-color:
+    #747474;
+
+  box-shadow:
+    inset 0 1px 2px
+      rgba(0, 0, 0, 0.26),
+    0 0 0 1px
+      rgba(255, 255, 255, 0.06);
+}
+
+.roadsafe-command-results,
+.roadsafe-shortcuts-body {
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior:
+    contain;
+
+  scrollbar-width:
+    thin;
+
+  scrollbar-color:
+    #555555
+    #202020;
+}
+
+.roadsafe-command-results {
+  padding:
+    5px;
+}
+
+.roadsafe-command-result {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    8px
+    9px;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 3px;
+
+  background:
+    transparent;
+
+  color:
+    #c9c9c9;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+}
+
+.roadsafe-command-result:hover,
+.roadsafe-command-result.is-selected {
+  border-color:
+    #494949;
+
+  background:
+    #303030;
+}
+
+.roadsafe-command-result-copy,
+.roadsafe-shortcut-row-copy {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 3px;
+}
+
+.roadsafe-command-result-copy strong,
+.roadsafe-shortcut-row-copy strong {
+  overflow: hidden;
+
+  color:
+    #e7e7e7;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+.roadsafe-command-result-copy small,
+.roadsafe-shortcut-row-copy small {
+  overflow: hidden;
+
+  color:
+    #949494;
+
+  font-size: 8px;
+  line-height: 1.35;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+.roadsafe-command-result-meta {
+  display: grid;
+  justify-items: end;
+
+  gap: 4px;
+}
+
+.roadsafe-command-result-meta > span {
+  color:
+    #7f7f7f;
+
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+
+  text-transform:
+    uppercase;
+}
+
+.roadsafe-shortcut-keys {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.roadsafe-shortcut-key-group {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 3px;
+}
+
+.roadsafe-shortcut-or {
+  margin-right: 2px;
+
+  color:
+    #737373;
+
+  font-size: 7px;
+}
+
+.roadsafe-command-layer kbd,
+.roadsafe-shortcuts-layer kbd {
+  min-width: 22px;
+  min-height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    0
+    6px;
+
+  border:
+    1px solid #555555;
+
+  border-bottom-color:
+    #3e3e3e;
+
+  border-radius: 3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #3b3b3b 0%,
+      #303030 100%
+    );
+
+  color:
+    #d5d5d5;
+
+  font-family:
+    inherit;
+
+  font-size: 7px;
+  font-weight: 700;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(255, 255, 255, 0.05);
+}
+
+.roadsafe-command-empty {
+  padding: 32px 16px;
+
+  color:
+    #8d8d8d;
+
+  font-size: 10px;
+
+  text-align:
+    center;
+}
+
+.roadsafe-command-footer,
+.roadsafe-shortcuts-footer {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding:
+    8px
+    11px;
+
+  border-top:
+    1px solid #171717;
+
+  background:
+    #252525;
+
+  color:
+    #858585;
+
+  font-size: 8px;
+}
+
+.roadsafe-command-footer strong {
+  overflow: hidden;
+
+  color:
+    #b5b5b5;
+
+  font-size: 8px;
+  font-weight: 650;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+.roadsafe-shortcuts-window {
+  width:
+    min(
+      900px,
+      calc(100vw - 32px)
+    );
+
+  max-height:
+    calc(100vh - 40px);
+}
+
+.roadsafe-shortcuts-layer {
+  padding-top:
+    20px;
+}
+
+.roadsafe-shortcuts-body {
+  padding:
+    10px;
+}
+
+.roadsafe-shortcuts-group + .roadsafe-shortcuts-group {
+  margin-top:
+    13px;
+}
+
+.roadsafe-shortcuts-group h3 {
+  margin:
+    0
+    0
+    6px;
+
+  color:
+    #9b9b9b;
+
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: 0.10em;
+
+  text-transform:
+    uppercase;
+}
+
+.roadsafe-shortcuts-list {
+  overflow:
+    hidden;
+
+  border:
+    1px solid #414141;
+
+  border-radius:
+    3px;
+
+  background:
+    #292929;
+}
+
+.roadsafe-shortcut-row {
+  min-width: 0;
+  min-height: 48px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    7px
+    9px;
+}
+
+.roadsafe-shortcut-row + .roadsafe-shortcut-row {
+  border-top:
+    1px solid #3d3d3d;
+}
+
+.roadsafe-command-results::-webkit-scrollbar,
+.roadsafe-shortcuts-body::-webkit-scrollbar {
+  width:
+    8px;
+}
+
+.roadsafe-command-results::-webkit-scrollbar-track,
+.roadsafe-shortcuts-body::-webkit-scrollbar-track {
+  background:
+    #202020;
+}
+
+.roadsafe-command-results::-webkit-scrollbar-thumb,
+.roadsafe-shortcuts-body::-webkit-scrollbar-thumb {
+  border:
+    2px solid #202020;
+
+  border-radius:
+    999px;
+
+  background:
+    #555555;
+}
+
+@media (max-width: 680px) {
+  .roadsafe-command-layer,
+  .roadsafe-shortcuts-layer {
+    padding:
+      8px;
+  }
+
+  .roadsafe-command-palette,
+  .roadsafe-shortcuts-window {
+    width:
+      100%;
+
+    max-height:
+      calc(100vh - 16px);
+  }
+
+  .roadsafe-command-result,
+  .roadsafe-shortcut-row {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .roadsafe-command-result-meta {
+    justify-items:
+      start;
+  }
+
+  .roadsafe-shortcut-keys {
+    justify-content:
+      flex-start;
+  }
+
+  .roadsafe-command-result-copy small,
+  .roadsafe-shortcut-row-copy small {
+    white-space:
+      normal;
+  }
+}

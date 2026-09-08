@@ -21,6 +21,7 @@ import WorkspaceHeader from "../WorkspaceHeader";
 import WorkspaceInspector from "./WorkspaceInspector";
 import WorkspaceNavigation from "./WorkspaceNavigation";
 import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
+import AppShortcutManager from "../shortcuts/AppShortcutManager";
 import {
   WorkspaceRightPanelProvider,
 } from "./WorkspaceRightPanelContext";
@@ -507,6 +508,24 @@ export default function AppShell() {
         )
       )}
 
+      <AppShortcutManager
+        role={role}
+        homePath={homePath}
+        activeCaseId={
+          activeCase?.id ?? null
+        }
+        inspectorAvailable={
+          inspectorAvailable
+        }
+        onToggleNavigation={() =>
+          setDesktopCollapsed(
+            (value) => !value,
+          )
+        }
+        onToggleInspector={
+          toggleInspector
+        }
+      />
       <button
         type="button"
         className="roadsafe-mobile-overlay roadsafe-navigation-overlay"

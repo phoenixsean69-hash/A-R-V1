@@ -212,6 +212,131 @@ export default function WorkspaceRecentTabs({
     }
   }, [tabs]);
 
+  useEffect(() => {
+    function handleTabCommand(
+      event: Event,
+    ): void {
+      const detail =
+        (
+          event as CustomEvent<{
+            action?:
+              | "previous"
+              | "next"
+              | "close";
+          }>
+        ).detail;
+
+      const ordered =
+        sortTabs(tabs);
+
+      if (
+        ordered.length === 0 ||
+        !detail?.action
+      ) {
+        return;
+      }
+
+      const currentIndex =
+        ordered.findIndex(
+          (tab) =>
+            tab.pathname ===
+            location.pathname,
+        );
+
+      if (
+        detail.action ===
+        "previous" ||
+        detail.action ===
+        "next"
+      ) {
+        const direction =
+          detail.action ===
+          "next"
+            ? 1
+            : -1;
+
+        const baseIndex =
+          currentIndex >= 0
+            ? currentIndex
+            : 0;
+
+        const targetIndex =
+          (
+            baseIndex +
+            direction +
+            ordered.length
+          ) %
+          ordered.length;
+
+        const target =
+          ordered[
+            targetIndex
+          ];
+
+        if (
+          target &&
+          target.pathname !==
+            location.pathname
+        ) {
+          navigate(
+            target.pathname,
+          );
+        }
+
+        return;
+      }
+
+      if (
+        detail.action ===
+        "close"
+      ) {
+        const active =
+          ordered.find(
+            (tab) =>
+              tab.pathname ===
+              location.pathname,
+          );
+
+        if (!active) {
+          return;
+        }
+
+        const remaining =
+          tabs.filter(
+            (tab) =>
+              tab.pathname !==
+              active.pathname,
+          );
+
+        navigate(
+          remaining[0]?.pathname ??
+            homePath,
+        );
+
+        setTabs(
+          remaining,
+        );
+      }
+    }
+
+    window.addEventListener(
+      "roadsafe:recent-tabs-command",
+      handleTabCommand,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "roadsafe:recent-tabs-command",
+        handleTabCommand,
+      );
+    };
+  }, [
+    homePath,
+    location.pathname,
+    navigate,
+    tabs,
+  ]);
+
   const orderedTabs = useMemo(
     () => sortTabs(tabs),
     [tabs],
