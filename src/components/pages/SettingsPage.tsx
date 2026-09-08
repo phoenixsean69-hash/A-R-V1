@@ -1,163 +1,429 @@
 import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  Link,
+} from "react-router-dom";
+
+import {
+  AppWindow,
+  Database,
   KeyRound,
   ShieldCheck,
   SlidersHorizontal,
   Users,
-} from "../../components/icons/materialIcons";
-import { Link } from "react-router-dom";
+} from "../icons/materialIcons";
 
-import { useAuth } from "../../context/AuthContext";
+import {
+  formatStorageBytes,
+  getRoadSafeStorageSummary,
+  readRoadSafeSettings,
+  subscribeRoadSafeSettings,
+  writeRoadSafeSettings,
+  type RoadSafeAppSettings,
+} from "../../services/roadSafeSettingsService";
+
+import {
+  useAuth,
+} from "../../context/AuthContext";
+
+import DataSettingsPanel from "../settings/DataSettingsPanel";
+import ShortcutSettingsPanel from "../settings/ShortcutSettingsPanel";
+import WorkspaceSettingsPanel from "../settings/WorkspaceSettingsPanel";
+
+import "./SettingsPage.css";
+
+type SettingsSection =
+  | "workspace"
+  | "keyboard"
+  | "data"
+  | "account";
+
+const SECTIONS = [
+  {
+    id: "workspace",
+    label: "Workspace",
+    description:
+      "Layout, Inspector, density and motion",
+    icon:
+      SlidersHorizontal,
+  },
+  {
+    id: "keyboard",
+    label: "Keyboard",
+    description:
+      "Shortcuts, palette and remapping",
+    icon:
+      KeyRound,
+  },
+  {
+    id: "data",
+    label: "Data & storage",
+    description:
+      "Browser storage and reset controls",
+    icon:
+      Database,
+  },
+  {
+    id: "account",
+    label: "Account",
+    description:
+      "Security and station administration",
+    icon:
+      ShieldCheck,
+  },
+] as const;
 
 export default function SettingsPage() {
-  const auth = useAuth();
+  const auth =
+    useAuth();
+
+  const role =
+    auth.identity?.role ??
+    "unassigned";
+
   const isStationAdmin =
-    auth.identity?.role ===
+    role ===
     "station_admin";
 
+  const [
+    section,
+    setSection,
+  ] = useState<SettingsSection>(
+    "workspace",
+  );
+
+  const [
+    settings,
+    setSettings,
+  ] = useState<RoadSafeAppSettings>(
+    () =>
+      readRoadSafeSettings(),
+  );
+
+  useEffect(
+    () =>
+      subscribeRoadSafeSettings(
+        setSettings,
+      ),
+    [],
+  );
+
+  const storage =
+    useMemo(
+      () =>
+        getRoadSafeStorageSummary(),
+      [settings],
+    );
+
+  const customShortcutCount =
+    Object.keys(
+      settings.shortcuts
+        .overrides,
+    ).length;
+
+  function changeSettings(
+    next:
+      RoadSafeAppSettings,
+  ): void {
+    const saved =
+      writeRoadSafeSettings(
+        next,
+      );
+
+    setSettings(saved);
+  }
+
   return (
-    <div className="space-y-3">
-      {isStationAdmin && (
-        <section className="ui-panel overflow-hidden">
-          <div className="ui-panel-header">
-            <div>
-              <h2 className="ui-panel-title">
-                Station administration
-              </h2>
-              <p className="mt-1 text-[9px] text-slate-600">
-                Control officer access without opening the Appwrite Console.
-              </p>
-            </div>
+    <div className="roadsafe-settings-page">
+      <section className="roadsafe-settings-hero">
+        <div className="roadsafe-settings-hero__copy">
+          <span>
+            RoadSafe configuration
+          </span>
 
-            <ShieldCheck
-              size={16}
-              className="text-[#c4c4c4]"
-            />
-          </div>
+          <h2>
+            System Settings
+          </h2>
 
-          <div className="grid gap-3 p-4 sm:grid-cols-2">
-            <Link
-              to="/officers"
-              className="rounded-md border border-[#494949] bg-[#303030] p-4 transition-colors hover:bg-[#303030]"
-            >
-              <Users
-                size={18}
-                className="text-[#c4c4c4]"
-              />
-              <h3 className="mt-3 text-sm font-bold text-slate-100">
-                Officer management
-              </h3>
-              <p className="mt-2 text-[9px] leading-5 text-slate-500">
-                Create officers, assign station roles, block access and reset temporary passwords.
-              </p>
-            </Link>
-
-            <Link
-              to="/change-password"
-              className="rounded-md border border-[#494949] bg-[#303030] p-4 transition-colors hover:border-[#494949] hover:bg-[#303030]"
-            >
-              <KeyRound
-                size={18}
-                className="text-[#c4c4c4]"
-              />
-              <h3 className="mt-3 text-sm font-bold text-slate-100">
-                Change my password
-              </h3>
-              <p className="mt-2 text-[9px] leading-5 text-slate-500">
-                Replace the current Station Client password securely.
-              </p>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      <section className="ui-panel p-5">
-        <div className="flex items-center gap-3 border-b border-[#494949] pb-3">
-          <SlidersHorizontal
-            size={16}
-            className="text-[#c4c4c4]"
-          />
-          <div>
-            <h2 className="ui-panel-title">
-              Workspace preferences
-            </h2>
-            <p className="mt-1 text-[9px] text-slate-600">
-              Configure reconstruction behaviour for this browser.
-            </p>
-          </div>
+          <p>
+            Configure workstation behaviour, keyboard control and browser-resident RoadSafe data.
+          </p>
         </div>
 
-        <div className="mt-5 space-y-5">
-          {[
-            [
-              "Auto save",
-              "Automatically save changes in reconstruction",
-            ],
-            [
-              "Show physics vectors",
-              "Display velocity and impact indicators",
-            ],
-            [
-              "Confirm destructive actions",
-              "Require confirmation before deletion",
-            ],
-          ].map(
-            ([label, note], index) => (
-              <label
-                key={label}
-                className="flex items-center justify-between gap-5 border-b border-[#494949] pb-5"
-              >
-                <span>
-                  <span className="block text-xs font-semibold text-slate-300">
-                    {label}
-                  </span>
-                  <span className="mt-1 block text-[10px] text-slate-500">
-                    {note}
-                  </span>
-                </span>
+        <div className="roadsafe-settings-summary">
+          <div>
+            <span>
+              Density
+            </span>
 
-                <input
-                  type="checkbox"
-                  defaultChecked={
-                    index !== 1
+            <strong>
+              {
+                settings.workspace
+                  .density ===
+                "compact"
+                  ? "Compact"
+                  : "Comfortable"
+              }
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Shortcuts
+            </span>
+
+            <strong>
+              {
+                settings.shortcuts
+                  .enabled
+                  ? "Enabled"
+                  : "Disabled"
+              }
+            </strong>
+
+            <small>
+              {customShortcutCount} custom
+            </small>
+          </div>
+
+          <div>
+            <span>
+              Local data
+            </span>
+
+            <strong>
+              {formatStorageBytes(
+                storage.approximateBytes,
+              )}
+            </strong>
+
+            <small>
+              {storage.keyCount} keys
+            </small>
+          </div>
+        </div>
+      </section>
+
+      <div className="roadsafe-settings-layout">
+        <aside className="roadsafe-settings-sidebar">
+          <div className="roadsafe-settings-sidebar__label">
+            Settings
+          </div>
+
+          <nav>
+            {SECTIONS.map(
+              ({
+                id,
+                label,
+                description,
+                icon: Icon,
+              }) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={
+                    section ===
+                    id
+                      ? "is-active"
+                      : ""
                   }
-                  className="h-4 w-4 accent-[#e8872d]"
-                />
-              </label>
-            ),
+                  onClick={() =>
+                    setSection(
+                      id,
+                    )
+                  }
+                >
+                  <Icon
+                    size={17}
+                  />
+
+                  <span>
+                    <strong>
+                      {label}
+                    </strong>
+
+                    <small>
+                      {
+                        description
+                      }
+                    </small>
+                  </span>
+                </button>
+              ),
+            )}
+          </nav>
+
+          <div className="roadsafe-settings-sidebar__session">
+            <AppWindow
+              size={16}
+            />
+
+            <span>
+              <strong>
+                Browser profile
+              </strong>
+
+              <small>
+                Settings save locally and apply immediately.
+              </small>
+            </span>
+          </div>
+        </aside>
+
+        <main className="roadsafe-settings-content">
+          {section ===
+            "workspace" && (
+            <WorkspaceSettingsPanel
+              settings={
+                settings
+              }
+              onChange={
+                changeSettings
+              }
+            />
           )}
 
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-300">
-              Default playback speed
-            </span>
-            <select className="ui-input mt-2 block w-full max-w-xs">
-              <option>1.0x</option>
-              <option>0.5x</option>
-              <option>1.5x</option>
-              <option>2.0x</option>
-            </select>
-          </label>
-        </div>
-      </section>
+          {section ===
+            "keyboard" && (
+            <ShortcutSettingsPanel
+              role={role}
+              settings={
+                settings
+              }
+              onChange={
+                changeSettings
+              }
+            />
+          )}
 
-      <section className="ui-panel p-5">
-        <h2 className="ui-panel-title">
-          Data
-        </h2>
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-slate-300">
-              Storage location
-            </p>
-            <p className="mt-1 text-[10px] text-slate-500">
-              Local browser storage
-            </p>
-          </div>
-          <button className="ui-button">
-            Clear local data
-          </button>
-        </div>
-      </section>
+          {section ===
+            "data" && (
+            <DataSettingsPanel
+              settings={
+                settings
+              }
+            />
+          )}
+
+          {section ===
+            "account" && (
+            <div className="roadsafe-settings-panel-stack">
+              <section className="roadsafe-settings-card">
+                <header className="roadsafe-settings-card__header">
+                  <span className="roadsafe-settings-card__icon">
+                    <ShieldCheck
+                      size={18}
+                    />
+                  </span>
+
+                  <div>
+                    <span>
+                      Account
+                    </span>
+
+                    <strong>
+                      Security
+                    </strong>
+
+                    <small>
+                      Manage the current Station Client credential.
+                    </small>
+                  </div>
+                </header>
+
+                <div className="roadsafe-settings-account-grid">
+                  <Link
+                    to="/change-password"
+                    className="roadsafe-settings-account-card"
+                  >
+                    <KeyRound
+                      size={20}
+                    />
+
+                    <strong>
+                      Change password
+                    </strong>
+
+                    <small>
+                      Replace your current RoadSafe password securely.
+                    </small>
+                  </Link>
+
+                  <div className="roadsafe-settings-account-card is-readonly">
+                    <AppWindow
+                      size={20}
+                    />
+
+                    <strong>
+                      Current role
+                    </strong>
+
+                    <small>
+                      {
+                        role ===
+                        "station_admin"
+                          ? "Station Administrator"
+                          : role ===
+                            "supervisor"
+                            ? "Station Supervisor"
+                            : "RoadSafe user"
+                      }
+                    </small>
+                  </div>
+                </div>
+              </section>
+
+              {isStationAdmin && (
+                <section className="roadsafe-settings-card">
+                  <header className="roadsafe-settings-card__header">
+                    <span className="roadsafe-settings-card__icon">
+                      <Users
+                        size={18}
+                      />
+                    </span>
+
+                    <div>
+                      <span>
+                        Administration
+                      </span>
+
+                      <strong>
+                        Station access
+                      </strong>
+
+                      <small>
+                        Officer and role management is restricted to Station Administrators.
+                      </small>
+                    </div>
+                  </header>
+
+                  <div className="roadsafe-settings-account-grid">
+                    <Link
+                      to="/officers"
+                      className="roadsafe-settings-account-card"
+                    >
+                      <Users
+                        size={20}
+                      />
+
+                      <strong>
+                        Officer management
+                      </strong>
+
+                      <small>
+                        Create officers, assign roles, block access and manage credentials.
+                      </small>
+                    </Link>
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

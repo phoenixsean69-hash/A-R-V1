@@ -1,10 +1,10 @@
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+
 import {
   useLocation,
   useNavigate,
@@ -14,102 +14,74 @@ import {
   X,
 } from "../icons/materialIcons";
 
+import {
+  readRoadSafeSettings,
+  subscribeRoadSafeSettings,
+  type RoadSafeAppSettings,
+} from "../../services/roadSafeSettingsService";
+
 import type {
   RoadSafeRole,
 } from "../../types/auth";
 
+import {
+  SHORTCUT_DEFINITIONS,
+  formatShortcutSignature,
+  getEffectiveShortcutSignatures,
+  shortcutSignatureFromEvent,
+  type ShortcutCategory,
+  type ShortcutDefinition,
+} from "./shortcutRegistry";
+
 import "./AppShortcutManager.css";
 
-type ShortcutCategory =
-  | "Application"
-  | "Navigation"
-  | "Active case"
-  | "Workspace"
-  | "Tabs";
-
-interface Accelerator {
-  signature: string;
-  label: string;
-}
-
 interface ShortcutCommand {
-  id: string;
-  label: string;
-  description: string;
-  category: ShortcutCategory;
-  keywords: string[];
-  accelerators: Accelerator[];
+  definition:
+    ShortcutDefinition;
+
+  signatures:
+    string[];
+
   run(): void;
 }
 
 interface AppShortcutManagerProps {
-  role: RoadSafeRole;
-  homePath: string;
-  activeCaseId?: string | null;
-  inspectorAvailable: boolean;
-  onToggleNavigation(): void;
-  onToggleInspector(): void;
+  role:
+    RoadSafeRole;
+
+  homePath:
+    string;
+
+  activeCaseId?:
+    string | null;
+
+  inspectorAvailable:
+    boolean;
+
+  onToggleNavigation():
+    void;
+
+  onToggleInspector():
+    void;
 }
 
 const TAB_COMMAND_EVENT =
   "roadsafe:recent-tabs-command";
 
-function isMacPlatform(): boolean {
-  if (
-    typeof navigator ===
-    "undefined"
-  ) {
-    return false;
-  }
-
-  return /Mac|iPhone|iPad/i.test(
-    navigator.platform,
-  );
-}
-
-function modifierLabel(): string {
-  return isMacPlatform()
-    ? "Cmd"
-    : "Ctrl";
-}
-
-function eventSignature(
-  event: KeyboardEvent,
-): string {
-  const parts: string[] = [];
-
-  if (
-    event.ctrlKey ||
-    event.metaKey
-  ) {
-    parts.push("mod");
-  }
-
-  if (event.altKey) {
-    parts.push("alt");
-  }
-
-  if (event.shiftKey) {
-    parts.push("shift");
-  }
-
-  parts.push(
-    event.key.toLowerCase(),
-  );
-
-  return parts.join("+");
-}
-
 function isEditableTarget(
-  target: EventTarget | null,
+  target:
+    EventTarget | null,
 ): boolean {
   if (
-    !(target instanceof HTMLElement)
+    !(target instanceof
+      HTMLElement)
   ) {
     return false;
   }
 
-  if (target.isContentEditable) {
+  if (
+    target.isContentEditable
+  ) {
     return true;
   }
 
@@ -139,20 +111,31 @@ function dispatchTabCommand(
 }
 
 function ShortcutKeys({
-  accelerators,
+  signatures,
+  visible,
 }: {
-  accelerators: Accelerator[];
+  signatures:
+    string[];
+
+  visible:
+    boolean;
 }) {
-  if (accelerators.length === 0) {
+  if (
+    !visible ||
+    signatures.length === 0
+  ) {
     return null;
   }
 
   return (
     <span className="roadsafe-shortcut-keys">
-      {accelerators.map(
-        (accelerator, index) => (
+      {signatures.map(
+        (
+          signature,
+          index,
+        ) => (
           <span
-            key={accelerator.signature}
+            key={signature}
             className="roadsafe-shortcut-key-group"
           >
             {index > 0 && (
@@ -161,18 +144,71 @@ function ShortcutKeys({
               </span>
             )}
 
-            {accelerator.label
-              .split("+")
-              .map((part) => (
-                <kbd key={part}>
-                  {part}
-                </kbd>
-              ))}
+            <kbd>
+              {formatShortcutSignature(
+                signature,
+              )}
+            </kbd>
           </span>
         ),
       )}
     </span>
   );
+}
+
+function definitionAvailable(
+  definition:
+    ShortcutDefinition,
+  role:
+    RoadSafeRole,
+  activeCaseId:
+    string | null | undefined,
+  inspectorAvailable:
+    boolean,
+  commandPaletteEnabled:
+    boolean,
+): boolean {
+  if (
+    definition.id ===
+      "command-palette" &&
+    !commandPaletteEnabled
+  ) {
+    return false;
+  }
+
+  if (
+    definition.id ===
+      "toggle-inspector" &&
+    !inspectorAvailable
+  ) {
+    return false;
+  }
+
+  switch (
+    definition.scope
+  ) {
+    case "all":
+      return true;
+
+    case "station":
+      return (
+        role ===
+          "supervisor" ||
+        role ===
+          "station_admin"
+      );
+
+    case "admin":
+      return (
+        role ===
+        "station_admin"
+      );
+
+    case "active-case":
+      return Boolean(
+        activeCaseId,
+      );
+  }
 }
 
 export default function AppShortcutManager({
@@ -189,8 +225,13 @@ export default function AppShortcutManager({
   const location =
     useLocation();
 
-  const mod =
-    modifierLabel();
+  const [
+    settings,
+    setSettings,
+  ] = useState<RoadSafeAppSettings>(
+    () =>
+      readRoadSafeSettings(),
+  );
 
   const [
     paletteOpen,
@@ -217,708 +258,249 @@ export default function AppShortcutManager({
       null,
     );
 
-  const stationClient =
-    role === "supervisor" ||
-    role === "station_admin";
+  useEffect(
+    () =>
+      subscribeRoadSafeSettings(
+        setSettings,
+      ),
+    [],
+  );
 
-  const stationAdmin =
-    role === "station_admin";
+  function runById(
+    id: string,
+  ): void {
+    switch (id) {
+      case "command-palette":
+        setHelpOpen(false);
+        setPaletteOpen(true);
+        return;
 
-  const commands =
-    useMemo<ShortcutCommand[]>(() => {
-      const list: ShortcutCommand[] = [];
+      case "shortcut-reference":
+        setPaletteOpen(false);
+        setHelpOpen(true);
+        return;
 
-      const add = (
-        command: ShortcutCommand,
-      ) => {
-        list.push(command);
-      };
+      case "home":
+        navigate(homePath);
+        return;
 
-      add({
-        id: "command-palette",
-        label: "Open command palette",
-        description:
-          "Search every RoadSafe shortcut and destination.",
-        category: "Application",
-        keywords: [
-          "command",
-          "palette",
-          "search",
-          "shortcut",
-        ],
-        accelerators: [
-          {
-            signature:
-              "mod+k",
-            label:
-              `${mod}+K`,
-          },
-          {
-            signature:
-              "mod+shift+p",
-            label:
-              `${mod}+Shift+P`,
-          },
-        ],
-        run: () => {
-          setHelpOpen(false);
-          setPaletteOpen(true);
-        },
-      });
+      case "cases":
+        navigate("/cases");
+        return;
 
-      add({
-        id: "shortcut-reference",
-        label: "Show keyboard shortcuts",
-        description:
-          "Open the complete RoadSafe shortcut reference.",
-        category: "Application",
-        keywords: [
-          "help",
-          "keyboard",
-          "keys",
-          "reference",
-        ],
-        accelerators: [
-          {
-            signature:
-              "f1",
-            label: "F1",
-          },
-          {
-            signature:
-              "shift+?",
-            label: "Shift+?",
-          },
-        ],
-        run: () => {
-          setPaletteOpen(false);
-          setHelpOpen(true);
-        },
-      });
+      case "new-case":
+        navigate(
+          "/cases/new",
+        );
+        return;
 
-      add({
-        id: "home",
-        label:
-          stationClient
-            ? "Station Overview"
-            : "Field Home",
-        description:
-          "Open the assigned RoadSafe home workspace.",
-        category: "Navigation",
-        keywords: [
-          "home",
-          "station",
-          "field",
-          "overview",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+1",
-            label: "Alt+1",
-          },
-        ],
-        run: () =>
-          navigate(homePath),
-      });
+      case "scene-map":
+        navigate(
+          "/scene-map",
+        );
+        return;
 
-      add({
-        id: "cases",
-        label: "Investigation Cases",
-        description:
-          "Open the full accident case register.",
-        category: "Navigation",
-        keywords: [
-          "cases",
-          "investigations",
-          "register",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+2",
-            label: "Alt+2",
-          },
-        ],
-        run: () =>
-          navigate("/cases"),
-      });
+      case "evidence":
+        navigate(
+          "/evidence",
+        );
+        return;
 
-      add({
-        id: "new-case",
-        label: "New Accident Case",
-        description:
-          "Start a new accident investigation record.",
-        category: "Navigation",
-        keywords: [
-          "new",
-          "case",
-          "create",
-          "accident",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+3",
-            label: "Alt+3",
-          },
-          {
-            signature:
-              "mod+shift+n",
-            label:
-              `${mod}+Shift+N`,
-          },
-        ],
-        run: () =>
-          navigate("/cases/new"),
-      });
+      case "reconstruction":
+        navigate(
+          "/reconstruction",
+        );
+        return;
 
-      add({
-        id: "scene-map",
-        label: "Scene and Risk Map",
-        description:
-          "Open investigation locations and road-safety intelligence.",
-        category: "Navigation",
-        keywords: [
-          "map",
-          "scene",
-          "risk",
-          "heatmap",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+4",
-            label: "Alt+4",
-          },
-          {
-            signature:
-              "mod+shift+m",
-            label:
-              `${mod}+Shift+M`,
-          },
-        ],
-        run: () =>
-          navigate("/scene-map"),
-      });
+      case "footage":
+        navigate(
+          "/footage",
+        );
+        return;
 
-      add({
-        id: "evidence",
-        label: "Evidence Register",
-        description:
-          "Open scene evidence and linked observations.",
-        category: "Navigation",
-        keywords: [
-          "evidence",
-          "records",
-          "photos",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+5",
-            label: "Alt+5",
-          },
-          {
-            signature:
-              "mod+shift+e",
-            label:
-              `${mod}+Shift+E`,
-          },
-        ],
-        run: () =>
-          navigate("/evidence"),
-      });
+      case "reports":
+        navigate(
+          "/reports",
+        );
+        return;
 
-      add({
-        id: "reconstruction",
-        label: "Reconstruction",
-        description:
-          "Open the reconstruction case launcher.",
-        category: "Navigation",
-        keywords: [
-          "reconstruction",
-          "simulate",
-          "3d",
-          "ar",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+6",
-            label: "Alt+6",
-          },
-          {
-            signature:
-              "mod+shift+r",
-            label:
-              `${mod}+Shift+R`,
-          },
-        ],
-        run: () =>
-          navigate("/reconstruction"),
-      });
+      case "analytics":
+        navigate(
+          "/analytics",
+        );
+        return;
 
-      add({
-        id: "footage",
-        label: "Footage Library",
-        description:
-          "Open saved reconstruction recordings.",
-        category: "Navigation",
-        keywords: [
-          "footage",
-          "video",
-          "recordings",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+7",
-            label: "Alt+7",
-          },
-        ],
-        run: () =>
-          navigate("/footage"),
-      });
+      case "settings":
+        navigate(
+          "/settings",
+        );
+        return;
 
-      add({
-        id: "reports",
-        label: "Reports",
-        description:
-          "Open formal investigation outputs.",
-        category: "Navigation",
-        keywords: [
-          "reports",
-          "output",
-          "documents",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+8",
-            label: "Alt+8",
-          },
-        ],
-        run: () =>
-          navigate("/reports"),
-      });
+      case "officers":
+        navigate(
+          "/officers",
+        );
+        return;
 
-      if (stationClient) {
-        add({
-          id: "analytics",
-          label: "Road-Safety Analytics",
-          description:
-            "Open station trends and recurring accident patterns.",
-          category: "Navigation",
-          keywords: [
-            "analytics",
-            "statistics",
-            "trends",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+9",
-              label: "Alt+9",
-            },
-          ],
-          run: () =>
-            navigate("/analytics"),
-        });
+      case "toggle-navigation":
+        onToggleNavigation();
+        return;
 
-        add({
-          id: "settings",
-          label: "System Settings",
-          description:
-            "Open RoadSafe station and workspace settings.",
-          category: "Navigation",
-          keywords: [
-            "settings",
-            "preferences",
-            "system",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+0",
-              label: "Alt+0",
-            },
-          ],
-          run: () =>
-            navigate("/settings"),
-        });
-      }
+      case "toggle-inspector":
+        onToggleInspector();
+        return;
 
-      if (stationAdmin) {
-        add({
-          id: "officers",
-          label: "Officer Management",
-          description:
-            "Manage station access and investigator accounts.",
-          category: "Navigation",
-          keywords: [
-            "officers",
-            "users",
-            "admin",
-            "accounts",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+o",
-              label: "Alt+O",
-            },
-          ],
-          run: () =>
-            navigate("/officers"),
-        });
-      }
-
-      if (activeCaseId) {
-        const base =
-          `/cases/${activeCaseId}`;
-
-        add({
-          id: "active-case",
-          label: "Open active case",
-          description:
-            "Jump directly to the current investigation.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "case",
-            "investigation",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+1",
-              label: "Alt+Shift+1",
-            },
-          ],
-          run: () =>
-            navigate(base),
-        });
-
-        add({
-          id: "active-case-edit",
-          label: "Edit active case",
-          description:
-            "Open the active case record for editing.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "case",
-            "edit",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+2",
-              label: "Alt+Shift+2",
-            },
-          ],
-          run: () =>
-            navigate(`${base}/edit`),
-        });
-
-        add({
-          id: "active-reconstruction",
-          label:
-            "Active case reconstruction",
-          description:
-            "Open the current investigation reconstruction.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "reconstruction",
-            "simulation",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+3",
-              label: "Alt+Shift+3",
-            },
-          ],
-          run: () =>
-            navigate(
-              `${base}/reconstruction`,
-            ),
-        });
-
-        add({
-          id: "active-ar",
-          label:
-            "Active case AR review",
-          description:
-            "Open augmented-reality reconstruction review.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "ar",
-            "augmented",
-            "reconstruction",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+4",
-              label: "Alt+Shift+4",
-            },
-          ],
-          run: () =>
-            navigate(
-              `${base}/reconstruction/ar`,
-            ),
-        });
-
-        add({
-          id: "active-report",
-          label:
-            "Active case report",
-          description:
-            "Open the formal report for the current investigation.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "report",
-            "findings",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+5",
-              label: "Alt+Shift+5",
-            },
-          ],
-          run: () =>
-            navigate(
-              `${base}/report`,
-            ),
-        });
-
-        add({
-          id: "active-footage",
-          label:
-            "Active case footage",
-          description:
-            "Open recordings for the current investigation.",
-          category: "Active case",
-          keywords: [
-            "active",
-            "footage",
-            "video",
-          ],
-          accelerators: [
-            {
-              signature:
-                "alt+shift+6",
-              label: "Alt+Shift+6",
-            },
-          ],
-          run: () =>
-            navigate(
-              `${base}/footage`,
-            ),
-        });
-      }
-
-      add({
-        id: "toggle-navigation",
-        label: "Toggle navigation",
-        description:
-          "Collapse or expand the RoadSafe navigation rail.",
-        category: "Workspace",
-        keywords: [
-          "sidebar",
-          "navigation",
-          "collapse",
-        ],
-        accelerators: [
-          {
-            signature:
-              "mod+b",
-            label:
-              `${mod}+B`,
-          },
-        ],
-        run:
-          onToggleNavigation,
-      });
-
-      if (inspectorAvailable) {
-        add({
-          id: "toggle-inspector",
-          label: "Toggle inspector",
-          description:
-            "Show or hide the active workspace inspector.",
-          category: "Workspace",
-          keywords: [
-            "inspector",
-            "panel",
-            "details",
-          ],
-          accelerators: [
-            {
-              signature:
-                "mod+i",
-              label:
-                `${mod}+I`,
-            },
-          ],
-          run:
-            onToggleInspector,
-        });
-      }
-
-      add({
-        id: "previous-roadSafe-tab",
-        label:
-          "Previous RoadSafe tab",
-        description:
-          "Move to the previous tab in the RoadSafe tab rail.",
-        category: "Tabs",
-        keywords: [
-          "tab",
+      case "previous-roadSafe-tab":
+        dispatchTabCommand(
           "previous",
-          "back",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+[",
-            label: "Alt+[",
-          },
-        ],
-        run: () =>
-          dispatchTabCommand(
-            "previous",
-          ),
-      });
+        );
+        return;
 
-      add({
-        id: "next-roadSafe-tab",
-        label:
-          "Next RoadSafe tab",
-        description:
-          "Move to the next tab in the RoadSafe tab rail.",
-        category: "Tabs",
-        keywords: [
-          "tab",
+      case "next-roadSafe-tab":
+        dispatchTabCommand(
           "next",
-          "forward",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+]",
-            label: "Alt+]",
-          },
-        ],
-        run: () =>
-          dispatchTabCommand(
-            "next",
-          ),
-      });
+        );
+        return;
 
-      add({
-        id: "close-roadSafe-tab",
-        label:
-          "Close active RoadSafe tab",
-        description:
-          "Close only the active in-app workspace tab.",
-        category: "Tabs",
-        keywords: [
-          "tab",
+      case "close-roadSafe-tab":
+        dispatchTabCommand(
           "close",
-          "workspace",
-        ],
-        accelerators: [
-          {
-            signature:
-              "alt+shift+w",
-            label: "Alt+Shift+W",
-          },
-        ],
-        run: () =>
-          dispatchTabCommand(
-            "close",
-          ),
-      });
+        );
+        return;
+    }
 
-      return list;
-    }, [
-      activeCaseId,
-      homePath,
-      inspectorAvailable,
-      mod,
-      navigate,
-      onToggleInspector,
-      onToggleNavigation,
-      stationAdmin,
-      stationClient,
-    ]);
+    if (!activeCaseId) {
+      return;
+    }
+
+    const base =
+      `/cases/${activeCaseId}`;
+
+    switch (id) {
+      case "active-case":
+        navigate(base);
+        return;
+
+      case "active-case-edit":
+        navigate(
+          `${base}/edit`,
+        );
+        return;
+
+      case "active-reconstruction":
+        navigate(
+          `${base}/reconstruction`,
+        );
+        return;
+
+      case "active-ar":
+        navigate(
+          `${base}/reconstruction/ar`,
+        );
+        return;
+
+      case "active-report":
+        navigate(
+          `${base}/report`,
+        );
+        return;
+
+      case "active-footage":
+        navigate(
+          `${base}/footage`,
+        );
+        return;
+    }
+  }
+
+  const commands:
+    ShortcutCommand[] =
+    SHORTCUT_DEFINITIONS
+      .filter(
+        (definition) =>
+          definitionAvailable(
+            definition,
+            role,
+            activeCaseId,
+            inspectorAvailable,
+            settings.shortcuts
+              .commandPaletteEnabled,
+          ),
+      )
+      .map(
+        (definition) => ({
+          definition,
+
+          signatures:
+            getEffectiveShortcutSignatures(
+              definition,
+              settings.shortcuts
+                .overrides,
+            ),
+
+          run: () =>
+            runById(
+              definition.id,
+            ),
+        }),
+      );
 
   const filteredCommands =
-    useMemo(() => {
-      const normalized =
-        query
-          .trim()
-          .toLowerCase();
-
-      if (!normalized) {
-        return commands;
-      }
-
-      return commands.filter(
-        (command) => {
-          const haystack = [
-            command.label,
-            command.description,
-            command.category,
-            ...command.keywords,
-          ]
-            .join(" ")
+    commands.filter(
+      (command) => {
+        const normalized =
+          query
+            .trim()
             .toLowerCase();
 
-          return haystack.includes(
+        if (!normalized) {
+          return true;
+        }
+
+        return [
+          command.definition
+            .label,
+          command.definition
+            .description,
+          command.definition
+            .category,
+          ...command.definition
+            .keywords,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(
             normalized,
           );
-        },
-      );
-    }, [
-      commands,
-      query,
-    ]);
+      },
+    );
 
   const groupedCommands =
-    useMemo(() => {
-      const categories:
-        ShortcutCategory[] = [
-          "Application",
-          "Navigation",
-          "Active case",
-          "Workspace",
-          "Tabs",
-        ];
+    (
+      [
+        "Application",
+        "Navigation",
+        "Active case",
+        "Workspace",
+        "Tabs",
+      ] as ShortcutCategory[]
+    )
+      .map((category) => ({
+        category,
 
-      return categories
-        .map((category) => ({
-          category,
-          commands:
-            commands.filter(
-              (command) =>
-                command.category ===
-                category,
-            ),
-        }))
-        .filter(
-          (group) =>
-            group.commands.length >
-            0,
-        );
-    }, [commands]);
+        commands:
+          commands.filter(
+            (command) =>
+              command.definition
+                .category ===
+              category,
+          ),
+      }))
+      .filter(
+        (group) =>
+          group.commands.length >
+          0,
+      );
 
   useEffect(() => {
     if (!paletteOpen) {
@@ -930,7 +512,8 @@ export default function AppShortcutManager({
 
     window.setTimeout(
       () => {
-        inputRef.current?.focus();
+        inputRef.current
+          ?.focus();
       },
       0,
     );
@@ -941,31 +524,102 @@ export default function AppShortcutManager({
   }, [query]);
 
   useEffect(() => {
+    function handleShortcutUi(
+      event: Event,
+    ): void {
+      const detail =
+        (
+          event as
+            CustomEvent<{
+              view?:
+                | "palette"
+                | "help";
+            }>
+        ).detail;
+
+      if (
+        detail?.view ===
+        "palette"
+      ) {
+        if (
+          settings.shortcuts
+            .commandPaletteEnabled
+        ) {
+          setHelpOpen(false);
+          setPaletteOpen(true);
+        }
+
+        return;
+      }
+
+      if (
+        detail?.view ===
+        "help"
+      ) {
+        setPaletteOpen(false);
+        setHelpOpen(true);
+      }
+    }
+
+    window.addEventListener(
+      "roadsafe:shortcut-ui",
+      handleShortcutUi,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "roadsafe:shortcut-ui",
+        handleShortcutUi,
+      );
+    };
+  }, [
+    settings.shortcuts
+      .commandPaletteEnabled,
+  ]);
+
+  useEffect(() => {
     function handleKeyDown(
       event: KeyboardEvent,
     ): void {
       if (
-        event.key === "Escape" &&
-        (paletteOpen ||
-          helpOpen)
+        event.key ===
+          "Escape" &&
+        (
+          paletteOpen ||
+          helpOpen
+        )
       ) {
         event.preventDefault();
+
         setPaletteOpen(false);
         setHelpOpen(false);
+
+        return;
+      }
+
+      if (
+        !settings.shortcuts
+          .enabled
+      ) {
         return;
       }
 
       const signature =
-        eventSignature(event);
+        shortcutSignatureFromEvent(
+          event,
+        );
+
+      if (!signature) {
+        return;
+      }
 
       const command =
         commands.find(
           (item) =>
-            item.accelerators.some(
-              (accelerator) =>
-                accelerator.signature ===
+            item.signatures
+              .includes(
                 signature,
-            ),
+              ),
         );
 
       if (!command) {
@@ -973,8 +627,9 @@ export default function AppShortcutManager({
       }
 
       const applicationCommand =
-        command.category ===
-          "Application";
+        command.definition
+          .category ===
+        "Application";
 
       if (
         isEditableTarget(
@@ -991,9 +646,9 @@ export default function AppShortcutManager({
       command.run();
 
       if (
-        command.id !==
+        command.definition.id !==
           "command-palette" &&
-        command.id !==
+        command.definition.id !==
           "shortcut-reference"
       ) {
         setPaletteOpen(false);
@@ -1014,12 +669,15 @@ export default function AppShortcutManager({
       );
     };
   }, [
+    activeCaseId,
     commands,
     helpOpen,
     paletteOpen,
+    settings.shortcuts
+      .enabled,
   ]);
 
-  function runCommand(
+  function executeCommand(
     command:
       ShortcutCommand,
   ): void {
@@ -1082,7 +740,10 @@ export default function AppShortcutManager({
       }
 
       event.preventDefault();
-      runCommand(command);
+
+      executeCommand(
+        command,
+      );
     }
   }
 
@@ -1092,7 +753,9 @@ export default function AppShortcutManager({
         <div
           className="roadsafe-command-layer"
           role="presentation"
-          onMouseDown={(event) => {
+          onMouseDown={(
+            event,
+          ) => {
             if (
               event.target ===
               event.currentTarget
@@ -1137,7 +800,9 @@ export default function AppShortcutManager({
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={(event) =>
+                onChange={(
+                  event,
+                ) =>
                   setQuery(
                     event.target.value,
                   )
@@ -1168,7 +833,8 @@ export default function AppShortcutManager({
                   ) => (
                     <button
                       key={
-                        command.id
+                        command.definition
+                          .id
                       }
                       type="button"
                       className={`roadsafe-command-result ${
@@ -1183,7 +849,7 @@ export default function AppShortcutManager({
                         )
                       }
                       onClick={() =>
-                        runCommand(
+                        executeCommand(
                           command,
                         )
                       }
@@ -1191,13 +857,15 @@ export default function AppShortcutManager({
                       <span className="roadsafe-command-result-copy">
                         <strong>
                           {
-                            command.label
+                            command.definition
+                              .label
                           }
                         </strong>
 
                         <small>
                           {
-                            command.description
+                            command.definition
+                              .description
                           }
                         </small>
                       </span>
@@ -1205,13 +873,18 @@ export default function AppShortcutManager({
                       <span className="roadsafe-command-result-meta">
                         <span>
                           {
-                            command.category
+                            command.definition
+                              .category
                           }
                         </span>
 
                         <ShortcutKeys
-                          accelerators={
-                            command.accelerators
+                          signatures={
+                            command.signatures
+                          }
+                          visible={
+                            settings.shortcuts
+                              .showHints
                           }
                         />
                       </span>
@@ -1240,7 +913,9 @@ export default function AppShortcutManager({
         <div
           className="roadsafe-shortcuts-layer"
           role="presentation"
-          onMouseDown={(event) => {
+          onMouseDown={(
+            event,
+          ) => {
             if (
               event.target ===
               event.currentTarget
@@ -1304,27 +979,34 @@ export default function AppShortcutManager({
                         (command) => (
                           <div
                             key={
-                              command.id
+                              command.definition
+                                .id
                             }
                             className="roadsafe-shortcut-row"
                           >
                             <span className="roadsafe-shortcut-row-copy">
                               <strong>
                                 {
-                                  command.label
+                                  command.definition
+                                    .label
                                 }
                               </strong>
 
                               <small>
                                 {
-                                  command.description
+                                  command.definition
+                                    .description
                                 }
                               </small>
                             </span>
 
                             <ShortcutKeys
-                              accelerators={
-                                command.accelerators
+                              signatures={
+                                command.signatures
+                              }
+                              visible={
+                                settings.shortcuts
+                                  .showHints
                               }
                             />
                           </div>
@@ -1338,7 +1020,7 @@ export default function AppShortcutManager({
 
             <footer className="roadsafe-shortcuts-footer">
               <span>
-                Shortcuts are disabled while typing, except the command palette and help keys.
+                Shortcuts are disabled while typing, except application-level help and palette commands.
               </span>
 
               <kbd>

@@ -14,6 +14,11 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
 import {
+  readRoadSafeSettings,
+  subscribeRoadSafeSettings,
+  updateRoadSafeSettings,
+} from "../../services/roadSafeSettingsService";
+import {
   isStationRole,
 } from "../../types/auth";
 
@@ -22,6 +27,7 @@ import WorkspaceInspector from "./WorkspaceInspector";
 import WorkspaceNavigation from "./WorkspaceNavigation";
 import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
 import AppShortcutManager from "../shortcuts/AppShortcutManager";
+import "../settings/SettingsRuntime.css";
 import {
   WorkspaceRightPanelProvider,
 } from "./WorkspaceRightPanelContext";
@@ -266,6 +272,61 @@ export default function AppShell() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    /*
+     * Initialise document-level density/motion preferences
+     * and keep this shell live-synchronised with Settings.
+     */
+    readRoadSafeSettings();
+
+    return subscribeRoadSafeSettings(
+      (next) => {
+        setDesktopCollapsed(
+          next.workspace
+            .navigationCollapsed,
+        );
+
+        setInspectorOpen(
+          next.workspace
+            .inspectorOpen,
+        );
+
+        setInspectorDocked(
+          next.workspace
+            .inspectorDocked,
+        );
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    /*
+     * Shell controls can also change these values directly
+     * through buttons and keyboard shortcuts. Keep Settings
+     * synchronised in the same browser tab.
+     */
+    updateRoadSafeSettings(
+      (current) => ({
+        ...current,
+
+        workspace: {
+          ...current.workspace,
+
+          navigationCollapsed:
+            desktopCollapsed,
+
+          inspectorOpen,
+
+          inspectorDocked,
+        },
+      }),
+    );
+  }, [
+    desktopCollapsed,
+    inspectorOpen,
+    inspectorDocked,
+  ]);
 
   const identity = auth.identity;
   const role =

@@ -1,0 +1,34 @@
+html[data-roadsafe-reduce-motion="true"] *,
+html[data-roadsafe-reduce-motion="true"] *::before,
+html[data-roadsafe-reduce-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.001ms !important;
+}
+
+html[data-roadsafe-density="compact"]
+  .ui-panel-header {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+html[data-roadsafe-density="compact"]
+  .ui-button,
+html[data-roadsafe-density="compact"]
+  .ui-button-primary {
+  min-height: 32px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+html[data-roadsafe-density="compact"]
+  .roadsafe-navigation-link {
+  min-height: 34px !important;
+}
+
+html[data-roadsafe-density="compact"]
+  .roadsafe-workspace-main
+  .ui-panel {
+  --roadsafe-density-gap: 8px;
+}
