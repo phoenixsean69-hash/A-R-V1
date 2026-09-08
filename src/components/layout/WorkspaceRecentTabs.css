@@ -1,0 +1,415 @@
+/*
+ * RoadSafe workspace tabs
+ *
+ * Chrome-inspired behavior:
+ * - fixed rail under the workspace header
+ * - only the main workspace content scrolls vertically
+ * - gray-only palette
+ * - active tab is brighter and raised
+ * - neutral app/site icon is always visible
+ * - active close button is always visible
+ */
+
+.roadsafe-workstation .roadsafe-center {
+  height: 100vh !important;
+  min-height: 0 !important;
+
+  display: grid !important;
+  grid-template-rows:
+    auto
+    auto
+    minmax(0, 1fr) !important;
+
+  overflow: hidden !important;
+}
+
+/* Header occupies the first fixed row. */
+.roadsafe-workstation .roadsafe-workspace-header {
+  position: relative !important;
+  top: auto !important;
+  z-index: 31 !important;
+  grid-row: 1;
+
+  flex: 0 0 auto;
+}
+
+/* Tab rail occupies the second fixed row. */
+.roadsafe-workstation .roadsafe-tabbar {
+  position: relative !important;
+  top: auto !important;
+  z-index: 30 !important;
+  grid-row: 2;
+
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  flex: 0 0 42px;
+
+  margin: 0 !important;
+  padding: 0 8px !important;
+
+  overflow: hidden !important;
+
+  border-top: 1px solid #303030 !important;
+  border-right: 0 !important;
+  border-bottom: 1px solid #111111 !important;
+  border-left: 0 !important;
+
+  background: #202020 !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+
+.roadsafe-workstation .roadsafe-tabbar::before,
+.roadsafe-workstation .roadsafe-tabbar::after {
+  display: none !important;
+  content: none !important;
+}
+
+.roadsafe-workstation .roadsafe-tabbar-scroll {
+  height: 100%;
+  min-height: 0;
+
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 2px !important;
+
+  padding: 5px 6px 0 !important;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  scrollbar-width: none;
+}
+
+.roadsafe-workstation .roadsafe-tabbar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * Only this third row scrolls.
+ * This unmounts the header and tab rail from the page scroll.
+ */
+.roadsafe-workstation .roadsafe-workspace-main {
+  grid-row: 3;
+
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+
+  background: var(--js-workspace, #303030);
+}
+
+/* Reconstruction has no ordinary header/tab rail. */
+.roadsafe-workstation .roadsafe-workspace-main.is-editor {
+  grid-row: 1 / -1;
+
+  height: 100vh !important;
+  min-height: 0 !important;
+
+  overflow: hidden !important;
+}
+
+/* ------------------------------------------------------------- */
+/* Chrome-like tab silhouette                                     */
+/* ------------------------------------------------------------- */
+
+.roadsafe-workstation .roadsafe-tab {
+  position: relative;
+  z-index: 1;
+
+  min-width: 138px !important;
+  max-width: 238px !important;
+  height: 36px !important;
+
+  display: inline-flex !important;
+  flex: 1 1 190px !important;
+  align-items: center !important;
+
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 0 5px 0 6px !important;
+
+  overflow: visible !important;
+
+  border: 1px solid transparent !important;
+  border-bottom: 0 !important;
+  border-radius: 9px 9px 0 0 !important;
+
+  background: #2a2a2a !important;
+  color: #bdbdbd !important;
+
+  box-shadow: none !important;
+
+  transition:
+    background-color 100ms ease,
+    color 100ms ease,
+    border-color 100ms ease !important;
+}
+
+.roadsafe-workstation .roadsafe-tab + .roadsafe-tab::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 8px;
+  bottom: 7px;
+
+  width: 1px;
+
+  background: #444444;
+  opacity: 0.65;
+}
+
+.roadsafe-workstation .roadsafe-tab:hover {
+  background: #343434 !important;
+  color: #ededed !important;
+}
+
+/*
+ * Active tab: brighter, raised, gray-only.
+ * Deliberately no gold/orange border.
+ */
+.roadsafe-workstation .roadsafe-tab.is-active {
+  z-index: 4;
+
+  border-color: #c6c6c6 !important;
+  border-bottom-color: #d7d7d7 !important;
+
+  background: #d7d7d7 !important;
+  color: #202124 !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 -1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.roadsafe-workstation .roadsafe-tab.is-active::before {
+  display: none !important;
+}
+
+.roadsafe-workstation .roadsafe-tab.is-active + .roadsafe-tab::before {
+  display: none !important;
+}
+
+.roadsafe-workstation .roadsafe-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+
+  height: 2px;
+
+  background: #d7d7d7;
+}
+
+/* ------------------------------------------------------------- */
+/* Label + favicon                                                */
+/* ------------------------------------------------------------- */
+
+.roadsafe-workstation .roadsafe-tab-label {
+  min-width: 0;
+  height: 100%;
+
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+
+  gap: 8px !important;
+
+  margin: 0 !important;
+  padding: 0 7px !important;
+
+  overflow: hidden !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  color: inherit !important;
+
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+
+  text-align: left;
+}
+
+.roadsafe-workstation .roadsafe-tab-label > span:last-child {
+  min-width: 0;
+
+  display: block;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workstation .roadsafe-tab-favicon {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  flex: 0 0 14px !important;
+
+  color: #a8a8a8 !important;
+  opacity: 1 !important;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-favicon {
+  color: #4f5357 !important;
+}
+
+/* Old dot styling is disabled even if another stylesheet references it. */
+.roadsafe-workstation .roadsafe-tab-dot {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------- */
+/* Pin + close actions                                            */
+/* ------------------------------------------------------------- */
+
+.roadsafe-workstation .roadsafe-tab-action {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  flex: 0 0 22px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background: transparent !important;
+  color: #949494 !important;
+
+  box-shadow: none !important;
+
+  transition:
+    opacity 90ms ease,
+    background-color 90ms ease,
+    color 90ms ease !important;
+}
+
+.roadsafe-workstation .roadsafe-tab-action svg {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 13px !important;
+}
+
+.roadsafe-workstation .roadsafe-tab-action:hover {
+  background: rgba(255, 255, 255, 0.11) !important;
+  color: #f2f2f2 !important;
+}
+
+/* Pin is secondary, like a browser tab affordance. */
+.roadsafe-workstation
+  .roadsafe-tab-action:not(.roadsafe-tab-close) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab:hover
+  .roadsafe-tab-action:not(.roadsafe-tab-close),
+.roadsafe-workstation
+  .roadsafe-tab.is-pinned
+  .roadsafe-tab-action:not(.roadsafe-tab-close),
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-action:not(.roadsafe-tab-close) {
+  opacity: 0.72;
+  pointer-events: auto;
+}
+
+/*
+ * Chrome behavior:
+ * active tab X is ALWAYS visible;
+ * inactive X appears on hover.
+ */
+.roadsafe-workstation .roadsafe-tab-close {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-close,
+.roadsafe-workstation
+  .roadsafe-tab:hover
+  .roadsafe-tab-close {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-action {
+  color: #55595d !important;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-action:hover {
+  background: rgba(0, 0, 0, 0.10) !important;
+  color: #202124 !important;
+}
+
+/* No orange/gold focus ring in the tab rail. */
+.roadsafe-workstation
+  .roadsafe-tabbar
+  button:focus-visible {
+  outline: 1px solid #9c9c9c !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+
+/* Remove any inherited gold selected border from older theme layers. */
+.roadsafe-workstation .roadsafe-tab,
+.roadsafe-workstation .roadsafe-tab:hover,
+.roadsafe-workstation .roadsafe-tab.is-active,
+.roadsafe-workstation .roadsafe-tab.is-pinned {
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+.roadsafe-workstation .roadsafe-tab.is-active {
+  border-top-color: #c6c6c6 !important;
+  border-left-color: #c6c6c6 !important;
+  border-right-color: #c6c6c6 !important;
+}
+
+/* Compact response without changing the fixed rail behavior. */
+@media (max-width: 900px) {
+  .roadsafe-workstation .roadsafe-tab {
+    min-width: 126px !important;
+    max-width: 205px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .roadsafe-workstation .roadsafe-tabbar {
+    padding-inline: 4px !important;
+  }
+
+  .roadsafe-workstation .roadsafe-tabbar-scroll {
+    padding-inline: 2px !important;
+  }
+
+  .roadsafe-workstation .roadsafe-tab {
+    min-width: 116px !important;
+    max-width: 178px !important;
+  }
+}

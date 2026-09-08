@@ -8,10 +8,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  AppWindow,
   Pin,
   PinOff,
   X,
 } from "../icons/materialIcons";
+import "./WorkspaceRecentTabs.css";
 
 interface RecentWorkspaceTab {
   pathname: string;
@@ -238,8 +240,10 @@ export default function WorkspaceRecentTabs({
                   }
                 }}
               >
-                <span
-                  className="roadsafe-tab-dot"
+                <AppWindow
+                  className="roadsafe-tab-favicon"
+                  size={14}
+                  strokeWidth={1.7}
                   aria-hidden="true"
                 />
                 <span>{tab.label}</span>
