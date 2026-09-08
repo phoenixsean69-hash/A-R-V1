@@ -11,15 +11,20 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  AppWindow,
   BarChart3,
+  Bell,
   Boxes,
   Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   FileText,
   FolderKanban,
+  LogOut,
   Map,
+  Menu,
   Pin,
   PinOff,
   RadioTower,
@@ -36,7 +41,6 @@ import {
   roleLabel,
 } from "../../types/auth";
 import WorkspaceInspector from "./WorkspaceInspector";
-import WorkspaceHeader from "../WorkspaceHeader";
 import {
   WorkspaceRightPanelProvider,
 } from "./WorkspaceRightPanelContext";
@@ -209,6 +213,20 @@ function pageMeta(
   ];
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value || "Not recorded";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 function readStoredBoolean(
   key: string,
   fallback: boolean,
@@ -332,6 +350,8 @@ export default function AppShell() {
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
+  const [profileOpen, setProfileOpen] =
+    useState(false);
   const [desktopCollapsed, setDesktopCollapsed] =
     useState(() =>
       readStoredBoolean(
@@ -361,6 +381,9 @@ export default function AppShell() {
     workspaceRightPanelHost,
     setWorkspaceRightPanelHost,
   ] = useState<HTMLElement | null>(null);
+  const [now, setNow] = useState(
+    () => new Date(),
+  );
 
   useEffect(() => {
     setRecentTabs((currentTabs) => {
@@ -432,6 +455,15 @@ export default function AppShell() {
     [location.pathname],
   );
 
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setNow(new Date()),
+      1_000,
+    );
+
+    return () =>
+      window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     try {
@@ -468,6 +500,7 @@ export default function AppShell() {
 
   useEffect(() => {
     setMobileOpen(false);
+    setProfileOpen(false);
   }, [location.pathname]);
 
   const identity = auth.identity;
@@ -552,6 +585,18 @@ export default function AppShell() {
       ) ?? summary.latestReconstruction
     : summary.latestReconstruction;
 
+  const displayName =
+    identity?.user.name ||
+    identity?.user.email ||
+    "RoadSafe User";
+
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "RS";
 
   const isDashboard =
     location.pathname === "/field" ||
@@ -775,20 +820,149 @@ export default function AppShell() {
 
       <div className="roadsafe-center">
         {!isReconstructionWorkspace && (
-          <WorkspaceHeader
-            title={title}
-            description={description}
-            stationClient={stationClient}
-            homePath={homePath}
-            activeCase={activeCase}
-            activeCases={summary.activeCases}
-            inspectorAvailable={inspectorAvailable}
-            inspectorOpen={inspectorOpen}
-            onToggleInspector={toggleInspector}
-            onOpenNavigation={() =>
-              setMobileOpen(true)
-            }
-          />
+          <header className="roadsafe-workspace-header">
+            <div className="roadsafe-workspace-header-left">
+              <button
+                type="button"
+                className="ui-icon-button roadsafe-mobile-menu-button"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open navigation"
+              >
+                <Menu size={18} />
+              </button>
+
+              <div className="roadsafe-workspace-title">
+                <p className="roadsafe-eyebrow">
+                  {stationClient
+                    ? "Station workspace"
+                    : "Field workspace"}
+                </p>
+                <h1>{title}</h1>
+                <p>{description}</p>
+              </div>
+            </div>
+
+            <div className="roadsafe-workspace-header-right">
+              {activeCase && (
+                <Link
+                  to={`/cases/${activeCase.id}`}
+                  className="roadsafe-active-case-chip"
+                >
+                  <span>Active case</span>
+                  <strong>{activeCase.caseNumber}</strong>
+                  <small>
+                    {formatDate(
+                      activeCase.accidentDate,
+                    )}
+                  </small>
+                </Link>
+              )}
+
+              <div className="roadsafe-header-clock">
+                <strong>
+                  {now.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </strong>
+                <span>
+                  {now.toLocaleDateString([], {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+
+              <Link
+                to={homePath}
+                className="ui-icon-button roadsafe-header-icon"
+                aria-label="Open dashboard"
+              >
+                <AppWindow size={16} />
+              </Link>
+
+              <Link
+                to="/cases"
+                className="ui-icon-button roadsafe-header-icon roadsafe-notification-button"
+                aria-label={`${summary.activeCases} active cases`}
+              >
+                <Bell size={16} />
+                {summary.activeCases > 0 && (
+                  <span>{summary.activeCases}</span>
+                )}
+              </Link>
+
+              {inspectorAvailable && (
+                <button
+                  type="button"
+                  className="ui-button roadsafe-inspector-toggle"
+                  onClick={toggleInspector}
+                  aria-label="Toggle case inspector"
+                  aria-pressed={inspectorOpen}
+                >
+                  <ClipboardList size={15} />
+                  <span>Inspector</span>
+                  {inspectorOpen ? (
+                    <ChevronRight size={14} />
+                  ) : (
+                    <ChevronLeft size={14} />
+                  )}
+                </button>
+              )}
+
+              <div className="roadsafe-profile-menu">
+                <button
+                  type="button"
+                  className="roadsafe-profile-trigger"
+                  onClick={() =>
+                    setProfileOpen(
+                      (value) => !value,
+                    )
+                  }
+                  aria-expanded={profileOpen}
+                >
+                  <span className="roadsafe-profile-avatar">
+                    {initials}
+                  </span>
+                  <span className="roadsafe-profile-copy">
+                    <small>{roleLabel(role)}</small>
+                    <strong>{displayName}</strong>
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+
+                {profileOpen && (
+                  <div className="roadsafe-profile-popover">
+                    <div className="roadsafe-profile-popover-head">
+                      <strong>{displayName}</strong>
+                      <span>{identity?.user.email}</span>
+                    </div>
+
+                    <Link
+                      to="/cases"
+                      onClick={() =>
+                        setProfileOpen(false)
+                      }
+                    >
+                      Investigation cases
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        void auth.signOut();
+                      }}
+                    >
+                      <LogOut size={14} />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
         )}
 
         {!isReconstructionWorkspace && orderedRecentTabs.length > 0 && (

@@ -1,5 +1,5 @@
 /*
- * RoadSafe AR Ã¢â‚¬â€ Balanced Typography
+ * RoadSafe AR â€” Balanced Typography
  *
  * Goal:
  * - large workstation card titles come DOWN
@@ -155,7 +155,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   HEADINGS Ã¢â‚¬â€ LESS OVERSIZED
+   HEADINGS â€” LESS OVERSIZED
    --------------------------------------------------------- */
 
 .roadsafe-workstation h1 {
@@ -199,7 +199,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   RECONSTRUCTION WORKSPACE Ã¢â‚¬â€ FORCE ONE HIERARCHY
+   RECONSTRUCTION WORKSPACE â€” FORCE ONE HIERARCHY
    --------------------------------------------------------- */
 
 /* Main workspace card headings such as CASE SETUP / SCENE ENVIRONMENT */
@@ -237,7 +237,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   SCENE ENVIRONMENT Ã¢â‚¬â€ BRING TITLE DOWN, PROPERTY TEXT UP
+   SCENE ENVIRONMENT â€” BRING TITLE DOWN, PROPERTY TEXT UP
    --------------------------------------------------------- */
 
 .roadsafe-workstation .scene-settings__section-title strong {
@@ -271,7 +271,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   RIGHT CONTEXT INSPECTOR Ã¢â‚¬â€ BRING SMALL TEXT UP
+   RIGHT CONTEXT INSPECTOR â€” BRING SMALL TEXT UP
    --------------------------------------------------------- */
 
 .roadsafe-workstation
@@ -363,7 +363,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   CONTRAST Ã¢â‚¬â€ READABLE WITHOUT LOOKING BRIGHT
+   CONTRAST â€” READABLE WITHOUT LOOKING BRIGHT
    --------------------------------------------------------- */
 
 .roadsafe-workstation .text-slate-700,
@@ -515,89 +515,3 @@ body,
     display: none !important;
   }
 }
-
-/* [RoadSafe:InspectorHeaderButtonOnly:start] */
-/*
- * Surgical fix for the top-header Inspector button only.
- * Keeps icon + "Inspector" + chevron fully visible without clipping.
- */
-.roadsafe-workstation
-  .roadsafe-workspace-header
-  .roadsafe-inspector-toggle {
-  width: 118px !important;
-  min-width: 118px !important;
-  max-width: 118px !important;
-
-  height: 36px !important;
-  min-height: 36px !important;
-
-  display: inline-flex !important;
-  flex: 0 0 118px !important;
-
-  align-items: center !important;
-  justify-content: center !important;
-
-  gap: 6px !important;
-  padding: 0 9px !important;
-
-  overflow: visible !important;
-  white-space: nowrap !important;
-}
-
-.roadsafe-workstation
-  .roadsafe-workspace-header
-  .roadsafe-inspector-toggle
-  > span:not(.roadsafe-material-icon),
-.roadsafe-workstation
-  .roadsafe-workspace-header
-  .roadsafe-inspector-toggle-label {
-  display: inline-block !important;
-
-  min-width: 0 !important;
-  overflow: visible !important;
-
-  font-size: 11px !important;
-  font-weight: 650 !important;
-  line-height: 1.2 !important;
-
-  text-overflow: clip !important;
-  white-space: nowrap !important;
-}
-
-.roadsafe-workstation
-  .roadsafe-workspace-header
-  .roadsafe-inspector-toggle
-  svg {
-  width: 15px !important;
-  min-width: 15px !important;
-  height: 15px !important;
-  flex: 0 0 15px !important;
-}
-
-/* Only collapse this single control on genuinely narrow header widths. */
-@container roadsafe-header (max-width: 620px) {
-  .roadsafe-workstation
-    .roadsafe-workspace-header
-    .roadsafe-inspector-toggle {
-    width: 36px !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
-    flex-basis: 36px !important;
-    padding: 0 !important;
-  }
-
-  .roadsafe-workstation
-    .roadsafe-workspace-header
-    .roadsafe-inspector-toggle
-    > span:not(.roadsafe-material-icon),
-  .roadsafe-workstation
-    .roadsafe-workspace-header
-    .roadsafe-inspector-toggle-label,
-  .roadsafe-workstation
-    .roadsafe-workspace-header
-    .roadsafe-inspector-toggle
-    svg:last-child {
-    display: none !important;
-  }
-}
-/* [RoadSafe:InspectorHeaderButtonOnly:end] */

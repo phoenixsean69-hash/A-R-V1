@@ -1,0 +1,390 @@
+/*
+ * WorkspaceHeader owns the top workstation strip.
+ *
+ * This file intentionally has more specific selectors than the older
+ * repo-wide typography/theme layers. The header should stay compact,
+ * but controls and text must never be vertically clipped.
+ */
+
+.roadsafe-workstation .roadsafe-workspace-header {
+  container-type: inline-size;
+  container-name: roadsafe-workspace-header;
+
+  min-width: 0;
+  min-height: 60px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 7px 14px;
+  overflow: visible;
+
+  border-bottom: 1px solid var(--roadsafe-ui-border, #171717);
+  background:
+    linear-gradient(180deg, #252525 0%, #202020 100%);
+}
+
+.roadsafe-workstation .roadsafe-workspace-header-left {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.roadsafe-workstation .roadsafe-workspace-header-right {
+  min-width: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  overflow: visible;
+}
+
+.roadsafe-workstation .roadsafe-workspace-title {
+  min-width: 0;
+  max-width: 100%;
+  padding: 1px 0 1px 11px;
+  overflow: hidden;
+
+  border-left: 3px solid var(--roadsafe-ui-accent, #e8872d);
+}
+
+.roadsafe-workstation .roadsafe-workspace-title .roadsafe-eyebrow {
+  margin: 0 0 2px;
+  overflow: hidden;
+
+  color: var(--roadsafe-ui-muted, #969696);
+  font-size: 9px !important;
+  font-weight: 760;
+  line-height: 1.2 !important;
+  letter-spacing: 0.11em;
+
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.roadsafe-workstation .roadsafe-workspace-title h1 {
+  margin: 0;
+  overflow: hidden;
+
+  color: var(--roadsafe-ui-text, #dedede);
+  font-size: 14px !important;
+  font-weight: 720;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workstation .roadsafe-workspace-title > p:last-child {
+  margin: 2px 0 0;
+  overflow: hidden;
+
+  color: var(--roadsafe-ui-muted, #969696);
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Every header control uses one stable vertical rhythm. */
+.roadsafe-workstation .roadsafe-workspace-header button,
+.roadsafe-workstation .roadsafe-workspace-header .ui-button,
+.roadsafe-workstation .roadsafe-workspace-header .ui-icon-button,
+.roadsafe-workstation .roadsafe-workspace-header a.ui-icon-button {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+.roadsafe-workstation .roadsafe-header-square-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  flex: 0 0 36px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.roadsafe-workstation .roadsafe-header-square-button svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
+/* Active case: never squeeze its text into a clipped box. */
+.roadsafe-workstation .roadsafe-active-case-chip {
+  min-width: max-content;
+  min-height: 40px;
+  flex: 0 0 auto;
+
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: center;
+  column-gap: 8px;
+
+  padding: 5px 9px;
+  overflow: hidden;
+}
+
+.roadsafe-workstation .roadsafe-active-case-chip span,
+.roadsafe-workstation .roadsafe-active-case-chip small {
+  font-size: 8px !important;
+  line-height: 1.15 !important;
+}
+
+.roadsafe-workstation .roadsafe-active-case-chip strong {
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+/* Clock uses tabular numerals and enough height for both rows. */
+.roadsafe-workstation .roadsafe-header-clock {
+  min-width: 92px;
+  min-height: 40px;
+  flex: 0 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: 2px 12px;
+  overflow: visible;
+}
+
+.roadsafe-workstation .roadsafe-header-clock strong {
+  font-size: 16px !important;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05 !important;
+}
+
+.roadsafe-workstation .roadsafe-header-clock span {
+  margin-top: 3px;
+
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+}
+
+/* Inspector control keeps icon, label and chevron centered. */
+.roadsafe-workstation .roadsafe-inspector-toggle {
+  min-width: 104px;
+  width: auto;
+  height: 36px !important;
+  min-height: 36px !important;
+  flex: 0 0 auto;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+
+  padding: 0 9px !important;
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+.roadsafe-workstation .roadsafe-inspector-toggle svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.roadsafe-workstation .roadsafe-inspector-toggle-label {
+  display: block !important;
+  min-width: 0;
+
+  overflow: visible;
+  font-size: 11px !important;
+  font-weight: 650;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+}
+
+/* Profile control: no fixed 116px text box, no cropped ascenders/descenders. */
+.roadsafe-workstation .roadsafe-profile-menu {
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.roadsafe-workstation .roadsafe-profile-trigger {
+  width: clamp(178px, 15vw, 250px);
+  min-width: 178px;
+  min-height: 44px;
+  height: auto;
+  flex: 0 0 auto;
+
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+
+  padding: 5px 8px !important;
+  overflow: visible;
+  white-space: normal;
+}
+
+.roadsafe-workstation .roadsafe-profile-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+.roadsafe-workstation .roadsafe-profile-copy {
+  width: auto !important;
+  min-width: 0;
+  max-width: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.roadsafe-workstation .roadsafe-profile-copy small,
+.roadsafe-workstation .roadsafe-profile-copy strong {
+  display: block;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+
+  line-height: 1.2 !important;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-workstation .roadsafe-profile-copy small {
+  color: var(--roadsafe-ui-muted, #969696);
+  font-size: 9px !important;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.roadsafe-workstation .roadsafe-profile-copy strong {
+  margin-top: 3px;
+  color: var(--roadsafe-ui-text, #dedede);
+  font-size: 11px !important;
+  font-weight: 680;
+}
+
+.roadsafe-workstation .roadsafe-profile-chevron {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+/* Notification badge must sit outside the button without being cropped. */
+.roadsafe-workstation .roadsafe-notification-button {
+  position: relative;
+  overflow: visible !important;
+}
+
+.roadsafe-workstation
+  .roadsafe-notification-button
+  > span:not(.roadsafe-material-icon) {
+  top: -5px;
+  right: -5px;
+
+  min-width: 17px;
+  height: 17px;
+
+  padding: 0 4px;
+  overflow: visible;
+
+  font-size: 8px !important;
+  line-height: 15px !important;
+}
+
+/*
+ * Container-responsive reduction.
+ * We remove low-priority information before any control is allowed to clip.
+ */
+@container roadsafe-workspace-header (max-width: 980px) {
+  .roadsafe-workstation .roadsafe-active-case-chip {
+    display: none;
+  }
+
+  .roadsafe-workstation .roadsafe-profile-trigger {
+    width: 184px;
+    min-width: 184px;
+  }
+}
+
+@container roadsafe-workspace-header (max-width: 800px) {
+  .roadsafe-workstation .roadsafe-header-clock {
+    display: none;
+  }
+
+  .roadsafe-workstation .roadsafe-profile-trigger {
+    width: 164px;
+    min-width: 164px;
+  }
+}
+
+@container roadsafe-workspace-header (max-width: 660px) {
+  .roadsafe-workstation .roadsafe-workspace-title > p:last-child {
+    display: none;
+  }
+
+  .roadsafe-workstation .roadsafe-inspector-toggle {
+    width: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+  }
+
+  .roadsafe-workstation .roadsafe-inspector-toggle-label,
+  .roadsafe-workstation .roadsafe-inspector-toggle svg:last-child {
+    display: none !important;
+  }
+
+  .roadsafe-workstation .roadsafe-profile-trigger {
+    width: 44px;
+    min-width: 44px;
+    grid-template-columns: 30px;
+    justify-content: center;
+    padding: 5px 6px !important;
+  }
+
+  .roadsafe-workstation .roadsafe-profile-copy,
+  .roadsafe-workstation .roadsafe-profile-chevron {
+    display: none !important;
+  }
+}
+
+@container roadsafe-workspace-header (max-width: 520px) {
+  .roadsafe-workstation .roadsafe-header-icon {
+    display: none !important;
+  }
+
+  .roadsafe-workstation .roadsafe-workspace-title .roadsafe-eyebrow {
+    display: none;
+  }
+
+  .roadsafe-workstation .roadsafe-workspace-header {
+    gap: 7px;
+    padding-inline: 8px;
+  }
+
+  .roadsafe-workstation .roadsafe-workspace-title {
+    padding-left: 8px;
+  }
+}
