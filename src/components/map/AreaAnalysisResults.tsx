@@ -162,7 +162,7 @@ export default function AreaAnalysisResults({
 
         <div className="rounded border border-[#494949] bg-[#292929] px-2.5 py-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[7px] uppercase tracking-[0.08em] text-slate-500">
+            <span className="text-[8px] font-semibold uppercase tracking-[0.08em] text-[#a9a9a9]">
               Overall filtered risk
             </span>
             <span
@@ -173,15 +173,15 @@ export default function AreaAnalysisResults({
               {analysis.overallRiskLevel}
             </span>
           </div>
-          <p className="mt-1.5 truncate text-[8px] text-slate-400">
+          <p className="mt-1.5 truncate text-[9px] font-medium text-[#c4c4c4]">
             Top cause: {topCause.label} · {topCause.sharePct}%
           </p>
-          <p className="mt-1 truncate text-[8px] text-slate-500">
+          <p className="mt-1 truncate text-[9px] text-[#a9a9a9]">
             Peak band: {peakTime.label}
           </p>
         </div>
 
-        <div className="rounded border border-[#494949] bg-[#292929] px-2.5 py-2 text-[7px] leading-4 text-slate-500">
+        <div className="rounded border border-[#494949] bg-[#292929] px-2.5 py-2 text-[9px] leading-4 text-[#a9a9a9]">
           Selected area contains {selectedCrashShare}% of crashes and{" "}
           {selectedCasualtyShare}% of casualties in the current filter sample.
         </div>
@@ -352,8 +352,8 @@ function CompactMetric({
 }) {
   return (
     <div className="rounded border border-[#494949] bg-[#292929] px-1.5 py-2 text-center">
-      <p className="text-[11px] font-bold text-slate-100">{value}</p>
-      <p className="mt-0.5 text-[6px] uppercase tracking-[0.06em] text-slate-500">
+      <p className="text-[13px] font-bold text-[#f0f0f0]">{value}</p>
+      <p className="mt-1 text-[8px] font-semibold uppercase tracking-[0.07em] text-[#a9a9a9]">
         {label}
       </p>
     </div>
