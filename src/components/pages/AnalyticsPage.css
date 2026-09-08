@@ -1450,3 +1450,324 @@
     text-align: left;
   }
 }
+
+/* ROADSAFE_ANALYTICS_INTERACTION_V4_START */
+
+.roadsafe-analytics-chart-card__plot canvas {
+  cursor: crosshair;
+}
+
+.roadsafe-analytics-chart-context {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, .72fr))
+    minmax(270px, 1.55fr);
+
+  gap: 8px;
+
+  padding:
+    0
+    10px
+    10px;
+}
+
+.roadsafe-analytics-context-card,
+.roadsafe-analytics-selected-datum {
+  min-width: 0;
+
+  border: 1px solid #3f3f3f;
+  border-radius: 3px;
+
+  background: #252525;
+
+  color: #c9c9c9;
+}
+
+.roadsafe-analytics-context-card {
+  min-height: 78px;
+
+  display: grid;
+  grid-template-columns:
+    28px
+    minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 9px;
+
+  font: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background-color 90ms ease,
+    border-color 90ms ease,
+    transform 90ms ease;
+}
+
+.roadsafe-analytics-context-card:hover:not(:disabled),
+.roadsafe-analytics-context-card:focus-visible {
+  border-color: #595959;
+
+  background: #2d2d2d;
+
+  transform: translateY(-1px);
+
+  outline: none;
+}
+
+.roadsafe-analytics-context-card:disabled {
+  opacity: .42;
+
+  cursor: default;
+}
+
+.roadsafe-analytics-context-card
+  > .roadsafe-material-icon {
+  color: #e8872d;
+}
+
+.roadsafe-analytics-context-card > span {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 2px;
+}
+
+.roadsafe-analytics-context-card small,
+.roadsafe-analytics-selected-datum small {
+  color: #858585;
+
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: .04em;
+
+  text-transform: uppercase;
+}
+
+.roadsafe-analytics-context-card strong {
+  overflow: hidden;
+
+  color: #e7e7e7;
+
+  font-size: 11px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-analytics-context-card em {
+  overflow: hidden;
+
+  color: #969696;
+
+  font-size: 9px;
+  font-style: normal;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-analytics-selected-datum {
+  min-height: 78px;
+
+  display: grid;
+  grid-template-columns:
+    28px
+    minmax(0, 1fr);
+
+  align-items: start;
+
+  gap: 8px;
+
+  padding: 9px;
+}
+
+.roadsafe-analytics-selected-datum
+  > .roadsafe-material-icon {
+  margin-top: 2px;
+
+  color: #e8872d;
+}
+
+.roadsafe-analytics-selected-datum > div {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 3px;
+}
+
+.roadsafe-analytics-selected-datum strong {
+  color: #eeeeee;
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.roadsafe-analytics-selected-datum p {
+  margin: 0;
+
+  color: #929292;
+
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.roadsafe-analytics-selected-datum__metrics {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 5px;
+
+  margin-top: 3px;
+}
+
+.roadsafe-analytics-selected-datum__metrics > span {
+  display: inline-grid;
+
+  gap: 1px;
+
+  padding:
+    4px
+    6px;
+
+  border: 1px solid #414141;
+  border-radius: 2px;
+
+  background: #202020;
+}
+
+.roadsafe-analytics-selected-datum__metrics b {
+  max-width: 220px;
+
+  overflow: hidden;
+
+  color: #d9d9d9;
+
+  font-size: 9px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-analytics-selected-datum__actions {
+  display: flex;
+
+  gap: 5px;
+
+  margin-top: 3px;
+}
+
+.roadsafe-analytics-selected-datum__actions button {
+  min-height: 25px;
+
+  padding:
+    0
+    8px;
+
+  border: 1px solid #4d4d4d;
+  border-radius: 3px;
+
+  background: #2d2d2d;
+
+  color: #cfcfcf;
+
+  font: inherit;
+  font-size: 8px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.roadsafe-analytics-selected-datum__actions button:first-child {
+  border-color: #67492f;
+
+  background: #35291f;
+
+  color: #e8a669;
+}
+
+.roadsafe-analytics-selected-datum__actions button:hover {
+  background: #383838;
+}
+
+.roadsafe-analytics-kpi,
+.roadsafe-analytics-finding,
+.roadsafe-analytics-time-row,
+.roadsafe-analytics-cause-row,
+.roadsafe-analytics-junction-list > div {
+  cursor: pointer;
+
+  transition:
+    background-color 90ms ease,
+    border-color 90ms ease,
+    transform 90ms ease;
+}
+
+.roadsafe-analytics-kpi:hover,
+.roadsafe-analytics-kpi:focus-visible {
+  border-color: #4d4d4d;
+
+  background: #2e2e2e;
+
+  transform: translateY(-1px);
+
+  outline: none;
+}
+
+.roadsafe-analytics-finding:hover,
+.roadsafe-analytics-finding:focus-visible {
+  background: #2e2e2e;
+
+  outline: none;
+}
+
+.roadsafe-analytics-time-row:hover,
+.roadsafe-analytics-time-row:focus-visible,
+.roadsafe-analytics-cause-row:hover,
+.roadsafe-analytics-cause-row:focus-visible,
+.roadsafe-analytics-junction-list > div:hover,
+.roadsafe-analytics-junction-list > div:focus-visible {
+  background: #303030;
+
+  outline: none;
+}
+
+.roadsafe-analytics-junction-list > div.is-top:hover {
+  background: #43362a;
+}
+
+@media (max-width: 1200px) {
+  .roadsafe-analytics-chart-context {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .roadsafe-analytics-selected-datum {
+    grid-column:
+      1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .roadsafe-analytics-chart-context {
+    grid-template-columns:
+      1fr;
+  }
+
+  .roadsafe-analytics-selected-datum {
+    grid-column:
+      auto;
+  }
+}
+
+/* ROADSAFE_ANALYTICS_INTERACTION_V4_END */

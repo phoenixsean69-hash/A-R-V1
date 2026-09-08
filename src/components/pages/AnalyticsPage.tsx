@@ -9,7 +9,10 @@ import {
   LineElement,
   PointElement,
   Tooltip,
+  type ActiveElement,
+  type ChartEvent,
   type Plugin,
+
 } from "chart.js";
 import {
   Bar,
@@ -145,6 +148,24 @@ const chartSurfacePlugin:
       },
     };
 
+interface AnalyticsInteraction {
+  eyebrow: string;
+  title: string;
+  summary: string;
+  metrics: Array<{
+    label: string;
+    value: string;
+  }>;
+  action?: {
+    label: string;
+    kind:
+      | "month"
+      | "cause"
+      | "junction"
+      | "severity";
+    value: string;
+  };
+}
 function signed(
   value: number,
 ): string {
@@ -203,6 +224,9 @@ function percentageWidth(
 
 function lineOptions(
   maxTicks = 6,
+  onSelect?: (
+    index: number,
+  ) => void,
 ) {
   return {
     responsive:
@@ -210,6 +234,23 @@ function lineOptions(
 
     maintainAspectRatio:
       false,
+
+    onClick: (
+      _event: ChartEvent,
+      elements: ActiveElement[],
+    ) => {
+      const index =
+        elements[0]?.index;
+
+      if (
+        index !== undefined
+      ) {
+        onSelect?.(
+          index,
+        );
+      }
+    },
+
 
     interaction: {
       intersect:
@@ -300,6 +341,9 @@ function lineOptions(
 
 function barOptions(
   horizontal = false,
+  onSelect?: (
+    index: number,
+  ) => void,
 ) {
   return {
     responsive:
@@ -307,6 +351,23 @@ function barOptions(
 
     maintainAspectRatio:
       false,
+
+    onClick: (
+      _event: ChartEvent,
+      elements: ActiveElement[],
+    ) => {
+      const index =
+        elements[0]?.index;
+
+      if (
+        index !== undefined
+      ) {
+        onSelect?.(
+          index,
+        );
+      }
+    },
+
 
     indexAxis:
       horizontal
@@ -385,13 +446,34 @@ function barOptions(
   };
 }
 
-function doughnutOptions() {
+function doughnutOptions(
+  onSelect?: (
+    index: number,
+  ) => void,
+) {
   return {
     responsive:
       true,
 
     maintainAspectRatio:
       false,
+
+    onClick: (
+      _event: ChartEvent,
+      elements: ActiveElement[],
+    ) => {
+      const index =
+        elements[0]?.index;
+
+      if (
+        index !== undefined
+      ) {
+        onSelect?.(
+          index,
+        );
+      }
+    },
+
 
     cutout:
       "62%",
@@ -456,6 +538,13 @@ export default function AnalyticsPage() {
     chartPage,
     setChartPage,
   ] = useState(0);
+  const [
+    interaction,
+    setInteraction,
+  ] =
+    useState<AnalyticsInteraction | null>(
+      null,
+    );
 
   const model =
     useMemo(
@@ -655,6 +744,504 @@ export default function AnalyticsPage() {
       4,
     );
 
+  const setMonthSelection = (
+    index: number,
+    source: string,
+  ): void => {
+    const row =
+      model.monthly[index];
+
+    if (!row) {
+      return;
+    }
+
+    const severeRate =
+      row.accidents
+        ? (
+            (row.severeAccidents /
+              row.accidents) *
+            100
+          ).toFixed(1)
+        : "0.0";
+
+    const intensity =
+      row.accidents
+        ? (
+            row.casualties /
+            row.accidents
+          ).toFixed(2)
+        : "0.00";
+
+    setInteraction({
+      eyebrow:
+        source,
+      title:
+        row.label,
+      summary:
+        "Monthly crash statistics from the current analytical sample.",
+      metrics: [
+        {
+          label:
+            "Crashes",
+          value:
+            String(
+              row.accidents,
+            ),
+        },
+        {
+          label:
+            "Severe",
+          value:
+            `${severeRate}%`,
+        },
+        {
+          label:
+            "Casualties",
+          value:
+            String(
+              row.casualties,
+            ),
+        },
+        {
+          label:
+            "Casualties/crash",
+          value:
+            intensity,
+        },
+      ],
+      action: {
+        label:
+          "Filter to month",
+        kind:
+          "month",
+        value:
+          row.key,
+      },
+    });
+  };
+
+  const setCauseSelection = (
+    label: string,
+  ): void => {
+    const row =
+      model.causes.find(
+        (item) =>
+          item.label ===
+          label,
+      );
+
+    if (!row) {
+      return;
+    }
+
+    setInteraction({
+      eyebrow:
+        "Cause diagnostic",
+      title:
+        row.label,
+      summary:
+        "Recorded cause statistics from the current filtered sample.",
+      metrics: [
+        {
+          label:
+            "Crashes",
+          value:
+            String(
+              row.accidents,
+            ),
+        },
+        {
+          label:
+            "Share",
+          value:
+            `${row.sharePct}%`,
+        },
+        {
+          label:
+            "Severe",
+          value:
+            `${row.severeRatePct}%`,
+        },
+        {
+          label:
+            "Casualties/crash",
+          value:
+            row.casualtiesPerAccident.toFixed(
+              2,
+            ),
+        },
+      ],
+      action: {
+        label:
+          "Filter to cause",
+        kind:
+          "cause",
+        value:
+          row.label,
+      },
+    });
+  };
+
+  const setSeveritySelection = (
+    index: number,
+  ): void => {
+    const labels:
+      AnalyticsSeverityFilter[] = [
+        "Minor",
+        "Serious",
+        "Fatal",
+      ];
+
+    const counts = [
+      severityMix.minor,
+      severityMix.serious,
+      severityMix.fatal,
+    ];
+
+    const label =
+      labels[index];
+
+    if (!label) {
+      return;
+    }
+
+    setInteraction({
+      eyebrow:
+        "Severity mix",
+      title:
+        label,
+      summary:
+        "Severity segment selected from the current filtered sample.",
+      metrics: [
+        {
+          label:
+            "Crashes",
+          value:
+            String(
+              counts[index] ??
+                0,
+            ),
+        },
+        {
+          label:
+            "Filtered sample",
+          value:
+            String(
+              model.kpis
+                .totalAccidents,
+            ),
+        },
+      ],
+      action: {
+        label:
+          `Filter to ${label}`,
+        kind:
+          "severity",
+        value:
+          label,
+      },
+    });
+  };
+
+  const setJunctionSelection = (
+    index: number,
+  ): void => {
+    const row =
+      model.junctions
+        .slice(
+          0,
+          5,
+        )[index];
+
+    if (!row) {
+      return;
+    }
+
+    setInteraction({
+      eyebrow:
+        "Junction risk",
+      title:
+        row.name,
+      summary:
+        `${row.priority}. ${row.topCause} is the leading recorded cause.`,
+      metrics: [
+        {
+          label:
+            "Risk",
+          value:
+            String(
+              row.riskScore,
+            ),
+        },
+        {
+          label:
+            "Crashes",
+          value:
+            String(
+              row.accidents,
+            ),
+        },
+        {
+          label:
+            "Severe",
+          value:
+            `${row.severeRatePct}%`,
+        },
+        {
+          label:
+            "Peak",
+          value:
+            row.peakTimeBand,
+        },
+      ],
+      action: {
+        label:
+          "Filter to junction",
+        kind:
+          "junction",
+        value:
+          row.id,
+      },
+    });
+  };
+
+  const setTimeSelection = (
+    label: string,
+  ): void => {
+    const row =
+      model.timeBands.find(
+        (item) =>
+          item.label ===
+          label,
+      );
+
+    if (!row) {
+      return;
+    }
+
+    setInteraction({
+      eyebrow:
+        "Time band",
+      title:
+        row.label,
+      summary:
+        "Time concentration for the current filtered crash sample.",
+      metrics: [
+        {
+          label:
+            "Crashes",
+          value:
+            String(
+              row.accidents,
+            ),
+        },
+        {
+          label:
+            "Share",
+          value:
+            `${row.sharePct}%`,
+        },
+        {
+          label:
+            "Severe",
+          value:
+            `${row.severeRatePct}%`,
+        },
+        {
+          label:
+            "Severity index",
+          value:
+            row.severityIndex.toFixed(
+              2,
+            ),
+        },
+      ],
+    });
+  };
+
+  const setFindingSelection = (
+    index: number,
+  ): void => {
+    const finding =
+      findings[index];
+
+    if (!finding) {
+      return;
+    }
+
+    setInteraction({
+      eyebrow:
+        `${finding.level} finding`,
+      title:
+        finding.title,
+      summary:
+        finding.statement,
+      metrics: [
+        {
+          label:
+            "Evidence",
+          value:
+            finding.evidence,
+        },
+      ],
+    });
+  };
+
+  const setSampleSelection =
+    (): void => {
+      setInteraction({
+        eyebrow:
+          "Current sample",
+        title:
+          `${model.kpis.totalAccidents} filtered crashes`,
+        summary:
+          `${model.kpis.severeAccidents} serious/fatal crashes and ${model.kpis.casualties} casualties are currently included.`,
+        metrics: [
+          {
+            label:
+              "Severe rate",
+            value:
+              `${model.kpis.severeRatePct}%`,
+          },
+          {
+            label:
+              "Severity index",
+            value:
+              model.kpis.severityIndex.toFixed(
+                2,
+              ),
+          },
+          {
+            label:
+              "Casualties/crash",
+            value:
+              model.kpis.casualtiesPerAccident.toFixed(
+                2,
+              ),
+          },
+        ],
+      });
+    };
+
+  const handleKpiClick = (
+    label: string,
+  ): void => {
+    if (
+      label ===
+        "Highest-risk junction"
+    ) {
+      setJunctionSelection(
+        0,
+      );
+      return;
+    }
+
+    if (
+      label ===
+        "Peak time band" &&
+      peakTimeBand
+    ) {
+      setTimeSelection(
+        peakTimeBand.label,
+      );
+      return;
+    }
+
+    setSampleSelection();
+  };
+
+  const applyInteraction =
+    (): void => {
+      const action =
+        interaction?.action;
+
+      if (!action) {
+        return;
+      }
+
+      if (
+        action.kind ===
+        "cause"
+      ) {
+        updateFilter(
+          "cause",
+          action.value,
+        );
+        return;
+      }
+
+      if (
+        action.kind ===
+        "junction"
+      ) {
+        updateFilter(
+          "junctionId",
+          action.value,
+        );
+        return;
+      }
+
+      if (
+        action.kind ===
+        "severity"
+      ) {
+        updateFilter(
+          "severity",
+          action.value as
+            AnalyticsSeverityFilter,
+        );
+        return;
+      }
+
+      const [
+        yearText,
+        monthText,
+      ] =
+        action.value.split(
+          "-",
+        );
+
+      const year =
+        Number(
+          yearText,
+        );
+
+      const month =
+        Number(
+          monthText,
+        );
+
+      if (
+        !year ||
+        !month
+      ) {
+        return;
+      }
+
+      const endDay =
+        new Date(
+          year,
+          month,
+          0,
+        ).getDate();
+
+      setFilters(
+        (
+          current,
+        ) => ({
+          ...current,
+          startDate:
+            `${action.value}-01`,
+          endDate:
+            `${action.value}-${String(
+              endDay,
+            ).padStart(
+              2,
+              "0",
+            )}`,
+        }),
+      );
+    };
   const chartCards:
     Array<{
       key: string;
@@ -716,7 +1303,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={lineOptions()}
+            options={lineOptions(6, (index) => setMonthSelection(index, "Crash volume"))}
           />
         ),
       },
@@ -767,7 +1354,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={lineOptions()}
+            options={lineOptions(6, (index) => setMonthSelection(index, "Severe outcomes"))}
           />
         ),
       },
@@ -814,7 +1401,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={barOptions()}
+            options={barOptions(false, (index) => setMonthSelection(index, "Casualties"))}
           />
         ),
       },
@@ -875,7 +1462,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={lineOptions()}
+            options={lineOptions(6, (index) => setMonthSelection(index, "Severe rate"))}
           />
         ),
       },
@@ -935,7 +1522,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={lineOptions()}
+            options={lineOptions(6, (index) => setMonthSelection(index, "Casualty intensity"))}
           />
         ),
       },
@@ -979,7 +1566,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={doughnutOptions()}
+            options={doughnutOptions(setSeveritySelection)}
           />
         ),
       },
@@ -1040,7 +1627,20 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={doughnutOptions()}
+            options={doughnutOptions((index) => {
+              const row =
+                model.causes
+                  .slice(
+                    0,
+                    6,
+                  )[index];
+
+              if (row) {
+                setCauseSelection(
+                  row.label,
+                );
+              }
+            })}
           />
         ),
       },
@@ -1100,9 +1700,7 @@ export default function AnalyticsPage() {
                 },
               ],
             }}
-            options={barOptions(
-              true,
-            )}
+            options={barOptions(true, setJunctionSelection)}
           />
         ),
       },
@@ -1414,6 +2012,25 @@ export default function AnalyticsPage() {
             <article
               key={label}
               className={`roadsafe-analytics-kpi is-${accent}`}
+            role="button"
+              tabIndex={0}
+              onClick={() =>
+                handleKpiClick(
+                  label,
+                )
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" ||
+                  event.key === " "
+                ) {
+                  event.preventDefault();
+
+                  handleKpiClick(
+                    label,
+                  );
+                }
+              }}
             >
               <div className="roadsafe-analytics-kpi__icon">
                 <Icon
@@ -1577,7 +2194,180 @@ export default function AnalyticsPage() {
               ),
             )}
           </div>
-        </section>
+                  <div className="roadsafe-analytics-chart-context">
+            <button
+              type="button"
+              className="roadsafe-analytics-context-card"
+              onClick={
+                setSampleSelection
+              }
+            >
+              <Database
+                size={17}
+              />
+
+              <span>
+                <small>
+                  Current sample
+                </small>
+
+                <strong>
+                  {model.kpis.totalAccidents} crashes
+                </strong>
+
+                <em>
+                  {model.kpis.severeRatePct}% severe - {model.kpis.casualties} casualties
+                </em>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="roadsafe-analytics-context-card"
+              disabled={
+                !highestRisk
+              }
+              onClick={() =>
+                setJunctionSelection(
+                  0,
+                )
+              }
+            >
+              <MapPin
+                size={17}
+              />
+
+              <span>
+                <small>
+                  Highest risk
+                </small>
+
+                <strong>
+                  {highestRisk?.name ?? "No junction"}
+                </strong>
+
+                <em>
+                  {highestRisk
+                    ? `Score ${highestRisk.riskScore} - ${highestRisk.priority}`
+                    : "No junction risk available"}
+                </em>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="roadsafe-analytics-context-card"
+              disabled={
+                !peakTimeBand
+              }
+              onClick={() => {
+                if (
+                  peakTimeBand
+                ) {
+                  setTimeSelection(
+                    peakTimeBand.label,
+                  );
+                }
+              }}
+            >
+              <Clock3
+                size={17}
+              />
+
+              <span>
+                <small>
+                  Peak period
+                </small>
+
+                <strong>
+                  {peakTimeBand?.label ?? "No time band"}
+                </strong>
+
+                <em>
+                  {peakTimeBand
+                    ? `${peakTimeBand.sharePct}% share - ${peakTimeBand.severeRatePct}% severe`
+                    : "No time pattern available"}
+                </em>
+              </span>
+            </button>
+
+            <article className="roadsafe-analytics-selected-datum">
+              <Activity
+                size={17}
+              />
+
+              <div>
+                <small>
+                  {interaction?.eyebrow ?? "Selected datum"}
+                </small>
+
+                <strong>
+                  {interaction?.title ?? "Click a point, bar or slice"}
+                </strong>
+
+                <p>
+                  {interaction?.summary ??
+                    "Chart selections show their supporting statistics here."}
+                </p>
+
+                {interaction && (
+                  <div className="roadsafe-analytics-selected-datum__metrics">
+                    {interaction.metrics.map(
+                      (
+                        metric,
+                      ) => (
+                        <span
+                          key={
+                            metric.label
+                          }
+                        >
+                          <small>
+                            {
+                              metric.label
+                            }
+                          </small>
+
+                          <b>
+                            {
+                              metric.value
+                            }
+                          </b>
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
+
+                {interaction?.action && (
+                  <div className="roadsafe-analytics-selected-datum__actions">
+                    <button
+                      type="button"
+                      onClick={
+                        applyInteraction
+                      }
+                    >
+                      {
+                        interaction.action
+                          .label
+                      }
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setInteraction(
+                          null,
+                        )
+                      }
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+            </article>
+          </div>
+</section>
 
         <section className="roadsafe-analytics-panel roadsafe-analytics-findings">
           <PanelHeader
@@ -1598,6 +2388,25 @@ export default function AnalyticsPage() {
                       finding.id
                     }
                     className="roadsafe-analytics-finding"
+                  role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setFindingSelection(
+                        index,
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                      ) {
+                        event.preventDefault();
+
+                        setFindingSelection(
+                          index,
+                        );
+                      }
+                    }}
                   >
                     <span
                       className={`roadsafe-analytics-finding__rank is-${finding.level.toLowerCase()}`}
@@ -1690,6 +2499,13 @@ export default function AnalyticsPage() {
                     row.label
                   }
                   className="roadsafe-analytics-time-row"
+                role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    setTimeSelection(
+                      row.label,
+                    )
+                  }
                 >
                   <strong>
                     {row.label}
@@ -1772,6 +2588,13 @@ export default function AnalyticsPage() {
                       row.label
                     }
                     className="roadsafe-analytics-cause-row"
+                  role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setCauseSelection(
+                        row.label,
+                      )
+                    }
                   >
                     <strong>
                       {
@@ -1918,6 +2741,13 @@ export default function AnalyticsPage() {
                       index === 0
                         ? "is-top"
                         : ""
+                    }
+                  role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setJunctionSelection(
+                        index,
+                      )
                     }
                   >
                     <span>
