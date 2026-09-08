@@ -1,5 +1,5 @@
 /*
- * RoadSafe AR â€” Balanced Typography
+ * RoadSafe AR — Balanced Typography
  *
  * Goal:
  * - large workstation card titles come DOWN
@@ -155,7 +155,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   HEADINGS â€” LESS OVERSIZED
+   HEADINGS — LESS OVERSIZED
    --------------------------------------------------------- */
 
 .roadsafe-workstation h1 {
@@ -199,7 +199,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   RECONSTRUCTION WORKSPACE â€” FORCE ONE HIERARCHY
+   RECONSTRUCTION WORKSPACE — FORCE ONE HIERARCHY
    --------------------------------------------------------- */
 
 /* Main workspace card headings such as CASE SETUP / SCENE ENVIRONMENT */
@@ -237,7 +237,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   SCENE ENVIRONMENT â€” BRING TITLE DOWN, PROPERTY TEXT UP
+   SCENE ENVIRONMENT — BRING TITLE DOWN, PROPERTY TEXT UP
    --------------------------------------------------------- */
 
 .roadsafe-workstation .scene-settings__section-title strong {
@@ -271,7 +271,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   RIGHT CONTEXT INSPECTOR â€” BRING SMALL TEXT UP
+   RIGHT CONTEXT INSPECTOR — BRING SMALL TEXT UP
    --------------------------------------------------------- */
 
 .roadsafe-workstation
@@ -363,7 +363,7 @@ body,
 }
 
 /* ---------------------------------------------------------
-   CONTRAST â€” READABLE WITHOUT LOOKING BRIGHT
+   CONTRAST — READABLE WITHOUT LOOKING BRIGHT
    --------------------------------------------------------- */
 
 .roadsafe-workstation .text-slate-700,
@@ -488,7 +488,7 @@ body,
   .roadsafe-active-case-chip,
   .roadsafe-header-clock,
   .roadsafe-header-icon,
-  .roadsafe-inspector-toggle > span:not(.roadsafe-material-icon),
+  .roadsafe-inspector-toggle > span,
   .roadsafe-profile-copy {
     display: none !important;
   }
@@ -500,7 +500,7 @@ body,
     justify-content: center;
   }
 
-  .roadsafe-inspector-toggle > .roadsafe-material-icon:last-child {
+  .roadsafe-inspector-toggle svg:last-child {
     display: none;
   }
 

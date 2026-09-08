@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: dark;
 
   --js-shell: #1b1b1b;
@@ -524,7 +524,7 @@ a {
   position: relative;
 }
 
-.roadsafe-notification-button > span {
+.roadsafe-notification-button > span:not(.roadsafe-material-icon) {
   position: absolute;
   top: -4px;
   right: -4px;
@@ -1394,7 +1394,7 @@ canvas {
   .roadsafe-active-case-chip,
   .roadsafe-header-clock,
   .roadsafe-header-icon,
-  .roadsafe-inspector-toggle > span,
+  .roadsafe-inspector-toggle > span:not(.roadsafe-material-icon),
   .roadsafe-profile-copy {
     display: none !important;
   }
@@ -1405,7 +1405,7 @@ canvas {
     padding: 0 !important;
   }
 
-  .roadsafe-inspector-toggle svg:last-child {
+  .roadsafe-inspector-toggle > .roadsafe-material-icon:last-child {
     display: none;
   }
 
@@ -2346,7 +2346,7 @@ textarea:focus {
 }
 
 /* Prevent notification badge clipping. */
-.roadsafe-notification-button > span {
+.roadsafe-notification-button > span:not(.roadsafe-material-icon) {
   top: -2px !important;
   right: -2px !important;
   z-index: 20 !important;

@@ -524,7 +524,7 @@ a {
   position: relative;
 }
 
-.roadsafe-notification-button > span:not(.roadsafe-material-icon) {
+.roadsafe-notification-button > span {
   position: absolute;
   top: -4px;
   right: -4px;
@@ -1394,7 +1394,7 @@ canvas {
   .roadsafe-active-case-chip,
   .roadsafe-header-clock,
   .roadsafe-header-icon,
-  .roadsafe-inspector-toggle > span:not(.roadsafe-material-icon),
+  .roadsafe-inspector-toggle > span,
   .roadsafe-profile-copy {
     display: none !important;
   }
@@ -1405,7 +1405,7 @@ canvas {
     padding: 0 !important;
   }
 
-  .roadsafe-inspector-toggle > .roadsafe-material-icon:last-child {
+  .roadsafe-inspector-toggle svg:last-child {
     display: none;
   }
 
