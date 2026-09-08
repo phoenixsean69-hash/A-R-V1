@@ -28,13 +28,15 @@ export interface ForensicLocalMetricFrame {
 }
 
 export interface ForensicAreaSnapshot {
-  schemaVersion: "RoadSafe Case Area V1";
+  schemaVersion: "RoadSafe Case Area V1" | "RoadSafe Case Area V2";
   id: string;
   frozenAt: string;
   boundaryMode: "Rectangle" | "Polygon" | "Radius";
   coreArea: RealSceneAreaSelection;
   contextArea: RealSceneAreaSelection;
   contextBufferMetres: number;
+  requestedContextBufferMetres?: number;
+  approachMinimumBufferMetres?: number;
   accidentAnchor: RoadDetectionCoordinate;
   localFrame: ForensicLocalMetricFrame;
   coreDimensionsMetres: { width: number; height: number; areaSquareMetres: number };
@@ -53,7 +55,7 @@ export interface ForensicArchiveReference {
 
 export interface ForensicSourceRecord {
   id: string;
-  layer: "roads" | "buildings" | "paths" | "barriers" | "land-cover" | "vegetation" | "terrain" | "area";
+  layer: "roads" | "road-controls" | "buildings" | "paths" | "barriers" | "land-cover" | "vegetation" | "terrain" | "area";
   provider: string;
   classification: ForensicSourceClassification;
   status: ForensicSourceStatus;
@@ -107,9 +109,13 @@ export interface ForensicQaCheck {
 }
 
 export interface ForensicQaReport {
-  schemaVersion: "RoadSafe Geometry QA V1";
+  schemaVersion: "RoadSafe Geometry QA V1" | "RoadSafe Geometry QA V2";
   generatedAt: string;
   geometryCompletenessPercent: number;
+  anchorAlignmentScorePercent?: number;
+  roadModelScorePercent?: number;
+  topologyScorePercent?: number;
+  boundaryCoverageScorePercent?: number;
   elevationCoveragePercent: number;
   sourceArchivePercent: number;
   overallScorePercent: number;

@@ -2,13 +2,13 @@ import { buildForensicAreaSnapshot } from "./forensicAreaService";
 import { ForensicElevationService } from "./forensicElevationService";
 import { ForensicSourceArchiveService, sha256Json } from "./forensicSourceArchiveService";
 import { RealSceneExtractionService } from "./realSceneExtractionService";
+import { ForensicGeometryEngine } from "./forensicGeometryEngine";
 import type { RealSceneAreaSelection, RealSceneGeometry } from "../types/realSceneGeometry";
 import type { RoadDetectionCoordinate } from "../types/roadLayoutDetection";
 import type {
   ForensicLayerAssessment,
   ForensicPipelineBuildResult,
   ForensicPipelineStage,
-  ForensicQaCheck,
   ForensicQaReport,
   ForensicScenePackage,
   ForensicSourceRecord,
@@ -272,11 +272,6 @@ function updateStage(
 function overpassQuery(area: RealSceneAreaSelection): string {
   const b = area.bounds;
 
-  /*
-   * Keep acquisition forensic-relevant. Broad natural/leisure/waterway
-   * selectors can explode result size around towns and are unnecessary for
-   * the geometry normalizer.
-   */
   return `[out:json][timeout:30];
 (
   way["highway"]["area"!="yes"](${b.south},${b.west},${b.north},${b.east});
@@ -286,11 +281,19 @@ function overpassQuery(area: RealSceneAreaSelection): string {
   way["natural"~"wood|scrub|grassland|wetland|bare_rock|sand|scree|water"](${b.south},${b.west},${b.north},${b.east});
   way["leisure"~"park|garden|nature_reserve"](${b.south},${b.west},${b.north},${b.east});
   way["waterway"="riverbank"](${b.south},${b.west},${b.north},${b.east});
+
+  node["highway"~"traffic_signals|stop|give_way|crossing|mini_roundabout|speed_camera"](${b.south},${b.west},${b.north},${b.east});
+  node["traffic_calming"](${b.south},${b.west},${b.north},${b.east});
+  node["barrier"~"bollard|gate"](${b.south},${b.west},${b.north},${b.east});
   node["natural"~"tree|shrub"](${b.south},${b.west},${b.north},${b.east});
+
+  relation["type"="restriction"](${b.south},${b.west},${b.north},${b.east});
+  relation["type"="multipolygon"]["building"](${b.south},${b.west},${b.north},${b.east});
+  relation["type"="multipolygon"]["landuse"](${b.south},${b.west},${b.north},${b.east});
+  relation["type"="multipolygon"]["natural"](${b.south},${b.west},${b.north},${b.east});
 );
 out tags geom qt;`;
 }
-
 interface OsmApiElement {
   type: "node" | "way" | "relation";
   id: number;
@@ -689,6 +692,7 @@ function sourceRecords(
 
   return [
     make("roads", geometry.roads.length > 0 ? 0.88 : 0.3, geometry.roads.length),
+    make("road-controls", (geometry.roadControls?.length ?? 0) > 0 ? 0.9 : 0.45, geometry.roadControls?.length ?? 0),
     make("buildings", geometry.buildings.length > 0 ? 0.78 : 0.35, geometry.buildings.length),
     make("paths", geometry.paths.length > 0 ? 0.74 : 0.5, geometry.paths.length),
     make("barriers", geometry.barriers.length > 0 ? 0.7 : 0.42, geometry.barriers.length),
@@ -699,79 +703,17 @@ function sourceRecords(
 
 function qaReport(
   geometry: RealSceneGeometry,
+  area: ReturnType<typeof buildForensicAreaSnapshot>,
   terrainReady: boolean,
   archiveCount: number,
 ): ForensicQaReport {
-  const checks: ForensicQaCheck[] = [
-    {
-      id: "boundary-valid",
-      label: "Frozen case boundary",
-      severity: "pass",
-      value: "Valid",
-      detail: "The forensic core and context boundary are frozen into the case package.",
-    },
-    {
-      id: "roads",
-      label: "Mapped road coverage",
-      severity: geometry.roads.length > 0 ? "pass" : "warning",
-      value: `${geometry.roads.length} road(s)`,
-      detail: geometry.roads.length > 0 ? "Mapped road geometry intersects the core." : "No mapped vehicle-road centreline intersects the core; manual correction is required.",
-    },
-    {
-      id: "terrain",
-      label: "Macro terrain",
-      severity: terrainReady ? "pass" : "warning",
-      value: terrainReady ? "DEM acquired" : "Flat fallback",
-      detail: terrainReady ? "Macro elevation coverage is available." : "Flat terrain is an explicit low-confidence fallback.",
-    },
-    {
-      id: "archive",
-      label: "Immutable source archive",
-      severity: archiveCount >= 2 ? "pass" : "warning",
-      value: `${archiveCount} frozen archive(s)`,
-      detail: "Frozen JSON payloads are stored in IndexedDB and identified by SHA-256.",
-    },
-    {
-      id: "micro",
-      label: "Micro road geometry",
-      severity: "warning",
-      value: "Field verification required",
-      detail: "Kerbs, potholes, humps, road crown/camber, drains and small defects are not inferred from the macro DEM.",
-    },
-  ];
-
-  const geometryCompleteness = Math.round(
-    Math.min(
-      100,
-      35 +
-        Math.min(35, geometry.roads.length * 12) +
-        Math.min(15, geometry.buildings.length * 2) +
-        Math.min(15, (geometry.paths.length + geometry.barriers.length + (geometry.landCover?.length ?? 0)) * 2),
-    ),
+  return ForensicGeometryEngine.createQaReport(
+    geometry,
+    area,
+    terrainReady,
+    archiveCount,
   );
-  const elevationCoverage = terrainReady ? 100 : 0;
-  const sourceArchivePercent = Math.min(100, archiveCount * 34);
-  const overall = Math.round(geometryCompleteness * 0.48 + elevationCoverage * 0.28 + sourceArchivePercent * 0.24);
-  const decision =
-    overall >= 75 && geometry.roads.length > 0
-      ? "GOOD — REVIEW REQUIRED"
-      : overall >= 45
-        ? "LIMITED — CORRECTION REQUIRED"
-        : "INSUFFICIENT — DO NOT USE";
-
-  return {
-    schemaVersion: "RoadSafe Geometry QA V1",
-    generatedAt: new Date().toISOString(),
-    geometryCompletenessPercent: geometryCompleteness,
-    elevationCoveragePercent: elevationCoverage,
-    sourceArchivePercent,
-    overallScorePercent: overall,
-    decision,
-    checks,
-    warnings: checks.filter((check) => check.severity !== "pass").map((check) => check.detail),
-  };
 }
-
 export const ForensicScenePipelineService = {
   async build({ coreArea, accidentAnchor, contextBufferMetres, onProgress }: BuildOptions): Promise<ForensicPipelineBuildResult> {
     let stages = initialStages();
@@ -801,12 +743,25 @@ export const ForensicScenePipelineService = {
       await RealSceneExtractionService.extract(
         area.coreArea,
       );
-    const geometry: RealSceneGeometry = {
+
+    const baseGeometry: RealSceneGeometry = {
       ...extracted.geometry,
-      warnings: extracted.geometry.warnings.filter((warning) => !warning.toLowerCase().includes("map snapshot")),
+      warnings: extracted.geometry.warnings.filter(
+        (warning) =>
+          !warning
+            .toLowerCase()
+            .includes("map snapshot"),
+      ),
     };
+
+    const geometry =
+      ForensicGeometryEngine.enrich(
+        baseGeometry,
+        area,
+        raw.payload.elements ?? [],
+      );
     const normalizedArchive = await ForensicSourceArchiveService.saveJson("osm-normalized", geometry);
-    stages = updateStage(stages, "normalize-geometry", { status: "complete", progressPercent: 100, message: `${geometry.roads.length} road(s), ${geometry.buildings.length} building(s), ${geometry.paths.length} path(s).` }, onProgress);
+    stages = updateStage(stages, "normalize-geometry", { status: "complete", progressPercent: 100, message: `${geometry.roads.length} road(s), ${geometry.roadControls?.length ?? 0} control(s), ${geometry.topology?.intersectionCount ?? 0} intersection(s).` }, onProgress);
 
     stages = updateStage(stages, "acquire-elevation", { status: "running", progressPercent: 25, message: "Sampling macro elevation across the forensic core…" }, onProgress);
     let terrain = ForensicElevationService.flatFallback(area, "Elevation has not been requested yet.");
@@ -845,10 +800,11 @@ export const ForensicScenePipelineService = {
 
     stages = updateStage(stages, "quality-assurance", { status: "running", progressPercent: 50, message: "Checking coverage, source integrity and uncertainty…" }, onProgress);
     const archiveCount = [rawArchive, normalizedArchive, elevationArchive].filter(Boolean).length;
-    const qa = qaReport(geometry, terrain.status === "ready", archiveCount);
+    const qa = qaReport(geometry, area, terrain.status === "ready", archiveCount);
 
     const layers: ForensicLayerAssessment[] = [
       ["roads", geometry.roads.length],
+      ["road-controls", geometry.roadControls?.length ?? 0],
       ["buildings", geometry.buildings.length],
       ["paths", geometry.paths.length],
       ["barriers", geometry.barriers.length],

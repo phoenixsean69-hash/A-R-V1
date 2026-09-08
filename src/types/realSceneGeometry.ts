@@ -47,6 +47,78 @@ export interface RealSceneSnapshotReference {
   mimeType: string;
 }
 
+export interface RealSceneMetricPoint {
+  /** Easting from the accident anchor. */
+  eastMetres: number;
+  /** Northing from the accident anchor. */
+  northMetres: number;
+}
+
+export type RealSceneGeometryProvenance =
+  | "source-reported"
+  | "derived"
+  | "inferred";
+
+export interface RealSceneLaneGeometry {
+  laneIndex: number;
+  offsetFromCentreMetres: number;
+  widthMetres: number;
+  centreline: RealSceneMetricPoint[];
+}
+
+export interface RealSceneRoadwayGeometry {
+  schemaVersion: "RoadSafe Roadway Geometry V1";
+  coordinateFrame: "accident-anchor-ENU";
+  centreline: RealSceneMetricPoint[];
+  leftEdge: RealSceneMetricPoint[];
+  rightEdge: RealSceneMetricPoint[];
+  surfacePolygon: RealSceneMetricPoint[];
+  lanes: RealSceneLaneGeometry[];
+  widthSource: "source-reported" | "lane-model" | "default-model";
+  laneCountSource: "source-reported" | "default-model";
+  widthConfidence: number;
+  laneConfidence: number;
+  clippedAtCoreBoundary: boolean;
+  approachBearingDegrees?: number;
+  sourceTags: Record<string, string>;
+}
+
+export type RealSceneRoadControlType =
+  | "Traffic Signal"
+  | "Stop"
+  | "Give Way"
+  | "Crossing"
+  | "Traffic Calming"
+  | "Mini Roundabout"
+  | "Speed Camera"
+  | "Other";
+
+export interface RealSceneRoadControlGeometry {
+  id: string;
+  osmId: number;
+  controlType: RealSceneRoadControlType;
+  position: RealSceneGeoPoint;
+  localPosition: RealSceneLocalPoint;
+  anchorPosition: RealSceneMetricPoint;
+  sourceTags: Record<string, string>;
+  confidence: number;
+}
+
+export interface RealSceneTopologySummary {
+  schemaVersion: "RoadSafe Road Topology V1";
+  analysedRoadCount: number;
+  intersectionCount: number;
+  connectedComponentCount: number;
+  boundaryCutRoadCount: number;
+  anchorRoadId?: string;
+  anchorRoadDistanceMetres: number;
+  inferredRoadWidthCount: number;
+  inferredLaneCountCount: number;
+  invalidRoadModelCount: number;
+  roadControlCount: number;
+  unresolvedRelationCount: number;
+  topologyAnalysisTruncated: boolean;
+}
 export interface RealSceneRoadGeometry {
   id: string;
   osmId: number;
@@ -58,7 +130,7 @@ export interface RealSceneRoadGeometry {
   surface?: string;
   maximumSpeedKmh?: number;
   isRoundabout: boolean;
-  points: RealSceneGeoPoint[];
+    forensic?: RealSceneRoadwayGeometry;points: RealSceneGeoPoint[];
   localPoints: RealSceneLocalPoint[];
 }
 
@@ -134,7 +206,7 @@ export interface RealSceneVegetationGeometry {
 }
 
 export interface RealSceneGeometry {
-  version: "RoadSafe Real Scene V1" | "RoadSafe Real Scene V2";
+  version: "RoadSafe Real Scene V1" | "RoadSafe Real Scene V2" | "RoadSafe Real Scene V3";
   status: "ready";
   selection: RealSceneAreaSelection;
   snapshot?: RealSceneSnapshotReference;
@@ -147,6 +219,8 @@ export interface RealSceneGeometry {
   barriers: RealSceneBarrierGeometry[];
   landCover?: RealSceneLandCoverGeometry[];
   vegetation?: RealSceneVegetationGeometry[];
+  roadControls?: RealSceneRoadControlGeometry[];
+  topology?: RealSceneTopologySummary;
   confidence: number;
   warnings: string[];
   attribution: string;
