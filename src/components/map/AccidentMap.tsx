@@ -7,6 +7,7 @@ import {
 
 import JunctionAnalysisModal from "./JunctionAnalysisModal";
 import JunctionQuickCard from "./JunctionQuickCard";
+import SelectedAreaDetailsWindow from "./SelectedAreaDetailsWindow";
 
 import maplibregl from "maplibre-gl";
 
@@ -1102,9 +1103,39 @@ const handleCloseJunctionAnalysis =
         false,
       );
 
-      setShowAnalysis(false);
-      setAnalysis(null);
-      setAnalysisError(null);
+      if (
+        compactSelectionPanel
+      ) {
+        setShowAnalysis(false);
+        setAnalysis(null);
+        setAnalysisError(null);
+      } else {
+        try {
+          const result =
+            AreaAnalysisService.analyse(
+              finalBounds,
+              heatmapFiltersRef.current,
+            );
+
+          setAnalysis(result);
+          setAnalysisError(null);
+          setShowAnalysis(true);
+        } catch (error) {
+          console.error(
+            "Selected area analysis failed:",
+            error,
+          );
+
+          setAnalysis(null);
+          setShowAnalysis(true);
+
+          setAnalysisError(
+            error instanceof Error
+              ? error.message
+              : "The selected area could not be analysed.",
+          );
+        }
+      }
     };
 
     map.on(
@@ -1143,7 +1174,7 @@ const handleCloseJunctionAnalysis =
       map.getCanvas().style.cursor =
         "";
     };
-  }, [selectionEnabled]);
+  }, [selectionEnabled, compactSelectionPanel]);
 
   const handleSelectArea =
     useCallback(() => {
@@ -1412,83 +1443,99 @@ const handleCloseJunctionAnalysis =
       )}
 
 {selectedBounds && !compactSelectionPanel && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
-          <div className="flex max-h-[95%] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between gap-4 border-b border-gray-200 p-5">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Selected Area
-                </h3>
-
-                <p className="text-sm text-gray-500">
-                  Focused road-safety analysis zone
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCloseSelectedArea}
-                className="rounded-xl bg-red-600 px-8 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-red-700 active:scale-95"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="overflow-y-auto p-5">
-              <SelectedAreaPreview
-                bounds={selectedBounds}
-                mapType={mapType}
-                visualizationMode={visualizationMode}
-                heatmapFilters={heatmapFilters}
-                onViewFullAnalysis={handleOpenJunctionQuickCard}
+        <SelectedAreaDetailsWindow
+          title="Selected area details"
+          subtitle={
+            analysis
+              ? `${analysis.areaSquareKilometres.toFixed(3)} km2 - ${analysis.totalJunctions} junction(s)`
+              : "Current map filters applied"
+          }
+          onClose={
+            handleCloseSelectedArea
+          }
+        >
+          {analysis ? (
+            <>
+              <AreaAnalysisResults
+                analysis={analysis}
+                filters={heatmapFilters}
+                compact
               />
 
-              {showAnalysis && analysis && (
-                <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
-                  <AreaAnalysisResults analysis={analysis} />
-                </div>
-              )}
-
-              {showAnalysis && analysisError && (
-                <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-5">
-                  <h4 className="font-semibold text-red-800">Analysis failed</h4>
-                  <p className="mt-1 text-sm text-red-700">{analysisError}</p>
-                </div>
-              )}
-
-              <div className="mt-4 flex flex-wrap justify-end gap-3">
+              <div className="roadsafe-area-details-actions">
                 <button
                   type="button"
-                  onClick={handleSelectArea}
-                  className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                  onClick={
+                    handleSelectArea
+                  }
+                  className="ui-button"
                 >
-                  Select Again
+                  Select again
                 </button>
 
-                {showAnalysis && analysis ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowAnalysis(false)}
-                    className="rounded-lg border border-[#494949] px-5 py-2 text-sm font-medium text-[#c4c4c4] transition hover:bg-[#303030]"
-                  >
-                    Hide Analysis
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleAnalyseArea}
-                    className="rounded-lg bg-[#303030] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#303030]"
-                  >
-                    Analyse Selected Area
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedAreaWorkbenchOpen(
+                      true,
+                    )
+                  }
+                  className="ui-button-primary"
+                >
+                  More details
+                </button>
               </div>
+            </>
+          ) : analysisError ? (
+            <>
+              <div className="roadsafe-area-details-status is-error">
+                <strong>
+                  Analysis failed
+                </strong>
+
+                <span>
+                  {analysisError}
+                </span>
+              </div>
+
+              <div className="roadsafe-area-details-actions">
+                <button
+                  type="button"
+                  onClick={
+                    handleSelectArea
+                  }
+                  className="ui-button"
+                >
+                  Select again
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleAnalyseArea
+                  }
+                  className="ui-button-primary"
+                >
+                  Retry
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="roadsafe-area-details-status">
+              <strong>
+                Analysing selected area
+              </strong>
+
+              <span>
+                Calculating crash concentration, severity, casualties,
+                recurring causes and junction risk.
+              </span>
             </div>
-          </div>
-        </div>
+          )}
+        </SelectedAreaDetailsWindow>
       )}
 
-            {selectedAreaWorkbenchOpen &&
+{selectedAreaWorkbenchOpen &&
         selectedBounds &&
         analysis && (
           <div className="absolute inset-0 z-[70] flex min-w-0 flex-col bg-black/80 p-2 sm:p-4">
@@ -1558,166 +1605,4 @@ const handleCloseJunctionAnalysis =
       )}
     </div>
   );
-}
-
-interface SelectedAreaPreviewProps {
-  bounds: MapBounds;
-  mapType: MapType;
-  visualizationMode: VisualizationMode;
-  heatmapFilters: AccidentHeatmapFilters;
-
-  onViewFullAnalysis: (
-    junctionId: string,
-  ) => void;
-}
-
-function SelectedAreaPreview({
-  bounds,
-  mapType,
-  visualizationMode,
-  heatmapFilters,
-  onViewFullAnalysis,
-}: SelectedAreaPreviewProps) {
-  const containerRef =
-    useRef<HTMLDivElement | null>(
-      null,
-    );
-
-  useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    let cleanupJunctionMarkers:
-      | (() => void)
-      | null = null;
-
-    const previewMap =
-      new maplibregl.Map({
-        container:
-          containerRef.current,
-
-        style:
-          getMapStyle(mapType),
-
-        center: [
-          (
-            bounds.west +
-            bounds.east
-          ) / 2,
-
-          (
-            bounds.south +
-            bounds.north
-          ) / 2,
-        ],
-
-        zoom:
-          INITIAL_ZOOM,
-
-        minZoom:
-          MIN_ALLOWED_ZOOM,
-
-        maxZoom:
-          MAX_ALLOWED_ZOOM,
-
-        pitch: 0,
-
-        bearing: 0,
-
-        attributionControl: {
-          compact: true,
-        },
-      });
-
-    previewMap.addControl(
-      new maplibregl
-        .NavigationControl({
-          showCompass: false,
-          showZoom: true,
-        }),
-      "bottom-right",
-    );
-
-    const handlePreviewLoad =
-      () => {
-        previewMap.setMaxZoom(
-          MAX_ALLOWED_ZOOM,
-        );
-
-        ensureAccidentHeatmapLayers(
-          previewMap,
-          bounds,
-          heatmapFilters,
-        );
-
-        setAccidentHeatmapVisibility(
-          previewMap,
-          visualizationMode ===
-            "heatmap",
-        );
-
-        ensureSelectionLayers(
-          previewMap,
-        );
-
-        updateSelectionLayer(
-          previewMap,
-          bounds,
-        );
-
-        if (
-          visualizationMode ===
-          "markers"
-        ) {
-          cleanupJunctionMarkers =
-            addJunctionMarkers(
-              previewMap,
-              bounds,
-              onViewFullAnalysis,
-            );
-        }
-
-        previewMap.resize();
-      };
-
-    previewMap.on(
-      "load",
-      handlePreviewLoad,
-    );
-
-    return () => {
-      cleanupJunctionMarkers?.();
-
-      cleanupJunctionMarkers =
-        null;
-
-      previewMap.off(
-        "load",
-        handlePreviewLoad,
-      );
-
-      previewMap.remove();
-    };
-  }, [
-    bounds,
-    mapType,
-    visualizationMode,
-    heatmapFilters,
-    onViewFullAnalysis,
-  ]);
-
-  
-
-  return (
-    <div className="h-[340px] overflow-hidden rounded-xl border border-gray-200">
-      <div
-        ref={containerRef}
-        className="h-full w-full"
-      />
-
-    </div>
-  );
-
-  
 }
