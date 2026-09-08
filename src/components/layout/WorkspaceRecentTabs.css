@@ -413,3 +413,150 @@
     max-width: 178px !important;
   }
 }
+
+/* [RoadSafe:FlatChromeInactiveTabs:start] */
+/*
+ * Chrome-style refinement:
+ * - inactive tabs merge into the rail instead of looking like cards
+ * - active-tab hover is opacity only
+ * - inner label hover can never paint a dark rectangle over the active tab
+ */
+
+.roadsafe-workstation .roadsafe-tabbar-scroll {
+  gap: 0 !important;
+}
+
+/* Inactive tabs are visually part of the rail. */
+.roadsafe-workstation
+  .roadsafe-tab:not(.is-active) {
+  border-color: transparent !important;
+  border-bottom-color: transparent !important;
+
+  background: transparent !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+  color: #b9b9b9 !important;
+}
+
+/* Keep only Chrome-like separators between inactive tabs. */
+.roadsafe-workstation
+  .roadsafe-tab:not(.is-active)
+  + .roadsafe-tab:not(.is-active)::before {
+  display: block !important;
+  content: "" !important;
+
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 8px;
+
+  width: 1px;
+
+  background: #3d3d3d !important;
+  opacity: 0.85 !important;
+}
+
+/* No separator immediately beside the raised active tab. */
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  + .roadsafe-tab::before,
+.roadsafe-workstation
+  .roadsafe-tab:has(+ .roadsafe-tab.is-active)::after {
+  display: none !important;
+}
+
+/* Inactive hover: subtle Chrome rail hover, not a permanent tab card. */
+.roadsafe-workstation
+  .roadsafe-tab:not(.is-active):hover {
+  border-color: transparent !important;
+
+  background: rgba(255, 255, 255, 0.055) !important;
+  background-image: none !important;
+
+  color: #e7e7e7 !important;
+  box-shadow: none !important;
+}
+
+/*
+ * Active tab hover:
+ * preserve the exact active shape and colors.
+ * Only opacity changes.
+ */
+.roadsafe-workstation
+  .roadsafe-tab.is-active:hover {
+  border-top-color: #c6c6c6 !important;
+  border-right-color: #c6c6c6 !important;
+  border-bottom-color: #d7d7d7 !important;
+  border-left-color: #c6c6c6 !important;
+
+  background: #d7d7d7 !important;
+  background-image: none !important;
+
+  color: #202124 !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 -1px 0 rgba(255, 255, 255, 0.08) !important;
+
+  opacity: 0.90 !important;
+}
+
+/*
+ * Kill inherited/global button hover paint.
+ * This is what caused the dark rectangular half-overlay in the screenshot.
+ */
+.roadsafe-workstation
+  .roadsafe-tab
+  .roadsafe-tab-label,
+.roadsafe-workstation
+  .roadsafe-tab
+  .roadsafe-tab-label:hover,
+.roadsafe-workstation
+  .roadsafe-tab
+  .roadsafe-tab-label:active,
+.roadsafe-workstation
+  .roadsafe-tab
+  .roadsafe-tab-label:focus,
+.roadsafe-workstation
+  .roadsafe-tab
+  .roadsafe-tab-label:focus-visible {
+  border: 0 !important;
+
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  color: inherit !important;
+
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Active label itself never changes opacity independently. */
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-label,
+.roadsafe-workstation
+  .roadsafe-tab.is-active
+  .roadsafe-tab-label:hover {
+  opacity: 1 !important;
+}
+
+/* Keep the active tab as the only permanent raised shape. */
+.roadsafe-workstation
+  .roadsafe-tab.is-active {
+  border-radius: 9px 9px 0 0 !important;
+}
+
+.roadsafe-workstation
+  .roadsafe-tab:not(.is-active) {
+  border-radius: 0 !important;
+}
+
+/* Hover can have a very slight Chrome-like top rounding. */
+.roadsafe-workstation
+  .roadsafe-tab:not(.is-active):hover {
+  border-radius: 7px 7px 0 0 !important;
+}
+/* [RoadSafe:FlatChromeInactiveTabs:end] */
