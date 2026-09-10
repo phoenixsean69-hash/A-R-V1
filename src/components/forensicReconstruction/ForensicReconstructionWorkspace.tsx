@@ -32,6 +32,7 @@ import type {
 import "dockview-react/dist/styles/dockview.css";
 
 import {
+  ArrowLeft,
   AlertTriangle,
   CheckCircle2,
   ChevronLeft,
@@ -94,6 +95,8 @@ interface Props {
   onMessage?(
     message: string,
   ): void;
+
+  onExitWorkspace?(): void;
 }
 
 type DockApi =
@@ -347,6 +350,7 @@ function createDefaultLayout(
 export default function ForensicReconstructionWorkspace({
   investigation,
   onMessage,
+  onExitWorkspace,
 }: Props) {
   const navigate =
     useNavigate();
@@ -1006,6 +1010,17 @@ export default function ForensicReconstructionWorkspace({
       <div className="fv2-dock-workstation">
         <header className="fv2-dock-commandbar">
           <div className="fv2-dock-commandbar__identity">
+            {onExitWorkspace && (
+              <button
+                type="button"
+                className="fv2-dock-commandbar__back"
+                onClick={onExitWorkspace}
+                title="Back to Investigation workflow"
+                aria-label="Back to Investigation workflow"
+              >
+                <ArrowLeft size={15} />
+              </button>
+            )}
             <span>
               STEP 11
             </span>

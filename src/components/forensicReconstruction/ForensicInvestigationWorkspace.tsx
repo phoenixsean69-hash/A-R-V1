@@ -2547,7 +2547,7 @@ export default function ForensicInvestigationWorkspace({
   };
 
   return (
-    <div className="fv2-root">
+    <div className={`fv2-root ${section === "2D / 3D / AR" ? "fv2-root--step11" : ""}`}>
       {datumPickerOpen && (
         <ForensicDatumPicker
           accidentCase={accidentCase}
@@ -5146,6 +5146,7 @@ export default function ForensicInvestigationWorkspace({
             <ForensicReconstructionWorkspace
               investigation={investigation}
               onMessage={setMessage}
+              onExitWorkspace={() => setSection("Simulation")}
             />
           )}
 

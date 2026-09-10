@@ -719,3 +719,44 @@
     --dv-tabs-and-actions-container-height: 29px;
   }
 }
+
+/* ROADSAFE_STEP11_FLAT_DOCK_START */
+
+.fv2-dock-commandbar__back {
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 27px;
+
+  padding: 0;
+
+  border: 1px solid #444;
+  border-radius: 3px;
+
+  background: #272727;
+
+  color: #9b9b9b;
+
+  cursor: pointer;
+}
+
+.fv2-dock-commandbar__back:hover {
+  background: #313131;
+
+  color: #ededed;
+}
+
+.fv2-root--step11
+.fv2-dock-commandbar {
+  border-top: 0;
+}
+
+.fv2-root--step11
+.fv2-dock-host {
+  background: #1b1b1b;
+}
+
+/* ROADSAFE_STEP11_FLAT_DOCK_END */
