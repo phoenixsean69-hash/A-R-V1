@@ -2753,3 +2753,107 @@
 }
 
 /* ROADSAFE_SCENE_INTAKE_WORKBENCH_END */
+
+/* ROADSAFE_FORENSIC_VERTICAL_SCROLL_FIX_START */
+
+/*
+ * Reconstruction Steps 1-10 and 12-13 are normal document-like forensic
+ * workspaces. They need an internal vertical scroll surface because the
+ * global Dockview editor panel itself is intentionally overflow:hidden.
+ *
+ * Step 11 is explicitly excluded: its nested Dockview / WebGL / AR viewport
+ * must remain fixed-height and manage its own panels.
+ */
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11) {
+  width: 100%;
+  height: 100% !important;
+
+  min-width: 0;
+  min-height: 0 !important;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  overflow: hidden;
+}
+
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11)
+> .fv2-topbar {
+  position: relative;
+
+  top: auto;
+
+  flex: 0 0 auto;
+}
+
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11)
+> .fv2-layout {
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0 !important;
+
+  overflow: hidden;
+}
+
+/* Investigation step rail can scroll independently if the window is short. */
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11)
+.fv2-sidebar {
+  height: 100%;
+
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+/* This becomes the canonical scroll surface for forensic steps. */
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11)
+.fv2-main {
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Allow the actual step content to grow naturally so the .fv2-main scroll
+ * container can measure its full height.
+ */
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root:not(.fv2-root--step11)
+.fv2-main > * {
+  max-width: 100%;
+}
+
+/* Preserve the fixed immersive editor behavior of Step 11. */
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root--step11,
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root--step11 .fv2-layout,
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root--step11 .fv2-main {
+  overflow: hidden !important;
+}
+
+/* ROADSAFE_FORENSIC_VERTICAL_SCROLL_FIX_END */

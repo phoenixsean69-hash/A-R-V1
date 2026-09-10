@@ -300,3 +300,42 @@
     --dv-tabs-and-actions-container-font-size: 10px;
   }
 }
+
+/* ROADSAFE_SCROLL_OWNERSHIP_FIX_START */
+
+/*
+ * Dockview owns the outer application viewport, so normal RoadSafe pages
+ * must scroll inside the central Workspace panel rather than on body/html.
+ */
+.roadsafe-global-dock-workspace:not(.is-editor)
+.roadsafe-workspace-main {
+  height: 100% !important;
+  min-height: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.roadsafe-global-dock-workspace:not(.is-editor)
+.roadsafe-page-stage {
+  height: auto !important;
+  min-height: 100% !important;
+
+  overflow: visible !important;
+}
+
+/*
+ * Do not allow page-level min-height / viewport-height rules to steal
+ * scrolling from the Dockview Workspace on normal routes.
+ */
+.roadsafe-global-dock-workspace:not(.is-editor)
+.roadsafe-page-stage > * {
+  max-width: 100%;
+}
+
+/* ROADSAFE_SCROLL_OWNERSHIP_FIX_END */
