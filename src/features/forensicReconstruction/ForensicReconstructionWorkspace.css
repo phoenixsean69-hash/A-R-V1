@@ -760,3 +760,164 @@
 }
 
 /* ROADSAFE_STEP11_FLAT_DOCK_END */
+
+/* ROADSAFE_STEP11_TYPOGRAPHY_MATCH_START */
+
+/*
+ * Step 11 typography aligned with the rest of RoadSafe.
+ * Keep the editor dense, but remove the 7-8px micro-text that made
+ * Dockview look visually disconnected from the rest of the application.
+ */
+
+.fv2-root--step11 .fv2-dock-workstation {
+  font-size: 13px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Command bar */
+.fv2-root--step11 .fv2-dock-commandbar__identity > span {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-commandbar__identity > strong {
+  font-size: 13px;
+}
+
+.fv2-root--step11 .fv2-dock-commandbar__identity > em {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-commandbar__status > span {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-commandbar__status b {
+  font-size: 11px;
+}
+
+/* Dockview tabs */
+.fv2-root--step11 .roadsafe-dockview {
+  --dv-tabs-and-actions-container-font-size: 12px;
+}
+
+.fv2-root--step11 .roadsafe-dockview .dv-tab {
+  font-size: 12px;
+}
+
+/* Left/right panel headings */
+.fv2-root--step11 .fv2-dock-section-title strong {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-section-title span {
+  font-size: 9px;
+}
+
+/* Scene panel */
+.fv2-root--step11 .fv2-dock-scene select {
+  font-size: 12px;
+}
+
+.fv2-root--step11 .fv2-dock-scene section:first-child > button {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-tree article strong {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-tree article small {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-tree article i {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-tree p {
+  font-size: 10px;
+}
+
+.fv2-root--step11 .fv2-dock-contact-list article span {
+  font-size: 9px;
+}
+
+.fv2-root--step11 .fv2-dock-contact-list article strong {
+  font-size: 10px;
+}
+
+/* Properties panel */
+.fv2-root--step11 .fv2-dock-properties dt {
+  font-size: 10px;
+}
+
+.fv2-root--step11 .fv2-dock-properties dd {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-view-buttons button {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-rule p {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/* Timeline */
+.fv2-root--step11 .fv2-dock-timeline__controls select {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-timeline__controls output {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-timeline__marks {
+  font-size: 9px;
+}
+
+/* Empty / loading / canonical gates */
+.fv2-root--step11 .fv2-dock-gate strong {
+  font-size: 13px;
+}
+
+.fv2-root--step11 .fv2-dock-gate span {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-gate button {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-boot {
+  font-size: 11px;
+}
+
+.fv2-root--step11 .fv2-dock-preview-flag {
+  font-size: 9px;
+}
+
+/*
+ * Native controls inside Step 11 should match RoadSafe's shared
+ * 12-13px control typography rather than inheriting Dockview micro-text.
+ */
+.fv2-root--step11 select,
+.fv2-root--step11 input,
+.fv2-root--step11 button {
+  font-family: inherit;
+}
+
+@media(max-width:620px) {
+  .fv2-root--step11 .roadsafe-dockview {
+    --dv-tabs-and-actions-container-font-size: 11px;
+  }
+
+  .fv2-root--step11 .roadsafe-dockview .dv-tab {
+    font-size: 11px;
+  }
+}
+
+/* ROADSAFE_STEP11_TYPOGRAPHY_MATCH_END */
