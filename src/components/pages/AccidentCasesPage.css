@@ -1,0 +1,457 @@
+/*
+ * RoadSafe Cases - icon-led register summary.
+ * Keeps the case table intact while making the top of the page visual.
+ */
+
+.roadsafe-cases-page {
+  --cases-accent: #e8872d;
+  --cases-panel: #272727;
+  --cases-panel-raised: #2d2d2d;
+  --cases-line: #444;
+  --cases-muted: #777;
+  --cases-text: #d7d7d7;
+}
+
+/* --------------------------------------------------------------------------
+ * Top title / utility row
+ * ----------------------------------------------------------------------- */
+
+.roadsafe-cases-commandbar {
+  min-height: 58px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1fr)
+    auto
+    minmax(150px, 1fr);
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--cases-line);
+  border-radius: 3px;
+
+  background: #262626;
+}
+
+.roadsafe-cases-commandbar__title {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 1px;
+}
+
+.roadsafe-cases-commandbar__eyebrow {
+  color: #757575;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.roadsafe-cases-commandbar__title h1 {
+  margin: 0;
+
+  color: #efefef;
+
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.roadsafe-cases-commandbar__tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+}
+
+.roadsafe-cases-tool {
+  width: 34px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 34px;
+
+  padding: 0;
+
+  border: 1px solid #464646;
+  border-radius: 3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #333,
+      #292929
+    );
+
+  color: #b8b8b8;
+
+  text-decoration: none;
+
+  cursor: pointer;
+}
+
+.roadsafe-cases-tool:hover:not(:disabled),
+.roadsafe-cases-tool.is-active {
+  border-color: #6a4a30;
+
+  background: #34291f;
+
+  color: #ef9b53;
+}
+
+.roadsafe-cases-tool:disabled {
+  opacity: .32;
+
+  cursor: default;
+}
+
+.roadsafe-cases-tool
+.roadsafe-material-icon {
+  color: currentColor;
+}
+
+.roadsafe-cases-more {
+  position: relative;
+
+  justify-self: end;
+}
+
+.roadsafe-cases-more > summary {
+  min-height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 0 11px;
+
+  border: 1px solid #484848;
+  border-radius: 3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #353535,
+      #2a2a2a
+    );
+
+  color: #d0d0d0;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  list-style: none;
+}
+
+.roadsafe-cases-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.roadsafe-cases-more[open] > summary,
+.roadsafe-cases-more > summary:hover {
+  border-color: #6a4a30;
+
+  color: #eea05c;
+}
+
+.roadsafe-cases-more__menu {
+  position: absolute;
+
+  top: calc(100% + 6px);
+  right: 0;
+
+  z-index: 80;
+
+  width: 230px;
+
+  display: grid;
+
+  gap: 4px;
+
+  padding: 6px;
+
+  border: 1px solid #484848;
+  border-radius: 3px;
+
+  background: #262626;
+
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .36);
+}
+
+.roadsafe-cases-more__status {
+  min-height: 32px;
+
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 4px 6px;
+
+  border-bottom: 1px solid #393939;
+
+  color: #9a9a9a;
+
+  font-size: 9px;
+}
+
+.roadsafe-cases-more__status > span:first-child {
+  width: 24px;
+  height: 24px;
+
+  display: grid;
+  place-items: center;
+
+  color: #cf8b53;
+}
+
+.roadsafe-cases-more__menu button {
+  min-height: 31px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 0 8px;
+
+  border: 0;
+  border-radius: 2px;
+
+  background: transparent;
+
+  color: #b8b8b8;
+
+  font: inherit;
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.roadsafe-cases-more__menu button:hover:not(:disabled) {
+  background: #323232;
+
+  color: #ededed;
+}
+
+.roadsafe-cases-more__menu button:disabled {
+  opacity: .35;
+
+  cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+ * Four icon-led metrics
+ * ----------------------------------------------------------------------- */
+
+.roadsafe-cases-metrics {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.roadsafe-cases-metric {
+  position: relative;
+
+  min-width: 0;
+  min-height: 124px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    78px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  overflow: hidden;
+
+  padding: 14px;
+
+  border: 1px solid var(--cases-line);
+  border-radius: 3px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2a2a2a 0%,
+      #272727 74%,
+      #2d2925 100%
+    );
+}
+
+.roadsafe-cases-metric::before {
+  position: absolute;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  width: 3px;
+
+  content: "";
+
+  background: rgba(232, 135, 45, .52);
+}
+
+.roadsafe-cases-metric__copy {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 7px;
+}
+
+.roadsafe-cases-metric__copy span {
+  color: #c2c2c2;
+
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+.roadsafe-cases-metric__copy strong {
+  color: #f0f0f0;
+
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.roadsafe-cases-metric__icon {
+  width: 72px;
+  height: 72px;
+
+  display: grid;
+  place-items: center;
+
+  justify-self: end;
+
+  border: 1px solid #4c443c;
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #33302d,
+      #2d2925
+    );
+
+  color: #e8872d;
+}
+
+.roadsafe-cases-metric__icon
+.roadsafe-material-icon {
+  color: currentColor;
+
+  opacity: .94;
+}
+
+/* Keep the register visually separate without changing its table geometry. */
+.roadsafe-cases-page
+> .ui-panel:last-child {
+  margin-top: 0;
+}
+
+@media(max-width:1050px) {
+  .roadsafe-cases-commandbar {
+    grid-template-columns:
+      minmax(170px, 1fr)
+      auto;
+  }
+
+  .roadsafe-cases-more {
+    grid-column: 2;
+    grid-row: 1;
+
+    margin-right: 170px;
+  }
+
+  .roadsafe-cases-commandbar__tools {
+    justify-self: end;
+  }
+
+  .roadsafe-cases-metrics {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width:720px) {
+  .roadsafe-cases-commandbar {
+    grid-template-columns: 1fr auto;
+
+    gap: 8px;
+  }
+
+  .roadsafe-cases-commandbar__tools {
+    grid-column: 1 / -1;
+
+    justify-self: stretch;
+    justify-content: flex-start;
+
+    order: 3;
+  }
+
+  .roadsafe-cases-more {
+    grid-column: 2;
+    grid-row: 1;
+
+    margin-right: 0;
+  }
+}
+
+@media(max-width:560px) {
+  .roadsafe-cases-commandbar__eyebrow {
+    display: none;
+  }
+
+  .roadsafe-cases-commandbar__title h1 {
+    font-size: 14px;
+  }
+
+  .roadsafe-cases-more > summary span {
+    display: none;
+  }
+
+  .roadsafe-cases-more > summary {
+    width: 34px;
+
+    padding: 0;
+  }
+
+  .roadsafe-cases-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .roadsafe-cases-metric {
+    min-height: 94px;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      60px;
+  }
+
+  .roadsafe-cases-metric__icon {
+    width: 54px;
+    height: 54px;
+  }
+}

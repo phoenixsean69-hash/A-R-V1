@@ -1,21 +1,25 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  Activity,
   AlertTriangle,
   Archive,
   Boxes,
   CheckCircle2,
   Cloud,
+  ClipboardList,
   Copy,
   ExternalLink,
   FileText,
   Filter,
+  FolderKanban,
   ListChecks,
   LoaderCircle,
   Orbit,
   Plus,
   RefreshCw,
   Search,
+  SlidersHorizontal,
   Trash2,
   Upload,
 } from "../../components/icons/materialIcons";
@@ -26,6 +30,8 @@ import { useCaseSync } from "../../context/CaseSyncContext";
 import { AccidentCaseService } from "../../services/accidentCaseService";
 import type { AccidentCaseStatus } from "../../types/accidentCase";
 import { ACCIDENT_CASE_STATUSES } from "../../types/accidentCase";
+
+import "./AccidentCasesPage.css";
 
 const LAST_RECONSTRUCTION_CASE_KEY =
   "roadsafe-ar-last-reconstruction-case-id";
@@ -165,106 +171,180 @@ export default function AccidentCasesPage() {
 
   return (
     <div className="roadsafe-cases-page mx-auto min-w-0 max-w-[1500px] space-y-3">
-      <section className="ui-panel min-w-0 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#494949] bg-[#292929] text-[#c4c4c4]">
-              {caseSync.status === "error" ? (
-                <AlertTriangle size={16} />
-              ) : caseSync.status === "loading" ||
-                caseSync.status === "syncing" ? (
-                <LoaderCircle className="animate-spin" size={16} />
-              ) : caseSync.status === "synced" ? (
-                <CheckCircle2 size={16} />
-              ) : (
-                <Cloud size={16} />
-              )}
+      <section className="roadsafe-cases-commandbar">
+        <div className="roadsafe-cases-commandbar__title">
+          <span className="roadsafe-cases-commandbar__eyebrow">
+            Station register
+          </span>
+          <h1>Accident Cases</h1>
+        </div>
+
+        <div
+          className="roadsafe-cases-commandbar__tools"
+          aria-label="Case register tools"
+        >
+          <button
+            type="button"
+            className="roadsafe-cases-tool"
+            onClick={() => void caseSync.refresh()}
+            aria-label="Refresh case register"
+            title="Refresh"
+          >
+            <RefreshCw size={17} />
+          </button>
+
+          <button
+            type="button"
+            className={
+              view === "table"
+                ? "roadsafe-cases-tool is-active"
+                : "roadsafe-cases-tool"
+            }
+            onClick={() => setView("table")}
+            aria-label="Table view"
+            title="Table view"
+          >
+            <ListChecks size={17} />
+          </button>
+
+          <button
+            type="button"
+            className={
+              view === "cards"
+                ? "roadsafe-cases-tool is-active"
+                : "roadsafe-cases-tool"
+            }
+            onClick={() => setView("cards")}
+            aria-label="Card view"
+            title="Card view"
+          >
+            <Boxes size={17} />
+          </button>
+
+          <Link
+            to="/cases/new"
+            className="roadsafe-cases-tool"
+            aria-label="Create new case"
+            title="New case"
+          >
+            <Plus size={18} />
+          </Link>
+        </div>
+
+        <details className="roadsafe-cases-more">
+          <summary>
+            <SlidersHorizontal size={15} />
+            <span>More Options</span>
+          </summary>
+
+          <div className="roadsafe-cases-more__menu">
+            <div className="roadsafe-cases-more__status">
+              <span>
+                {caseSync.status === "error" ? (
+                  <AlertTriangle size={15} />
+                ) : caseSync.status === "loading" ||
+                  caseSync.status === "syncing" ? (
+                  <LoaderCircle className="animate-spin" size={15} />
+                ) : caseSync.status === "synced" ? (
+                  <CheckCircle2 size={15} />
+                ) : (
+                  <Cloud size={15} />
+                )}
+              </span>
+              <span>{syncLabel}</span>
             </div>
-
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                {syncLabel}
-              </p>
-              <p className="mt-1 max-w-3xl text-[9px] leading-4 text-slate-600">
-                Case metadata is shared through Appwrite. Reconstruction scene
-                content remains local during this first migration phase.
-              </p>
-
-              {caseSync.error && (
-                <p className="mt-2 text-[9px] text-red-300">
-                  {caseSync.error}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {caseSync.canImportLocalCases &&
-              caseSync.localOnlyCount > 0 && (
-                <button
-                  type="button"
-                  className="ui-button"
-                  disabled={importing}
-                  onClick={() => void importLegacyCases()}
-                >
-                  {importing ? (
-                    <LoaderCircle className="animate-spin" size={13} />
-                  ) : (
-                    <Upload size={13} />
-                  )}
-                  Import {caseSync.localOnlyCount} local
-                </button>
-              )}
 
             <button
               type="button"
-              className="ui-icon-button roadsafe-icon-only"
               onClick={() => void caseSync.refresh()}
-              aria-label="Refresh case register"
-              title="Refresh"
             >
-              <RefreshCw size={15} />
+              <RefreshCw size={14} />
+              Refresh register
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                !caseSync.canImportLocalCases ||
+                caseSync.localOnlyCount <= 0 ||
+                importing
+              }
+              onClick={() => void importLegacyCases()}
+            >
+              {importing ? (
+                <LoaderCircle className="animate-spin" size={14} />
+              ) : (
+                <Upload size={14} />
+              )}
+              Import local cases
             </button>
 
             {caseSync.status === "error" && (
               <button
                 type="button"
-                className="ui-button-primary"
                 onClick={caseSync.retryPending}
               >
-                <RefreshCw size={13} />
-                <span>Retry</span>
+                <RefreshCw size={14} />
+                Retry synchronization
               </button>
             )}
+
+            {caseSync.error && (
+              <div className="roadsafe-cases-more__status">
+                <span>
+                  <AlertTriangle size={14} />
+                </span>
+                <span>{caseSync.error}</span>
+              </div>
+            )}
           </div>
-        </div>
+        </details>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section
+        className="roadsafe-cases-metrics"
+        aria-label="Case register summary"
+      >
         {[
-          ["All cases", cases.length, "Complete investigation register"],
-          ["Active", activeCount, "Open or under investigation"],
-          [
-            "Completed",
-            completedCount,
-            "Reconstruction complete or closed",
-          ],
-          [
-            "Evidence records",
-            evidenceCount,
-            "Across linked reconstructions",
-          ],
-        ].map(([label, value, detail]) => (
-          <article key={label} className="ui-panel min-w-0 p-4">
-            <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
-              {label}
-            </p>
-            <p className="mt-2 text-2xl font-bold text-slate-100">
-              {value}
-            </p>
-            <p className="mt-1 truncate text-[9px] text-slate-600">
-              {detail}
-            </p>
+          {
+            label: "All Cases",
+            value: cases.length,
+            Icon: FolderKanban,
+          },
+          {
+            label: "Active",
+            value: activeCount,
+            Icon: Activity,
+          },
+          {
+            label: "Completed",
+            value: completedCount,
+            Icon: CheckCircle2,
+          },
+          {
+            label: "Evidence Records",
+            value: evidenceCount,
+            Icon: ClipboardList,
+          },
+        ].map(({ label, value, Icon }) => (
+          <article
+            key={label}
+            className="roadsafe-cases-metric"
+          >
+            <div className="roadsafe-cases-metric__copy">
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+
+            <div
+              className="roadsafe-cases-metric__icon"
+              aria-hidden="true"
+            >
+              <Icon
+                size={58}
+                strokeWidth={1.55}
+              />
+            </div>
           </article>
         ))}
       </section>
