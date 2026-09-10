@@ -9,6 +9,7 @@ import {
   Cloud,
   ClipboardList,
   Copy,
+  Download,
   ExternalLink,
   FileText,
   Filter,
@@ -158,6 +159,89 @@ export default function AccidentCasesPage() {
     }
   };
 
+
+  const exportRegisterCsv = () => {
+    const escapeCsv = (value: unknown) => {
+      const text = String(value ?? "");
+
+      return `"${text.replaceAll('"', '""')}"`;
+    };
+
+    const rows = filteredCases.map((record) => {
+      const stats = AccidentCaseService.getStats(record);
+
+      return [
+        record.caseNumber,
+        record.title,
+        record.location,
+        record.investigatingOfficer,
+        record.accidentDate,
+        record.accidentTime,
+        record.status,
+        stats.participantCount,
+        stats.evidenceCount,
+        stats.measurementCount,
+        stats.photoCount,
+        stats.footageCount,
+      ];
+    });
+
+    const csv = [
+      [
+        "Case",
+        "Title",
+        "Location",
+        "Officer",
+        "Date",
+        "Time",
+        "Status",
+        "Participants",
+        "Evidence",
+        "Measurements",
+        "Photos",
+        "Footage",
+      ],
+      ...rows,
+    ]
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `roadsafe-case-register-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  };
+
+  const copyRegisterSummary = async () => {
+    const summary = [
+      "RoadSafe Accident Case Register",
+      `All cases: ${cases.length}`,
+      `Active: ${activeCount}`,
+      `Completed: ${completedCount}`,
+      `Evidence records: ${evidenceCount}`,
+      `Visible after filters: ${filteredCases.length}`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(summary);
+    } catch (error) {
+      console.warn("Unable to copy case register summary.", error);
+    }
+  };
+
   const syncLabel =
     caseSync.status === "loading"
       ? "Loading shared register"
@@ -256,10 +340,44 @@ export default function AccidentCasesPage() {
 
             <button
               type="button"
-              onClick={() => void caseSync.refresh()}
+              onClick={exportRegisterCsv}
             >
-              <RefreshCw size={14} />
-              Refresh register
+              <Download size={14} />
+              Export register CSV
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void copyRegisterSummary()}
+            >
+              <Copy size={14} />
+              Copy register summary
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setStatus("Archived");
+              }}
+            >
+              <Archive size={14} />
+              View archived cases
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                !query &&
+                status === "All"
+              }
+              onClick={() => {
+                setQuery("");
+                setStatus("All");
+              }}
+            >
+              <Filter size={14} />
+              Reset filters
             </button>
 
             <button
@@ -290,7 +408,7 @@ export default function AccidentCasesPage() {
             )}
 
             {caseSync.error && (
-              <div className="roadsafe-cases-more__status">
+              <div className="roadsafe-cases-more__status is-error">
                 <span>
                   <AlertTriangle size={14} />
                 </span>
@@ -358,39 +476,6 @@ export default function AccidentCasesPage() {
             </p>
           </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="roadsafe-case-view-switch flex rounded-md border border-[#494949] bg-[#292929] p-1">
-              <button
-                type="button"
-                className={
-                  view === "table"
-                    ? "ui-button-primary py-1.5"
-                    : "ui-button py-1.5"
-                }
-                onClick={() => setView("table")}
-              >
-                <ListChecks size={15} />
-                <span className="roadsafe-visually-hidden">Table view</span>
-              </button>
-              <button
-                type="button"
-                className={
-                  view === "cards"
-                    ? "ui-button-primary py-1.5"
-                    : "ui-button py-1.5"
-                }
-                onClick={() => setView("cards")}
-              >
-                <Boxes size={15} />
-                <span className="roadsafe-visually-hidden">Card view</span>
-              </button>
-            </div>
-
-            <Link to="/cases/new" className="ui-button-primary">
-              <Plus size={14} />
-              New
-            </Link>
-          </div>
         </div>
 
         <div className="grid min-w-0 gap-3 border-b border-[#494949] p-4 md:grid-cols-[minmax(0,1fr)_220px]">

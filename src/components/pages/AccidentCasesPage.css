@@ -455,3 +455,46 @@
     height: 54px;
   }
 }
+
+/* ROADSAFE_CASES_MORE_OPTIONS_V2_START */
+
+.roadsafe-cases-more__menu {
+  width: 250px;
+
+  gap: 2px;
+}
+
+.roadsafe-cases-more__menu button {
+  min-height: 34px;
+
+  border-bottom: 1px solid #353535;
+}
+
+.roadsafe-cases-more__menu button:last-of-type {
+  border-bottom: 0;
+}
+
+.roadsafe-cases-more__menu
+.roadsafe-material-icon {
+  flex: 0 0 auto;
+}
+
+.roadsafe-cases-more__status.is-error {
+  margin-top: 3px;
+
+  border-top: 1px solid #4d3636;
+  border-bottom: 0;
+
+  color: #d38a8a;
+}
+
+/*
+ * Register header is intentionally title-only.
+ * Table/card/new controls live once, in the page command bar above.
+ */
+.roadsafe-cases-page
+.ui-panel-header {
+  min-height: 43px;
+}
+
+/* ROADSAFE_CASES_MORE_OPTIONS_V2_END */
