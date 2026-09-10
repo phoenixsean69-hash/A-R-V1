@@ -7,9 +7,6 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
-import {
-  ClipboardList,
-} from "../icons/materialIcons";
 
 import { useAuth } from "../../context/AuthContext";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
@@ -22,16 +19,10 @@ import {
   isStationRole,
 } from "../../types/auth";
 
-import WorkspaceHeader from "../WorkspaceHeader";
-import WorkspaceInspector from "./WorkspaceInspector";
-import WorkspaceNavigation from "./WorkspaceNavigation";
-import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
 import AppShortcutManager from "../shortcuts/AppShortcutManager";
+import RoadSafeGlobalDock from "./RoadSafeGlobalDock";
 import "../settings/SettingsRuntime.css";
 import "../../styles/iconFirstUI.css";
-import {
-  WorkspaceRightPanelProvider,
-} from "./WorkspaceRightPanelContext";
 
 function pageMeta(
   pathname: string,
@@ -220,15 +211,7 @@ export default function AppShell() {
       true,
     ),
   );
-
-  const [
-    workspaceRightPanelHost,
-    setWorkspaceRightPanelHost,
-  ] = useState<HTMLElement | null>(
-    null,
-  );
-
-  const [title, description] =
+const [title, description] =
     useMemo(
       () =>
         pageMeta(
@@ -432,16 +415,41 @@ export default function AppShell() {
     );
   }
 
-  return (
-    <div className={shellClassName}>
-      <WorkspaceNavigation
-        homePath={homePath}
+
+return (
+    <div
+      className={`${shellClassName} is-global-dock`}
+    >
+      <RoadSafeGlobalDock
+        title={title}
+        description={description}
         stationClient={stationClient}
         stationAdmin={stationAdmin}
-        desktopCollapsed={
-          desktopCollapsed
-        }
+        homePath={homePath}
+        desktopCollapsed={desktopCollapsed}
         activeCase={activeCase}
+        activeReconstruction={activeReconstruction}
+        activeCases={summary.activeCases}
+        stationName={
+          identity?.stationTeam?.name ??
+          ""
+        }
+        inspectorAvailable={
+          inspectorAvailable
+        }
+        inspectorOpen={
+          inspectorOpen
+        }
+        inspectorDocked={
+          inspectorDocked
+        }
+        isDashboard={isDashboard}
+        isReconstructionWorkspace={
+          isReconstructionWorkspace
+        }
+        usesReconstructionContextPanel={
+          usesReconstructionContextPanel
+        }
         onToggleDesktopCollapsed={() =>
           setDesktopCollapsed(
             (value) => !value,
@@ -450,131 +458,28 @@ export default function AppShell() {
         onCloseMobile={() =>
           setMobileOpen(false)
         }
-      />
-
-      <div className="roadsafe-center">
-        {!isReconstructionWorkspace && (
-          <WorkspaceHeader
-            title={title}
-            description={description}
-            stationClient={
-              stationClient
-            }
-            homePath={homePath}
-            activeCase={activeCase}
-            activeCases={
-              summary.activeCases
-            }
-            inspectorAvailable={
-              inspectorAvailable
-            }
-            inspectorOpen={
-              inspectorOpen
-            }
-            onToggleInspector={
-              toggleInspector
-            }
-            onOpenNavigation={() =>
-              setMobileOpen(true)
-            }
-          />
-        )}
-
-        {!isReconstructionWorkspace && (
-          <WorkspaceRecentTabs
-            currentTitle={title}
-            homePath={homePath}
-          />
-        )}
-
-        <main
-          className={`roadsafe-workspace-main ${
-            isReconstructionWorkspace
-              ? "is-editor"
-              : ""
-          }`}
-        >
-          <div
-            className={`roadsafe-page-stage ${
-              isDashboard
-                ? "is-dashboard"
-                : ""
-            } ${
-              isReconstructionWorkspace
-                ? "is-editor"
-                : ""
-            }`}
-          >
-            <WorkspaceRightPanelProvider
-              host={
-                workspaceRightPanelHost
-              }
-            >
-              <Outlet />
-            </WorkspaceRightPanelProvider>
-          </div>
-        </main>
-      </div>
-
-      {isReconstructionWorkspace &&
-        inspectorAvailable &&
-        !inspectorOpen && (
-          <button
-            type="button"
-            className="ui-button roadsafe-editor-inspector-toggle"
-            onClick={
-              toggleInspector
-            }
-            aria-label="Open active investigation inspector"
-          >
-            <ClipboardList
-              size={15}
-            />
-            <span>Inspector</span>
-          </button>
-        )}
-
-      {usesReconstructionContextPanel ? (
-        <aside
-          ref={
-            setWorkspaceRightPanelHost
-          }
-          className="roadsafe-workspace-context-slot"
-          aria-label="Reconstruction context inspector"
-        />
-      ) : (
-        inspectorAvailable &&
-        inspectorOpen && (
-          <WorkspaceInspector
-            activeCase={activeCase}
-            activeReconstruction={
-              activeReconstruction
-            }
-            activeCases={
-              summary.activeCases
-            }
-            stationName={
-              identity?.stationTeam
-                ?.name ?? ""
-            }
-            docked={
-              inspectorDocked
-            }
-            onToggleDock={
-              toggleInspectorDock
-            }
-            onClose={
-              closeInspector
-            }
-          />
-        )
-      )}
+        onOpenMobile={() =>
+          setMobileOpen(true)
+        }
+        onToggleInspector={
+          toggleInspector
+        }
+        onToggleInspectorDock={
+          toggleInspectorDock
+        }
+        onCloseInspector={
+          closeInspector
+        }
+      >
+        <Outlet />
+      </RoadSafeGlobalDock>
 
       <AppShortcutManager
         role={role}
         homePath={homePath}
         activeCaseId={
-          activeCase?.id ?? null
+          activeCase?.id ??
+          null
         }
         inspectorAvailable={
           inspectorAvailable
@@ -587,14 +492,6 @@ export default function AppShell() {
         onToggleInspector={
           toggleInspector
         }
-      />
-      <button
-        type="button"
-        className="roadsafe-mobile-overlay roadsafe-navigation-overlay"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-        aria-label="Close navigation"
       />
     </div>
   );

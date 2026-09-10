@@ -15,6 +15,7 @@ import "./styles/blenderTotalUI.css";
 import "./styles/blenderColorGuard.css";
 import "./styles/mapWorkstation.css";
 import "./styles/typographyConsistency.css";
+import "./styles/globalDockShell.css";
 import App from "./App.tsx";
 import { migratePreciseSceneCollisionConfirmation } from "./utils/migratePreciseSceneCollisionConfirmation";
 import { installParticipantAnchorSynchronization } from "./utils/reconstructionParticipantAnchorSync";
