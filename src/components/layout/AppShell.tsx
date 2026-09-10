@@ -28,6 +28,7 @@ import WorkspaceNavigation from "./WorkspaceNavigation";
 import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
 import AppShortcutManager from "../shortcuts/AppShortcutManager";
 import "../settings/SettingsRuntime.css";
+import "../../styles/iconFirstUI.css";
 import {
   WorkspaceRightPanelProvider,
 } from "./WorkspaceRightPanelContext";

@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import {
   Activity,
   Camera,
+  ChevronRight,
   FolderKanban,
   Video,
+  Zap,
 } from "../icons/materialIcons";
 
 import "./StationOverviewQuickActions.css";
@@ -12,38 +14,38 @@ import "./StationOverviewQuickActions.css";
 const ACTIONS = [
   {
     to: "/cases",
-    label: "Case register",
-    description: "Open investigations",
+    label: "Cases",
     icon: FolderKanban,
   },
   {
     to: "/evidence",
     label: "Evidence",
-    description: "Review scene records",
     icon: Camera,
   },
   {
     to: "/footage",
     label: "Footage",
-    description: "Open saved recordings",
     icon: Video,
   },
   {
     to: "/reconstruction",
-    label: "Reconstruction",
-    description: "Open workspace",
+    label: "Reconstruct",
     icon: Activity,
   },
 ] as const;
 
 export default function StationOverviewQuickActions() {
   return (
-    <section className="station-overview-quick-actions">
+    <section className="station-overview-quick-actions station-overview-quick-actions--icon-first">
       <div className="station-overview-quick-actions__header">
         <div>
-          <p>Quick actions</p>
+          <Zap
+            size={15}
+            strokeWidth={1.8}
+          />
+
           <strong>
-            Station workspace
+            Quick actions
           </strong>
         </div>
 
@@ -57,18 +59,18 @@ export default function StationOverviewQuickActions() {
           ({
             to,
             label,
-            description,
             icon: Icon,
           }) => (
             <Link
               key={to}
               to={to}
               className="station-overview-quick-action"
+              title={label}
             >
               <span className="station-overview-quick-action__icon">
                 <Icon
-                  size={18}
-                  strokeWidth={1.65}
+                  size={19}
+                  strokeWidth={1.7}
                 />
               </span>
 
@@ -76,18 +78,13 @@ export default function StationOverviewQuickActions() {
                 <strong>
                   {label}
                 </strong>
-
-                <small>
-                  {description}
-                </small>
               </span>
 
-              <span
+              <ChevronRight
                 className="station-overview-quick-action__arrow"
-                aria-hidden="true"
-              >
-                &gt;
-              </span>
+                size={14}
+                strokeWidth={1.8}
+              />
             </Link>
           ),
         )}

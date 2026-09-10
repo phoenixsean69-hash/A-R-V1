@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Download,
   Film,
+  FolderKanban,
   Play,
   Star,
   Trash2,
@@ -34,7 +35,7 @@ export default function FootagePage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="roadsafe-footage-page space-y-3">
       <section className="ui-panel overflow-hidden">
         <div className="ui-panel-header flex-wrap gap-3">
           <div>
@@ -61,7 +62,7 @@ export default function FootagePage() {
           <p className="mx-auto mt-2 max-w-lg text-[10px] leading-5 text-slate-600">
             Open a case reconstruction and use Record Footage. The resulting MediaRecorder video will be stored in the browser and will become playable here.
           </p>
-          <Link to="/cases" className="ui-button-primary mt-5">Open cases</Link>
+          <Link to="/cases" className="ui-button-primary mt-5"><FolderKanban size={14} />Cases</Link>
         </section>
       ) : (
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_420px]">
@@ -126,7 +127,7 @@ export default function FootagePage() {
                     </button>
                     <div className="flex gap-1 px-3 pb-3">
                       <button
-                        className="ui-button flex-1 py-1.5"
+                        className="ui-icon-button h-8 w-8" title="Download recording" aria-label="Download recording"
                         onClick={async () => {
                           try {
                             await ReconstructionFootageService.download(record.id);
@@ -134,7 +135,7 @@ export default function FootagePage() {
                             setMessage(error instanceof Error ? error.message : "Download failed.");
                           }
                         }}
-                      ><Download size={12} />Download</button>
+                      ><Download size={13} /></button>
                       {!record.isPrimary && (
                         <button
                           className="ui-icon-button h-8 w-8"

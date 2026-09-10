@@ -1,0 +1,535 @@
+/*
+ * RoadSafe Icon-First UI
+ *
+ * Visual policy:
+ * - utility actions: icon-only where meaning is standard
+ * - primary workflow actions: icon + one short verb
+ * - forensic/evidence values remain textual
+ * - descriptions and repeated UI prose are suppressed
+ */
+
+.roadsafe-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.roadsafe-workstation .roadsafe-material-icon {
+  vertical-align: middle;
+}
+
+.roadsafe-workstation .ui-button,
+.roadsafe-workstation .ui-button-primary {
+  min-height: 31px;
+  gap: 6px;
+  padding-inline: 9px;
+  font-size: 10px;
+}
+
+.roadsafe-workstation .ui-button-primary
+.roadsafe-material-icon {
+  font-size: 15px !important;
+}
+
+.roadsafe-workstation .roadsafe-icon-only {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  font-size: 0 !important;
+}
+
+/* Generic panel headings do not need a subtitle on every panel. */
+.roadsafe-workstation
+.ui-panel-header > div > p {
+  display: none !important;
+}
+
+/* -------------------------
+   Top workstation header
+   ------------------------- */
+
+.roadsafe-workstation
+.roadsafe-workspace-header {
+  min-height: 50px !important;
+  padding: 5px 10px !important;
+  gap: 8px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-workspace-header-left {
+  gap: 7px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-workspace-header-right {
+  gap: 5px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-workspace-title {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  max-width: 460px;
+  padding: 0 !important;
+  border-left: 0 !important;
+}
+
+.roadsafe-workspace-title-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #414141;
+  border-radius: 3px;
+  background: #292929;
+  color: #e8872d;
+}
+
+.roadsafe-workspace-title-copy {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.roadsafe-workstation
+.roadsafe-workspace-title h1 {
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+.roadsafe-workspace-title-copy small {
+  color: #707070;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+
+.roadsafe-workstation
+.roadsafe-header-square-button {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  flex-basis: 32px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-icon-first-case-chip {
+  min-width: 0 !important;
+  min-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px !important;
+  padding: 0 8px !important;
+}
+
+.roadsafe-icon-first-case-chip
+.roadsafe-material-icon {
+  color: #e8872d;
+}
+
+.roadsafe-workstation
+.roadsafe-icon-first-case-chip strong {
+  font-size: 9px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-icon-first-clock {
+  min-width: 72px !important;
+  min-height: 32px !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 5px;
+  padding: 0 8px !important;
+  border: 1px solid #383838;
+  border-radius: 3px;
+  background: #222;
+}
+
+.roadsafe-workstation
+.roadsafe-icon-first-clock strong {
+  font-size: 12px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-inspector-toggle {
+  width: 32px !important;
+  min-width: 32px !important;
+  padding: 0 !important;
+}
+
+.roadsafe-workstation
+.roadsafe-profile-trigger--icon-first {
+  width: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  display: grid !important;
+  grid-template-columns: 28px !important;
+  place-items: center;
+  padding: 2px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-profile-trigger--icon-first
+.roadsafe-profile-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.roadsafe-workstation
+.roadsafe-profile-popover a,
+.roadsafe-workstation
+.roadsafe-profile-popover button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* -------------------------
+   Navigation
+   ------------------------- */
+
+.roadsafe-workstation
+.roadsafe-navigation-group-label {
+  display: none !important;
+}
+
+.roadsafe-workstation
+.roadsafe-navigation-group +
+.roadsafe-navigation-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #333;
+}
+
+.roadsafe-workstation
+.roadsafe-brand-copy small,
+.roadsafe-workstation
+.roadsafe-station-copy small,
+.roadsafe-workstation
+.roadsafe-navigation-case small,
+.roadsafe-workstation
+.roadsafe-navigation-case-status,
+.roadsafe-workstation
+.roadsafe-navigation-footer-copy small {
+  display: none !important;
+}
+
+.roadsafe-workstation
+.roadsafe-navigation-link {
+  min-height: 34px;
+}
+
+.roadsafe-workstation
+.roadsafe-navigation-link
+.roadsafe-material-icon {
+  font-size: 18px !important;
+}
+
+/* -------------------------
+   Inspector
+   ------------------------- */
+
+.roadsafe-workstation
+.roadsafe-inspector-section-heading
+.roadsafe-eyebrow,
+.roadsafe-workstation
+.roadsafe-inspector-empty p {
+  display: none !important;
+}
+
+.roadsafe-workstation
+.roadsafe-inspector-actions {
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+
+.roadsafe-workstation
+.roadsafe-inspector-actions a {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+}
+
+.roadsafe-workstation
+.roadsafe-inspector-actions a
+.roadsafe-material-icon {
+  font-size: 17px !important;
+}
+
+/* -------------------------
+   Dashboard
+   ------------------------- */
+
+.dashboard-material-stat-card {
+  aspect-ratio: auto !important;
+  min-height: 102px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.dashboard-material-stat-icon {
+  width: 42px !important;
+  height: 42px !important;
+  flex-basis: 42px !important;
+  border-color: #494949 !important;
+  color: #c8c8c8 !important;
+}
+
+.dashboard-material-stat-icon
+.roadsafe-material-icon {
+  font-size: 25px !important;
+}
+
+.dashboard-material-stat-content
+> p:nth-child(2) {
+  margin-top: 3px !important;
+  font-size: 21px !important;
+}
+
+.dashboard-material-stat-content
+> p:nth-child(3) {
+  display: none !important;
+}
+
+.station-overview-quick-actions--icon-first
+.station-overview-quick-actions__header > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.station-overview-quick-actions--icon-first
+.station-overview-quick-action {
+  min-height: 42px;
+}
+
+.station-overview-quick-actions--icon-first
+.station-overview-quick-action__icon {
+  width: 31px;
+  height: 31px;
+}
+
+.station-overview-quick-actions--icon-first
+.station-overview-quick-action__copy small {
+  display: none !important;
+}
+
+/* -------------------------
+   Cases
+   ------------------------- */
+
+.roadsafe-cases-page
+.roadsafe-case-view-switch button {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+}
+
+.roadsafe-cases-page
+.roadsafe-case-view-switch
+.roadsafe-material-icon {
+  font-size: 15px !important;
+}
+
+.roadsafe-cases-page
+> section:first-child
+.min-w-0 > p:nth-of-type(2) {
+  display: none;
+}
+
+/* -------------------------
+   Evidence / reports / footage
+   ------------------------- */
+
+.roadsafe-evidence-page
+.ui-panel-header > div > p,
+.roadsafe-reports-page
+.ui-panel-header > div > p,
+.roadsafe-footage-page
+.ui-panel-header > div > p {
+  display: none !important;
+}
+
+/* -------------------------
+   Scene Map
+   ------------------------- */
+
+.scene-map-metric__copy em,
+.scene-map-map-heading p,
+.scene-map-section-header small,
+.scene-map-empty span {
+  display: none !important;
+}
+
+.scene-map-filter-actions button {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 29px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  font-size: 0 !important;
+}
+
+.scene-map-filter-actions button
+.roadsafe-material-icon {
+  font-size: 14px !important;
+}
+
+/* -------------------------
+   Settings
+   ------------------------- */
+
+.roadsafe-settings-hero__copy p,
+.roadsafe-settings-sidebar nav button small,
+.roadsafe-settings-sidebar__session small,
+.roadsafe-settings-card__header small,
+.roadsafe-settings-account-card small,
+.roadsafe-settings-sidebar__label {
+  display: none !important;
+}
+
+.roadsafe-settings-sidebar nav button {
+  min-height: 36px !important;
+}
+
+/* -------------------------
+   New Case / Wizard
+   ------------------------- */
+
+.roadsafe-new-case-page__header p,
+.roadsafe-forensic-wizard__header p,
+.roadsafe-forensic-panel__heading p,
+.roadsafe-forensic-card p {
+  display: none !important;
+}
+
+.roadsafe-forensic-panel__heading {
+  margin-bottom: 9px !important;
+}
+
+.roadsafe-forensic-actions button {
+  min-height: 31px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px !important;
+  padding: 0 9px !important;
+}
+
+.roadsafe-forensic-actions
+button:not(.is-primary)
+.roadsafe-material-icon {
+  color: #9f9f9f;
+}
+
+.roadsafe-forensic-actions
+button.is-primary
+.roadsafe-material-icon {
+  color: #eaa66a;
+}
+
+.roadsafe-forensic-pipeline
+article.is-complete small {
+  display: none !important;
+}
+
+/* -------------------------
+   Area Workbench
+   ------------------------- */
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__search-input {
+  grid-template-columns:
+    minmax(0, 1fr) 29px !important;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__search-input button,
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__actions button {
+  width: 29px !important;
+  min-width: 29px !important;
+  height: 27px !important;
+  min-height: 27px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center;
+  font-size: 0 !important;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__actions {
+  max-width: 260px !important;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__actions
+.roadsafe-material-icon,
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__search-input
+.roadsafe-material-icon {
+  font-size: 14px !important;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__message {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep forensic data text. Only UI descriptions are reduced. */
+.roadsafe-forensic-source-list small,
+.roadsafe-forensic-qa-list small,
+.roadsafe-inspector-definition-list,
+.roadsafe-inspector-row,
+.scene-map-incident-row__meta {
+  display: revert;
+}
+
+@media (max-width: 760px) {
+  .roadsafe-workstation
+  .roadsafe-icon-first-clock,
+  .roadsafe-workstation
+  .roadsafe-icon-first-case-chip {
+    display: none !important;
+  }
+
+  .roadsafe-workstation
+  .roadsafe-workspace-title-copy small {
+    display: none;
+  }
+
+  .roadsafe-workstation
+  .roadsafe-inspector-actions {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+}

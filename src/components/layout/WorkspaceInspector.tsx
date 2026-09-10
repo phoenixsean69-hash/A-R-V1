@@ -332,23 +332,23 @@ export default function WorkspaceInspector({
               </div>
 
               <div className="roadsafe-inspector-actions">
-                <Link to={`/cases/${activeCase.id}`}>
+                <Link to={`/cases/${activeCase.id}`} title="Case overview" aria-label="Case overview">
                   <ClipboardList size={15} />
                   Case overview
                 </Link>
-                <Link to={`/cases/${activeCase.id}/reconstruction`}>
+                <Link to={`/cases/${activeCase.id}/reconstruction`} title="Reconstruction" aria-label="Reconstruction">
                   <Boxes size={15} />
                   Reconstruction
                 </Link>
-                <Link to={`/cases/${activeCase.id}/reconstruction/ar`}>
+                <Link to={`/cases/${activeCase.id}/reconstruction/ar`} title="AR review" aria-label="AR review">
                   <Map size={15} />
                   AR review
                 </Link>
-                <Link to={`/cases/${activeCase.id}/footage`}>
+                <Link to={`/cases/${activeCase.id}/footage`} title="Footage" aria-label="Footage">
                   <Video size={15} />
                   Footage
                 </Link>
-                <Link to={`/cases/${activeCase.id}/report`}>
+                <Link to={`/cases/${activeCase.id}/report`} title="Investigation report" aria-label="Investigation report">
                   <FileText size={15} />
                   Investigation report
                 </Link>

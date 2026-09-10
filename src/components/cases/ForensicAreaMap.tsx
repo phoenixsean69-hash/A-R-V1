@@ -9,6 +9,17 @@ import type { FormEvent } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import {
+  Check,
+  Loader2,
+  Pentagon,
+  Route,
+  Search,
+  Trash2,
+  Undo2,
+  X,
+} from "../icons/materialIcons";
+
 import type {
   FeatureCollection,
   LineString,
@@ -947,7 +958,7 @@ export default function ForensicAreaMap({
               type="submit"
               disabled={searching}
             >
-              {searching ? "Searching" : "Search"}
+              {searching ? <Loader2 className="animate-spin" size={14} /> : <Search size={14} />}
             </button>
           </div>
 
@@ -995,7 +1006,14 @@ export default function ForensicAreaMap({
               );
             }}
           >
-            {drawing ? "Cancel" : "Draw polygon"}
+            {drawing ? (
+              <X size={14} />
+            ) : (
+              <Pentagon size={14} />
+            )}
+            <span className="roadsafe-visually-hidden">
+              {drawing ? "Cancel polygon drawing" : "Draw forensic polygon"}
+            </span>
           </button>
 
           {drawing && (
@@ -1005,7 +1023,8 @@ export default function ForensicAreaMap({
                 disabled={draft.length < 3}
                 onClick={finish}
               >
-                Finish
+                <Check size={14} />
+                <span className="roadsafe-visually-hidden">Finish polygon</span>
               </button>
 
               <button
@@ -1017,7 +1036,8 @@ export default function ForensicAreaMap({
                   setDraft(next);
                 }}
               >
-                Undo
+                <Undo2 size={14} />
+                <span className="roadsafe-visually-hidden">Undo vertex</span>
               </button>
             </>
           )}
@@ -1031,7 +1051,8 @@ export default function ForensicAreaMap({
             }
             onClick={fitRoads}
           >
-            Fit roads
+            <Route size={14} />
+            <span className="roadsafe-visually-hidden">Fit core to roads</span>
           </button>
 
           <button
@@ -1044,7 +1065,8 @@ export default function ForensicAreaMap({
               );
             }}
           >
-            Clear
+            <Trash2 size={14} />
+            <span className="roadsafe-visually-hidden">Clear forensic core</span>
           </button>
         </div>
       </div>

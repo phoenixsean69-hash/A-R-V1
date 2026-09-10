@@ -5,6 +5,7 @@ import {
   Eye,
   FileJson,
   FileText,
+  Plus,
   Printer,
 } from "../../components/icons/materialIcons";
 import { AccidentReportService } from "../../services/accidentReportService";
@@ -34,7 +35,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="roadsafe-reports-page space-y-3">
       <section className="ui-panel overflow-hidden">
         <div className="ui-panel-header flex-wrap gap-3">
           <div>
@@ -56,7 +57,7 @@ export default function ReportsPage() {
               ))}
             </select>
             {selected && (
-              <Link to={`/cases/${selected.accidentCase.id}/report`} className="ui-button-primary"><Eye size={14} />Open report</Link>
+              <Link to={`/cases/${selected.accidentCase.id}/report`} className="ui-button-primary"><Eye size={14} />Open</Link>
             )}
           </div>
         </div>
@@ -68,7 +69,7 @@ export default function ReportsPage() {
             <FileText className="mx-auto text-slate-700" size={36} strokeWidth={1.3} />
             <h2 className="mt-4 text-sm font-semibold text-slate-300">No case reports can be generated yet</h2>
             <p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-slate-600">Create an accident case first. This page no longer invents report rows.</p>
-            <Link to="/cases/new" className="ui-button-primary mt-5">Create case</Link>
+            <Link to="/cases/new" className="ui-button-primary mt-5"><Plus size={14} />Create</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -157,7 +158,7 @@ export default function ReportsPage() {
           <aside className="ui-panel p-4">
             <h2 className="ui-panel-title">Export actions</h2>
             <div className="mt-4 space-y-2">
-              <Link to={`/cases/${selected.accidentCase.id}/report`} className="ui-button-primary w-full"><Eye size={14} />Open full report</Link>
+              <Link to={`/cases/${selected.accidentCase.id}/report`} className="ui-button-primary w-full"><Eye size={14} />Open</Link>
               <button
                 className="ui-button w-full"
                 onClick={() => {

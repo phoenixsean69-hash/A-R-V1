@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Boxes,
   Camera,
+  FolderKanban,
   ExternalLink,
   Filter,
   Image as ImageIcon,
   MapPin,
   Search,
+  X,
 } from "../../components/icons/materialIcons";
 import ForensicScenePreview from "../../components/reconstruction/ForensicScenePreview";
 import { WorkspaceDataService } from "../../services/workspaceDataService";
@@ -42,7 +45,7 @@ export default function EvidencePage() {
   const selected = evidenceItems.find((item) => item.id === selectedId) ?? null;
 
   return (
-    <div className="space-y-3">
+    <div className="roadsafe-evidence-page space-y-3">
       <section className="ui-panel overflow-hidden">
         <div className="ui-panel-header flex-wrap gap-3">
           <div>
@@ -81,7 +84,7 @@ export default function EvidencePage() {
           <p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-slate-600">
             Evidence appears here after it is added inside a case reconstruction. Empty cards are no longer generated.
           </p>
-          <Link to="/cases" className="ui-button-primary mt-5">Open cases</Link>
+          <Link to="/cases" className="ui-button-primary mt-5"><FolderKanban size={14} />Cases</Link>
         </section>
       ) : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -144,7 +147,7 @@ export default function EvidencePage() {
           <div className="ui-panel max-h-[90vh] w-full max-w-5xl overflow-auto">
             <div className="ui-panel-header">
               <div><h2 className="ui-panel-title">E{selected.evidence.evidenceNumber} · {selected.evidence.title}</h2><p className="mt-1 text-[9px] text-slate-600">{selected.accidentCase?.caseNumber || selected.reconstruction.accidentId}</p></div>
-              <button className="ui-button" onClick={() => setSelectedId(null)}>Close</button>
+              <button className="ui-icon-button roadsafe-icon-only" onClick={() => setSelectedId(null)} title="Close" aria-label="Close evidence preview"><X size={15} /></button>
             </div>
             <div className="grid gap-4 p-4 lg:grid-cols-[1.4fr_.8fr]">
               <div className="overflow-hidden rounded-md border border-[#494949] bg-[#303030]">
@@ -172,7 +175,7 @@ export default function EvidencePage() {
                   <h3 className="ui-panel-title">Investigator notes</h3>
                   <p className="mt-3 whitespace-pre-wrap text-[10px] leading-5 text-slate-400">{selected.evidence.description || selected.evidence.notes || "No notes recorded."}</p>
                 </div>
-                <Link to={selected.accidentCase ? `/cases/${selected.accidentCase.id}/reconstruction` : "/reconstruction"} className="ui-button-primary w-full">Open reconstruction</Link>
+                <Link to={selected.accidentCase ? `/cases/${selected.accidentCase.id}/reconstruction` : "/reconstruction"} className="ui-button-primary w-full"><Boxes size={14} />Open</Link>
               </aside>
             </div>
           </div>

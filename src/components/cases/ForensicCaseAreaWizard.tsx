@@ -13,6 +13,15 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import {
+  ArrowLeft,
+  LocateFixed,
+  MapPinned,
+  Play,
+  Plus,
+  RefreshCw,
+} from "../icons/materialIcons";
+
 import type {
   AccidentCaseFormValues,
 } from "../../types/accidentCase";
@@ -1478,7 +1487,8 @@ export default function ForensicCaseAreaWizard({
                 void completeCaseStep()
               }
             >
-              Define forensic area
+              <MapPinned size={14} />
+              <span>Area</span>
             </button>
           </Actions>
         </section>
@@ -1619,7 +1629,8 @@ export default function ForensicCaseAreaWizard({
                     )
                   }
                 >
-                  Use current location
+                  <LocateFixed size={14} />
+                  <span>Locate</span>
                 </button>
               </div>
 
@@ -1767,7 +1778,8 @@ export default function ForensicCaseAreaWizard({
                 )
               }
             >
-              Back
+              <ArrowLeft size={14} />
+              <span>Back</span>
             </button>
 
             <button
@@ -1783,7 +1795,8 @@ export default function ForensicCaseAreaWizard({
                 void completeAreaStep()
               }
             >
-              Freeze and build
+              <Play size={14} />
+              <span>Build</span>
             </button>
           </Actions>
         </section>
@@ -1857,7 +1870,8 @@ export default function ForensicCaseAreaWizard({
                 )
               }
             >
-              Back to area
+              <ArrowLeft size={14} />
+              <span>Area</span>
             </button>
 
             <button
@@ -1874,9 +1888,8 @@ export default function ForensicCaseAreaWizard({
                 void buildPipeline()
               }
             >
-              {building
-                ? "Building forensic scene…"
-                : "Run forensic pipeline"}
+              <Play className={building ? "animate-spin" : ""} size={14} />
+              <span>{building ? "Building" : "Run"}</span>
             </button>
           </Actions>
         </section>
@@ -2084,9 +2097,7 @@ export default function ForensicCaseAreaWizard({
             />
 
             <span>
-              I reviewed the extracted geometry, source confidence and QA
-              warnings. I understand that forensic microgeometry still
-              requires field verification/correction.
+              I reviewed geometry, provenance and QA. Microgeometry requires field verification.
             </span>
           </label>
 
@@ -2099,7 +2110,8 @@ export default function ForensicCaseAreaWizard({
                 )
               }
             >
-              Change area
+              <MapPinned size={14} />
+              <span>Area</span>
             </button>
 
             <button
@@ -2110,7 +2122,8 @@ export default function ForensicCaseAreaWizard({
                 )
               }
             >
-              Rebuild
+              <RefreshCw size={14} />
+              <span>Rebuild</span>
             </button>
 
             <button
@@ -2125,7 +2138,8 @@ export default function ForensicCaseAreaWizard({
                 void createCase()
               }
             >
-              Create case from frozen scene
+              <Plus size={14} />
+              <span>Create</span>
             </button>
           </Actions>
         </section>

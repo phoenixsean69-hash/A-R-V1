@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Archive,
+  Boxes,
   CheckCircle2,
   Cloud,
   Copy,
   ExternalLink,
   FileText,
   Filter,
+  ListChecks,
   LoaderCircle,
   Orbit,
   Plus,
@@ -162,7 +164,7 @@ export default function AccidentCasesPage() {
             : "Shared register waiting";
 
   return (
-    <div className="mx-auto min-w-0 max-w-[1500px] space-y-3">
+    <div className="roadsafe-cases-page mx-auto min-w-0 max-w-[1500px] space-y-3">
       <section className="ui-panel min-w-0 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -216,11 +218,12 @@ export default function AccidentCasesPage() {
 
             <button
               type="button"
-              className="ui-button"
+              className="ui-icon-button roadsafe-icon-only"
               onClick={() => void caseSync.refresh()}
+              aria-label="Refresh case register"
+              title="Refresh"
             >
-              <RefreshCw size={13} />
-              Refresh
+              <RefreshCw size={15} />
             </button>
 
             {caseSync.status === "error" && (
@@ -229,7 +232,8 @@ export default function AccidentCasesPage() {
                 className="ui-button-primary"
                 onClick={caseSync.retryPending}
               >
-                Retry pending
+                <RefreshCw size={13} />
+                <span>Retry</span>
               </button>
             )}
           </div>
@@ -275,7 +279,7 @@ export default function AccidentCasesPage() {
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="flex rounded-md border border-[#494949] bg-[#292929] p-1">
+            <div className="roadsafe-case-view-switch flex rounded-md border border-[#494949] bg-[#292929] p-1">
               <button
                 type="button"
                 className={
@@ -285,7 +289,8 @@ export default function AccidentCasesPage() {
                 }
                 onClick={() => setView("table")}
               >
-                Table
+                <ListChecks size={15} />
+                <span className="roadsafe-visually-hidden">Table view</span>
               </button>
               <button
                 type="button"
@@ -296,13 +301,14 @@ export default function AccidentCasesPage() {
                 }
                 onClick={() => setView("cards")}
               >
-                Cards
+                <Boxes size={15} />
+                <span className="roadsafe-visually-hidden">Card view</span>
               </button>
             </div>
 
             <Link to="/cases/new" className="ui-button-primary">
               <Plus size={14} />
-              New case
+              New
             </Link>
           </div>
         </div>
