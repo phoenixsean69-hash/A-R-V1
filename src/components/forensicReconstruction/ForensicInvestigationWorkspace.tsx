@@ -1,6 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AccidentCase } from "../../types/accidentCase";
 import {
+  CalendarClock,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardList,
+  CloudSun,
+  Crosshair,
+  Gauge,
+  Lightbulb,
+  LocateFixed,
+  MapPin,
+  MapPinned,
+  Navigation,
+  RefreshCw,
+  Route,
+  Ruler,
+  Satellite,
+  Save,
+  ScanEye,
+  ShieldCheck,
+  Waypoints,
+} from "../icons/materialIcons";
+import {
   ANALYSIS_CATEGORY_OPTIONS,
   ANALYSIS_FOLLOW_UP_OPTIONS,
   ANALYSIS_LIMITATION_OPTIONS,
@@ -2654,101 +2676,429 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Scene Intake" && (
-            <section className="fv2-panel">
-              <header><div><span>Scene preservation</span><strong>Initial scene intake</strong></div><button className="primary" onClick={saveScene}>Save scene intake</button></header>
-              <div className="fv2-grid">
-                {field("Accident location", "location")}
-                <label className="fv2-field"><span>Date</span><input type="date" value={investigation.scene.accidentDate} onChange={(e) => setInvestigation((c) => ({...c, scene:{...c.scene, accidentDate:e.target.value}}))} /></label>
-                <label className="fv2-field"><span>Time</span><input type="time" value={investigation.scene.accidentTime} onChange={(e) => setInvestigation((c) => ({...c, scene:{...c.scene, accidentTime:e.target.value}}))} /></label>
-                {sceneChoiceField(
-                  "Weather",
-                  "weather",
-                  "Enter another weather condition...",
-                )}
-                {sceneChoiceField(
-                  "Lighting",
-                  "lighting",
-                  "Enter another lighting condition...",
-                )}
-                {sceneChoiceField(
-                  "Road condition",
-                  "roadCondition",
-                  "Enter another road condition...",
-                )}
-                {sceneChoiceField(
-                  "Traffic-control state",
-                  "trafficControlState",
-                  "Enter another traffic-control state...",
-                )}
-                {sceneChoiceField(
-                  "Road geometry",
-                  "roadGeometry",
-                  "Describe the road geometry...",
-                )}
-                <div className="fv2-field">
-                  <span>Fixed reference point</span>
+            <section className="fv2-scene-workbench">
+              <header className="fv2-scene-commandbar">
+                <div className="fv2-scene-commandbar__identity">
+                  <span className="fv2-scene-commandbar__icon">
+                    <ShieldCheck size={20} />
+                  </span>
+                  <div>
+                    <small>Scene preservation</small>
+                    <strong>Scene Intake Console</strong>
+                  </div>
+                </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      readOnly
-                      value={String(investigation.scene.sceneDatumLabel ?? "")}
-                      placeholder="No field datum captured"
-                      className="min-w-0 flex-1"
-                    />
+                <div className="fv2-scene-commandbar__status">
+                  <span>
+                    <Gauge size={15} />
+                    <b>{completion}%</b>
+                    captured
+                  </span>
+
+                  <span
+                    className={
+                      investigation.scene.sceneDatum
+                        ? "is-ready"
+                        : "is-warning"
+                    }
+                  >
+                    <Satellite size={15} />
+                    <b>
+                      {investigation.scene.sceneDatum
+                        ? "DATUM LOCKED"
+                        : "NO DATUM"}
+                    </b>
+                  </span>
+
+                  <span>
+                    {persistenceStatus === "saved" ? (
+                      <CheckCircle2 size={15} />
+                    ) : (
+                      <RefreshCw
+                        className={
+                          persistenceStatus === "saving"
+                            ? "animate-spin"
+                            : ""
+                        }
+                        size={15}
+                      />
+                    )}
+                    <b>
+                      {persistenceStatus === "saved"
+                        ? "SAVED"
+                        : persistenceStatus === "saving"
+                          ? "SAVING"
+                          : "ATTENTION"}
+                    </b>
+                  </span>
+
+                  <button
+                    type="button"
+                    className="fv2-scene-save"
+                    onClick={saveScene}
+                    title="Save scene intake"
+                    aria-label="Save scene intake"
+                  >
+                    <Save size={17} />
+                    <span>Save</span>
+                  </button>
+                </div>
+              </header>
+
+              <div className="fv2-scene-readout-strip">
+                <article>
+                  <MapPinned size={20} />
+                  <div>
+                    <span>Location</span>
+                    <strong>
+                      {investigation.scene.location || "Not recorded"}
+                    </strong>
+                  </div>
+                </article>
+
+                <article>
+                  <CalendarClock size={20} />
+                  <div>
+                    <span>Accident time</span>
+                    <strong>
+                      {investigation.scene.accidentDate || "No date"}
+                      {" · "}
+                      {investigation.scene.accidentTime || "--:--"}
+                    </strong>
+                  </div>
+                </article>
+
+                <article>
+                  <CloudSun size={20} />
+                  <div>
+                    <span>Environment</span>
+                    <strong>
+                      {[
+                        investigation.scene.weather,
+                        investigation.scene.lighting,
+                        investigation.scene.roadCondition,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Not classified"}
+                    </strong>
+                  </div>
+                </article>
+
+                <article
+                  className={
+                    investigation.scene.sceneDatum
+                      ? "is-ready"
+                      : "is-warning"
+                  }
+                >
+                  <Crosshair size={20} />
+                  <div>
+                    <span>Reference datum</span>
+                    <strong>
+                      {investigation.scene.sceneDatumLabel ||
+                        "Capture required"}
+                    </strong>
+                  </div>
+                </article>
+              </div>
+
+              <div className="fv2-scene-workbench-grid">
+                <section className="fv2-scene-module fv2-scene-identity">
+                  <header>
+                    <MapPin size={17} />
+                    <div>
+                      <span>Scene identity</span>
+                      <strong>Where and when</strong>
+                    </div>
+                  </header>
+
+                  <div className="fv2-scene-module__body">
+                    {field("Accident location", "location")}
+
+                    <div className="fv2-scene-time-grid">
+                      <label className="fv2-field">
+                        <span>Date</span>
+                        <input
+                          type="date"
+                          value={investigation.scene.accidentDate}
+                          onChange={(event) =>
+                            setInvestigation((current) => ({
+                              ...current,
+                              scene: {
+                                ...current.scene,
+                                accidentDate: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      </label>
+
+                      <label className="fv2-field">
+                        <span>Time</span>
+                        <input
+                          type="time"
+                          value={investigation.scene.accidentTime}
+                          onChange={(event) =>
+                            setInvestigation((current) => ({
+                              ...current,
+                              scene: {
+                                ...current.scene,
+                                accidentTime: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="fv2-scene-module fv2-scene-environment">
+                  <header>
+                    <ScanEye size={17} />
+                    <div>
+                      <span>Observed state</span>
+                      <strong>Environmental conditions</strong>
+                    </div>
+                  </header>
+
+                  <div className="fv2-scene-condition-grid">
+                    <article className="fv2-scene-condition">
+                      <div className="fv2-scene-condition__readout">
+                        <CloudSun size={24} />
+                        <div>
+                          <span>Weather</span>
+                          <strong>{investigation.scene.weather || "Unset"}</strong>
+                        </div>
+                      </div>
+                      {sceneChoiceField(
+                        "Weather",
+                        "weather",
+                        "Enter another weather condition...",
+                      )}
+                    </article>
+
+                    <article className="fv2-scene-condition">
+                      <div className="fv2-scene-condition__readout">
+                        <Lightbulb size={24} />
+                        <div>
+                          <span>Lighting</span>
+                          <strong>{investigation.scene.lighting || "Unset"}</strong>
+                        </div>
+                      </div>
+                      {sceneChoiceField(
+                        "Lighting",
+                        "lighting",
+                        "Enter another lighting condition...",
+                      )}
+                    </article>
+
+                    <article className="fv2-scene-condition">
+                      <div className="fv2-scene-condition__readout">
+                        <Route size={24} />
+                        <div>
+                          <span>Road surface</span>
+                          <strong>{investigation.scene.roadCondition || "Unset"}</strong>
+                        </div>
+                      </div>
+                      {sceneChoiceField(
+                        "Road condition",
+                        "roadCondition",
+                        "Enter another road condition...",
+                      )}
+                    </article>
+
+                    <article className="fv2-scene-condition">
+                      <div className="fv2-scene-condition__readout">
+                        <Navigation size={24} />
+                        <div>
+                          <span>Traffic control</span>
+                          <strong>
+                            {investigation.scene.trafficControlState || "Unset"}
+                          </strong>
+                        </div>
+                      </div>
+                      {sceneChoiceField(
+                        "Traffic-control state",
+                        "trafficControlState",
+                        "Enter another traffic-control state...",
+                      )}
+                    </article>
+
+                    <article className="fv2-scene-condition">
+                      <div className="fv2-scene-condition__readout">
+                        <Waypoints size={24} />
+                        <div>
+                          <span>Road geometry</span>
+                          <strong>{investigation.scene.roadGeometry || "Unset"}</strong>
+                        </div>
+                      </div>
+                      {sceneChoiceField(
+                        "Road geometry",
+                        "roadGeometry",
+                        "Describe the road geometry...",
+                      )}
+                    </article>
+                  </div>
+                </section>
+
+                <section className="fv2-scene-module fv2-scene-datum">
+                  <header>
+                    <Crosshair size={17} />
+                    <div>
+                      <span>Spatial reference</span>
+                      <strong>Field datum / GNSS</strong>
+                    </div>
+                    <span
+                      className={`fv2-scene-module__state ${
+                        investigation.scene.sceneDatum
+                          ? "is-ready"
+                          : "is-warning"
+                      }`}
+                    >
+                      {investigation.scene.sceneDatum ? "LOCKED" : "REQUIRED"}
+                    </span>
+                  </header>
+
+                  <div className="fv2-scene-datum-hero">
+                    <div className="fv2-scene-datum-target">
+                      <Crosshair size={36} />
+                    </div>
+
+                    <div className="fv2-scene-datum-title">
+                      <span>Reference feature</span>
+                      <strong>
+                        {investigation.scene.sceneDatumLabel ||
+                          "No field datum captured"}
+                      </strong>
+                      <small>Device GNSS field capture</small>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setDatumPickerOpen(true)}
-                      className="shrink-0 rounded border border-[#8c6039] bg-[#3a2c21] px-3 text-[9px] font-bold text-[#f0c49a]"
+                      className="fv2-scene-datum-action"
                     >
-                      {investigation.scene.sceneDatum
-                        ? "Recapture at point"
-                        : "Set reference point"}
+                      <LocateFixed size={16} />
+                      <span>
+                        {investigation.scene.sceneDatum ? "Recapture" : "Capture"}
+                      </span>
                     </button>
                   </div>
 
-                  {investigation.scene.sceneDatum && (
-                    <small className="fv2-help">
-                      {investigation.scene.sceneDatum.latitude.toFixed(7)},{" "}
-                      {investigation.scene.sceneDatum.longitude.toFixed(7)}
-                      {" · "}GNSS accuracy ±
-                      {typeof investigation.scene.sceneDatum.accuracyMetres === "number"
-                        ? investigation.scene.sceneDatum.accuracyMetres.toFixed(1)
-                        : "?"} m
-                      {" · "}
-                      {investigation.scene.sceneDatum.sampleCount ?? 1} sample(s)
-                      {" · "}Device GNSS field capture
+                  <div className="fv2-scene-datum-readouts">
+                    <article>
+                      <span>Latitude</span>
+                      <strong>
+                        {investigation.scene.sceneDatum
+                          ? investigation.scene.sceneDatum.latitude.toFixed(7)
+                          : "—"}
+                      </strong>
+                    </article>
+
+                    <article>
+                      <span>Longitude</span>
+                      <strong>
+                        {investigation.scene.sceneDatum
+                          ? investigation.scene.sceneDatum.longitude.toFixed(7)
+                          : "—"}
+                      </strong>
+                    </article>
+
+                    <article>
+                      <span>Accuracy</span>
+                      <strong>
+                        {investigation.scene.sceneDatum
+                          ? `±${
+                              typeof investigation.scene.sceneDatum
+                                .accuracyMetres === "number"
+                                ? investigation.scene.sceneDatum.accuracyMetres.toFixed(
+                                    1,
+                                  )
+                                : "?"
+                            } m`
+                          : "—"}
+                      </strong>
+                    </article>
+
+                    <article>
+                      <span>Samples</span>
+                      <strong>
+                        {investigation.scene.sceneDatum
+                          ? investigation.scene.sceneDatum.sampleCount ?? 1
+                          : "—"}
+                      </strong>
+                    </article>
+                  </div>
+
+                  <div className="fv2-scene-axis">
+                    <div className="fv2-scene-axis__label">
+                      <Ruler size={16} />
+                      <span>Measurement axes</span>
+                    </div>
+
+                    <input
+                      value={String(
+                        investigation.scene.coordinateNotes ?? "",
+                      )}
+                      placeholder="Define forward / across-road directions"
+                      onChange={(event) =>
+                        setInvestigation((current) => ({
+                          ...current,
+                          scene: {
+                            ...current.scene,
+                            coordinateNotes: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="fv2-scene-protocol">
+                    <Satellite size={15} />
+                    <span>
+                      Stand at a permanent scene feature and capture live
+                      device GNSS fixes. No map-picked datum is used.
+                    </span>
+                  </div>
+                </section>
+              </div>
+
+              <details className="fv2-scene-notes">
+                <summary>
+                  <span className="fv2-scene-notes__icon">
+                    <ClipboardList size={17} />
+                  </span>
+
+                  <div>
+                    <strong>Preservation notes</strong>
+                    <small>
+                      {investigation.scene.preservationNotes.trim()
+                        ? "Scene narrative recorded"
+                        : "Add scene-preservation narrative"}
                     </small>
-                  )}
+                  </div>
 
-                  <small className="fv2-help">
-                    Officer physically walks to a permanent scene feature, stands
-                    at the exact point, then lets RoadSafe capture several live
-                    device GNSS fixes. No map clicking is used.
-                  </small>
-                </div>
+                  <ChevronDown size={18} />
+                </summary>
 
-                <div className="fv2-field">
-                  <span>Measurement directions</span>
-                  <input
-                    value={String(investigation.scene.coordinateNotes ?? "")}
-                    placeholder="e.g. Along the road toward Bindura = forward; across the road = left/right"
+                <div className="fv2-scene-notes__body">
+                  <textarea
+                    rows={5}
+                    value={investigation.scene.preservationNotes}
                     onChange={(event) =>
                       setInvestigation((current) => ({
                         ...current,
                         scene: {
                           ...current.scene,
-                          coordinateNotes: event.target.value,
+                          preservationNotes: event.target.value,
                         },
                       }))
                     }
+                    placeholder="Record what was present before anything was moved, collected or towed."
                   />
-                  <small className="fv2-help">
-                    Explain which way you will measure along and across the road.
-                  </small>
                 </div>
-                <label className="fv2-field full"><span>Preservation / scene notes</span><textarea rows={7} value={investigation.scene.preservationNotes} onChange={(e) => setInvestigation((c) => ({...c, scene:{...c.scene, preservationNotes:e.target.value}}))} placeholder="Record what was present before anything was moved, collected or towed." /></label>
-              </div>
+              </details>
             </section>
           )}
 
