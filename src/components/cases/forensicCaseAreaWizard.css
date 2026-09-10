@@ -1190,3 +1190,147 @@
 }
 
 /* ROADSAFE_NEW_CASE_WIZARD_WORKSTATION_END */
+
+/* ROADSAFE_FORENSIC_AREA_V2_START */
+
+.roadsafe-forensic-map--area-v2 {
+  min-height: 620px;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__actions {
+  max-width: 390px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__actions button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+.roadsafe-forensic-area-hud {
+  position: absolute;
+  z-index: 20;
+  top: 47px;
+  left: 7px;
+  right: 7px;
+  display: grid;
+  grid-template-columns: repeat(6,minmax(0,1fr));
+  gap: 3px;
+  pointer-events: none;
+}
+
+.roadsafe-forensic-area-hud > div {
+  min-width: 0;
+  min-height: 37px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 5px 7px;
+  border: 1px solid rgba(67,67,67,.96);
+  border-radius: 2px;
+  background: rgba(34,34,34,.92);
+  box-shadow: 0 4px 14px rgba(0,0,0,.16);
+}
+
+.roadsafe-forensic-area-hud span {
+  overflow: hidden;
+  color: #777;
+  font-size: 7px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-forensic-area-hud strong {
+  overflow: hidden;
+  color: #c6c6c6;
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-forensic-area-hud .is-warning {
+  border-color: #665033;
+  background: rgba(49,40,30,.94);
+}
+
+.roadsafe-forensic-area-hud .is-warning strong {
+  color: #d4a666;
+}
+
+.roadsafe-forensic-area-hud .is-adaptive {
+  border-color: #5f4933;
+}
+
+.roadsafe-forensic-area-hud .is-adaptive strong {
+  color: #dfa269;
+}
+
+.roadsafe-forensic-core-vertex {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #202020;
+  border-radius: 50%;
+  outline: 1px solid #ffad63;
+  background: #e8872d;
+  color: #171717;
+  font-family: "Saira",sans-serif;
+  font-size: 7px;
+  font-weight: 800;
+  cursor: move;
+  box-shadow: 0 3px 10px rgba(0,0,0,.38);
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-anchor-marker {
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #df4f4f;
+  cursor: move;
+}
+
+.roadsafe-forensic-map__legend i.is-road {
+  height: 2px;
+  background: #d4d4d4;
+}
+
+.roadsafe-forensic-map__legend i.is-cut {
+  height: 2px;
+  background: #d39b61;
+}
+
+.roadsafe-forensic-map--area-v2
+.roadsafe-forensic-map__message.is-warning {
+  border-color: #654b32;
+  background: rgba(48,39,29,.94);
+  color: #d0a16a;
+}
+
+@media(max-width:1120px) {
+  .roadsafe-forensic-area-hud {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px) {
+  .roadsafe-forensic-area-hud {
+    top: 84px;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .roadsafe-forensic-map--area-v2 {
+    min-height: 560px;
+  }
+}
+
+/* ROADSAFE_FORENSIC_AREA_V2_END */

@@ -5,18 +5,13 @@ import {
   useState,
 } from "react";
 
-import type {
-  FormEvent,
-} from "react";
-
-import maplibregl from
-  "maplibre-gl";
-
+import type { FormEvent } from "react";
+import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type {
-  Feature,
   FeatureCollection,
+  LineString,
   Polygon,
 } from "geojson";
 
@@ -25,9 +20,20 @@ import {
   type ZimbabweLocationSearchResult,
 } from "../../services/locationSearchService";
 
+import {
+  ForensicAreaIntelligenceService,
+  type ForensicAreaRoadIntelligence,
+} from "../../services/forensicAreaIntelligenceService";
+
+import {
+  areaSelectionFromPolygon,
+  createContextArea,
+  dimensionsForBounds,
+} from "../../services/forensicAreaService";
+
 import type {
   RealSceneAreaSelection,
-  RealSceneBounds,
+  RealSceneGeoPoint,
   RealSceneMapMode,
 } from "../../types/realSceneGeometry";
 
@@ -35,307 +41,195 @@ import type {
   RoadDetectionCoordinate,
 } from "../../types/roadLayoutDetection";
 
-import {
-  areaSelectionFromBounds,
-} from "../../services/forensicAreaService";
-
-interface ForensicAreaMapProps {
-  anchor:
-    RoadDetectionCoordinate | null;
-
-  coreArea:
-    RealSceneAreaSelection | null;
-
-  contextArea:
-    RealSceneAreaSelection | null;
-
-  onAnchorChange(
-    coordinate:
-      RoadDetectionCoordinate,
-  ): void;
-
-  onCoreAreaChange(
-    area:
-      RealSceneAreaSelection | null,
-  ): void;
+interface Props {
+  anchor: RoadDetectionCoordinate | null;
+  coreArea: RealSceneAreaSelection | null;
+  contextArea: RealSceneAreaSelection | null;
+  contextBufferMetres: number;
+  onAnchorChange(coordinate: RoadDetectionCoordinate): void;
+  onCoreAreaChange(area: RealSceneAreaSelection | null): void;
 }
 
-const DEFAULT_CENTER:
-  [number, number] =
-  [
-    31.053,
-    -17.825,
-  ];
-
+const DEFAULT_CENTER: [number, number] = [31.053, -17.825];
 const STREET_STYLE =
   "https://tiles.openfreemap.org/styles/liberty";
-
-const HYBRID_IMAGERY_TILE =
+const IMAGERY =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-
-const HYBRID_TRANSPORT_TILE =
+const TRANSPORT =
   "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
-
-const HYBRID_PLACES_TILE =
-  "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
-
-const TERRAIN_TILE =
+const TERRAIN =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
 
-function createHybridStyle() {
+function styleForMode(mode: RealSceneMapMode) {
+  if (mode === "street") {
+    return STREET_STYLE;
+  }
+
+  const tile = mode === "terrain" ? TERRAIN : IMAGERY;
+
   return {
     version: 8 as const,
-
     sources: {
-      imagery: {
-        type:
-          "raster" as const,
-
-        tiles: [
-          HYBRID_IMAGERY_TILE,
-        ],
-
+      base: {
+        type: "raster" as const,
+        tiles: [tile],
         tileSize: 256,
-        minzoom: 0,
-        maxzoom: 17,
-
-        attribution:
-          "Imagery © Esri",
+        maxzoom: 19,
       },
-
-      transportation: {
-        type:
-          "raster" as const,
-
-        tiles: [
-          HYBRID_TRANSPORT_TILE,
-        ],
-
-        tileSize: 256,
-        minzoom: 0,
-        maxzoom: 17,
-
-        attribution:
-          "Transportation reference © Esri",
-      },
-
-      places: {
-        type:
-          "raster" as const,
-
-        tiles: [
-          HYBRID_PLACES_TILE,
-        ],
-
-        tileSize: 256,
-        minzoom: 0,
-        maxzoom: 17,
-
-        attribution:
-          "Places and boundaries © Esri",
-      },
+      ...(mode === "hybrid"
+        ? {
+            transport: {
+              type: "raster" as const,
+              tiles: [TRANSPORT],
+              tileSize: 256,
+              maxzoom: 19,
+            },
+          }
+        : {}),
     },
-
     layers: [
       {
-        id:
-          "hybrid-imagery",
-        type:
-          "raster" as const,
-        source:
-          "imagery",
-        paint: {
-          "raster-opacity":
-            1,
-          "raster-fade-duration":
-            0,
-        },
+        id: "base",
+        type: "raster" as const,
+        source: "base",
       },
-
-      {
-        id:
-          "hybrid-transportation",
-        type:
-          "raster" as const,
-        source:
-          "transportation",
-        paint: {
-          "raster-opacity":
-            0.98,
-          "raster-fade-duration":
-            0,
-        },
-      },
-
-      {
-        id:
-          "hybrid-places",
-        type:
-          "raster" as const,
-        source:
-          "places",
-        paint: {
-          "raster-opacity":
-            1,
-          "raster-fade-duration":
-            0,
-        },
-      },
+      ...(mode === "hybrid"
+        ? [
+            {
+              id: "transport",
+              type: "raster" as const,
+              source: "transport",
+              paint: {
+                "raster-opacity": 0.9,
+              },
+            },
+          ]
+        : []),
     ],
   };
 }
 
-function createTerrainStyle() {
-  return {
-    version: 8 as const,
-
-    sources: {
-      terrain: {
-        type:
-          "raster" as const,
-
-        tiles: [
-          TERRAIN_TILE,
-        ],
-
-        tileSize: 256,
-        minzoom: 0,
-        maxzoom: 17,
-
-        attribution:
-          "Topographic map © Esri",
-      },
-    },
-
-    layers: [
-      {
-        id:
-          "terrain-layer",
-        type:
-          "raster" as const,
-        source:
-          "terrain",
-        paint: {
-          "raster-opacity":
-            1,
-          "raster-fade-duration":
-            0,
-        },
-      },
-    ],
-  };
-}
-
-function styleForMode(
-  mode:
-    RealSceneMapMode,
-) {
-  if (
-    mode ===
-    "hybrid"
-  ) {
-    return createHybridStyle();
-  }
-
-  if (
-    mode ===
-    "terrain"
-  ) {
-    return createTerrainStyle();
-  }
-
-  return STREET_STYLE;
-}
-
-function polygonCollection(
-  area:
-    RealSceneAreaSelection | null,
+function polygonData(
+  area: RealSceneAreaSelection | null,
 ): FeatureCollection<Polygon> {
-  if (!area) {
-    return {
-      type:
-        "FeatureCollection",
-      features: [],
-    };
-  }
-
-  const feature:
-    Feature<Polygon> =
-    {
-      type:
-        "Feature",
-      properties: {},
-      geometry: {
-        type:
-          "Polygon",
-        coordinates: [
-          area.polygon.map(
-            (point) => [
-              point.longitude,
-              point.latitude,
-            ],
-          ),
-        ],
-      },
-    };
-
   return {
-    type:
-      "FeatureCollection",
-    features: [
-      feature,
-    ],
+    type: "FeatureCollection",
+    features: area
+      ? [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                area.polygon.map((point) => [
+                  point.longitude,
+                  point.latitude,
+                ]),
+              ],
+            },
+          },
+        ]
+      : [],
   };
 }
 
-function boundsFromCorners(
-  first: {
-    latitude: number;
-    longitude: number;
-  },
-  second: {
-    latitude: number;
-    longitude: number;
-  },
-): RealSceneBounds {
+function draftData(
+  vertices: RealSceneGeoPoint[],
+): FeatureCollection<LineString> {
   return {
-    north:
-      Math.max(
-        first.latitude,
-        second.latitude,
-      ),
-
-    south:
-      Math.min(
-        first.latitude,
-        second.latitude,
-      ),
-
-    east:
-      Math.max(
-        first.longitude,
-        second.longitude,
-      ),
-
-    west:
-      Math.min(
-        first.longitude,
-        second.longitude,
-      ),
+    type: "FeatureCollection",
+    features:
+      vertices.length > 1
+        ? [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: vertices.map((point) => [
+                  point.longitude,
+                  point.latitude,
+                ]),
+              },
+            },
+          ]
+        : [],
   };
+}
+
+function roadData(
+  intelligence: ForensicAreaRoadIntelligence | null,
+): FeatureCollection<LineString> {
+  return {
+    type: "FeatureCollection",
+    features:
+      intelligence?.roads.map((road) => ({
+        type: "Feature" as const,
+        properties: {
+          clipped: road.clippedByCore,
+        },
+        geometry: {
+          type: "LineString" as const,
+          coordinates: road.points.map((point) => [
+            point.longitude,
+            point.latitude,
+          ]),
+        },
+      })) ?? [],
+  };
+}
+
+function openVertices(
+  area: RealSceneAreaSelection,
+): RealSceneGeoPoint[] {
+  const polygon = area.polygon;
+
+  if (polygon.length < 2) {
+    return [...polygon];
+  }
+
+  const first = polygon[0];
+  const last = polygon[polygon.length - 1];
+
+  return (
+    first.latitude === last.latitude &&
+    first.longitude === last.longitude
+      ? polygon.slice(0, -1)
+      : [...polygon]
+  );
+}
+
+function effectiveBuffer(
+  area: RealSceneAreaSelection | null,
+  requested: number,
+): number {
+  if (!area) return requested;
+
+  const dimensions = dimensionsForBounds(area.bounds);
+  const diagonal = Math.hypot(
+    dimensions.width,
+    dimensions.height,
+  );
+
+  return Math.max(
+    requested,
+    Math.round(
+      Math.min(
+        180,
+        Math.max(60, diagonal * 0.45),
+      ),
+    ),
+  );
 }
 
 function fitSearchResult(
-  map:
-    maplibregl.Map,
-  result:
-    ZimbabweLocationSearchResult,
-): void {
-  if (
-    result.boundingBox
-  ) {
-    const bounds =
-      new maplibregl.LngLatBounds(
+  map: maplibregl.Map,
+  result: ZimbabweLocationSearchResult,
+) {
+  if (result.boundingBox) {
+    map.fitBounds(
+      [
         [
           result.boundingBox.west,
           result.boundingBox.south,
@@ -344,19 +238,11 @@ function fitSearchResult(
           result.boundingBox.east,
           result.boundingBox.north,
         ],
-      );
-
-    map.fitBounds(
-      bounds,
+      ],
       {
-        padding:
-          75,
-
-        maxZoom:
-          17,
-
-        duration:
-          650,
+        padding: 70,
+        maxZoom: 18,
+        duration: 600,
       },
     );
 
@@ -368,12 +254,8 @@ function fitSearchResult(
       result.coordinate.longitude,
       result.coordinate.latitude,
     ],
-
-    zoom:
-      17,
-
-    duration:
-      650,
+    zoom: 18,
+    duration: 600,
   });
 }
 
@@ -381,693 +263,648 @@ export default function ForensicAreaMap({
   anchor,
   coreArea,
   contextArea,
+  contextBufferMetres,
   onAnchorChange,
   onCoreAreaChange,
-}: ForensicAreaMapProps) {
-  const mountRef =
-    useRef<HTMLDivElement | null>(
-      null,
-    );
-
-  const mapRef =
-    useRef<maplibregl.Map | null>(
-      null,
-    );
-
-  const markerRef =
-    useRef<maplibregl.Marker | null>(
-      null,
-    );
-
-  const firstCornerRef =
-    useRef<{
-      latitude: number;
-      longitude: number;
-    } | null>(
-      null,
-    );
-
-  const coreAreaRef =
-    useRef(
-      coreArea,
-    );
-
-  const contextAreaRef =
-    useRef(
-      contextArea,
-    );
-
-  const drawingRef =
-    useRef(
-      false,
-    );
+}: Props) {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const anchorMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const vertexMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const drawingRef = useRef(false);
+  const draftRef = useRef<RealSceneGeoPoint[]>([]);
+  const coreRef = useRef(coreArea);
+  const contextRef = useRef(contextArea);
+  const intelligenceRef =
+    useRef<ForensicAreaRoadIntelligence | null>(null);
 
   const [mode, setMode] =
-    useState<RealSceneMapMode>(
-      "hybrid",
+    useState<RealSceneMapMode>("hybrid");
+  const [drawing, setDrawing] = useState(false);
+  const [draft, setDraft] = useState<RealSceneGeoPoint[]>([]);
+  const [message, setMessage] = useState(
+    "Click the map to position the accident anchor.",
+  );
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] =
+    useState<ZimbabweLocationSearchResult[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [intelligence, setIntelligence] =
+    useState<ForensicAreaRoadIntelligence | null>(null);
+  const [scanState, setScanState] =
+    useState<"idle" | "loading" | "ready" | "warning">(
+      "idle",
     );
 
-  const [drawing, setDrawing] =
-    useState(
-      false,
-    );
+  const requestedBuffer = Math.min(
+    350,
+    Math.max(10, contextBufferMetres),
+  );
 
-  const [drawMessage, setDrawMessage] =
-    useState(
-      "Click the map to position the accident anchor.",
-    );
-
-  const [searchQuery, setSearchQuery] =
-    useState(
-      "",
-    );
-
-  const [searching, setSearching] =
-    useState(
-      false,
-    );
-
-  const [
-    searchResults,
-    setSearchResults,
-  ] =
-    useState<
-      ZimbabweLocationSearchResult[]
-    >(
-      [],
-    );
-
-  const [
-    searchError,
-    setSearchError,
-  ] =
-    useState(
-      "",
-    );
-
-  const [
-    searchOpen,
-    setSearchOpen,
-  ] =
-    useState(
-      false,
-    );
-
-  const anchorKey =
-    useMemo(
-      () =>
-        anchor
-          ? `${anchor.latitude.toFixed(
-              7,
-            )}:${anchor.longitude.toFixed(
-              7,
-            )}`
-          : "none",
-      [
-        anchor,
-      ],
-    );
-
-  useEffect(() => {
-    coreAreaRef.current =
-      coreArea;
-  }, [
+  const adaptiveBuffer = effectiveBuffer(
     coreArea,
-  ]);
+    requestedBuffer,
+  );
+
+  const displayContext = useMemo(
+    () =>
+      coreArea
+        ? createContextArea(coreArea, adaptiveBuffer)
+        : contextArea,
+    [coreArea, contextArea, adaptiveBuffer],
+  );
+
+  const dimensions = useMemo(
+    () =>
+      coreArea
+        ? dimensionsForBounds(coreArea.bounds)
+        : null,
+    [coreArea],
+  );
 
   useEffect(() => {
-    contextAreaRef.current =
-      contextArea;
-  }, [
-    contextArea,
-  ]);
+    coreRef.current = coreArea;
+  }, [coreArea]);
 
   useEffect(() => {
-    drawingRef.current =
-      drawing;
-  }, [
-    drawing,
-  ]);
+    contextRef.current = displayContext;
+  }, [displayContext]);
 
   useEffect(() => {
-    const mount =
-      mountRef.current;
+    intelligenceRef.current = intelligence;
+  }, [intelligence]);
 
-    if (!mount) {
+  useEffect(() => {
+    drawingRef.current = drawing;
+  }, [drawing]);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  useEffect(() => {
+    if (!anchor) {
+      setIntelligence(null);
+      setScanState("idle");
       return;
     }
 
-    const map =
-      new maplibregl.Map({
-        container:
-          mount,
+    let cancelled = false;
+    const timeout = window.setTimeout(async () => {
+      setScanState("loading");
 
-        style:
-          styleForMode(
-            mode,
-          ),
+      try {
+        const next =
+          await ForensicAreaIntelligenceService.scan({
+            anchor,
+            coreArea,
+            contextArea: displayContext,
+          });
 
-        center:
-          anchor
-            ? [
-                anchor.longitude,
-                anchor.latitude,
-              ]
-            : DEFAULT_CENTER,
+        if (cancelled) return;
 
-        zoom:
-          anchor
-            ? 17
-            : 6,
+        setIntelligence(next);
+        setScanState(next.warning ? "warning" : "ready");
 
-        maxZoom:
-          17,
+        if (next.warning) {
+          setMessage(next.warning);
+        }
+      } catch (error) {
+        if (cancelled) return;
 
-        pitch:
-          0,
+        setIntelligence(null);
+        setScanState("warning");
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Road-awareness scan unavailable.",
+        );
+      }
+    }, 450);
 
-        bearing:
-          0,
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [
+    anchor?.latitude,
+    anchor?.longitude,
+    coreArea?.id,
+    coreArea?.selectedAt,
+    adaptiveBuffer,
+  ]);
 
-        attributionControl:
-          false,
-      });
+  useEffect(() => {
+    const mount = mountRef.current;
 
-    mapRef.current =
-      map;
+    if (!mount) return;
+
+    const map = new maplibregl.Map({
+      container: mount,
+      style: styleForMode(mode),
+      center: anchor
+        ? [anchor.longitude, anchor.latitude]
+        : DEFAULT_CENTER,
+      zoom: anchor ? 17 : 6,
+      maxZoom: 19,
+      attributionControl: false,
+    });
+
+    mapRef.current = map;
 
     map.addControl(
       new maplibregl.NavigationControl({
-        visualizePitch:
-          false,
+        visualizePitch: false,
       }),
-
       "bottom-right",
     );
 
-    map.addControl(
-      new maplibregl.AttributionControl({
-        compact:
-          true,
-      }),
+    const ensureLayers = () => {
+      if (!map.getSource("forensic-context")) {
+        map.addSource("forensic-context", {
+          type: "geojson",
+          data: polygonData(contextRef.current),
+        });
 
-      "bottom-left",
-    );
+        map.addLayer({
+          id: "forensic-context-fill",
+          type: "fill",
+          source: "forensic-context",
+          paint: {
+            "fill-color": "#8a8a8a",
+            "fill-opacity": 0.07,
+          },
+        });
 
-    const ensureAreaLayers =
-      () => {
-        if (
-          !map.getSource(
-            "forensic-context",
-          )
-        ) {
-          map.addSource(
-            "forensic-context",
-            {
-              type:
-                "geojson",
+        map.addLayer({
+          id: "forensic-context-line",
+          type: "line",
+          source: "forensic-context",
+          paint: {
+            "line-color": "#a0a0a0",
+            "line-width": 1.2,
+            "line-dasharray": [3, 2],
+          },
+        });
+      }
 
-              data:
-                polygonCollection(
-                  contextAreaRef.current,
-                ),
-            },
-          );
+      if (!map.getSource("forensic-core")) {
+        map.addSource("forensic-core", {
+          type: "geojson",
+          data: polygonData(coreRef.current),
+        });
 
-          map.addLayer({
-            id:
-              "forensic-context-fill",
+        map.addLayer({
+          id: "forensic-core-fill",
+          type: "fill",
+          source: "forensic-core",
+          paint: {
+            "fill-color": "#e8872d",
+            "fill-opacity": 0.12,
+          },
+        });
 
-            type:
-              "fill",
+        map.addLayer({
+          id: "forensic-core-line",
+          type: "line",
+          source: "forensic-core",
+          paint: {
+            "line-color": "#e8872d",
+            "line-width": 2.2,
+          },
+        });
+      }
 
-            source:
-              "forensic-context",
+      if (!map.getSource("forensic-draft")) {
+        map.addSource("forensic-draft", {
+          type: "geojson",
+          data: draftData(draftRef.current),
+        });
 
-            paint: {
-              "fill-color":
-                "#8a8a8a",
+        map.addLayer({
+          id: "forensic-draft-line",
+          type: "line",
+          source: "forensic-draft",
+          paint: {
+            "line-color": "#ffad63",
+            "line-width": 2,
+            "line-dasharray": [2, 1.5],
+          },
+        });
+      }
 
-              "fill-opacity":
-                0.08,
-            },
-          });
+      if (!map.getSource("forensic-road-awareness")) {
+        map.addSource("forensic-road-awareness", {
+          type: "geojson",
+          data: roadData(intelligenceRef.current),
+        });
 
-          map.addLayer({
-            id:
-              "forensic-context-line",
+        map.addLayer({
+          id: "forensic-road-awareness-line",
+          type: "line",
+          source: "forensic-road-awareness",
+          paint: {
+            "line-color": [
+              "case",
+              ["==", ["get", "clipped"], true],
+              "#d39b61",
+              "#d6d6d6",
+            ],
+            "line-width": [
+              "case",
+              ["==", ["get", "clipped"], true],
+              2.5,
+              1.3,
+            ],
+            "line-opacity": 0.78,
+          },
+        });
+      }
+    };
 
-            type:
-              "line",
+    map.on("load", ensureLayers);
+    map.on("style.load", ensureLayers);
 
-            source:
-              "forensic-context",
+    map.on("click", (event) => {
+      if (!drawingRef.current) {
+        onAnchorChange({
+          latitude: event.lngLat.lat,
+          longitude: event.lngLat.lng,
+          accuracyMetres: 0,
+          capturedAt: new Date().toISOString(),
+        });
 
-            paint: {
-              "line-color":
-                "#a0a0a0",
-
-              "line-opacity":
-                0.8,
-
-              "line-width":
-                1.2,
-
-              "line-dasharray":
-                [
-                  3,
-                  2,
-                ],
-            },
-          });
-        }
-
-        if (
-          !map.getSource(
-            "forensic-core",
-          )
-        ) {
-          map.addSource(
-            "forensic-core",
-            {
-              type:
-                "geojson",
-
-              data:
-                polygonCollection(
-                  coreAreaRef.current,
-                ),
-            },
-          );
-
-          map.addLayer({
-            id:
-              "forensic-core-fill",
-
-            type:
-              "fill",
-
-            source:
-              "forensic-core",
-
-            paint: {
-              "fill-color":
-                "#e8872d",
-
-              "fill-opacity":
-                0.11,
-            },
-          });
-
-          map.addLayer({
-            id:
-              "forensic-core-line",
-
-            type:
-              "line",
-
-            source:
-              "forensic-core",
-
-            paint: {
-              "line-color":
-                "#e8872d",
-
-              "line-width":
-                2.2,
-            },
-          });
-        }
-      };
-
-    map.on(
-      "load",
-      ensureAreaLayers,
-    );
-
-    map.on(
-      "style.load",
-      ensureAreaLayers,
-    );
-
-    const handleClick =
-      (
-        event:
-          maplibregl.MapMouseEvent,
-      ) => {
-        const coordinate:
-          RoadDetectionCoordinate =
-          {
-            latitude:
-              event.lngLat.lat,
-
-            longitude:
-              event.lngLat.lng,
-
-            accuracyMetres:
-              0,
-
-            capturedAt:
-              new Date().toISOString(),
-          };
-
-        if (
-          !drawingRef.current
-        ) {
-          onAnchorChange(
-            coordinate,
-          );
-
-          setSearchOpen(
-            false,
-          );
-
-          setDrawMessage(
-            "Accident anchor updated. Draw the forensic core when ready.",
-          );
-
-          return;
-        }
-
-        const first =
-          firstCornerRef.current;
-
-        if (!first) {
-          firstCornerRef.current =
-            coordinate;
-
-          setDrawMessage(
-            "First corner fixed. Click the opposite corner.",
-          );
-
-          return;
-        }
-
-        const bounds =
-          boundsFromCorners(
-            first,
-            coordinate,
-          );
-
-        const area =
-          areaSelectionFromBounds(
-            bounds,
-            {
-              mapMode:
-                mode,
-
-              zoom:
-                map.getZoom(),
-
-              bearing:
-                map.getBearing(),
-
-              pitch:
-                map.getPitch(),
-            },
-          );
-
-        firstCornerRef.current =
-          null;
-
-        drawingRef.current =
-          false;
-
-        setDrawing(
-          false,
+        setSearchOpen(false);
+        setMessage(
+          "Anchor updated. Draw or auto-fit the forensic core.",
         );
+        return;
+      }
 
-        onCoreAreaChange(
-          area,
-        );
+      const next = [
+        ...draftRef.current,
+        {
+          latitude: event.lngLat.lat,
+          longitude: event.lngLat.lng,
+        },
+      ];
 
-        setDrawMessage(
-          "Forensic core selected. The grey context buffer is generated automatically.",
-        );
-      };
+      draftRef.current = next;
+      setDraft(next);
 
-    map.on(
-      "click",
-      handleClick,
-    );
+      setMessage(
+        next.length < 3
+          ? `${next.length} vertex fixed. Add at least ${
+              3 - next.length
+            } more.`
+          : `${next.length} vertices fixed. Add more or Finish.`,
+      );
+    });
 
     return () => {
-      markerRef.current?.remove();
-
-      markerRef.current =
-        null;
-
+      anchorMarkerRef.current?.remove();
+      vertexMarkersRef.current.forEach((marker) =>
+        marker.remove(),
+      );
       map.remove();
-
-      mapRef.current =
-        null;
+      mapRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.setStyle(styleForMode(mode));
+  }, [mode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const update = () => {
+      (
+        map.getSource("forensic-core") as
+          | maplibregl.GeoJSONSource
+          | undefined
+      )?.setData(polygonData(coreArea));
+
+      (
+        map.getSource("forensic-context") as
+          | maplibregl.GeoJSONSource
+          | undefined
+      )?.setData(polygonData(displayContext));
+
+      (
+        map.getSource("forensic-draft") as
+          | maplibregl.GeoJSONSource
+          | undefined
+      )?.setData(draftData(draft));
+
+      (
+        map.getSource("forensic-road-awareness") as
+          | maplibregl.GeoJSONSource
+          | undefined
+      )?.setData(roadData(intelligence));
+    };
+
+    if (map.isStyleLoaded()) {
+      update();
+    } else {
+      map.once("style.load", update);
+    }
   }, [
+    coreArea,
+    displayContext,
+    draft,
+    intelligence,
     mode,
   ]);
 
   useEffect(() => {
-    const map =
-      mapRef.current;
+    const map = mapRef.current;
+    if (!map) return;
 
-    if (
-      !map ||
-      !anchor
-    ) {
+    anchorMarkerRef.current?.remove();
+
+    if (!anchor) {
+      anchorMarkerRef.current = null;
       return;
     }
 
-    markerRef.current?.remove();
+    const element = document.createElement("button");
+    element.type = "button";
+    element.className = "roadsafe-forensic-anchor-marker";
+    element.title = "Drag accident anchor";
 
-    const markerElement =
-      document.createElement(
-        "div",
-      );
+    const marker = new maplibregl.Marker({
+      element,
+      draggable: true,
+    })
+      .setLngLat([
+        anchor.longitude,
+        anchor.latitude,
+      ])
+      .addTo(map);
 
-    markerElement.className =
-      "roadsafe-forensic-anchor-marker";
+    marker.on("dragend", () => {
+      const point = marker.getLngLat();
 
-    markerRef.current =
-      new maplibregl.Marker({
-        element:
-          markerElement,
-
-        anchor:
-          "center",
-      })
-        .setLngLat([
-          anchor.longitude,
-          anchor.latitude,
-        ])
-        .addTo(
-          map,
-        );
-
-    if (
-      anchorKey !==
-      "none"
-    ) {
-      map.easeTo({
-        center: [
-          anchor.longitude,
-          anchor.latitude,
-        ],
-
-        zoom:
-          Math.max(
-            15,
-            map.getZoom(),
-          ),
-
-        duration:
-          450,
+      onAnchorChange({
+        latitude: point.lat,
+        longitude: point.lng,
+        accuracyMetres: 0,
+        capturedAt: new Date().toISOString(),
       });
-    }
+
+      setMessage(
+        "Anchor moved. Road-aware diagnostics are refreshing.",
+      );
+    });
+
+    anchorMarkerRef.current = marker;
   }, [
-    anchorKey,
+    anchor?.latitude,
+    anchor?.longitude,
   ]);
 
   useEffect(() => {
-    const map =
-      mapRef.current;
+    const map = mapRef.current;
 
-    if (!map) {
+    vertexMarkersRef.current.forEach((marker) =>
+      marker.remove(),
+    );
+    vertexMarkersRef.current = [];
+
+    if (!map || !coreArea || drawing) {
       return;
     }
 
-    const update =
-      (
-        id: string,
-        area:
-          RealSceneAreaSelection | null,
-      ) => {
-        const source =
-          map.getSource(
-            id,
-          ) as
-            | maplibregl.GeoJSONSource
-            | undefined;
+    const vertices = openVertices(coreArea);
 
-        source?.setData(
-          polygonCollection(
-            area,
-          ),
-        );
-      };
+    vertices.forEach((vertex, index) => {
+      const element = document.createElement("button");
+      element.type = "button";
+      element.className =
+        "roadsafe-forensic-core-vertex";
+      element.textContent = String(index + 1);
+      element.title =
+        `Drag forensic-core vertex ${index + 1}`;
 
-    update(
-      "forensic-core",
-      coreArea,
-    );
+      const marker = new maplibregl.Marker({
+        element,
+        draggable: true,
+        anchor: "center",
+      })
+        .setLngLat([
+          vertex.longitude,
+          vertex.latitude,
+        ])
+        .addTo(map);
 
-    update(
-      "forensic-context",
-      contextArea,
-    );
-  }, [
-    coreArea,
-    contextArea,
-  ]);
+      marker.on("dragend", () => {
+        const moved = marker.getLngLat();
 
-  const handleSearch =
-    async (
-      event:
-        FormEvent<HTMLFormElement>,
-    ) => {
-      event.preventDefault();
-
-      const query =
-        searchQuery.trim();
-
-      if (
-        query.length <
-        2
-      ) {
-        setSearchResults(
-          [],
+        const next = vertices.map((point, pointIndex) =>
+          pointIndex === index
+            ? {
+                latitude: moved.lat,
+                longitude: moved.lng,
+              }
+            : point,
         );
 
-        setSearchError(
-          "Enter at least 2 characters.",
-        );
-
-        setSearchOpen(
-          true,
-        );
-
-        return;
-      }
-
-      setSearching(
-        true,
-      );
-
-      setSearchError(
-        "",
-      );
-
-      setSearchOpen(
-        true,
-      );
-
-      try {
-        const results =
-          await LocationSearchService.search(
-            query,
+        try {
+          onCoreAreaChange(
+            areaSelectionFromPolygon(next, {
+              mapMode: mode,
+              zoom: map.getZoom(),
+              bearing: map.getBearing(),
+              pitch: map.getPitch(),
+            }),
           );
 
-        setSearchResults(
-          results,
-        );
+          setMessage(
+            "Core vertex updated. Road coverage is refreshing.",
+          );
+        } catch (error) {
+          marker.setLngLat([
+            vertex.longitude,
+            vertex.latitude,
+          ]);
 
-        if (
-          results.length ===
-          0
-        ) {
-          setSearchError(
-            "No matching Zimbabwe locations were found.",
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "Vertex move rejected.",
           );
         }
-      } catch (error) {
-        setSearchResults(
-          [],
-        );
+      });
 
-        setSearchError(
-          error instanceof
-          Error
-            ? error.message
-            : "Location search failed.",
-        );
-      } finally {
-        setSearching(
-          false,
-        );
-      }
+      vertexMarkersRef.current.push(marker);
+    });
+
+    return () => {
+      vertexMarkersRef.current.forEach((marker) =>
+        marker.remove(),
+      );
+      vertexMarkersRef.current = [];
     };
+  }, [
+    coreArea?.id,
+    coreArea?.selectedAt,
+    drawing,
+    mode,
+  ]);
 
-  const selectSearchResult =
-    (
-      result:
-        ZimbabweLocationSearchResult,
-    ) => {
-      const map =
-        mapRef.current;
+  const finish = () => {
+    const map = mapRef.current;
 
-      setSearchQuery(
-        result.displayName,
+    if (!map || draftRef.current.length < 3) {
+      setMessage(
+        "A forensic polygon needs at least 3 vertices.",
       );
+      return;
+    }
 
-      setSearchOpen(
-        false,
-      );
-
-      setSearchError(
-        "",
-      );
-
-      firstCornerRef.current =
-        null;
-
-      drawingRef.current =
-        false;
-
-      setDrawing(
-        false,
-      );
-
-      /**
-       * A searched place may be hundreds of kilometres from the current core.
-       * Clear the old core intentionally so the case cannot retain stale area
-       * geometry around the previous anchor.
-       */
-      onCoreAreaChange(
-        null,
-      );
-
-      onAnchorChange(
+    try {
+      const area = areaSelectionFromPolygon(
+        draftRef.current,
         {
-          ...result.coordinate,
-
-          capturedAt:
-            new Date().toISOString(),
+          mapMode: mode,
+          zoom: map.getZoom(),
+          bearing: map.getBearing(),
+          pitch: map.getPitch(),
         },
       );
 
-      if (map) {
-        fitSearchResult(
-          map,
-          result,
-        );
-      }
+      onCoreAreaChange(area);
+      draftRef.current = [];
+      setDraft([]);
+      drawingRef.current = false;
+      setDrawing(false);
 
-      setDrawMessage(
-        "Search location selected and accident anchor moved. Draw a new forensic core around the actual crash scene.",
+      setMessage(
+        "Polygon core created. Drag numbered vertices to refine it.",
       );
-    };
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Polygon could not be created.",
+      );
+    }
+  };
+
+  const fitRoads = () => {
+    const map = mapRef.current;
+
+    if (!map || !anchor || !intelligence) {
+      return;
+    }
+
+    const area =
+      ForensicAreaIntelligenceService.suggestCore({
+        anchor,
+        roads: intelligence.roads,
+        mapMode: mode,
+        zoom: map.getZoom(),
+        bearing: map.getBearing(),
+        pitch: map.getPitch(),
+      });
+
+    if (!area) {
+      setMessage(
+        "Not enough mapped road geometry to auto-fit the core.",
+      );
+      return;
+    }
+
+    onCoreAreaChange(area);
+
+    map.fitBounds(
+      [
+        [area.bounds.west, area.bounds.south],
+        [area.bounds.east, area.bounds.north],
+      ],
+      {
+        padding: 70,
+        maxZoom: 19,
+        duration: 500,
+      },
+    );
+
+    setMessage(
+      "Core fitted to nearby approaches. Drag vertices to refine it.",
+    );
+  };
+
+  const submitSearch = async (
+    event: FormEvent,
+  ) => {
+    event.preventDefault();
+
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    setSearching(true);
+
+    try {
+      const next =
+        await LocationSearchService.search(
+          trimmed,
+        );
+
+      setResults(next);
+      setSearchOpen(true);
+    } catch (error) {
+      setResults([]);
+      setSearchOpen(true);
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Location search failed.",
+      );
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const chooseResult = (
+    result: ZimbabweLocationSearchResult,
+  ) => {
+    onAnchorChange({
+      ...result.coordinate,
+      capturedAt: new Date().toISOString(),
+    });
+
+    onCoreAreaChange(null);
+    setSearchOpen(false);
+    setDraft([]);
+    draftRef.current = [];
+    setDrawing(false);
+    drawingRef.current = false;
+
+    if (mapRef.current) {
+      fitSearchResult(
+        mapRef.current,
+        result,
+      );
+    }
+
+    setMessage(
+      "Location selected. Road scan is running.",
+    );
+  };
 
   return (
-    <section className="roadsafe-forensic-map">
+    <section className="roadsafe-forensic-map roadsafe-forensic-map--area-v2">
+      <div
+        ref={mountRef}
+        className="roadsafe-forensic-map__canvas"
+      />
+
       <div className="roadsafe-forensic-map__toolbar">
         <div className="roadsafe-forensic-map__modes">
           {(
@@ -1075,150 +912,63 @@ export default function ForensicAreaMap({
               "street",
               "hybrid",
               "terrain",
-            ] as
-              RealSceneMapMode[]
-          ).map(
-            (
-              item,
-            ) => (
-              <button
-                key={
-                  item
-                }
-
-                type="button"
-
-                className={
-                  mode ===
-                  item
-                    ? "is-active"
-                    : ""
-                }
-
-                onClick={() =>
-                  setMode(
-                    item,
-                  )
-                }
-              >
-                {item}
-              </button>
-            ),
-          )}
+            ] as RealSceneMapMode[]
+          ).map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={
+                mode === item
+                  ? "is-active"
+                  : ""
+              }
+              onClick={() => setMode(item)}
+            >
+              {item}
+            </button>
+          ))}
         </div>
 
         <form
           className="roadsafe-forensic-map__search"
-          onSubmit={
-            handleSearch
+          onSubmit={(event) =>
+            void submitSearch(event)
           }
         >
           <div className="roadsafe-forensic-map__search-input">
             <input
-              type="search"
-
-              value={
-                searchQuery
+              value={query}
+              onChange={(event) =>
+                setQuery(event.target.value)
               }
-
-              placeholder="Search road, city, junction or place…"
-
-              autoComplete="off"
-
-              aria-label="Search Zimbabwe location"
-
-              onFocus={() => {
-                if (
-                  searchResults.length >
-                    0 ||
-                  searchError
-                ) {
-                  setSearchOpen(
-                    true,
-                  );
-                }
-              }}
-
-              onChange={(
-                event,
-              ) => {
-                setSearchQuery(
-                  event.target.value,
-                );
-
-                setSearchError(
-                  "",
-                );
-
-                if (
-                  event.target.value.trim()
-                    .length ===
-                  0
-                ) {
-                  setSearchResults(
-                    [],
-                  );
-
-                  setSearchOpen(
-                    false,
-                  );
-                }
-              }}
+              placeholder="Search Zimbabwe road, junction or place"
             />
-
             <button
               type="submit"
-              disabled={
-                searching
-              }
+              disabled={searching}
             >
-              {searching
-                ? "Searching…"
-                : "Search"}
+              {searching ? "Searching" : "Search"}
             </button>
           </div>
 
           {searchOpen && (
             <div className="roadsafe-forensic-map__search-results">
-              {searchError && (
-                <p className="roadsafe-forensic-map__search-error">
-                  {
-                    searchError
+              {results.length === 0 && (
+                <p>No matching locations.</p>
+              )}
+
+              {results.map((result) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  onClick={() =>
+                    chooseResult(result)
                   }
-                </p>
-              )}
-
-              {searchResults.map(
-                (
-                  result,
-                ) => (
-                  <button
-                    key={
-                      result.id
-                    }
-
-                    type="button"
-
-                    onClick={() =>
-                      selectSearchResult(
-                        result,
-                      )
-                    }
-                  >
-                    <span>
-                      {
-                        result.displayName
-                      }
-                    </span>
-
-                    <small>
-                      {
-                        result.type
-                      }
-                    </small>
-                  </button>
-                ),
-              )}
+                >
+                  <strong>{result.displayName}</strong>
+                  <small>{result.type}</small>
+                </button>
+              ))}
             </div>
           )}
         </form>
@@ -1226,63 +976,71 @@ export default function ForensicAreaMap({
         <div className="roadsafe-forensic-map__actions">
           <button
             type="button"
-
             className={
-              drawing
-                ? "is-active"
-                : ""
+              drawing ? "is-active" : ""
             }
-
             onClick={() => {
-              firstCornerRef.current =
-                null;
+              const next = !drawing;
 
-              const next =
-                !drawing;
+              setDrawing(next);
+              drawingRef.current = next;
+              setDraft([]);
+              draftRef.current = [];
+              setSearchOpen(false);
 
-              drawingRef.current =
-                next;
-
-              setDrawing(
-                next,
-              );
-
-              setSearchOpen(
-                false,
-              );
-
-              setDrawMessage(
+              setMessage(
                 next
-                  ? "Click the first corner of the forensic core."
-                  : "Core drawing cancelled.",
+                  ? "Polygon mode: click at least 3 vertices around the core."
+                  : "Polygon drawing cancelled.",
               );
             }}
           >
-            {drawing
-              ? "Cancel draw"
-              : "Draw forensic core"}
+            {drawing ? "Cancel" : "Draw polygon"}
+          </button>
+
+          {drawing && (
+            <>
+              <button
+                type="button"
+                disabled={draft.length < 3}
+                onClick={finish}
+              >
+                Finish
+              </button>
+
+              <button
+                type="button"
+                disabled={draft.length === 0}
+                onClick={() => {
+                  const next = draft.slice(0, -1);
+                  draftRef.current = next;
+                  setDraft(next);
+                }}
+              >
+                Undo
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            disabled={
+              !anchor ||
+              !intelligence ||
+              intelligence.roads.length === 0
+            }
+            onClick={fitRoads}
+          >
+            Fit roads
           </button>
 
           <button
             type="button"
-
+            disabled={!coreArea}
             onClick={() => {
-              firstCornerRef.current =
-                null;
-
-              drawingRef.current =
-                false;
-
-              setDrawing(
-                false,
-              );
-
-              onCoreAreaChange(
-                null,
-              );
-
-              setDrawMessage(
-                "Core cleared. Draw a new forensic core.",
+              onCoreAreaChange(null);
+              setMessage(
+                "Core cleared. Draw a polygon or fit nearby roads.",
               );
             }}
           >
@@ -1291,35 +1049,121 @@ export default function ForensicAreaMap({
         </div>
       </div>
 
-      <div
-        ref={
-          mountRef
-        }
+      <div className="roadsafe-forensic-area-hud">
+        <div>
+          <span>Boundary</span>
+          <strong>
+            {coreArea
+              ? `Polygon / ${
+                  openVertices(coreArea).length
+                } vertices`
+              : "Not selected"}
+          </strong>
+        </div>
 
-        className="roadsafe-forensic-map__canvas"
-      />
+        <div>
+          <span>Core envelope</span>
+          <strong>
+            {dimensions
+              ? `${dimensions.width.toFixed(
+                  0,
+                )} x ${dimensions.height.toFixed(
+                  0,
+                )} m`
+              : "-"}
+          </strong>
+        </div>
+
+        <div>
+          <span>Roads scanned</span>
+          <strong>
+            {scanState === "loading"
+              ? "Scanning..."
+              : intelligence
+                ? intelligence.roads.length
+                : "-"}
+          </strong>
+        </div>
+
+        <div
+          className={
+            intelligence &&
+            intelligence.nearestRoadDistanceMetres > 12
+              ? "is-warning"
+              : ""
+          }
+        >
+          <span>Anchor to road</span>
+          <strong>
+            {intelligence
+              ? `${intelligence.nearestRoadDistanceMetres.toFixed(
+                  1,
+                )} m`
+              : "-"}
+          </strong>
+        </div>
+
+        <div
+          className={
+            intelligence &&
+            intelligence.clippedApproachCount > 0
+              ? "is-warning"
+              : ""
+          }
+        >
+          <span>Clipped approaches</span>
+          <strong>
+            {intelligence
+              ? intelligence.clippedApproachCount
+              : "-"}
+          </strong>
+        </div>
+
+        <div
+          className={
+            adaptiveBuffer > requestedBuffer
+              ? "is-adaptive"
+              : ""
+          }
+        >
+          <span>Context requested / effective</span>
+          <strong>
+            {requestedBuffer} / {adaptiveBuffer} m
+          </strong>
+        </div>
+      </div>
 
       <div className="roadsafe-forensic-map__legend">
         <span>
           <i className="is-core" />
-          Forensic core
+          forensic core
         </span>
-
         <span>
           <i className="is-context" />
-          Context buffer
+          context
         </span>
-
+        <span>
+          <i className="is-road" />
+          mapped road
+        </span>
+        <span>
+          <i className="is-cut" />
+          clipped approach
+        </span>
         <span>
           <i className="is-anchor" />
-          Accident anchor
+          accident anchor
         </span>
       </div>
 
-      <p className="roadsafe-forensic-map__message">
-        {
-          drawMessage
-        }
+      <p
+        className={`roadsafe-forensic-map__message ${
+          scanState === "warning"
+            ? "is-warning"
+            : ""
+        }`}
+      >
+        {message}
       </p>
     </section>
   );

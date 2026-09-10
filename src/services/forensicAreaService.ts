@@ -186,7 +186,7 @@ function normalisedPolygon(
   return result;
 }
 
-function pointInsidePolygon(
+export function pointInsidePolygon(
   coordinate: {
     latitude: number;
     longitude: number;
@@ -434,6 +434,79 @@ export function areaSelectionFromBounds(
   };
 }
 
+export function areaSelectionFromPolygon(
+  polygon: RealSceneGeoPoint[],
+  template?: Pick<
+    RealSceneAreaSelection,
+    | "mapMode"
+    | "zoom"
+    | "bearing"
+    | "pitch"
+  >,
+): RealSceneAreaSelection {
+  const ring = normalisedPolygon(polygon);
+
+  if (ring.length < 4) {
+    throw new Error(
+      "A forensic polygon requires at least 3 vertices.",
+    );
+  }
+
+  const vertices = ring.slice(0, -1);
+  const latitudes = vertices.map((point) => point.latitude);
+  const longitudes = vertices.map((point) => point.longitude);
+
+  const bounds: RealSceneBounds = {
+    north: Math.max(...latitudes),
+    south: Math.min(...latitudes),
+    east: Math.max(...longitudes),
+    west: Math.min(...longitudes),
+  };
+
+  if (polygonAreaSquareMetres(ring) < 64) {
+    throw new Error(
+      "The forensic polygon is too small; cover at least 64 square metres.",
+    );
+  }
+
+  return {
+    id: createId("forensic-area"),
+    bounds,
+    polygon: ring,
+    centre: {
+      latitude:
+        vertices.reduce(
+          (total, point) => total + point.latitude,
+          0,
+        ) / vertices.length,
+      longitude:
+        vertices.reduce(
+          (total, point) => total + point.longitude,
+          0,
+        ) / vertices.length,
+      accuracyMetres: 0,
+      capturedAt: new Date().toISOString(),
+    },
+    mapMode: template?.mapMode ?? "hybrid",
+    zoom: template?.zoom ?? 17,
+    bearing: template?.bearing ?? 0,
+    pitch: template?.pitch ?? 0,
+    selectedAt: new Date().toISOString(),
+  };
+}
+
+export function coordinateInsideArea(
+  coordinate: {
+    latitude: number;
+    longitude: number;
+  },
+  area: RealSceneAreaSelection,
+): boolean {
+  return (
+    coordinateInsideBounds(coordinate, area.bounds) &&
+    pointInsidePolygon(coordinate, area.polygon)
+  );
+}
 export function createContextArea(
   coreArea:
     RealSceneAreaSelection,

@@ -36,7 +36,7 @@ import {
 
 import {
   createContextArea,
-  coordinateInsideBounds,
+  coordinateInsideArea,
   dimensionsForBounds,
 } from "../../services/forensicAreaService";
 
@@ -333,9 +333,9 @@ export default function ForensicCaseAreaWizard({
     Boolean(
       anchor &&
       coreArea &&
-      coordinateInsideBounds(
+      coordinateInsideArea(
         anchor,
-        coreArea.bounds,
+        coreArea,
       ),
     );
 
@@ -1717,7 +1717,7 @@ export default function ForensicCaseAreaWizard({
                     </dt>
 
                     <dd>
-                      Rectangle · V1
+                      Polygon - V2
                     </dd>
                   </div>
                 </dl>
@@ -1733,6 +1733,9 @@ export default function ForensicCaseAreaWizard({
               }
               contextArea={
                 contextArea
+              }
+              contextBufferMetres={
+                contextBufferMetres
               }
               onAnchorChange={(
                 coordinate,
