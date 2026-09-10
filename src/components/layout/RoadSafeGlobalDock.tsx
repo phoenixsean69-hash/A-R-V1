@@ -2,9 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
-  useState,
 } from "react";
 
 import type {
@@ -90,13 +88,6 @@ type GlobalDockApi =
 
 interface GlobalDockModel
   extends RoadSafeGlobalDockProps {
-  workspaceRightPanelHost:
-    HTMLElement | null;
-
-  setWorkspaceRightPanelHost(
-    host: HTMLElement | null,
-  ): void;
-
   openNavigation():
     void;
 }
@@ -109,7 +100,7 @@ const GlobalDockContext =
   );
 
 const LAYOUT_VERSION =
-  "roadsafe:global-dock:v1";
+  "roadsafe:global-dock:v2";
 
 function useGlobalDock():
   GlobalDockModel {
@@ -141,22 +132,31 @@ function addWorkspace(
       title,
     );
 
+    existing.group.header.hidden =
+      true;
+
     return existing;
   }
 
-  return api.addPanel({
-    id:
-      "roadsafe-workspace",
-    component:
-      "workspace",
-    title,
-    renderer:
-      "always",
-    minimumWidth:
-      420,
-    minimumHeight:
-      320,
-  });
+  const panel =
+    api.addPanel({
+      id:
+        "roadsafe-workspace",
+      component:
+        "workspace",
+      title,
+      renderer:
+        "always",
+      minimumWidth:
+        420,
+      minimumHeight:
+        320,
+    });
+
+  panel.group.header.hidden =
+    true;
+
+  return panel;
 }
 
 function addNavigation(
@@ -169,6 +169,9 @@ function addNavigation(
     );
 
   if (existing) {
+    existing.group.header.hidden =
+      true;
+
     return existing;
   }
 
@@ -178,30 +181,36 @@ function addNavigation(
       "Workspace",
     );
 
-  return api.addPanel({
-    id:
-      "roadsafe-navigation",
-    component:
-      "navigation",
-    title:
-      "Navigation",
-    renderer:
-      "always",
-    initialWidth:
-      collapsed
-        ? 60
-        : 218,
-    minimumWidth:
-      54,
-    maximumWidth:
-      360,
-    position: {
-      referencePanel:
-        workspace.id,
-      direction:
-        "left",
-    },
-  });
+  const panel =
+    api.addPanel({
+      id:
+        "roadsafe-navigation",
+      component:
+        "navigation",
+      title:
+        "Navigation",
+      renderer:
+        "always",
+      initialWidth:
+        collapsed
+          ? 60
+          : 218,
+      minimumWidth:
+        54,
+      maximumWidth:
+        360,
+      position: {
+        referencePanel:
+          workspace.id,
+        direction:
+          "left",
+      },
+    });
+
+  panel.group.header.hidden =
+    true;
+
+  return panel;
 }
 
 function addInspector(
@@ -261,48 +270,6 @@ function addInspector(
               620,
           },
         }),
-  });
-}
-
-function addContext(
-  api: GlobalDockApi,
-) {
-  const existing =
-    api.getPanel(
-      "roadsafe-context",
-    );
-
-  if (existing) {
-    return existing;
-  }
-
-  const workspace =
-    addWorkspace(
-      api,
-      "Workspace",
-    );
-
-  return api.addPanel({
-    id:
-      "roadsafe-context",
-    component:
-      "context",
-    title:
-      "Context",
-    renderer:
-      "always",
-    initialWidth:
-      310,
-    minimumWidth:
-      235,
-    maximumWidth:
-      430,
-    position: {
-      referencePanel:
-        workspace.id,
-      direction:
-        "right",
-    },
   });
 }
 
@@ -439,7 +406,7 @@ function WorkspacePanel(
         >
           <WorkspaceRightPanelProvider
             host={
-              model.workspaceRightPanelHost
+              null
             }
           >
             {
@@ -490,26 +457,6 @@ function InspectorPanel(
   );
 }
 
-function ContextPanel(
-  _props:
-    IDockviewPanelProps,
-) {
-  const model =
-    useGlobalDock();
-
-  return (
-    <div className="roadsafe-global-dock-context">
-      <aside
-        ref={
-          model.setWorkspaceRightPanelHost
-        }
-        className="roadsafe-workspace-context-slot"
-        aria-label="Reconstruction context inspector"
-      />
-    </div>
-  );
-}
-
 const GLOBAL_DOCK_COMPONENTS = {
   navigation:
     NavigationPanel,
@@ -517,8 +464,6 @@ const GLOBAL_DOCK_COMPONENTS = {
     WorkspacePanel,
   inspector:
     InspectorPanel,
-  context:
-    ContextPanel,
 };
 
 export default function RoadSafeGlobalDock(
@@ -556,16 +501,6 @@ export default function RoadSafeGlobalDock(
   propsRef.current =
     props;
 
-  const [
-    workspaceRightPanelHost,
-    setWorkspaceRightPanelHost,
-  ] =
-    useState<
-      HTMLElement | null
-    >(
-      null,
-    );
-
   const layoutKey =
     `${LAYOUT_VERSION}:${
       props.stationClient
@@ -598,44 +533,45 @@ export default function RoadSafeGlobalDock(
           api,
           "roadsafe-navigation",
         );
-      } else {
-        addNavigation(
-          api,
-          current.desktopCollapsed,
-        );
-      }
 
-      if (
-        current.usesReconstructionContextPanel
-      ) {
         removePanel(
           api,
           "roadsafe-inspector",
         );
 
-        addContext(
-          api,
-        );
-      } else {
         removePanel(
           api,
           "roadsafe-context",
         );
 
-        if (
-          current.inspectorAvailable &&
-          current.inspectorOpen
-        ) {
-          addInspector(
-            api,
-            current.inspectorDocked,
-          );
-        } else {
-          removePanel(
-            api,
-            "roadsafe-inspector",
-          );
-        }
+        workspace.api.setActive();
+
+        return;
+      }
+
+      addNavigation(
+        api,
+        current.desktopCollapsed,
+      );
+
+      removePanel(
+        api,
+        "roadsafe-context",
+      );
+
+      if (
+        current.inspectorAvailable &&
+        current.inspectorOpen
+      ) {
+        addInspector(
+          api,
+          current.inspectorDocked,
+        );
+      } else {
+        removePanel(
+          api,
+          "roadsafe-inspector",
+        );
       }
 
       workspace.api.setActive();
@@ -690,7 +626,6 @@ export default function RoadSafeGlobalDock(
     [
       props.title,
       props.isReconstructionWorkspace,
-      props.usesReconstructionContextPanel,
       props.inspectorAvailable,
       props.inspectorOpen,
     ],
@@ -754,7 +689,7 @@ export default function RoadSafeGlobalDock(
         props.inspectorDocked;
 
       if (
-        props.usesReconstructionContextPanel ||
+        props.isReconstructionWorkspace ||
         !props.inspectorAvailable ||
         !props.inspectorOpen
       ) {
@@ -775,7 +710,7 @@ export default function RoadSafeGlobalDock(
       props.inspectorDocked,
       props.inspectorAvailable,
       props.inspectorOpen,
-      props.usesReconstructionContextPanel,
+      props.isReconstructionWorkspace,
     ],
   );
 
@@ -874,7 +809,7 @@ export default function RoadSafeGlobalDock(
                       "roadsafe-inspector",
                     ) &&
                     current.inspectorOpen &&
-                    !current.usesReconstructionContextPanel
+                    !current.isReconstructionWorkspace
                   ) {
                     current.onCloseInspector();
                   }
@@ -912,21 +847,6 @@ export default function RoadSafeGlobalDock(
                     event.api,
                     current.desktopCollapsed,
                   );
-
-                  return;
-                }
-
-                if (
-                  panel.id ===
-                    "roadsafe-context" &&
-                  current.usesReconstructionContextPanel &&
-                  !event.api.getPanel(
-                    "roadsafe-context",
-                  )
-                ) {
-                  addContext(
-                    event.api,
-                  );
                 }
               },
               0,
@@ -935,21 +855,11 @@ export default function RoadSafeGlobalDock(
         );
     };
 
-  const model =
-    useMemo<
-      GlobalDockModel
-    >(
-      () => ({
-        ...props,
-        workspaceRightPanelHost,
-        setWorkspaceRightPanelHost,
-        openNavigation,
-      }),
-      [
-        props,
-        workspaceRightPanelHost,
-      ],
-    );
+  const model:
+    GlobalDockModel = {
+      ...props,
+      openNavigation,
+    };
 
   return (
     <GlobalDockContext.Provider

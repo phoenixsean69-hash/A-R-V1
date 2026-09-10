@@ -1,13 +1,14 @@
 /*
- * RoadSafe Global Dockview Shell
+ * RoadSafe Global Dockview Shell V2
  *
- * Dockview owns the application window geometry.
- * Existing route/page components remain intact inside the central Workspace.
+ * Dockview owns geometry and sashes.
+ * RoadSafe owns the visible application chrome.
  */
 
 .roadsafe-workstation.is-global-dock {
   width: 100vw;
   height: 100dvh;
+
   min-width: 0;
   min-height: 0;
 
@@ -37,6 +38,7 @@
   --dv-background-color: #1b1b1b;
   --dv-group-view-background-color: #202020;
   --dv-tabs-and-actions-container-background-color: #292929;
+
   --dv-activegroup-visiblepanel-tab-background-color: #242424;
   --dv-activegroup-hiddenpanel-tab-background-color: #292929;
   --dv-inactivegroup-visiblepanel-tab-background-color: #262626;
@@ -59,20 +61,6 @@
 }
 
 .roadsafe-global-dockview
-.dv-tabs-and-actions-container {
-  border-bottom: 1px solid #404040;
-}
-
-.roadsafe-global-dockview
-.dv-tab.dv-active-tab {
-  box-shadow:
-    inset
-    0
-    -2px
-    #e8872d;
-}
-
-.roadsafe-global-dockview
 .dv-sash {
   background: #343434;
 }
@@ -84,8 +72,7 @@
 
 .roadsafe-global-dock-navigation,
 .roadsafe-global-dock-workspace,
-.roadsafe-global-dock-inspector,
-.roadsafe-global-dock-context {
+.roadsafe-global-dock-inspector {
   width: 100%;
   height: 100%;
 
@@ -95,7 +82,7 @@
   overflow: hidden;
 }
 
-/* Navigation is panel content now. */
+/* Navigation is Dockview content, not a fixed page column. */
 .roadsafe-global-dock-navigation
 .roadsafe-navigation {
   position: static !important;
@@ -123,7 +110,7 @@
   min-height: 47px;
 }
 
-/* Workspace panel. */
+/* Workspace contains RoadSafe's actual header and actual recent tabs. */
 .roadsafe-global-dock-workspace {
   display: grid;
 
@@ -138,6 +125,8 @@
 .roadsafe-global-dock-workspace.is-editor {
   grid-template-rows:
     minmax(0, 1fr);
+
+  background: #1b1b1b;
 }
 
 .roadsafe-global-dock-workspace
@@ -169,11 +158,14 @@
 .roadsafe-global-dock-workspace
 .roadsafe-workspace-main.is-editor {
   overflow: hidden;
+
+  background: #1b1b1b;
 }
 
 .roadsafe-global-dock-workspace
 .roadsafe-page-stage {
   width: 100%;
+
   min-width: 0;
 
   margin: 0 auto;
@@ -181,29 +173,52 @@
 
 .roadsafe-global-dock-workspace
 .roadsafe-page-stage.is-editor {
+  width: 100%;
   height: 100%;
 
+  min-width: 0;
   min-height: 0;
 
   margin: 0;
+
   padding: 0 !important;
 
   overflow: hidden;
+
+  background: #1b1b1b;
 }
 
-/*
- * Step 11 used viewport units when it was top-level.
- * Inside the global Workspace panel it must fill its parent instead.
- */
+/* Reconstruction owns the whole global Workspace panel. */
+.roadsafe-global-dock-root.is-editor
+.roadsafe-global-dock-workspace {
+  width: 100%;
+  height: 100%;
+}
+
+.roadsafe-global-dock-workspace.is-editor
+.fv2-root {
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+}
+
 .roadsafe-global-dock-workspace.is-editor
 .fv2-root--step11 {
   width: 100% !important;
   height: 100% !important;
 
+  min-width: 0 !important;
   min-height: 0 !important;
 }
 
-/* Inspector is now a Dockview panel. */
+/* v2 has no global Context panel. Defend against stale browser DOM/state. */
+.roadsafe-global-dock-context {
+  display: none !important;
+}
+
+/* Inspector remains a real Dockview panel. */
 .roadsafe-global-dock-inspector
 .roadsafe-inspector {
   position: static !important;
@@ -225,10 +240,6 @@
   box-shadow: none !important;
 }
 
-/*
- * Dockview owns title, close, drag and floating gestures.
- * Suppress the legacy second window header.
- */
 .roadsafe-global-dock-inspector
 .roadsafe-inspector-header {
   display: none !important;
@@ -236,48 +247,12 @@
 
 .roadsafe-global-dock-inspector
 .roadsafe-inspector-scroll {
-  height:
-    calc(
-      100% -
-      46px
-    );
-
   min-height: 0;
 
   overflow: auto;
 }
 
-.roadsafe-global-dock-inspector
-.roadsafe-inspector-footer {
-  min-height: 46px;
-}
-
-/* Reconstruction context portals now target a Dockview panel. */
-.roadsafe-global-dock-context
-.roadsafe-workspace-context-slot {
-  position: static !important;
-
-  inset: auto !important;
-
-  width: 100% !important;
-  height: 100% !important;
-
-  min-width: 0 !important;
-  max-width: none !important;
-  min-height: 0 !important;
-
-  display: block !important;
-
-  overflow: auto;
-
-  border: 0 !important;
-
-  background: #292929 !important;
-
-  box-shadow: none !important;
-}
-
-/* Obsolete top-level fixed shell children are no longer used. */
+/* Obsolete top-level fixed shell children stay disabled. */
 .roadsafe-workstation.is-global-dock
 > .roadsafe-navigation,
 .roadsafe-workstation.is-global-dock
@@ -299,12 +274,11 @@
 }
 
 .roadsafe-global-dock-navigation,
-.roadsafe-global-dock-inspector,
-.roadsafe-global-dock-context {
+.roadsafe-global-dock-inspector {
   font-size: 13px;
 }
 
-/* Nested Step 11 Dockview keeps the same RoadSafe accent. */
+/* Step 11 remains a nested Dockview editor. */
 .roadsafe-global-dock-workspace
 .roadsafe-dockview {
   --dv-active-sash-color: #e8872d;
