@@ -1,234 +1,82 @@
-.fv2-multiview-workstation {
-  --mv-orange: #e8872d;
-  --mv-bg: #1b1b1b;
-  --mv-panel: #242424;
-  --mv-panel-2: #292929;
-  --mv-line: #3f3f3f;
-  --mv-text: #d8d8d8;
-  --mv-muted: #7f7f7f;
+.fv2-dock-workstation {
+  --rs-dock-orange: #e8872d;
+
+  height: clamp(650px, calc(100vh - 128px), 980px);
+  min-height: 650px;
 
   display: grid;
-  gap: 8px;
+  grid-template-rows: 38px minmax(0, 1fr);
 
-  min-width: 0;
-}
-
-.fv2-multiview-shell {
   overflow: hidden;
 
-  border-color: #404040;
+  border: 1px solid #404040;
+  border-radius: 3px;
 
-  background: #202020;
+  background: #1b1b1b;
 }
 
-.fv2-multiview-toolbar {
-  min-height: 44px;
-
+.fv2-dock-commandbar {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
 
-  gap: 8px;
+  gap: 10px;
 
   padding: 0 7px;
 
-  border-bottom: 1px solid #414141;
+  border-bottom: 1px solid #444;
 
-  background:
-    linear-gradient(
-      180deg,
-      #303030,
-      #292929
-    );
+  background: linear-gradient(180deg, #303030, #292929);
 }
 
-.fv2-multiview-tabs {
+.fv2-dock-commandbar__identity,
+.fv2-dock-commandbar__status,
+.fv2-dock-commandbar__actions {
   display: flex;
-  align-items: end;
-
-  gap: 2px;
-}
-
-.fv2-multiview-tabs button {
-  position: relative;
-
-  min-width: 104px;
-  height: 38px;
-
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-
   gap: 6px;
-
-  padding: 0 12px;
-
-  border: 0;
-  border-left: 1px solid transparent;
-  border-right: 1px solid transparent;
-
-  background: transparent;
-
-  color: #8e8e8e;
-
-  font: inherit;
-  font-size: 10px;
-  font-weight: 700;
-
-  cursor: pointer;
 }
 
-.fv2-multiview-tabs button::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-
-  height: 2px;
-
-  content: "";
-
-  background: transparent;
+.fv2-dock-commandbar__identity > span {
+  color: #727272;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: .08em;
 }
 
-.fv2-multiview-tabs button:hover {
-  color: #c8c8c8;
-
-  background: #303030;
+.fv2-dock-commandbar__identity > strong {
+  color: #e1e1e1;
+  font-size: 11px;
 }
 
-.fv2-multiview-tabs button.is-active {
-  border-left-color: #444;
-  border-right-color: #444;
+.fv2-dock-commandbar__identity > em {
+  padding: 2px 5px;
 
-  background: #242424;
+  border: 1px solid #55432f;
+  border-radius: 2px;
 
-  color: #f1f1f1;
+  background: #30271f;
+
+  color: #cb8e58;
+
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
 }
 
-.fv2-multiview-tabs button.is-active::after {
-  background: var(--mv-orange);
-}
-
-.fv2-multiview-tabs
-.roadsafe-material-icon {
-  color: currentColor;
-}
-
-.fv2-multiview-tabs
-button.is-active
-.roadsafe-material-icon {
-  color: var(--mv-orange);
-}
-
-.fv2-multiview-source-tools {
-  display: flex;
-  align-items: center;
-
-  gap: 5px;
-}
-
-.fv2-multiview-run-picker select {
-  width: 170px;
-  height: 29px;
-
-  padding: 0 7px;
-
-  border: 1px solid #444;
-  border-radius: 3px;
-
-  outline: none;
-
-  background: #202020;
-
-  color: #bdbdbd;
-
-  font: inherit;
-  font-size: 9px;
-}
-
-.fv2-multiview-run-picker select:focus {
-  border-color: #705037;
-}
-
-.fv2-multiview-canonical,
-.fv2-multiview-icon-button {
-  min-height: 29px;
-
-  display: inline-flex;
-  align-items: center;
+.fv2-dock-commandbar__status {
+  flex: 1;
   justify-content: center;
-
-  gap: 5px;
-
-  padding: 0 8px;
-
-  border: 1px solid #484848;
-  border-radius: 3px;
-
-  background: #272727;
-
-  color: #a8a8a8;
-
-  font: inherit;
-  font-size: 8.5px;
-  font-weight: 700;
-
-  cursor: pointer;
 }
 
-.fv2-multiview-canonical:hover:not(:disabled),
-.fv2-multiview-icon-button:hover:not(:disabled) {
-  background: #303030;
-
-  color: #e0e0e0;
-}
-
-.fv2-multiview-canonical.is-current {
-  border-color: #6a4b32;
-
-  background: #33291f;
-
-  color: #dda065;
-}
-
-.fv2-multiview-icon-button {
-  width: 30px;
-
-  padding: 0;
-}
-
-.fv2-multiview-canonical:disabled,
-.fv2-multiview-icon-button:disabled {
-  opacity: .38;
-
-  cursor: default;
-}
-
-.fv2-multiview-statusbar {
-  min-height: 34px;
-
-  display: grid;
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
-  border-bottom: 1px solid #353535;
-
-  background: #222;
-}
-
-.fv2-multiview-statusbar > span {
-  min-width: 0;
+.fv2-dock-commandbar__status > span {
+  min-width: 70px;
 
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
 
-  gap: 5px;
-
-  padding: 4px 7px;
-
-  border-right: 1px solid #353535;
+  gap: 4px;
 
   color: #6f6f6f;
 
@@ -236,170 +84,450 @@ button.is-active
   text-transform: uppercase;
 }
 
-.fv2-multiview-statusbar > span:last-child {
-  border-right: 0;
-}
+.fv2-dock-commandbar__status b {
+  max-width: 110px;
 
-.fv2-multiview-statusbar b {
   overflow: hidden;
 
-  color: #b9b9b9;
+  color: #bcbcbc;
 
   font-size: 8px;
-  font-weight: 750;
 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.fv2-multiview-statusbar
-.is-ready b {
-  color: #7fab87;
-}
-
-.fv2-multiview-statusbar
-.is-preview b {
-  color: #c28b59;
-}
-
-.fv2-multiview-stage {
-  position: relative;
-
-  height:
-    clamp(
-      560px,
-      calc(100vh - 218px),
-      820px
-    );
-
-  min-height: 560px;
-
-  overflow: hidden;
-
-  background: var(--mv-bg);
-}
-
-.fv2-multiview-2d,
-.fv2-multiview-3d,
-.fv2-multiview-ar {
-  position: absolute;
-
-  inset: 0;
-
-  min-width: 0;
-  min-height: 0;
-}
-
-.fv2-multiview-2d {
-  display: grid;
-  grid-template-rows:
-    minmax(0, 1fr)
-    43px;
-}
-
-.fv2-multiview-plan {
-  position: relative;
-
-  min-height: 0;
-
-  overflow: hidden;
-
-  background: #1c1c1c;
-}
-
-.fv2-multiview-plan svg {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-}
-
-.fv2-multiview-preview-flag {
-  position: absolute;
-  top: 9px;
-  right: 9px;
-
-  padding: 4px 7px;
-
-  border: 1px solid #654a32;
-  border-radius: 2px;
-
-  background: rgba(47, 38, 29, .9);
-
-  color: #c68e5d;
-
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: .08em;
-}
-
-.fv2-multiview-playback {
-  display: grid;
-  grid-template-columns:
-    31px
-    31px
-    34px
-    31px
-    31px
-    minmax(100px, 1fr)
-    58px
-    31px;
-
-  align-items: center;
-
-  gap: 4px;
-
-  padding: 5px 7px;
-
-  border-top: 1px solid #3c3c3c;
-
-  background: #252525;
-}
-
-.fv2-multiview-playback button {
-  width: 31px;
-  height: 30px;
-
+.fv2-dock-commandbar__actions button,
+.fv2-dock-view-buttons button,
+.fv2-dock-timeline__controls button {
   display: grid;
   place-items: center;
 
   padding: 0;
 
-  border: 1px solid #454545;
+  border: 1px solid #464646;
   border-radius: 3px;
 
-  background: #292929;
+  background: #272727;
 
-  color: #a5a5a5;
+  color: #9b9b9b;
 
   cursor: pointer;
 }
 
-.fv2-multiview-playback button:hover {
-  color: #e3e3e3;
-
-  background: #313131;
+.fv2-dock-commandbar__actions button {
+  width: 28px;
+  height: 27px;
 }
 
-.fv2-multiview-playback
-button.is-primary {
+.fv2-dock-commandbar__actions button:hover:not(:disabled),
+.fv2-dock-view-buttons button:hover:not(:disabled),
+.fv2-dock-timeline__controls button:hover:not(:disabled) {
+  background: #313131;
+  color: #ededed;
+}
+
+.fv2-dock-commandbar__actions button:disabled,
+.fv2-dock-view-buttons button:disabled,
+.fv2-dock-timeline__controls button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.fv2-dock-host {
+  position: relative;
+
+  min-width: 0;
+  min-height: 0;
+
+  overflow: hidden;
+}
+
+.fv2-dock-host > .roadsafe-dockview {
+  width: 100%;
+  height: 100%;
+}
+
+.fv2-dock-boot {
+  position: absolute;
+  inset: 0;
+
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  background: #1c1c1c;
+
+  color: #777;
+
+  font-size: 9px;
+
+  pointer-events: none;
+}
+
+.roadsafe-dockview {
+  --dv-background-color: #1c1c1c;
+  --dv-group-view-background-color: #1c1c1c;
+  --dv-tabs-and-actions-container-background-color: #292929;
+  --dv-activegroup-visiblepanel-tab-background-color: #232323;
+  --dv-activegroup-hiddenpanel-tab-background-color: #292929;
+  --dv-inactivegroup-visiblepanel-tab-background-color: #252525;
+  --dv-inactivegroup-hiddenpanel-tab-background-color: #292929;
+  --dv-activegroup-visiblepanel-tab-color: #ededed;
+  --dv-activegroup-hiddenpanel-tab-color: #8f8f8f;
+  --dv-inactivegroup-visiblepanel-tab-color: #b0b0b0;
+  --dv-inactivegroup-hiddenpanel-tab-color: #777;
+  --dv-tab-divider-color: #3d3d3d;
+  --dv-separator-border: #444;
+  --dv-active-sash-color: #e8872d;
+  --dv-tabs-and-actions-container-height: 31px;
+  --dv-tabs-and-actions-container-font-size: 9px;
+  --dv-icon-hover-background-color: #383838;
+
+  font-family: "Saira", sans-serif;
+}
+
+.roadsafe-dockview .dv-tabs-and-actions-container {
+  border-bottom: 1px solid #404040;
+}
+
+.roadsafe-dockview .dv-tab.dv-active-tab {
+  box-shadow: inset 0 -2px #e8872d;
+}
+
+.roadsafe-dockview .dv-sash {
+  background: #363636;
+}
+
+.fv2-dock-panel {
+  height: 100%;
+
+  overflow: auto;
+
+  background: #232323;
+
+  color: #bdbdbd;
+}
+
+.fv2-dock-panel section {
+  padding: 8px;
+
+  border-bottom: 1px solid #383838;
+}
+
+.fv2-dock-section-title {
+  min-height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 6px;
+
+  margin-bottom: 5px;
+}
+
+.fv2-dock-section-title strong {
+  color: #bdbdbd;
+
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.fv2-dock-section-title span {
+  min-width: 20px;
+
+  padding: 2px 4px;
+
+  border-radius: 2px;
+
+  background: #2c2c2c;
+
+  color: #777;
+
+  font-size: 7px;
+
+  text-align: center;
+}
+
+.fv2-dock-section-title span.is-ready {
+  color: #7eac87;
+}
+
+.fv2-dock-scene select {
+  width: 100%;
+  height: 30px;
+
+  margin-bottom: 5px;
+
+  padding: 0 6px;
+
+  border: 1px solid #454545;
+  border-radius: 3px;
+
+  outline: none;
+
+  background: #1f1f1f;
+
+  color: #c4c4c4;
+
+  font: inherit;
+  font-size: 8.5px;
+}
+
+.fv2-dock-scene section:first-child > button {
+  width: 100%;
+  min-height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  border: 1px solid #4b453e;
+  border-radius: 3px;
+
+  background: #2b2722;
+
+  color: #bc8a60;
+
+  font: inherit;
+  font-size: 8px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.fv2-dock-scene section:first-child > button.is-current {
+  border-color: #435747;
+  background: #242d26;
+  color: #83ac8a;
+}
+
+.fv2-dock-tree,
+.fv2-dock-contact-list {
+  display: grid;
+  gap: 3px;
+}
+
+.fv2-dock-tree article {
+  min-height: 34px;
+
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 4px 5px;
+
+  border: 1px solid #373737;
+  border-radius: 2px;
+
+  background: #272727;
+}
+
+.fv2-dock-tree article i {
+  width: 22px;
+  height: 22px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #57432f;
+  border-radius: 2px;
+
+  background: #32281f;
+
+  color: #d18d54;
+
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.fv2-dock-tree article div {
+  min-width: 0;
+  display: grid;
+}
+
+.fv2-dock-tree article strong,
+.fv2-dock-contact-list article strong {
+  overflow: hidden;
+
+  color: #c5c5c5;
+
+  font-size: 8px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-dock-tree article small {
+  color: #707070;
+  font-size: 7px;
+}
+
+.fv2-dock-tree p {
+  color: #676767;
+  font-size: 8px;
+}
+
+.fv2-dock-contact-list article {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+
+  gap: 5px;
+
+  padding: 4px 5px;
+
+  border-bottom: 1px solid #333;
+}
+
+.fv2-dock-contact-list article span {
+  color: #be8454;
+  font-size: 7px;
+}
+
+.fv2-dock-properties dl {
+  margin: 0;
+  display: grid;
+}
+
+.fv2-dock-properties dl > div {
+  min-height: 27px;
+
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+
+  gap: 6px;
+
+  border-bottom: 1px solid #343434;
+}
+
+.fv2-dock-properties dt {
+  color: #6d6d6d;
+  font-size: 7px;
+}
+
+.fv2-dock-properties dd {
+  min-width: 0;
+
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #b6b6b6;
+
+  font-size: 8px;
+
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-dock-view-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 4px;
+}
+
+.fv2-dock-view-buttons button {
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  font: inherit;
+  font-size: 8px;
+}
+
+.fv2-dock-view-buttons .roadsafe-material-icon {
+  color: #d08b50;
+}
+
+.fv2-dock-rule {
+  display: flex;
+  gap: 7px;
+
+  color: #786957;
+}
+
+.fv2-dock-rule p {
+  margin: 0;
+
+  color: #817363;
+
+  font-size: 7.5px;
+  line-height: 1.45;
+}
+
+.fv2-dock-timeline {
+  height: 100%;
+
+  display: grid;
+  grid-template-rows: 40px 34px 18px;
+  align-content: center;
+
+  gap: 4px;
+
+  padding: 7px 9px;
+
+  background: #222;
+}
+
+.fv2-dock-timeline__controls {
+  display: grid;
+  grid-template-columns: 30px 30px 34px 30px 30px 62px 66px;
+  align-items: center;
+
+  gap: 4px;
+}
+
+.fv2-dock-timeline__controls button {
+  width: 30px;
+  height: 30px;
+}
+
+.fv2-dock-timeline__controls button.is-primary {
   width: 34px;
 
-  border-color: #6a4a31;
+  border-color: #68492f;
 
   background: #35291f;
 
-  color: #e99f5e;
+  color: #e79e5d;
 }
 
-.fv2-multiview-playback input {
-  width: 100%;
+.fv2-dock-timeline__controls select {
+  width: 62px;
+  height: 28px;
 
-  accent-color: var(--mv-orange);
+  border: 1px solid #454545;
+  border-radius: 3px;
+
+  background: #1e1e1e;
+
+  color: #a8a8a8;
+
+  font: inherit;
+  font-size: 8px;
 }
 
-.fv2-multiview-playback output {
-  color: #a9a9a9;
+.fv2-dock-timeline__controls output {
+  color: #b2b2b2;
 
   font-size: 9px;
   font-variant-numeric: tabular-nums;
@@ -407,50 +535,97 @@ button.is-primary {
   text-align: center;
 }
 
-.fv2-multiview-3d,
-.fv2-multiview-ar {
-  background: #1b1b1b;
+.fv2-dock-timeline__range {
+  width: 100%;
+
+  accent-color: #e8872d;
 }
 
-.fv2-multiview-3d
-.reconstruction-3d {
-  height: 100% !important;
-  min-height: 100% !important;
+.fv2-dock-timeline__marks {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #646464;
+
+  font-size: 7px;
 }
 
-.fv2-multiview-3d
-.reconstruction-3d__viewport,
-.fv2-multiview-3d canvas {
-  min-height: 100% !important;
-}
-
-.fv2-multiview-ar-embed {
+.fv2-dock-timeline__marks i {
   position: absolute;
+  top: 0;
 
-  inset: 0;
+  width: 1px;
+  height: 12px;
+
+  background: #cf6f58;
+}
+
+.fv2-dock-viewport {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
 
   overflow: hidden;
 
   background: #1b1b1b;
 }
 
-.fv2-multiview-ar-embed
-> .roadsafe-ar-workstation {
+.fv2-dock-viewport--2d svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fv2-dock-preview-flag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  padding: 3px 6px;
+
+  border: 1px solid #5b4633;
+  border-radius: 2px;
+
+  background: rgba(48,39,30,.9);
+
+  color: #c68d5a;
+
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.fv2-dock-viewport--3d .reconstruction-3d {
   height: 100% !important;
   min-height: 100% !important;
 }
 
-.fv2-multiview-ar-embed
-.roadsafe-ar-blender-properties {
+.fv2-dock-viewport--3d .reconstruction-3d__viewport,
+.fv2-dock-viewport--3d canvas {
+  min-height: 100% !important;
+}
+
+.fv2-dock-viewport--ar > .roadsafe-ar-workstation {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+.fv2-dock-viewport--ar .roadsafe-ar-blender-properties {
   top: 8px !important;
   right: 8px !important;
   bottom: 8px !important;
 }
 
-.fv2-multiview-empty {
-  position: absolute;
-
-  inset: 0;
+.fv2-dock-gate {
+  width: 100%;
+  height: 100%;
 
   display: grid;
   place-items: center;
@@ -458,317 +633,89 @@ button.is-primary {
 
   gap: 8px;
 
-  padding: 24px;
+  padding: 20px;
 
   background:
     radial-gradient(
       circle at center,
-      rgba(232,135,45,.045),
+      rgba(232,135,45,.04),
       transparent 38%
     ),
-    #1c1c1c;
+    #1b1b1b;
 
-  color: #747474;
+  color: #777;
 
   text-align: center;
 }
 
-.fv2-multiview-empty
-> .roadsafe-material-icon {
-  color: #9a7657;
+.fv2-dock-gate > .roadsafe-material-icon {
+  color: #9a7453;
 }
 
-.fv2-multiview-empty strong {
-  color: #c4c4c4;
-
-  font-size: 12px;
+.fv2-dock-gate strong {
+  color: #bdbdbd;
+  font-size: 11px;
 }
 
-.fv2-multiview-empty span {
-  color: #717171;
-
-  font-size: 9px;
-}
-
-.fv2-multiview-empty
-button.primary {
-  min-height: 31px;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  margin-top: 3px;
-
-  padding: 0 10px;
-}
-
-.fv2-multiview-footer {
-  min-height: 34px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 10px;
-
-  padding: 5px 8px;
-
-  border-top: 1px solid #3b3b3b;
-
-  background: #252525;
-
-  color: #767676;
-
+.fv2-dock-gate span {
+  color: #707070;
   font-size: 8px;
 }
 
-.fv2-multiview-footer > div {
-  display: flex;
-  align-items: center;
+.fv2-dock-gate button {
+  min-height: 30px;
 
-  gap: 7px;
-}
-
-.fv2-multiview-footer
-> div > span {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 4px;
-}
-
-.fv2-multiview-footer
-.is-ready {
-  color: #84ae8c;
-}
-
-.fv2-multiview-provenance {
-  overflow: hidden;
-}
-
-.fv2-multiview-provenance summary {
-  min-height: 34px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 8px;
-
-  padding: 0 9px;
-
-  cursor: pointer;
-
-  color: #8e8e8e;
-
-  list-style: none;
-}
-
-.fv2-multiview-provenance summary::-webkit-details-marker {
-  display: none;
-}
-
-.fv2-multiview-provenance summary > span {
   display: inline-flex;
   align-items: center;
 
   gap: 5px;
 
-  font-size: 9px;
+  padding: 0 9px;
+
+  border: 1px solid #68492f;
+  border-radius: 3px;
+
+  background: #35291f;
+
+  color: #dda064;
+
+  font: inherit;
+  font-size: 8px;
   font-weight: 700;
+
+  cursor: pointer;
 }
 
-.fv2-multiview-provenance[open]
-summary
-> .roadsafe-material-icon {
-  transform: rotate(90deg);
+.fv2-dock-spin {
+  animation: fv2-dock-spin 1s linear infinite;
 }
 
-.fv2-multiview-provenance-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
-  border-top: 1px solid #3a3a3a;
-}
-
-.fv2-multiview-provenance-grid article {
-  min-width: 0;
-
-  display: grid;
-  gap: 2px;
-
-  padding: 8px;
-
-  border-right: 1px solid #373737;
-
-  background: #232323;
-}
-
-.fv2-multiview-provenance-grid article:last-child {
-  border-right: 0;
-}
-
-.fv2-multiview-provenance-grid span,
-.fv2-multiview-provenance-grid small {
-  color: #727272;
-
-  font-size: 7px;
-}
-
-.fv2-multiview-provenance-grid strong {
-  overflow: hidden;
-
-  color: #bdbdbd;
-
-  font-size: 9px;
-
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fv2-multiview-sr-only {
-  position: absolute;
-
-  width: 1px;
-  height: 1px;
-
-  overflow: hidden;
-
-  clip: rect(
-    0,
-    0,
-    0,
-    0
-  );
-
-  white-space: nowrap;
-}
-
-.fv2-multiview-spin {
-  animation:
-    fv2-multiview-spin
-    1s
-    linear
-    infinite;
-}
-
-@keyframes
-fv2-multiview-spin {
+@keyframes fv2-dock-spin {
   to {
-    transform:
-      rotate(
-        360deg
-      );
+    transform: rotate(360deg);
   }
 }
 
-@media(max-width:980px) {
-  .fv2-multiview-toolbar {
-    min-height: 80px;
-
-    flex-direction: column;
-
-    padding:
-      5px
-      7px;
+@media(max-width:900px) {
+  .fv2-dock-workstation {
+    height: clamp(620px, calc(100vh - 118px), 900px);
   }
 
-  .fv2-multiview-tabs {
-    width: 100%;
-  }
-
-  .fv2-multiview-tabs button {
-    flex: 1;
-
-    min-width: 0;
-  }
-
-  .fv2-multiview-source-tools {
-    width: 100%;
-  }
-
-  .fv2-multiview-run-picker {
-    flex: 1;
-  }
-
-  .fv2-multiview-run-picker select {
-    width: 100%;
-  }
-
-  .fv2-multiview-statusbar {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-
-  .fv2-multiview-stage {
-    height:
-      clamp(
-        520px,
-        calc(100vh - 260px),
-        760px
-      );
-
-    min-height: 520px;
+  .fv2-dock-commandbar__status > span:nth-child(2),
+  .fv2-dock-commandbar__status > span:nth-child(3) {
+    display: none;
   }
 }
 
 @media(max-width:620px) {
-  .fv2-multiview-tabs
-  button span {
+  .fv2-dock-commandbar__identity > span,
+  .fv2-dock-commandbar__identity > em,
+  .fv2-dock-commandbar__status {
     display: none;
   }
 
-  .fv2-multiview-tabs button {
-    min-width: 46px;
-  }
-
-  .fv2-multiview-canonical span {
-    display: none;
-  }
-
-  .fv2-multiview-run-picker select {
-    font-size: 8px;
-  }
-
-  .fv2-multiview-statusbar {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .fv2-multiview-statusbar
-  > span:nth-child(5) {
-    display: none;
-  }
-
-  .fv2-multiview-playback {
-    grid-template-columns:
-      30px
-      30px
-      34px
-      30px
-      minmax(80px, 1fr)
-      52px;
-
-    gap: 3px;
-  }
-
-  .fv2-multiview-playback
-  > button:nth-child(5),
-  .fv2-multiview-playback
-  > button:last-child {
-    display: none;
-  }
-
-  .fv2-multiview-footer
-  > span {
-    display: none;
-  }
-
-  .fv2-multiview-provenance-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+  .roadsafe-dockview {
+    --dv-tabs-and-actions-container-font-size: 8px;
+    --dv-tabs-and-actions-container-height: 29px;
   }
 }
