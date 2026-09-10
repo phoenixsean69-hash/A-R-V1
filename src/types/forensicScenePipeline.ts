@@ -124,8 +124,18 @@ export interface ForensicQaReport {
   warnings: string[];
 }
 
+export interface ForensicGeometryCorrection {
+  id: string;
+  appliedAt: string;
+  roadId: string;
+  osmId: number;
+  roadName: string;
+  method: "inspector" | "edge-handle";
+  previous: { widthMetres: number; laneCount: number };
+  next: { widthMetres: number; laneCount: number };
+}
 export interface ForensicScenePackage {
-  schemaVersion: "RoadSafe Forensic Scene V1";
+  schemaVersion: "RoadSafe Forensic Scene V1" | "RoadSafe Forensic Scene V2";
   id: string;
   version: 1;
   createdAt: string;
@@ -137,6 +147,7 @@ export interface ForensicScenePackage {
   snapshotSha256: string;
   geometrySha256: string;
   legacyGeometryVersion: RealSceneGeometry["version"];
+  corrections?: ForensicGeometryCorrection[];
   reviewStatus: "pending-investigator-review" | "investigator-confirmed";
   investigatorConfirmedAt?: string;
 }

@@ -1,0 +1,257 @@
+.roadsafe-geometry-review {
+  margin-bottom: 9px;
+  overflow: hidden;
+  border: 1px solid #424242;
+  border-radius: 3px;
+  background: #242424;
+}
+
+.roadsafe-geometry-review > header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #3e3e3e;
+  background: #272727;
+}
+
+.roadsafe-geometry-review > header > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.roadsafe-geometry-review > header span {
+  color: #e8872d;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.roadsafe-geometry-review > header strong {
+  color: #e3e3e3;
+  font-size: 12px;
+}
+
+.roadsafe-geometry-review > header p {
+  margin: 1px 0 0;
+  color: #888;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.roadsafe-geometry-review__stats {
+  display: flex;
+  gap: 5px;
+}
+
+.roadsafe-geometry-review__stats span {
+  min-width: 52px;
+  min-height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 4px 7px;
+  border: 1px solid #454545;
+  border-radius: 3px;
+  background: #222;
+  color: #818181;
+  font-size: 7px;
+}
+
+.roadsafe-geometry-review__stats b {
+  color: #ddd;
+  font-size: 11px;
+}
+
+.roadsafe-geometry-review__body {
+  min-height: 470px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 285px;
+}
+
+.roadsafe-geometry-review__map-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 470px;
+  border-right: 1px solid #3e3e3e;
+  background: #1d1d1d;
+}
+
+.roadsafe-geometry-review__map {
+  position: absolute;
+  inset: 0;
+}
+
+.roadsafe-geometry-review__hint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 4;
+  max-width: 420px;
+  padding: 6px 8px;
+  border: 1px solid #444;
+  border-radius: 3px;
+  background: rgba(31,31,31,.93);
+  color: #9b9b9b;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+.roadsafe-geometry-review__edge-handle {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #202020;
+  border-radius: 50%;
+  outline: 1px solid #ffab62;
+  background: #e8872d;
+  color: #171717;
+  font-family: "Saira", sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: ew-resize;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}
+
+.roadsafe-geometry-review aside {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 9px;
+  background: #252525;
+}
+
+.roadsafe-geometry-review aside label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.roadsafe-geometry-review aside label > span {
+  color: #8d8d8d;
+  font-size: 8px;
+  font-weight: 650;
+}
+
+.roadsafe-geometry-review select,
+.roadsafe-geometry-review input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 7px;
+  border: 1px solid #474747;
+  border-radius: 3px;
+  outline: none;
+  background: #202020;
+  color: #d5d5d5;
+  font-family: "Saira", sans-serif;
+  font-size: 10px;
+}
+
+.roadsafe-geometry-review__meta {
+  display: grid;
+  gap: 4px;
+}
+
+.roadsafe-geometry-review__meta span {
+  min-height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 7px;
+  border: 1px solid #3d3d3d;
+  border-radius: 3px;
+  background: #292929;
+  color: #777;
+  font-size: 8px;
+}
+
+.roadsafe-geometry-review__meta b {
+  color: #b8b8b8;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.roadsafe-geometry-review__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.roadsafe-geometry-review__apply {
+  min-height: 32px;
+  border: 1px solid #684a31;
+  border-radius: 3px;
+  background: #34291f;
+  color: #e3a166;
+  font-family: "Saira", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roadsafe-geometry-review__apply:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.roadsafe-geometry-review__warning {
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #514637;
+  border-radius: 3px;
+  background: #2c2822;
+  color: #a79076;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.roadsafe-geometry-review__audit {
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.roadsafe-geometry-review__audit > strong {
+  color: #bbb;
+  font-size: 9px;
+}
+
+.roadsafe-geometry-review__audit article {
+  display: grid;
+  gap: 1px;
+  padding: 5px 6px;
+  border: 1px solid #393939;
+  border-radius: 3px;
+  background: #222;
+}
+
+.roadsafe-geometry-review__audit article span {
+  overflow: hidden;
+  color: #b8b8b8;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-geometry-review__audit article small {
+  color: #777;
+  font-size: 7px;
+}
+
+@media (max-width: 930px) {
+  .roadsafe-geometry-review__body {
+    grid-template-columns: 1fr;
+  }
+
+  .roadsafe-geometry-review__map-shell {
+    min-height: 420px;
+    border-right: 0;
+    border-bottom: 1px solid #3e3e3e;
+  }
+}

@@ -57,7 +57,8 @@ export interface RealSceneMetricPoint {
 export type RealSceneGeometryProvenance =
   | "source-reported"
   | "derived"
-  | "inferred";
+  | "inferred"
+  | "manual-correction";
 
 export interface RealSceneLaneGeometry {
   laneIndex: number;
@@ -74,8 +75,8 @@ export interface RealSceneRoadwayGeometry {
   rightEdge: RealSceneMetricPoint[];
   surfacePolygon: RealSceneMetricPoint[];
   lanes: RealSceneLaneGeometry[];
-  widthSource: "source-reported" | "lane-model" | "default-model";
-  laneCountSource: "source-reported" | "default-model";
+  widthSource: "source-reported" | "lane-model" | "default-model" | "manual-correction";
+  laneCountSource: "source-reported" | "default-model" | "manual-correction";
   widthConfidence: number;
   laneConfidence: number;
   clippedAtCoreBoundary: boolean;
@@ -130,7 +131,8 @@ export interface RealSceneRoadGeometry {
   surface?: string;
   maximumSpeedKmh?: number;
   isRoundabout: boolean;
-    forensic?: RealSceneRoadwayGeometry;points: RealSceneGeoPoint[];
+  forensic?: RealSceneRoadwayGeometry;
+  points: RealSceneGeoPoint[];
   localPoints: RealSceneLocalPoint[];
 }
 

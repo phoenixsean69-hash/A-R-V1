@@ -63,6 +63,7 @@ import {
 } from "../../data/stations";
 
 import ForensicAreaMap from "./ForensicAreaMap";
+import ForensicGeometryReviewWorkspace from "./ForensicGeometryReviewWorkspace";
 
 import "./forensicCaseAreaWizard.css";
 
@@ -1884,8 +1885,18 @@ export default function ForensicCaseAreaWizard({
         <section className="roadsafe-forensic-panel">
           <Heading
             eyebrow="Investigator review"
-            title="Review the frozen scene package"
-            text="Verify source provenance, geometry and QA before creating the case."
+            title="Verify and correct the scene geometry"
+            text="Compare extracted roadway geometry with imagery and source metadata, then correct verified dimensions before confirmation."
+          />
+
+          <ForensicGeometryReviewWorkspace
+            buildResult={buildResult}
+            onBuildResultChange={(next) => {
+              setBuildResult(next);
+              setConfirmed(false);
+              setError("");
+            }}
+            onError={setError}
           />
 
           <div className="roadsafe-forensic-review-metrics">
