@@ -339,3 +339,61 @@
 }
 
 /* ROADSAFE_SCROLL_OWNERSHIP_FIX_END */
+
+/* ROADSAFE_NO_INSTRUCTIONAL_CHROME_START */
+
+/*
+ * RoadSafe UI rule:
+ * no instructional banners, helper strips, hint callouts or decorative
+ * left-side accent bars. Operational controls and forensic data stay visible.
+ */
+
+/* Generic instructional/helper chrome. */
+.fv2-help,
+.roadsafe-help,
+.roadsafe-helper,
+.roadsafe-hint,
+.roadsafe-callout,
+.roadsafe-guide,
+.roadsafe-advisory,
+.roadsafe-notice,
+.roadsafe-inline-help,
+.roadsafe-panel-help,
+.roadsafe-panel-hint,
+.fv2-helper,
+.fv2-hint,
+.fv2-callout,
+.fv2-guide,
+.fv2-advisory,
+.fv2-protocol,
+[class^="roadsafe-"][class*="-helper"],
+[class^="roadsafe-"][class*="-hint"],
+[class^="roadsafe-"][class*="-callout"],
+[class^="roadsafe-"][class*="-guide"],
+[class^="roadsafe-"][class*="-advisory"],
+[class^="roadsafe-"][class*="-protocol"],
+[class^="fv2-"][class*="-helper"],
+[class^="fv2-"][class*="-hint"],
+[class^="fv2-"][class*="-callout"],
+[class^="fv2-"][class*="-guide"],
+[class^="fv2-"][class*="-advisory"],
+[class^="fv2-"][class*="-protocol"] {
+  display: none !important;
+}
+
+/* Remove the shared orange title highlighter. */
+.roadsafe-workstation .roadsafe-workspace-title {
+  padding-left: 0 !important;
+  border-left: 0 !important;
+}
+
+/* Remove decorative accent pseudo-elements when they are explicitly named. */
+[class^="roadsafe-"][class*="-accent"]::before,
+[class^="roadsafe-"][class*="-accent"]::after,
+[class^="fv2-"][class*="-accent"]::before,
+[class^="fv2-"][class*="-accent"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ROADSAFE_NO_INSTRUCTIONAL_CHROME_END */

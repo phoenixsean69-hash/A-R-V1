@@ -48,10 +48,10 @@
 .roadsafe-workstation .roadsafe-workspace-title {
   min-width: 0;
   max-width: 100%;
-  padding: 1px 0 1px 11px;
+  padding: 1px 0;
   overflow: hidden;
 
-  border-left: 3px solid var(--roadsafe-ui-accent, #e8872d);
+  border-left: 0;
 }
 
 .roadsafe-workstation .roadsafe-workspace-title .roadsafe-eyebrow {

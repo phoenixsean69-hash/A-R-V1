@@ -2857,3 +2857,22 @@
 }
 
 /* ROADSAFE_FORENSIC_VERTICAL_SCROLL_FIX_END */
+
+/* ROADSAFE_FORENSIC_NO_INSTRUCTIONAL_CHROME_START */
+
+/* Scene Intake GNSS instruction strip shown in the screenshot. */
+.fv2-scene-protocol {
+  display: none !important;
+}
+
+/* Forensic helper copy should not become a visual strip/card. */
+.fv2-help,
+.fv2-scene-helper,
+.fv2-scene-hint,
+.fv2-scene-callout,
+.fv2-scene-guide,
+.fv2-scene-advisory {
+  display: none !important;
+}
+
+/* ROADSAFE_FORENSIC_NO_INSTRUCTIONAL_CHROME_END */
