@@ -7,6 +7,15 @@ import {
   Plus,
   ScanLine,
   Trash2,
+  Activity,
+  BarChart3,
+  CarFront,
+  FileText,
+  Flag,
+  Orbit,
+  PersonStanding,
+  Play,
+  Users,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -2655,30 +2664,268 @@ export default function ForensicInvestigationWorkspace({
           {message && <div className="fv2-message">{message}<button onClick={() => setMessage("")}>×</button></div>}
 
           {section === "Overview" && (
-            <div className="fv2-stack">
-              <section className="fv2-hero">
-                <div>
-                  <small>RoadSafe Forensic Reconstruction V2</small>
-                  <h1>Evidence before reconstruction</h1>
-                  <p>Scene preservation and physical evidence now come first. Physics, 2D, 3D and AR will be generated later as analytical outputs, not treated as the starting truth.</p>
-                </div>
-                <strong>STEP 6<br /><span>ANALYSIS</span></strong>
-              </section>
+            <section className="fv2-overview-console">
+              <header className="fv2-overview-commandbar">
+                <div className="fv2-overview-commandbar__identity">
+                  <span className="fv2-overview-commandbar__icon">
+                    <ShieldCheck size={20} />
+                  </span>
 
-              <div className="fv2-stats">
-                <article><span>Scene intake</span><strong>{completion}%</strong><small>core scene fields</small></article>
-                <article><span>Evidence</span><strong>{investigation.evidence.length}</strong><small>registered items</small></article>
-                <article><span>Witnesses</span><strong>{investigation.witnesses.length}</strong><small>preserved accounts</small></article>
-                <article><span>Analysis</span><strong>{investigation.analysisFindings.length}</strong><small>recorded findings</small></article>
+                  <div>
+                    <small>Forensic reconstruction</small>
+                    <strong>{accidentCase.caseNumber}</strong>
+                  </div>
+                </div>
+
+                <div className="fv2-overview-commandbar__status">
+                  <span>
+                    <Gauge size={15} />
+                    <b>{completion}%</b>
+                    scene
+                  </span>
+
+                  <span>
+                    <ClipboardCheck size={15} />
+                    <b>{investigation.evidence.length}</b>
+                    evidence
+                  </span>
+
+                  <span>
+                    <BarChart3 size={15} />
+                    <b>{investigation.analysisFindings.length}</b>
+                    findings
+                  </span>
+                </div>
+              </header>
+
+              <div className="fv2-overview-metrics">
+                <button
+                  type="button"
+                  onClick={() => setSection("Scene Intake")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <MapPinned size={26} />
+                  </span>
+                  <div>
+                    <span>Scene</span>
+                    <strong>{completion}%</strong>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSection("Evidence Registry")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <ScanLine size={26} />
+                  </span>
+                  <div>
+                    <span>Evidence</span>
+                    <strong>{investigation.evidence.length}</strong>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSection("Measurements")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <Ruler size={26} />
+                  </span>
+                  <div>
+                    <span>Measurements</span>
+                    <strong>{investigation.measurements.length}</strong>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSection("Witnesses")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <Users size={26} />
+                  </span>
+                  <div>
+                    <span>Witnesses</span>
+                    <strong>{investigation.witnesses.length}</strong>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSection("Analysis")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <BarChart3 size={26} />
+                  </span>
+                  <div>
+                    <span>Analysis</span>
+                    <strong>{investigation.analysisFindings.length}</strong>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSection("Hypotheses")}
+                >
+                  <span className="fv2-overview-metric__icon">
+                    <Orbit size={26} />
+                  </span>
+                  <div>
+                    <span>Hypotheses</span>
+                    <strong>{investigation.hypotheses.length}</strong>
+                  </div>
+                </button>
               </div>
 
-              <section className="fv2-panel">
-                <header><span>Forensic provenance</span><strong>Every fact must say where it came from</strong></header>
-                <div className="fv2-tags">
-                  {FORENSIC_PROVENANCE_OPTIONS.map((item) => <span key={item} className={isDerived(item) ? "derived" : ""}>{item}</span>)}
+              <section className="fv2-overview-pipeline">
+                <header>
+                  <div>
+                    <Activity size={17} />
+                    <span>Investigation pipeline</span>
+                  </div>
+
+                  <strong>
+                    {investigation.scene.sceneDatum
+                      ? "DATUM LOCKED"
+                      : "DATUM PENDING"}
+                  </strong>
+                </header>
+
+                <div className="fv2-overview-pipeline__grid">
+                  {[
+                    {
+                      label: "Scene Intake",
+                      Icon: MapPinned,
+                      value: `${completion}%`,
+                    },
+                    {
+                      label: "Evidence Registry",
+                      Icon: ScanLine,
+                      value: investigation.evidence.length,
+                    },
+                    {
+                      label: "Measurements",
+                      Icon: Ruler,
+                      value: investigation.measurements.length,
+                    },
+                    {
+                      label: "Vehicles",
+                      Icon: CarFront,
+                      value: investigation.vehicles.length,
+                    },
+                    {
+                      label: "Persons",
+                      Icon: PersonStanding,
+                      value: investigation.persons.length,
+                    },
+                    {
+                      label: "Witnesses",
+                      Icon: Users,
+                      value: investigation.witnesses.length,
+                    },
+                    {
+                      label: "Analysis",
+                      Icon: BarChart3,
+                      value: investigation.analysisFindings.length,
+                    },
+                    {
+                      label: "Hypotheses",
+                      Icon: Orbit,
+                      value: investigation.hypotheses.length,
+                    },
+                    {
+                      label: "Simulation",
+                      Icon: Play,
+                      value: "RUN",
+                    },
+                    {
+                      label: "2D / 3D / AR",
+                      Icon: Boxes,
+                      value: "VIEW",
+                    },
+                    {
+                      label: "Findings",
+                      Icon: Flag,
+                      value: "REVIEW",
+                    },
+                    {
+                      label: "Report",
+                      Icon: FileText,
+                      value: "OUTPUT",
+                    },
+                  ].map(({ label, Icon, value }, index) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className={
+                        label === "Scene Intake" && completion >= 100
+                          ? "is-ready"
+                          : label === "Evidence Registry" &&
+                              investigation.evidence.length > 0
+                            ? "is-ready"
+                            : label === "Measurements" &&
+                                investigation.measurements.length > 0
+                              ? "is-ready"
+                              : label === "Vehicles" &&
+                                  investigation.vehicles.length > 0
+                                ? "is-ready"
+                                : label === "Persons" &&
+                                    investigation.persons.length > 0
+                                  ? "is-ready"
+                                  : label === "Witnesses" &&
+                                      investigation.witnesses.length > 0
+                                    ? "is-ready"
+                                    : label === "Analysis" &&
+                                        investigation.analysisFindings.length > 0
+                                      ? "is-ready"
+                                      : label === "Hypotheses" &&
+                                          investigation.hypotheses.length > 0
+                                        ? "is-ready"
+                                        : ""
+                      }
+                      onClick={() =>
+                        setSection(label as Section)
+                      }
+                    >
+                      <span className="fv2-overview-pipeline__number">
+                        {String(index + 2).padStart(2, "0")}
+                      </span>
+
+                      <Icon size={22} />
+
+                      <span className="fv2-overview-pipeline__label">
+                        {label}
+                      </span>
+
+                      <strong>{value}</strong>
+                    </button>
+                  ))}
                 </div>
               </section>
-            </div>
+
+              <section className="fv2-overview-provenance">
+                <header>
+                  <ShieldCheck size={16} />
+                  <span>Provenance classes</span>
+                </header>
+
+                <div>
+                  {FORENSIC_PROVENANCE_OPTIONS.map((item) => (
+                    <span
+                      key={item}
+                      className={
+                        isDerived(item)
+                          ? "is-derived"
+                          : "is-source"
+                      }
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            </section>
           )}
 
           {section === "Scene Intake" && (
