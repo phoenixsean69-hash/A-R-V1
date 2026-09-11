@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AccidentCase } from "../../types/accidentCase";
 import {
+  Boxes,
+  ClipboardCheck,
+  FileSearch,
+  Plus,
+  ScanLine,
+  Trash2,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -3103,44 +3109,386 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Evidence Registry" && (
-            <div className="fv2-stack">
-              <section className="fv2-panel">
-                <header><span>Physical evidence</span><strong>Add evidence record</strong></header>
-                <div className="fv2-grid">
-                  <label className="fv2-field"><span>Source</span><select value={source} onChange={(e) => setSource(e.target.value as EvidenceSource)}>{EVIDENCE_SOURCE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-                  <label className="fv2-field"><span>Evidence type</span><select value={type} onChange={(e) => setType(e.target.value as PhysicalEvidenceType)}>{PHYSICAL_EVIDENCE_TYPE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-                  <label className="fv2-field full"><span>Description</span><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What was observed?" /></label>
-                  <label className="fv2-field full"><span>Exact location / reference</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Where was it found? Include fixed reference points where possible." /></label>
-                  <div className="fv2-field full">
-                    <span>Spatial position relative to scene datum (optional)</span>
-                    <div className="fv2-coordinates">
-                      <label><span>Along road (m)</span><input inputMode="decimal" value={evidenceX} onChange={(e) => setEvidenceX(e.target.value)} /></label>
-                      <label><span>Across road (m)</span><input inputMode="decimal" value={evidenceY} onChange={(e) => setEvidenceY(e.target.value)} /></label>
-                      <label><span>Z (m)</span><input inputMode="decimal" value={evidenceZ} onChange={(e) => setEvidenceZ(e.target.value)} /></label>
-                      <label><span>Accuracy ± m</span><input inputMode="decimal" value={evidenceAccuracy} onChange={(e) => setEvidenceAccuracy(e.target.value)} /></label>
+            <section className="fv2-evidence-workbench">
+              <header className="fv2-evidence-commandbar">
+                <div className="fv2-evidence-commandbar__identity">
+                  <span className="fv2-evidence-commandbar__icon">
+                    <ScanLine size={20} />
+                  </span>
+
+                  <div>
+                    <small>Physical evidence</small>
+                    <strong>Evidence Acquisition Console</strong>
+                  </div>
+                </div>
+
+                <div className="fv2-evidence-commandbar__status">
+                  <span>
+                    <ClipboardCheck size={15} />
+                    <b>{investigation.evidence.length}</b>
+                    records
+                  </span>
+
+                  <span>
+                    <Crosshair size={15} />
+                    <b>{positionedEvidence.length}</b>
+                    positioned
+                  </span>
+
+                  <button
+                    type="button"
+                    className="fv2-evidence-add"
+                    onClick={addEvidence}
+                    title="Register evidence"
+                    aria-label="Register evidence"
+                  >
+                    <Plus size={16} />
+                    <span>Register</span>
+                  </button>
+                </div>
+              </header>
+
+              <div className="fv2-evidence-instrument-strip">
+                <label className="fv2-evidence-instrument">
+                  <span className="fv2-evidence-instrument__icon">
+                    <FileSearch size={20} />
+                  </span>
+                  <div>
+                    <small>Source</small>
+                    <select
+                      value={source}
+                      onChange={(event) =>
+                        setSource(event.target.value as EvidenceSource)
+                      }
+                    >
+                      {EVIDENCE_SOURCE_OPTIONS.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+
+                <label className="fv2-evidence-instrument">
+                  <span className="fv2-evidence-instrument__icon">
+                    <Boxes size={20} />
+                  </span>
+                  <div>
+                    <small>Evidence type</small>
+                    <select
+                      value={type}
+                      onChange={(event) =>
+                        setType(event.target.value as PhysicalEvidenceType)
+                      }
+                    >
+                      {PHYSICAL_EVIDENCE_TYPE_OPTIONS.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+
+                <label className="fv2-evidence-instrument">
+                  <span className="fv2-evidence-instrument__icon">
+                    <ShieldCheck size={20} />
+                  </span>
+                  <div>
+                    <small>Provenance</small>
+                    <select
+                      value={provenance}
+                      onChange={(event) =>
+                        setProvenance(
+                          event.target.value as ForensicProvenance,
+                        )
+                      }
+                    >
+                      {FORENSIC_PROVENANCE_OPTIONS.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+
+                <label className="fv2-evidence-instrument">
+                  <span className="fv2-evidence-instrument__icon">
+                    <Gauge size={20} />
+                  </span>
+                  <div>
+                    <small>Confidence</small>
+                    <select
+                      value={confidence}
+                      onChange={(event) =>
+                        setConfidence(
+                          event.target.value as ForensicConfidence,
+                        )
+                      }
+                    >
+                      {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+              </div>
+
+              <div className="fv2-evidence-capture-grid">
+                <section className="fv2-evidence-module fv2-evidence-observation">
+                  <header>
+                    <ScanEye size={17} />
+                    <div>
+                      <span>Observation</span>
+                      <strong>Evidence description</strong>
                     </div>
-                    <small className="fv2-help">
-                      Measured from: {investigation.scene.sceneDatumLabel || "reference point not set yet"}
+                  </header>
+
+                  <div className="fv2-evidence-module__body">
+                    <label className="fv2-evidence-field">
+                      <span>Observed item</span>
+                      <input
+                        value={description}
+                        onChange={(event) =>
+                          setDescription(event.target.value)
+                        }
+                        placeholder="Describe the physical evidence"
+                      />
+                    </label>
+
+                    <label className="fv2-evidence-field">
+                      <span>Exact scene reference</span>
+                      <div className="fv2-evidence-input-with-icon">
+                        <MapPinned size={16} />
+                        <input
+                          value={location}
+                          onChange={(event) =>
+                            setLocation(event.target.value)
+                          }
+                          placeholder="Exact location or fixed reference"
+                        />
+                      </div>
+                    </label>
+                  </div>
+                </section>
+
+                <section className="fv2-evidence-module fv2-evidence-spatial">
+                  <header>
+                    <Crosshair size={17} />
+                    <div>
+                      <span>Spatial fix</span>
+                      <strong>Datum-relative position</strong>
+                    </div>
+
+                    <span
+                      className={`fv2-evidence-module__state ${
+                        investigation.scene.sceneDatum
+                          ? "is-ready"
+                          : "is-neutral"
+                      }`}
+                    >
+                      {investigation.scene.sceneDatum
+                        ? "DATUM READY"
+                        : "NO DATUM"}
+                    </span>
+                  </header>
+
+                  <div className="fv2-evidence-spatial-grid">
+                    <label>
+                      <span>Along road</span>
+                      <div>
+                        <input
+                          inputMode="decimal"
+                          value={evidenceX}
+                          onChange={(event) =>
+                            setEvidenceX(event.target.value)
+                          }
+                          placeholder="0.00"
+                        />
+                        <small>m</small>
+                      </div>
+                    </label>
+
+                    <label>
+                      <span>Across road</span>
+                      <div>
+                        <input
+                          inputMode="decimal"
+                          value={evidenceY}
+                          onChange={(event) =>
+                            setEvidenceY(event.target.value)
+                          }
+                          placeholder="0.00"
+                        />
+                        <small>m</small>
+                      </div>
+                    </label>
+
+                    <label>
+                      <span>Elevation</span>
+                      <div>
+                        <input
+                          inputMode="decimal"
+                          value={evidenceZ}
+                          onChange={(event) =>
+                            setEvidenceZ(event.target.value)
+                          }
+                          placeholder="0.00"
+                        />
+                        <small>m</small>
+                      </div>
+                    </label>
+
+                    <label>
+                      <span>Accuracy</span>
+                      <div>
+                        <input
+                          inputMode="decimal"
+                          value={evidenceAccuracy}
+                          onChange={(event) =>
+                            setEvidenceAccuracy(event.target.value)
+                          }
+                          placeholder="0.00"
+                        />
+                        <small>±m</small>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="fv2-evidence-datum-readout">
+                    <Crosshair size={15} />
+                    <span>Reference</span>
+                    <strong>
+                      {investigation.scene.sceneDatumLabel ||
+                        "Scene datum not set"}
+                    </strong>
+                  </div>
+                </section>
+              </div>
+
+              <details className="fv2-evidence-notes">
+                <summary>
+                  <span className="fv2-evidence-notes__icon">
+                    <ClipboardList size={17} />
+                  </span>
+
+                  <div>
+                    <strong>Evidence notes</strong>
+                    <small>
+                      {notes.trim()
+                        ? "Additional record notes entered"
+                        : "Optional"}
                     </small>
                   </div>
-                  <label className="fv2-field"><span>Provenance</span><select value={provenance} onChange={(e) => setProvenance(e.target.value as ForensicProvenance)}>{FORENSIC_PROVENANCE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-                  <label className="fv2-field"><span>Confidence</span><select value={confidence} onChange={(e) => setConfidence(e.target.value as ForensicConfidence)}>{FORENSIC_CONFIDENCE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-                  <label className="fv2-field full"><span>Notes</span><textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
-                </div>
-                <footer><button className="primary" onClick={addEvidence}>Add evidence</button></footer>
-              </section>
 
-              <section className="fv2-panel">
-                <header><span>Evidence register</span><strong>{investigation.evidence.length} item(s)</strong></header>
-                {investigation.evidence.length === 0 ? <div className="fv2-empty">No evidence registered yet.</div> : (
-                  <div className="fv2-tablewrap"><table><thead><tr><th>ID</th><th>Type</th><th>Description</th><th>Location</th><th>X / Y</th><th>Provenance</th><th>Confidence</th><th /></tr></thead><tbody>
-                    {investigation.evidence.map((record) => <tr key={record.id}>
-                      <td><b>{record.code}</b></td><td>{record.type}<small>{record.source}</small></td><td>{record.description}</td><td>{record.locationDescription}</td><td>{record.spatialPosition ? `${record.spatialPosition.xMetres.toFixed(2)}, ${record.spatialPosition.yMetres.toFixed(2)} m` : "—"}</td><td><span className={`tag ${isDerived(record.provenance) ? "derived" : ""}`}>{record.provenance}</span></td><td>{record.confidence}</td><td><button className="danger" onClick={() => setInvestigation(ForensicInvestigationService.deleteEvidence(investigation, record.id))}>Remove</button></td>
-                    </tr>)}
-                  </tbody></table></div>
+                  <ChevronDown size={18} />
+                </summary>
+
+                <div className="fv2-evidence-notes__body">
+                  <textarea
+                    rows={4}
+                    value={notes}
+                    onChange={(event) =>
+                      setNotes(event.target.value)
+                    }
+                    placeholder="Additional evidence-specific notes"
+                  />
+                </div>
+              </details>
+
+              <section className="fv2-evidence-register">
+                <header>
+                  <div>
+                    <span>Evidence register</span>
+                    <strong>Recorded physical evidence</strong>
+                  </div>
+
+                  <div className="fv2-evidence-register__count">
+                    <ClipboardCheck size={15} />
+                    <b>{investigation.evidence.length}</b>
+                    <span>items</span>
+                  </div>
+                </header>
+
+                {investigation.evidence.length === 0 ? (
+                  <div className="fv2-evidence-empty">
+                    <ScanLine size={34} />
+                    <strong>No evidence registered</strong>
+                  </div>
+                ) : (
+                  <div className="fv2-tablewrap fv2-evidence-tablewrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Type / source</th>
+                          <th>Observation</th>
+                          <th>Scene reference</th>
+                          <th>Position</th>
+                          <th>Provenance</th>
+                          <th>Confidence</th>
+                          <th aria-label="Actions" />
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {investigation.evidence.map((record) => (
+                          <tr key={record.id}>
+                            <td><b>{record.code}</b></td>
+                            <td>
+                              <strong>{record.type}</strong>
+                              <small>{record.source}</small>
+                            </td>
+                            <td>{record.description}</td>
+                            <td>{record.locationDescription}</td>
+                            <td className="fv2-evidence-position-cell">
+                              {record.spatialPosition ? (
+                                <>
+                                  <strong>
+                                    {record.spatialPosition.xMetres.toFixed(2)}
+                                    {" / "}
+                                    {record.spatialPosition.yMetres.toFixed(2)}
+                                  </strong>
+                                  <small>metres</small>
+                                </>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td>
+                              <span
+                                className={`tag ${
+                                  isDerived(record.provenance)
+                                    ? "derived"
+                                    : ""
+                                }`}
+                              >
+                                {record.provenance}
+                              </span>
+                            </td>
+                            <td>{record.confidence}</td>
+                            <td>
+                              <button
+                                type="button"
+                                className="fv2-evidence-delete"
+                                onClick={() =>
+                                  setInvestigation(
+                                    ForensicInvestigationService.deleteEvidence(
+                                      investigation,
+                                      record.id,
+                                    ),
+                                  )
+                                }
+                                title={`Remove ${record.code}`}
+                                aria-label={`Remove ${record.code}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </section>
-            </div>
+            </section>
           )}
 
           {section === "Measurements" && (
