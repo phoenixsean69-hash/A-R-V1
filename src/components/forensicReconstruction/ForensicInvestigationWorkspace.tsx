@@ -6628,20 +6628,20 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Analysis" && (
-            <div className="fv2-stack fv2-analysis-workstation">
-              <header className="fv2-batch-commandbar fv2-analysis-commandbar">
-                <div className="fv2-batch-commandbar__identity">
-                  <span className="fv2-batch-commandbar__icon">
-                    <BarChart3 size={30} />
+            <div className="fv2-stack fv2-analysis-visual">
+              <header className="fv2-analysis-visual-commandbar">
+                <div className="fv2-analysis-visual-commandbar__identity">
+                  <span className="fv2-analysis-visual-commandbar__icon">
+                    <BarChart3 size={34} />
                   </span>
 
                   <div>
                     <small>Evidence relationships</small>
-                    <strong>Analysis Control Board</strong>
+                    <strong>Forensic Analysis Workstation</strong>
                   </div>
                 </div>
 
-                <div className="fv2-batch-commandbar__status">
+                <div className="fv2-analysis-visual-commandbar__status">
                   <span>
                     <BarChart3 size={15} />
                     <b>{investigation.analysisFindings.length}</b>
@@ -6665,256 +6665,366 @@ export default function ForensicInvestigationWorkspace({
                     <b>{analysisAttentionCount}</b>
                     attention
                   </span>
+
+                  <button
+                    type="button"
+                    onClick={addAnalysisFinding}
+                    title="Register analysis finding"
+                    aria-label="Register analysis finding"
+                  >
+                    <Plus size={16} />
+                    <span>Register</span>
+                  </button>
                 </div>
               </header>
-              <section className="fv2-panel fv2-analysis-hero">
-                <header>
-                  <div>
-                    <span>Forensic analysis workstation</span>
-                    <strong>Evidence relationships before hypothesis building</strong>
-                  </div>
-                  <div className="fv2-analysis-summary fv2-analysis-summary-wide">
-                    <span>{investigation.analysisFindings.length} finding(s)</span>
-                    <span>{analysisLinkedSourceCount} linked source(s)</span>
-                    <span className="conflict">{analysisConflictCount} conflict</span>
-                    <span className="attention">{analysisAttentionCount} attention</span>
-                  </div>
-                </header>
 
-                <div className="fv2-analysis-metric-grid">
+              <section className="fv2-analysis-source-deck">
+                <div className="fv2-analysis-network-hub">
+                  <BarChart3 size={42} />
+                  <span>Current finding</span>
+                  <strong>{analysisLinkedSourceCount}</strong>
+                  <small>linked sources</small>
+                </div>
+
+                <div className="fv2-analysis-network-nodes">
                   {analysisAreaCards.map((card) => (
-                    <article key={card.area} className="fv2-analysis-metric-card">
-                      <span>{card.label}</span>
-                      <strong>{card.totalCount} record{card.totalCount === 1 ? "" : "s"}</strong>
-                      <div className="fv2-analysis-metric-meta">
-                        <small>{card.selectedCount} selected</small>
-                        <small>{card.conflictCount} conflict</small>
-                        <small>{card.attentionCount} attention</small>
+                    <article
+                      key={card.area}
+                      className={`fv2-analysis-network-node ${
+                        card.conflictCount > 0
+                          ? "is-conflict"
+                          : card.attentionCount > 0
+                            ? "is-attention"
+                            : card.selectedCount > 0
+                              ? "is-linked"
+                              : ""
+                      }`}
+                    >
+                      <CircleDot size={22} />
+
+                      <div>
+                        <span>{card.area}</span>
+                        <strong>{card.totalCount}</strong>
                       </div>
+
+                      <small>
+                        {card.selectedCount} linked
+                      </small>
                     </article>
                   ))}
                 </div>
               </section>
 
-              <div className="fv2-analysis-layout">
-                <div className="fv2-analysis-main">
-                  <div className="fv2-analysis-row fv2-analysis-row-split">
-                    <section className="fv2-panel">
-                      <header>
-                        <div>
-                          <span>Evidence relationship map</span>
-                          <strong>Current source network</strong>
-                        </div>
-                      </header>
+              <div className="fv2-analysis-visual-layout">
+                <main className="fv2-analysis-canvas">
+                  <section className="fv2-analysis-state-deck">
+                    <article>
+                      <Activity size={24} />
+                      <span>Category</span>
+                      <strong>
+                        {analysisCategory.trim() || "Not selected"}
+                      </strong>
+                    </article>
 
-                      <div className="fv2-analysis-linkmap">
-                        {analysisAreaCards.map((card) => (
-                          <article key={card.area} className={`fv2-analysis-linknode ${card.conflictCount > 0 ? "conflict" : card.attentionCount > 0 ? "attention" : "clear"}`}>
-                            <span>{card.area}</span>
-                            <strong>{card.totalCount}</strong>
-                            <small>{card.selectedCount} linked to the current finding</small>
-                          </article>
-                        ))}
-                      </div>
+                    <article>
+                      <Waypoints size={24} />
+                      <span>Method</span>
+                      <strong>
+                        {analysisMethod.trim() || "Not selected"}
+                      </strong>
+                    </article>
 
-                      <div className="fv2-analysis-flow">
-                        <div className="fv2-analysis-flow-node">Observed / measured</div>
-                        <div className="fv2-analysis-flow-arrow">→</div>
-                        <div className="fv2-analysis-flow-node active">Analysis</div>
-                        <div className="fv2-analysis-flow-arrow">→</div>
-                        <div className="fv2-analysis-flow-node">Hypothesis testing</div>
-                      </div>
-                    </section>
+                    <article>
+                      <CircleDot size={24} />
+                      <span>Status</span>
+                      <strong>{analysisStatus}</strong>
+                    </article>
 
-                    <section className="fv2-panel">
-                      <header>
-                        <div>
-                          <span>Current analytical position</span>
-                          <strong>What the next finding is being built from</strong>
-                        </div>
-                      </header>
+                    <article>
+                      <Gauge size={24} />
+                      <span>Confidence</span>
+                      <strong>{analysisConfidence}</strong>
+                    </article>
+                  </section>
 
-                      <div className="fv2-analysis-current-grid">
-                        <div className="fv2-analysis-current-card">
-                          <span>Category</span>
-                          <strong>{analysisCategory.trim() || "Not selected"}</strong>
-                        </div>
-                        <div className="fv2-analysis-current-card">
-                          <span>Method</span>
-                          <strong>{analysisMethod.trim() || "Not selected"}</strong>
-                        </div>
-                        <div className="fv2-analysis-current-card">
-                          <span>Status</span>
-                          <strong>{analysisStatus}</strong>
-                        </div>
-                        <div className="fv2-analysis-current-card">
-                          <span>Confidence</span>
-                          <strong>{analysisConfidence}</strong>
-                        </div>
-                      </div>
-
-                      <label className="fv2-field full fv2-analysis-focus-field">
-                        <span>Working analytical conclusion</span>
-                        <textarea
-                          rows={5}
-                          value={analysisFinding}
-                          onChange={(e) => setAnalysisFinding(e.target.value)}
-                          placeholder="State what the evidence currently supports, contradicts, or leaves unresolved."
-                        />
-                      </label>
-
-                      <div className="fv2-analysis-chipbox">
-                        {analysisSelectedSourceLabels.length === 0 ? (
-                          <div className="fv2-empty-select">No current source links yet.</div>
-                        ) : (
-                          analysisSelectedSourceLabels.map((label) => (
-                            <span key={label} className="tag">{label}</span>
-                          ))
-                        )}
-                      </div>
-                    </section>
-                  </div>
-
-                  <div className="fv2-analysis-row fv2-analysis-row-split">
-                    <section className="fv2-panel">
-                      <header>
-                        <div>
-                          <span>Consistency matrix</span>
-                          <strong>Availability, selection and flagged issues</strong>
-                        </div>
-                      </header>
-
-                      <div className="fv2-tablewrap">
-                        <table className="fv2-analysis-matrix">
-                          <thead>
-                            <tr>
-                              <th>Area</th>
-                              <th>Available</th>
-                              <th>Selected now</th>
-                              <th>Auto conflicts</th>
-                              <th>Auto attention</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {analysisAreaCards.map((card) => (
-                              <tr key={card.area}>
-                                <td><b>{card.area}</b><small>{card.label}</small></td>
-                                <td>{card.totalCount}</td>
-                                <td>{card.selectedCount}</td>
-                                <td>{card.conflictCount}</td>
-                                <td>{card.attentionCount}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </section>
-
-                    <section className="fv2-panel">
-                      <header>
-                        <div>
-                          <span>Event & evidence timeline</span>
-                          <strong>Chronology of recorded analytical inputs</strong>
-                        </div>
-                      </header>
-
-                      <div className="fv2-analysis-timeline">
-                        {analysisTimelineEvents.length === 0 ? (
-                          <div className="fv2-empty">No dated analytical events are available yet.</div>
-                        ) : (
-                          analysisTimelineEvents.map((event) => (
-                            <article key={event.key} className={`fv2-analysis-timeline-item ${event.type}`}>
-                              <small>{event.stamp.replace("T", " ")}</small>
-                              <strong>{event.title}</strong>
-                              <p>{event.detail}</p>
-                            </article>
-                          ))
-                        )}
-                      </div>
-                    </section>
-                  </div>
-
-                  <div className="fv2-analysis-row fv2-analysis-row-scan">
-                    <section className="fv2-panel fv2-analysis-scan-panel">
-                      <header>
-                        <div>
-                          <span>Automatic consistency scan</span>
-                          <strong>Open questions, conflicts and missing foundations</strong>
-                        </div>
-                      </header>
-
-                      <div className="fv2-analysis-signal-grid">
-                        {analysisOpenQuestions.length === 0 ? (
-                          <article className="fv2-analysis-signal clear">
-                            <span>Automated scan</span>
-                            <strong>No automatic warning is currently raised</strong>
-                            <p>The limited consistency scan has not found a conflict or missing-foundation warning at this stage.</p>
-                          </article>
-                        ) : (
-                          analysisOpenQuestions.map((signal) => (
-                            <article key={signal.id} className={`fv2-analysis-signal ${signal.level}`}>
-                              <span>{signal.area}</span>
-                              <strong>{signal.title}</strong>
-                              <p>{signal.detail}</p>
-                            </article>
-                          ))
-                        )}
-                      </div>
-                    </section>
-
-                    <section className="fv2-panel">
-                      <header>
-                        <div>
-                          <span>Analysis register</span>
-                          <strong>{investigation.analysisFindings.length} recorded finding(s)</strong>
-                        </div>
-                      </header>
-
-                      {investigation.analysisFindings.length === 0 ? (
-                        <div className="fv2-empty">No analytical findings recorded yet.</div>
-                      ) : (
-                        <div className="fv2-analysis-finding-cards">
-                          {investigation.analysisFindings.map((finding) => {
-                            const sourceCount = Number(finding.usesSceneIntake) + finding.sourceEvidenceIds.length + finding.sourceMeasurementIds.length + finding.sourceVehicleIds.length + finding.sourcePersonIds.length + finding.sourceWitnessIds.length;
-                            return (
-                              <article key={finding.id} className="fv2-analysis-finding-card">
-                                <div className="fv2-analysis-finding-head">
-                                  <div>
-                                    <span>{finding.code}</span>
-                                    <strong>{finding.category}</strong>
-                                  </div>
-                                  <span className={`tag ${finding.status === "Conflicting evidence" ? "derived" : ""}`}>{finding.status}</span>
-                                </div>
-                                <p>{finding.finding}</p>
-                                <div className="fv2-analysis-finding-meta">
-                                  <small>{finding.method}</small>
-                                  <small>{sourceCount} source{sourceCount === 1 ? "" : "s"}</small>
-                                  <small>{finding.confidence}</small>
-                                </div>
-                                <div className="fv2-analysis-finding-meta">
-                                  <small>{finding.origin}</small>
-                                  <small>{finding.followUpAction || "No follow-up recorded"}</small>
-                                </div>
-                                <button className="danger" onClick={() => setInvestigation(ForensicInvestigationService.deleteAnalysisFinding(investigation, finding.id))}>Remove</button>
-                              </article>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </section>
-                  </div>
-                </div>
-
-                <aside className="fv2-analysis-sidebar">
-                  <section className="fv2-panel fv2-analysis-composer">
+                  <section className="fv2-analysis-conclusion">
                     <header>
+                      <ClipboardList size={19} />
+
                       <div>
-                        <span>Finding composer</span>
-                        <strong>Build an evidence-based analysis record</strong>
+                        <span>Working analytical conclusion</span>
+                        <strong>
+                          Build the finding from linked evidence
+                        </strong>
+                      </div>
+
+                      <div className="fv2-analysis-conclusion__count">
+                        <b>{analysisLinkedSourceCount}</b>
+                        <span>sources</span>
                       </div>
                     </header>
 
-                    <div className="fv2-grid">
+                    <textarea
+                      rows={7}
+                      value={analysisFinding}
+                      onChange={(e) =>
+                        setAnalysisFinding(e.target.value)
+                      }
+                      placeholder="State what the evidence currently supports, contradicts, or leaves unresolved."
+                    />
+
+                    <div className="fv2-analysis-source-chips">
+                      {analysisSelectedSourceLabels.length === 0 ? (
+                        <span className="is-empty">
+                          No source links selected
+                        </span>
+                      ) : (
+                        analysisSelectedSourceLabels.map((label) => (
+                          <span key={label}>{label}</span>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  <div className="fv2-analysis-diagnostics-grid">
+                    <section className="fv2-analysis-diagnostic-module">
+                      <header>
+                        <ShieldCheck size={18} />
+                        <div>
+                          <span>Consistency matrix</span>
+                          <strong>Source availability</strong>
+                        </div>
+                      </header>
+
+                      <div className="fv2-analysis-matrix-grid">
+                        {analysisAreaCards.map((card) => (
+                          <article key={card.area}>
+                            <div>
+                              <strong>{card.area}</strong>
+                              <small>{card.label}</small>
+                            </div>
+
+                            <span>
+                              <b>{card.totalCount}</b>
+                              available
+                            </span>
+
+                            <span>
+                              <b>{card.selectedCount}</b>
+                              selected
+                            </span>
+
+                            <span
+                              className={
+                                card.conflictCount > 0
+                                  ? "is-alert"
+                                  : ""
+                              }
+                            >
+                              <b>{card.conflictCount}</b>
+                              conflict
+                            </span>
+
+                            <span
+                              className={
+                                card.attentionCount > 0
+                                  ? "is-attention"
+                                  : ""
+                              }
+                            >
+                              <b>{card.attentionCount}</b>
+                              attention
+                            </span>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="fv2-analysis-diagnostic-module">
+                      <header>
+                        <Activity size={18} />
+                        <div>
+                          <span>Event timeline</span>
+                          <strong>Recorded analytical inputs</strong>
+                        </div>
+                      </header>
+
+                      <div className="fv2-analysis-timeline-visual">
+                        {analysisTimelineEvents.length === 0 ? (
+                          <div className="fv2-analysis-timeline-empty">
+                            <Activity size={30} />
+                            <strong>No dated events</strong>
+                          </div>
+                        ) : (
+                          analysisTimelineEvents.map((event) => (
+                            <article
+                              key={event.key}
+                              className={`is-${event.type}`}
+                            >
+                              <span />
+                              <div>
+                                <small>
+                                  {event.stamp.replace("T", " ")}
+                                </small>
+                                <strong>{event.title}</strong>
+                                <p>{event.detail}</p>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="fv2-analysis-scan">
+                    <header>
+                      <ScanEye size={19} />
+
+                      <div>
+                        <span>Automatic consistency scan</span>
+                        <strong>
+                          {analysisOpenQuestions.length
+                            ? `${analysisOpenQuestions.length} issue(s)`
+                            : "No automatic warnings"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-analysis-scan-grid">
+                      {analysisOpenQuestions.length === 0 ? (
+                        <article className="is-clear">
+                          <ShieldCheck size={26} />
+                          <div>
+                            <strong>Clear</strong>
+                            <span>No automatic warning raised</span>
+                          </div>
+                        </article>
+                      ) : (
+                        analysisOpenQuestions.map((signal) => (
+                          <article
+                            key={signal.id}
+                            className={`is-${signal.level}`}
+                            title={signal.detail}
+                          >
+                            <CircleDot size={22} />
+
+                            <div>
+                              <small>{signal.area}</small>
+                              <strong>{signal.title}</strong>
+                            </div>
+                          </article>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="fv2-analysis-register">
+                    <header>
+                      <BarChart3 size={19} />
+
+                      <div>
+                        <span>Analysis register</span>
+                        <strong>
+                          {investigation.analysisFindings.length}
+                          {" "}
+                          recorded finding(s)
+                        </strong>
+                      </div>
+                    </header>
+
+                    {investigation.analysisFindings.length === 0 ? (
+                      <div className="fv2-analysis-register-empty">
+                        <BarChart3 size={38} />
+                        <strong>No analytical findings recorded</strong>
+                      </div>
+                    ) : (
+                      <div className="fv2-analysis-register-grid">
+                        {investigation.analysisFindings.map(
+                          (finding) => {
+                            const sourceCount =
+                              Number(finding.usesSceneIntake) +
+                              finding.sourceEvidenceIds.length +
+                              finding.sourceMeasurementIds.length +
+                              finding.sourceVehicleIds.length +
+                              finding.sourcePersonIds.length +
+                              finding.sourceWitnessIds.length;
+
+                            return (
+                              <article
+                                key={finding.id}
+                                className="fv2-analysis-register-card"
+                              >
+                                <header>
+                                  <div>
+                                    <span>{finding.code}</span>
+                                    <strong>
+                                      {finding.category}
+                                    </strong>
+                                  </div>
+
+                                  <span
+                                    className={`tag ${
+                                      finding.status ===
+                                      "Conflicting evidence"
+                                        ? "derived"
+                                        : ""
+                                    }`}
+                                  >
+                                    {finding.status}
+                                  </span>
+                                </header>
+
+                                <p>{finding.finding}</p>
+
+                                <div>
+                                  <span>{finding.method}</span>
+                                  <span>
+                                    {sourceCount}
+                                    {" "}
+                                    source
+                                    {sourceCount === 1 ? "" : "s"}
+                                  </span>
+                                  <span>{finding.confidence}</span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  className="fv2-analysis-delete"
+                                  onClick={() =>
+                                    setInvestigation(
+                                      ForensicInvestigationService
+                                        .deleteAnalysisFinding(
+                                          investigation,
+                                          finding.id,
+                                        ),
+                                    )
+                                  }
+                                  title={`Remove ${finding.code}`}
+                                  aria-label={`Remove ${finding.code}`}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </article>
+                            );
+                          },
+                        )}
+                      </div>
+                    )}
+                  </section>
+                </main>
+
+                <aside className="fv2-analysis-inspector">
+                  <section className="fv2-analysis-inspector-module">
+                    <header>
+                      <Activity size={18} />
+
+                      <div>
+                        <span>Finding setup</span>
+                        <strong>Analysis parameters</strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-analysis-inspector-body">
                       {analysisChoiceField(
                         "Analysis category",
                         "category",
@@ -6933,137 +7043,383 @@ export default function ForensicInvestigationWorkspace({
                         "Describe another analysis method...",
                       )}
 
-                      <label className="fv2-field">
-                        <span>Finding status</span>
-                        <select value={analysisStatus} onChange={(e) => setAnalysisStatus(e.target.value as AnalysisFindingStatus)}>
-                          {ANALYSIS_STATUS_OPTIONS.map((item) => <option key={item}>{item}</option>)}
-                        </select>
+                      <div className="fv2-analysis-inspector-pair">
+                        <label>
+                          <span>Status</span>
+                          <select
+                            value={analysisStatus}
+                            onChange={(e) =>
+                              setAnalysisStatus(
+                                e.target
+                                  .value as AnalysisFindingStatus,
+                              )
+                            }
+                          >
+                            {ANALYSIS_STATUS_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </label>
+
+                        <label>
+                          <span>Origin</span>
+                          <select
+                            value={analysisOrigin}
+                            onChange={(e) =>
+                              setAnalysisOrigin(
+                                e.target
+                                  .value as AnalysisOrigin,
+                              )
+                            }
+                          >
+                            {ANALYSIS_ORIGIN_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </label>
+                      </div>
+
+                      <label className="fv2-analysis-confidence-instrument">
+                        <Gauge size={24} />
+
+                        <div>
+                          <span>Confidence</span>
+                          <select
+                            value={analysisConfidence}
+                            onChange={(e) =>
+                              setAnalysisConfidence(
+                                e.target
+                                  .value as ForensicConfidence,
+                              )
+                            }
+                          >
+                            {FORENSIC_CONFIDENCE_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </div>
                       </label>
 
-                      <label className="fv2-field">
-                        <span>Analysis origin</span>
-                        <select value={analysisOrigin} onChange={(e) => setAnalysisOrigin(e.target.value as AnalysisOrigin)}>
-                          {ANALYSIS_ORIGIN_OPTIONS.map((item) => <option key={item}>{item}</option>)}
-                        </select>
-                      </label>
+                      <label className="fv2-analysis-scene-source">
+                        <input
+                          type="checkbox"
+                          checked={analysisUsesSceneIntake}
+                          onChange={(e) =>
+                            setAnalysisUsesSceneIntake(
+                              e.target.checked,
+                            )
+                          }
+                        />
 
-                      <label className="fv2-field">
-                        <span>Confidence</span>
-                        <select value={analysisConfidence} onChange={(e) => setAnalysisConfidence(e.target.value as ForensicConfidence)}>
-                          {FORENSIC_CONFIDENCE_OPTIONS.map((item) => <option key={item}>{item}</option>)}
-                        </select>
-                      </label>
+                        <MapPinned size={22} />
 
-                      <label className="fv2-field fv2-analysis-scene-basis">
-                        <span>Scene intake as source</span>
-                        <span className="fv2-toggle-row">
-                          <input type="checkbox" checked={analysisUsesSceneIntake} onChange={(e) => setAnalysisUsesSceneIntake(e.target.checked)} />
-                          Include recorded scene conditions / layout
-                        </span>
+                        <div>
+                          <strong>Scene intake</strong>
+                          <span>
+                            Use recorded scene conditions
+                          </span>
+                        </div>
                       </label>
+                    </div>
+                  </section>
 
-                      <div className="fv2-field full">
+                  <details
+                    className="fv2-analysis-inspector-module fv2-analysis-source-drawers"
+                    open
+                  >
+                    <summary>
+                      <FileSearch size={18} />
+
+                      <div>
                         <span>Support sets</span>
-                        <div className="fv2-analysis-source-groups">
-                          <article className="fv2-analysis-source-group">
-                            <header><strong>Physical evidence</strong><small>{analysisEvidenceIds.size}/{investigation.evidence.length}</small></header>
-                            {investigation.evidence.length === 0 ? (
-                              <div className="fv2-empty-select">No evidence records are available.</div>
-                            ) : (
-                              <div className="fv2-evidence-select">
-                                {investigation.evidence.map((record) => (
-                                  <label key={record.id}>
-                                    <input type="checkbox" checked={analysisEvidenceIds.has(record.id)} onChange={() => toggleAnalysisSource(setAnalysisEvidenceIds, record.id)} />
-                                    <span><b>{record.code}</b> {record.type} · {record.description}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-
-                          <article className="fv2-analysis-source-group">
-                            <header><strong>Measurements</strong><small>{analysisMeasurementIds.size}/{investigation.measurements.length}</small></header>
-                            {investigation.measurements.length === 0 ? (
-                              <div className="fv2-empty-select">No measurement records are available.</div>
-                            ) : (
-                              <div className="fv2-evidence-select">
-                                {investigation.measurements.map((record) => (
-                                  <label key={record.id}>
-                                    <input type="checkbox" checked={analysisMeasurementIds.has(record.id)} onChange={() => toggleAnalysisSource(setAnalysisMeasurementIds, record.id)} />
-                                    <span><b>{record.code}</b> {record.label} · {record.value} {record.unit}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-
-                          <article className="fv2-analysis-source-group">
-                            <header><strong>Vehicles</strong><small>{analysisVehicleIds.size}/{investigation.vehicles.length}</small></header>
-                            {investigation.vehicles.length === 0 ? (
-                              <div className="fv2-empty-select">No vehicle examination records are available.</div>
-                            ) : (
-                              <div className="fv2-evidence-select">
-                                {investigation.vehicles.map((record) => (
-                                  <label key={record.id}>
-                                    <input type="checkbox" checked={analysisVehicleIds.has(record.id)} onChange={() => toggleAnalysisSource(setAnalysisVehicleIds, record.id)} />
-                                    <span><b>{record.code}</b> {record.label} · {record.makeModel || record.vehicleType}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-
-                          <article className="fv2-analysis-source-group">
-                            <header><strong>Persons / drivers</strong><small>{analysisPersonIds.size}/{investigation.persons.length}</small></header>
-                            {investigation.persons.length === 0 ? (
-                              <div className="fv2-empty-select">No person records are available.</div>
-                            ) : (
-                              <div className="fv2-evidence-select">
-                                {investigation.persons.map((record) => (
-                                  <label key={record.id}>
-                                    <input type="checkbox" checked={analysisPersonIds.has(record.id)} onChange={() => toggleAnalysisSource(setAnalysisPersonIds, record.id)} />
-                                    <span><b>{record.code}</b> {record.label} · {record.involvement}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-
-                          <article className="fv2-analysis-source-group">
-                            <header><strong>Witnesses</strong><small>{analysisWitnessIds.size}/{investigation.witnesses.length}</small></header>
-                            {investigation.witnesses.length === 0 ? (
-                              <div className="fv2-empty-select">No witness statements are available.</div>
-                            ) : (
-                              <div className="fv2-evidence-select">
-                                {investigation.witnesses.map((record) => (
-                                  <label key={record.id}>
-                                    <input type="checkbox" checked={analysisWitnessIds.has(record.id)} onChange={() => toggleAnalysisSource(setAnalysisWitnessIds, record.id)} />
-                                    <span><b>{record.code}</b> {record.label} · {record.assessmentStatus}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-                        </div>
+                        <strong>
+                          {analysisLinkedSourceCount} linked
+                        </strong>
                       </div>
 
-                      <div className="fv2-field full">
-                        <span>Known limitations / uncertainty</span>
-                        <div className="fv2-check-grid fv2-analysis-limitations">
-                          {ANALYSIS_LIMITATION_OPTIONS.map((item) => (
-                            <label key={item}>
-                              <input type="checkbox" checked={analysisLimitations.has(item)} onChange={() => toggleAnalysisLimitation(item)} />
-                              <span>{item}</span>
-                            </label>
-                          ))}
-                        </div>
+                      <ChevronDown size={18} />
+                    </summary>
+
+                    <div className="fv2-analysis-source-drawer-list">
+                      <details>
+                        <summary>
+                          <span>Physical evidence</span>
+                          <b>
+                            {analysisEvidenceIds.size}/
+                            {investigation.evidence.length}
+                          </b>
+                        </summary>
+
+                        {investigation.evidence.length === 0 ? (
+                          <div className="fv2-analysis-drawer-empty">
+                            No evidence records
+                          </div>
+                        ) : (
+                          <div className="fv2-analysis-drawer-options">
+                            {investigation.evidence.map(
+                              (record) => (
+                                <label key={record.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisEvidenceIds.has(
+                                      record.id,
+                                    )}
+                                    onChange={() =>
+                                      toggleAnalysisSource(
+                                        setAnalysisEvidenceIds,
+                                        record.id,
+                                      )
+                                    }
+                                  />
+                                  <span>
+                                    <b>{record.code}</b>
+                                    {" "}
+                                    {record.type}
+                                  </span>
+                                </label>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </details>
+
+                      <details>
+                        <summary>
+                          <span>Measurements</span>
+                          <b>
+                            {analysisMeasurementIds.size}/
+                            {investigation.measurements.length}
+                          </b>
+                        </summary>
+
+                        {investigation.measurements.length === 0 ? (
+                          <div className="fv2-analysis-drawer-empty">
+                            No measurement records
+                          </div>
+                        ) : (
+                          <div className="fv2-analysis-drawer-options">
+                            {investigation.measurements.map(
+                              (record) => (
+                                <label key={record.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisMeasurementIds.has(
+                                      record.id,
+                                    )}
+                                    onChange={() =>
+                                      toggleAnalysisSource(
+                                        setAnalysisMeasurementIds,
+                                        record.id,
+                                      )
+                                    }
+                                  />
+                                  <span>
+                                    <b>{record.code}</b>
+                                    {" "}
+                                    {record.value} {record.unit}
+                                  </span>
+                                </label>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </details>
+
+                      <details>
+                        <summary>
+                          <span>Vehicles</span>
+                          <b>
+                            {analysisVehicleIds.size}/
+                            {investigation.vehicles.length}
+                          </b>
+                        </summary>
+
+                        {investigation.vehicles.length === 0 ? (
+                          <div className="fv2-analysis-drawer-empty">
+                            No vehicle records
+                          </div>
+                        ) : (
+                          <div className="fv2-analysis-drawer-options">
+                            {investigation.vehicles.map(
+                              (record) => (
+                                <label key={record.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisVehicleIds.has(
+                                      record.id,
+                                    )}
+                                    onChange={() =>
+                                      toggleAnalysisSource(
+                                        setAnalysisVehicleIds,
+                                        record.id,
+                                      )
+                                    }
+                                  />
+                                  <span>
+                                    <b>{record.code}</b>
+                                    {" "}
+                                    {record.label}
+                                  </span>
+                                </label>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </details>
+
+                      <details>
+                        <summary>
+                          <span>Persons / drivers</span>
+                          <b>
+                            {analysisPersonIds.size}/
+                            {investigation.persons.length}
+                          </b>
+                        </summary>
+
+                        {investigation.persons.length === 0 ? (
+                          <div className="fv2-analysis-drawer-empty">
+                            No person records
+                          </div>
+                        ) : (
+                          <div className="fv2-analysis-drawer-options">
+                            {investigation.persons.map(
+                              (record) => (
+                                <label key={record.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisPersonIds.has(
+                                      record.id,
+                                    )}
+                                    onChange={() =>
+                                      toggleAnalysisSource(
+                                        setAnalysisPersonIds,
+                                        record.id,
+                                      )
+                                    }
+                                  />
+                                  <span>
+                                    <b>{record.code}</b>
+                                    {" "}
+                                    {record.label}
+                                  </span>
+                                </label>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </details>
+
+                      <details>
+                        <summary>
+                          <span>Witnesses</span>
+                          <b>
+                            {analysisWitnessIds.size}/
+                            {investigation.witnesses.length}
+                          </b>
+                        </summary>
+
+                        {investigation.witnesses.length === 0 ? (
+                          <div className="fv2-analysis-drawer-empty">
+                            No witness records
+                          </div>
+                        ) : (
+                          <div className="fv2-analysis-drawer-options">
+                            {investigation.witnesses.map(
+                              (record) => (
+                                <label key={record.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisWitnessIds.has(
+                                      record.id,
+                                    )}
+                                    onChange={() =>
+                                      toggleAnalysisSource(
+                                        setAnalysisWitnessIds,
+                                        record.id,
+                                      )
+                                    }
+                                  />
+                                  <span>
+                                    <b>{record.code}</b>
+                                    {" "}
+                                    {record.label}
+                                  </span>
+                                </label>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </details>
+                    </div>
+                  </details>
+
+                  <details className="fv2-analysis-inspector-module">
+                    <summary>
+                      <CircleDot size={18} />
+
+                      <div>
+                        <span>Limitations</span>
+                        <strong>
+                          {analysisLimitations.size} selected
+                        </strong>
                       </div>
 
-                      <label className="fv2-field full">
-                        <span>Limitation / uncertainty notes</span>
-                        <textarea rows={3} value={analysisLimitationNotes} onChange={(e) => setAnalysisLimitationNotes(e.target.value)} placeholder="Explain how missing, uncertain or conflicting inputs affect this finding." />
-                      </label>
+                      <ChevronDown size={18} />
+                    </summary>
 
+                    <div className="fv2-analysis-limitations-visual">
+                      {ANALYSIS_LIMITATION_OPTIONS.map((item) => (
+                        <label
+                          key={item}
+                          className={
+                            analysisLimitations.has(item)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={analysisLimitations.has(item)}
+                            onChange={() =>
+                              toggleAnalysisLimitation(item)
+                            }
+                          />
+
+                          <CircleDot size={18} />
+                          <span>{item}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <textarea
+                      rows={3}
+                      value={analysisLimitationNotes}
+                      onChange={(e) =>
+                        setAnalysisLimitationNotes(
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Uncertainty notes"
+                    />
+                  </details>
+
+                  <section className="fv2-analysis-inspector-module">
+                    <header>
+                      <Waypoints size={18} />
+
+                      <div>
+                        <span>Follow-up</span>
+                        <strong>Next investigative action</strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-analysis-inspector-body">
                       {analysisChoiceField(
                         "Recommended follow-up",
                         "followUp",
@@ -7072,11 +7428,16 @@ export default function ForensicInvestigationWorkspace({
                         ANALYSIS_FOLLOW_UP_OPTIONS,
                         "Describe another follow-up action...",
                       )}
-                    </div>
 
-                    <footer>
-                      <button className="primary" onClick={addAnalysisFinding}>Add analysis finding</button>
-                    </footer>
+                      <button
+                        type="button"
+                        className="fv2-analysis-register-action"
+                        onClick={addAnalysisFinding}
+                      >
+                        <Plus size={16} />
+                        <span>Register finding</span>
+                      </button>
+                    </div>
                   </section>
                 </aside>
               </div>
