@@ -5882,3 +5882,765 @@
 }
 
 /* ROADSAFE_REMAINING_WORKFLOW_BATCH_END */
+
+/* ROADSAFE_PERSON_VISUAL_WORKSTATION_START */
+
+.fv2-persons-visual {
+  gap: 10px;
+}
+
+.fv2-person-visual-commandbar {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 9px;
+  border: 1px solid #414141;
+  background: linear-gradient(180deg, #303030, #292929);
+}
+
+.fv2-person-visual-commandbar__identity,
+.fv2-person-visual-commandbar__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fv2-person-visual-commandbar__icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #4b4b4b;
+  border-radius: 3px;
+  background: #222;
+  color: #d5d5d5;
+}
+
+.fv2-person-visual-commandbar__identity > div {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-person-visual-commandbar__identity small {
+  color: #757575;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.fv2-person-visual-commandbar__identity strong {
+  color: #e4e4e4;
+  font-size: 13px;
+}
+
+.fv2-person-visual-commandbar__status > span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #414141;
+  border-radius: 3px;
+  background: #252525;
+  color: #777;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.fv2-person-visual-commandbar__status > span b {
+  color: #cfcfcf;
+  font-size: 10px;
+}
+
+.fv2-person-visual-commandbar__status > button {
+  min-height: 32px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px !important;
+  border: 1px solid #505050 !important;
+  border-radius: 3px !important;
+  background: #303030 !important;
+  color: #e8872d !important;
+  font-size: 10px !important;
+}
+
+.fv2-person-workbench {
+  display: grid;
+  gap: 10px;
+}
+
+.fv2-person-topgrid,
+.fv2-person-scene-health-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+  gap: 10px;
+}
+
+.fv2-person-module {
+  min-width: 0;
+  border: 1px solid #414141;
+  background: #222;
+}
+
+.fv2-person-module > header {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-bottom: 1px solid #3d3d3d;
+  background: #2a2a2a;
+  color: #9b9b9b;
+}
+
+.fv2-person-module > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-person-module > header span {
+  color: #777;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.fv2-person-module > header strong {
+  overflow: hidden;
+  color: #d1d1d1;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-person-module-count {
+  margin-left: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px !important;
+  padding: 3px 6px;
+  border: 1px solid #454545;
+  background: #242424;
+}
+
+.fv2-person-module-count b {
+  color: #ddd;
+  font-size: 10px;
+}
+
+.fv2-person-module__body {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+/* identity becomes visual, not just fields */
+.fv2-person-identity-body {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 9px;
+  padding: 9px;
+}
+
+.fv2-person-avatar {
+  min-height: 206px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid #3f3f3f;
+  background:
+    radial-gradient(circle at center, #303030 0%, #232323 70%);
+  color: #d0d0d0;
+}
+
+.fv2-person-avatar strong {
+  max-width: 145px;
+  overflow: hidden;
+  color: #d7d7d7;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-person-avatar small {
+  color: #747474;
+  font-size: 9px;
+}
+
+.fv2-person-identity-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  align-content: start;
+}
+
+.fv2-person-identity-fields label,
+.fv2-person-compact-field {
+  display: grid;
+  gap: 4px;
+}
+
+.fv2-person-identity-fields label.wide {
+  grid-column: 1 / -1;
+}
+
+.fv2-person-identity-fields span,
+.fv2-person-compact-field > span,
+.fv2-persons-visual .fv2-field > span {
+  color: #858585;
+  font-size: 9px !important;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.fv2-person-identity-fields input,
+.fv2-person-identity-fields select,
+.fv2-person-compact-field select,
+.fv2-persons-visual .fv2-field input,
+.fv2-persons-visual .fv2-field select {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #424242;
+  border-radius: 2px;
+  background: #1d1d1d;
+  color: #d0d0d0;
+  font: inherit;
+  font-size: 11px !important;
+  box-shadow: none;
+}
+
+.fv2-person-role-module .fv2-field {
+  grid-column: auto !important;
+}
+
+.fv2-person-role-module .fv2-help,
+.fv2-persons-visual small.fv2-help {
+  display: none !important;
+}
+
+.fv2-person-role-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.fv2-person-role-metrics > div {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 1px 6px;
+  padding: 8px;
+  border: 1px solid #3f3f3f;
+  background: #252525;
+}
+
+.fv2-person-role-metrics > div > .roadsafe-material-icon {
+  grid-row: 1 / 3;
+  color: #999;
+}
+
+.fv2-person-role-metrics span {
+  color: #777;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.fv2-person-role-metrics strong {
+  overflow: hidden;
+  color: #cfcfcf;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* driver registry remains functional but is visually compressed */
+.fv2-persons-visual .fv2-driver-identification-card {
+  grid-column: auto !important;
+  border-color: #414141 !important;
+  background: #222 !important;
+  padding: 0 !important;
+}
+
+.fv2-persons-visual .fv2-driver-registry-head {
+  min-height: 43px;
+  padding: 7px 9px;
+  border-bottom: 1px solid #3d3d3d;
+  background: #2a2a2a;
+}
+
+.fv2-persons-visual .fv2-driver-registry-head small {
+  display: none !important;
+}
+
+.fv2-persons-visual .fv2-driver-identification-grid,
+.fv2-persons-visual .fv2-registry-search-actions,
+.fv2-persons-visual .fv2-driver-registry-result,
+.fv2-persons-visual .fv2-known-driver-check {
+  margin-left: 9px;
+  margin-right: 9px;
+}
+
+.fv2-persons-visual .fv2-driver-registry-result,
+.fv2-persons-visual .fv2-known-driver-check,
+.fv2-persons-visual .fv2-driver-registry-empty,
+.fv2-persons-visual .fv2-driver-candidate-warning {
+  border-color: #444 !important;
+  background: #252525 !important;
+}
+
+.fv2-persons-visual .fv2-driver-candidate-warning,
+.fv2-persons-visual .fv2-known-driver-check small {
+  display: none !important;
+}
+
+/* scene coordinate console */
+.fv2-person-coordinate-console {
+  display: grid;
+  grid-template-columns: 88px repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.fv2-person-coordinate-visual {
+  min-height: 110px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid #414141;
+  background:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+    #1e1e1e;
+  background-size: 16px 16px;
+  color: #999;
+}
+
+.fv2-person-coordinate-visual span {
+  max-width: 70px;
+  overflow: hidden;
+  color: #777;
+  font-size: 8px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-person-coordinate-console > div:not(.fv2-person-coordinate-visual) {
+  min-width: 0;
+  min-height: 110px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid #414141;
+  background: #252525;
+}
+
+.fv2-person-coordinate-console > div > span {
+  color: #777;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.fv2-person-coordinate-console > div > strong {
+  align-self: center;
+  overflow: hidden;
+  color: #dedede;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 24px;
+  text-overflow: ellipsis;
+}
+
+.fv2-person-coordinate-console > div > strong small {
+  margin-left: 3px;
+  color: #777;
+  font-size: 10px;
+}
+
+.fv2-person-coordinate-console input {
+  width: 100%;
+  min-height: 27px;
+  padding: 4px 5px;
+  border: 1px solid #3f3f3f;
+  background: #1d1d1d;
+  color: #bbb;
+  font-size: 10px;
+}
+
+/* body injury map */
+.fv2-person-injury-body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px;
+}
+
+.fv2-person-body-visual {
+  min-height: 248px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid #414141;
+  background:
+    radial-gradient(circle at center, #303030 0%, #202020 72%);
+  color: #c9c9c9;
+}
+
+.fv2-person-body-visual strong {
+  color: #d1d1d1;
+  font-size: 11px;
+}
+
+.fv2-person-body-visual small {
+  color: #707070;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.fv2-person-body-zones {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.fv2-person-body-zones > label {
+  position: relative;
+  min-width: 0;
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid #3d3d3d;
+  background: #252525;
+  cursor: pointer;
+}
+
+.fv2-person-body-zones > label.is-selected {
+  border-color: #5b5b5b;
+  background: #2e2e2e;
+}
+
+.fv2-person-body-zones input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fv2-person-body-zones .roadsafe-material-icon {
+  color: #696969;
+}
+
+.fv2-person-body-zones > label.is-selected .roadsafe-material-icon {
+  color: #e8872d;
+}
+
+.fv2-person-body-zones span {
+  color: #bcbcbc;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* evidence becomes selectable forensic records */
+.fv2-person-evidence-empty {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  color: #555;
+}
+
+.fv2-person-evidence-empty strong {
+  color: #777;
+  font-size: 10px;
+}
+
+.fv2-person-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  max-height: 205px;
+  overflow: auto;
+  padding: 7px;
+}
+
+.fv2-person-evidence-grid > label {
+  position: relative;
+  min-width: 0;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid #3d3d3d;
+  background: #252525;
+  cursor: pointer;
+}
+
+.fv2-person-evidence-grid > label.is-selected {
+  border-color: #565656;
+  background: #2d2d2d;
+}
+
+.fv2-person-evidence-grid input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fv2-person-evidence-grid > label > .roadsafe-material-icon {
+  color: #707070;
+}
+
+.fv2-person-evidence-grid > label.is-selected > .roadsafe-material-icon {
+  color: #e8872d;
+}
+
+.fv2-person-evidence-grid > label > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-person-evidence-grid strong {
+  color: #d0d0d0;
+  font-size: 10px;
+}
+
+.fv2-person-evidence-grid span,
+.fv2-person-evidence-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv2-person-evidence-grid span {
+  color: #929292;
+  font-size: 9px;
+}
+
+.fv2-person-evidence-grid small {
+  color: #666;
+  font-size: 8px;
+}
+
+/* provenance / confidence / notes */
+.fv2-person-bottomgrid {
+  display: grid;
+  grid-template-columns: 230px 230px minmax(0, 1fr);
+  gap: 7px;
+}
+
+.fv2-person-instrument {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid #414141;
+  background: #252525;
+  color: #999;
+}
+
+.fv2-person-instrument > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.fv2-person-instrument span {
+  color: #777;
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.fv2-person-instrument select {
+  width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  padding: 0 24px 0 0;
+  border: 0;
+  background: transparent;
+  color: #d0d0d0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  outline: 0;
+}
+
+.fv2-person-notes {
+  border: 1px solid #414141;
+  background: #252525;
+}
+
+.fv2-person-notes > summary {
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.fv2-person-notes > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fv2-person-notes > summary > div {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-person-notes strong {
+  color: #c8c8c8;
+  font-size: 11px;
+}
+
+.fv2-person-notes small {
+  color: #707070;
+  font-size: 9px;
+}
+
+.fv2-person-notes textarea {
+  width: calc(100% - 18px);
+  min-height: 92px;
+  margin: 0 9px 9px;
+  resize: vertical;
+  padding: 8px;
+  border: 1px solid #414141;
+  background: #1d1d1d;
+  color: #c8c8c8;
+  font: inherit;
+  font-size: 11px;
+}
+
+/* register */
+.fv2-persons-visual > .fv2-panel:last-child > header {
+  min-height: 44px;
+  background: #2a2a2a;
+}
+
+.fv2-persons-visual > .fv2-panel:last-child .fv2-empty {
+  min-height: 105px;
+  display: grid;
+  place-items: center;
+  color: #707070;
+}
+
+.fv2-persons-visual > .fv2-panel:last-child table {
+  min-width: 1180px;
+}
+
+.fv2-persons-visual .fv2-person-delete {
+  width: 29px;
+  min-width: 29px !important;
+  height: 28px;
+  min-height: 28px !important;
+  display: grid !important;
+  place-items: center;
+  padding: 0 !important;
+  border: 1px solid #513b3f !important;
+  border-radius: 2px !important;
+  background: #2d2426 !important;
+  color: #c57e89 !important;
+}
+
+/* hard-neutralize old warm person-specific styles */
+.fv2-persons-visual .fv2-person-injury-grid label.selected,
+.fv2-persons-visual .fv2-driver-registry-result.is-warning,
+.fv2-persons-visual .fv2-driver-registry-restriction {
+  border-color: #505050 !important;
+  background: #292929 !important;
+  color: #bdbdbd !important;
+}
+
+@media(max-width:1180px) {
+  .fv2-person-topgrid,
+  .fv2-person-scene-health-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-person-evidence-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media(max-width:850px) {
+  .fv2-person-visual-commandbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fv2-person-visual-commandbar__status {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .fv2-person-identity-body,
+  .fv2-person-injury-body {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-person-avatar,
+  .fv2-person-body-visual {
+    min-height: 130px;
+  }
+
+  .fv2-person-coordinate-console {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fv2-person-coordinate-visual {
+    grid-column: 1 / -1;
+    min-height: 75px;
+  }
+
+  .fv2-person-body-zones,
+  .fv2-person-evidence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fv2-person-bottomgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fv2-person-notes {
+    grid-column: 1 / -1;
+  }
+}
+
+@media(max-width:560px) {
+  .fv2-person-identity-fields,
+  .fv2-person-role-metrics,
+  .fv2-person-coordinate-console,
+  .fv2-person-body-zones,
+  .fv2-person-evidence-grid,
+  .fv2-person-bottomgrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-person-coordinate-visual,
+  .fv2-person-notes {
+    grid-column: auto;
+  }
+}
+
+/* ROADSAFE_PERSON_VISUAL_WORKSTATION_END */

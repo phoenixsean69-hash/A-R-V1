@@ -4943,11 +4943,11 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Persons" && (
-            <div className="fv2-stack fv2-persons-console">
-              <header className="fv2-batch-commandbar fv2-persons-commandbar">
-                <div className="fv2-batch-commandbar__identity">
-                  <span className="fv2-batch-commandbar__icon">
-                    <PersonStanding size={30} />
+            <div className="fv2-stack fv2-persons-console fv2-persons-visual">
+              <header className="fv2-person-visual-commandbar">
+                <div className="fv2-person-visual-commandbar__identity">
+                  <span className="fv2-person-visual-commandbar__icon">
+                    <PersonStanding size={34} />
                   </span>
 
                   <div>
@@ -4956,22 +4956,22 @@ export default function ForensicInvestigationWorkspace({
                   </div>
                 </div>
 
-                <div className="fv2-batch-commandbar__status">
+                <div className="fv2-person-visual-commandbar__status">
                   <span>
                     <PersonStanding size={15} />
                     <b>{investigation.persons.length}</b>
-                    persons
+                    records
                   </span>
 
                   <span>
-                    <CarFront size={15} />
-                    <b>{investigation.vehicles.length}</b>
-                    vehicles
+                    <CircleDot size={15} />
+                    <b>{personInjuryAreas.size}</b>
+                    injury zones
                   </span>
 
                   <span>
                     <ScanLine size={15} />
-                    <b>{investigation.evidence.length}</b>
+                    <b>{personEvidenceIds.size}</b>
                     evidence
                   </span>
 
@@ -4986,84 +4986,181 @@ export default function ForensicInvestigationWorkspace({
                   </button>
                 </div>
               </header>
-              <section className="fv2-panel">
-                <header>
-                  <div>
-                    <span>People involved in the crash</span>
-                    <strong>Record people separately from witness statements</strong>
-                  </div>
-                </header>
+              <section className="fv2-person-workbench">
+                <div className="fv2-person-topgrid">
+                  <section className="fv2-person-module fv2-person-identity-module">
+                    <header>
+                      <PersonStanding size={19} />
+                      <div>
+                        <span>Identity</span>
+                        <strong>
+                          {personLabel.trim() ||
+                            personFullName.trim() ||
+                            "Unregistered person"}
+                        </strong>
+                      </div>
+                    </header>
 
-                <div className="fv2-grid">
-                  <label className="fv2-field">
-                    <span>Person case label</span>
-                    <input
-                      value={personLabel}
-                      onChange={(e) => setPersonLabel(e.target.value)}
-                      placeholder="e.g. Driver A, Passenger B, Pedestrian A"
-                    />
-                  </label>
+                    <div className="fv2-person-identity-body">
+                      <div className="fv2-person-avatar">
+                        <PersonStanding size={92} />
+                        <strong>
+                          {personInvolvement.trim() || "Person"}
+                        </strong>
+                        <small>{personIdentityStatus}</small>
+                      </div>
 
-                  <label className="fv2-field">
-                    <span>Identity status</span>
-                    <select
-                      value={personIdentityStatus}
-                      onChange={(e) =>
-                        setPersonIdentityStatus(
-                          e.target.value as PersonIdentityStatus,
-                        )
-                      }
-                    >
-                      {PERSON_IDENTITY_STATUS_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
+                      <div className="fv2-person-identity-fields">
+                        <label>
+                          <span>Case label</span>
+                          <input
+                            value={personLabel}
+                            onChange={(e) =>
+                              setPersonLabel(e.target.value)
+                            }
+                            placeholder="Driver A"
+                          />
+                        </label>
 
-                  <label className="fv2-field">
-                    <span>Name (if known)</span>
-                    <input
-                      value={personFullName}
-                      onChange={(e) => {
-                        setPersonFullName(e.target.value);
-                        clearPersonIdentityLead();
-                      }}
-                      placeholder="Full name"
-                    />
-                  </label>
+                        <label>
+                          <span>Name</span>
+                          <input
+                            value={personFullName}
+                            onChange={(e) => {
+                              setPersonFullName(e.target.value);
+                              clearPersonIdentityLead();
+                            }}
+                            placeholder="Full name"
+                          />
+                        </label>
 
-                  <label className="fv2-field">
-                    <span>National ID / passport (if recorded)</span>
-                    <input
-                      value={personIdentityNumber}
-                      onChange={(e) => {
-                        setPersonIdentityNumber(e.target.value);
-                        clearPersonIdentityLead();
-                      }}
-                      placeholder="Optional"
-                    />
-                  </label>
+                        <label>
+                          <span>Identity status</span>
+                          <select
+                            value={personIdentityStatus}
+                            onChange={(e) =>
+                              setPersonIdentityStatus(
+                                e.target.value as PersonIdentityStatus,
+                              )
+                            }
+                          >
+                            {PERSON_IDENTITY_STATUS_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </label>
 
-                  <label className="fv2-field full">
-                    <span>Driver licence / permit number (if applicable)</span>
-                    <input
-                      value={personLicenceNumber}
-                      onChange={(e) => {
-                        setPersonLicenceNumber(e.target.value);
-                        clearPersonIdentityLead();
-                      }}
-                      placeholder="Leave blank when not applicable"
-                    />
-                  </label>
+                        <label>
+                          <span>National ID / passport</span>
+                          <input
+                            value={personIdentityNumber}
+                            onChange={(e) => {
+                              setPersonIdentityNumber(e.target.value);
+                              clearPersonIdentityLead();
+                            }}
+                            placeholder="Optional"
+                          />
+                        </label>
 
-                  {personChoiceField(
-                    "How this person was involved",
-                    "involvement",
-                    personInvolvement,
-                    setPersonInvolvement,
-                    PERSON_INVOLVEMENT_OPTIONS,
-                    "Describe another involvement...",
-                  )}
+                        <label className="wide">
+                          <span>Driver licence / permit</span>
+                          <input
+                            value={personLicenceNumber}
+                            onChange={(e) => {
+                              setPersonLicenceNumber(e.target.value);
+                              clearPersonIdentityLead();
+                            }}
+                            placeholder="When applicable"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-person-module fv2-person-role-module">
+                    <header>
+                      <CarFront size={19} />
+                      <div>
+                        <span>Crash role</span>
+                        <strong>
+                          {personInvolvement.trim() ||
+                            "Role not assigned"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-person-module__body">
+                      {personChoiceField(
+                        "How this person was involved",
+                        "involvement",
+                        personInvolvement,
+                        setPersonInvolvement,
+                        PERSON_INVOLVEMENT_OPTIONS,
+                        "Describe another involvement...",
+                      )}
+
+                      {personInvolvement
+                        .trim()
+                        .toLowerCase() !== "driver" && (
+                        <label className="fv2-person-compact-field">
+                          <span>Linked vehicle</span>
+                          <select
+                            value={personLinkedVehicleId}
+                            onChange={(e) =>
+                              setPersonLinkedVehicleId(
+                                e.target.value,
+                              )
+                            }
+                          >
+                            <option value="">
+                              No linked vehicle
+                            </option>
+
+                            {investigation.vehicles.map(
+                              (vehicle) => (
+                                <option
+                                  key={vehicle.id}
+                                  value={vehicle.id}
+                                >
+                                  {vehicle.code} · {vehicle.label}
+                                  {vehicle.registration
+                                    ? ` · ${vehicle.registration}`
+                                    : ""}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        </label>
+                      )}
+
+                      <div className="fv2-person-role-metrics">
+                        <div>
+                          <PersonStanding size={23} />
+                          <span>Role</span>
+                          <strong>
+                            {personInvolvement.trim() || "—"}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <CarFront size={23} />
+                          <span>Vehicle</span>
+                          <strong>
+                            {personLinkedVehicleId
+                              ? investigation.vehicles.find(
+                                  (vehicle) =>
+                                    vehicle.id ===
+                                    personLinkedVehicleId,
+                                )?.code ?? "Linked"
+                              : "—"}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
 
                   {personInvolvement.trim().toLowerCase() === "driver" && (
                     <section className="fv2-driver-identification-card full">
@@ -5321,214 +5418,339 @@ export default function ForensicInvestigationWorkspace({
                     </section>
                   )}
 
-                  {personInvolvement.trim().toLowerCase() !== "driver" && (
-                    <label className="fv2-field full">
-                      <span>Linked vehicle</span>
-                      <select
-                        value={personLinkedVehicleId}
-                        onChange={(e) => setPersonLinkedVehicleId(e.target.value)}
-                      >
-                        <option value="">No vehicle linked / not applicable</option>
-                        {investigation.vehicles.map((vehicle) => (
-                          <option key={vehicle.id} value={vehicle.id}>
-                            {vehicle.code} · {vehicle.label}
-                            {vehicle.registration ? ` · ${vehicle.registration}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <small className="fv2-help">
-                        Link occupants to an examined vehicle. Pedestrians and others can remain unlinked.
-                      </small>
-                    </label>
-                  )}
+                <div className="fv2-person-scene-health-grid">
+                  <section className="fv2-person-module">
+                    <header>
+                      <MapPinned size={19} />
+                      <div>
+                        <span>Scene position</span>
+                        <strong>Recorded location</strong>
+                      </div>
+                    </header>
 
-                  {personChoiceField(
-                    "Where the person was found after the crash",
-                    "foundLocation",
-                    personFoundLocation,
-                    setPersonFoundLocation,
-                    PERSON_FOUND_LOCATION_OPTIONS,
-                    "Describe where the person was found...",
-                  )}
+                    <div className="fv2-person-module__body">
+                      {personChoiceField(
+                        "Where found",
+                        "foundLocation",
+                        personFoundLocation,
+                        setPersonFoundLocation,
+                        PERSON_FOUND_LOCATION_OPTIONS,
+                        "Describe where the person was found...",
+                      )}
 
-                  {personChoiceField(
-                    "Body position when recorded",
-                    "bodyPosition",
-                    personBodyPosition,
-                    setPersonBodyPosition,
-                    PERSON_BODY_POSITION_OPTIONS,
-                    "Describe another recorded position...",
-                  )}
+                      {personChoiceField(
+                        "Body position",
+                        "bodyPosition",
+                        personBodyPosition,
+                        setPersonBodyPosition,
+                        PERSON_BODY_POSITION_OPTIONS,
+                        "Describe another recorded position...",
+                      )}
 
-                  <div className="fv2-field full">
-                    <span>Final / recorded position from fixed reference (optional)</span>
-                    <div className="fv2-coordinates">
-                      <label>
-                        <span>Along road (m)</span>
-                        <input
-                          inputMode="decimal"
-                          value={personAlongRoad}
-                          onChange={(e) => setPersonAlongRoad(e.target.value)}
-                        />
+                      <div className="fv2-person-coordinate-console">
+                        <div className="fv2-person-coordinate-visual">
+                          <Crosshair size={50} />
+                          <span>
+                            {investigation.scene
+                              .sceneDatumLabel ||
+                              "Scene datum"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span>Along road</span>
+                          <strong>
+                            {personAlongRoad.trim() || "—"}
+                            <small>m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={personAlongRoad}
+                            onChange={(e) =>
+                              setPersonAlongRoad(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Along road metres"
+                          />
+                        </div>
+
+                        <div>
+                          <span>Across road</span>
+                          <strong>
+                            {personAcrossRoad.trim() || "—"}
+                            <small>m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={personAcrossRoad}
+                            onChange={(e) =>
+                              setPersonAcrossRoad(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Across road metres"
+                          />
+                        </div>
+
+                        <div>
+                          <span>Accuracy</span>
+                          <strong>
+                            {personPositionAccuracy.trim() || "—"}
+                            <small>±m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={personPositionAccuracy}
+                            onChange={(e) =>
+                              setPersonPositionAccuracy(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Position accuracy metres"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-person-module">
+                    <header>
+                      <Gauge size={19} />
+                      <div>
+                        <span>Condition</span>
+                        <strong>
+                          {personInjurySeriousness ||
+                            "Not assessed"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-person-module__body">
+                      {personChoiceField(
+                        "First recorded condition",
+                        "condition",
+                        personObservedCondition,
+                        setPersonObservedCondition,
+                        PERSON_OBSERVED_CONDITION_OPTIONS,
+                        "Describe another observed condition...",
+                      )}
+
+                      <label className="fv2-person-compact-field">
+                        <span>Injury seriousness</span>
+                        <select
+                          value={personInjurySeriousness}
+                          onChange={(e) =>
+                            setPersonInjurySeriousness(
+                              e.target.value,
+                            )
+                          }
+                        >
+                          {PERSON_INJURY_SERIOUSNESS_OPTIONS.map(
+                            (item) => (
+                              <option key={item}>{item}</option>
+                            ),
+                          )}
+                        </select>
                       </label>
 
-                      <label>
-                        <span>Across road (m)</span>
-                        <input
-                          inputMode="decimal"
-                          value={personAcrossRoad}
-                          onChange={(e) => setPersonAcrossRoad(e.target.value)}
-                        />
-                      </label>
+                      {personChoiceField(
+                        "Protection / restraint",
+                        "protection",
+                        personProtectionObserved,
+                        setPersonProtectionObserved,
+                        PERSON_PROTECTION_OPTIONS,
+                        "Describe another restraint or protection finding...",
+                      )}
 
-                      <label>
-                        <span>Accuracy ± m</span>
-                        <input
-                          inputMode="decimal"
-                          value={personPositionAccuracy}
-                          onChange={(e) => setPersonPositionAccuracy(e.target.value)}
-                        />
-                      </label>
+                      {personChoiceField(
+                        "Disposition",
+                        "nextAction",
+                        personNextAction,
+                        setPersonNextAction,
+                        PERSON_NEXT_ACTION_OPTIONS,
+                        "Describe another next action / disposition...",
+                      )}
+                    </div>
+                  </section>
+                </div>
+
+                <section className="fv2-person-module fv2-person-injury-module">
+                  <header>
+                    <PersonStanding size={19} />
+                    <div>
+                      <span>Body examination</span>
+                      <strong>Visible / reported injury map</strong>
                     </div>
 
-                    <small className="fv2-help">
-                      Measured from: {investigation.scene.sceneDatumLabel || "reference point not set yet"}
-                    </small>
-                  </div>
+                    <div className="fv2-person-module-count">
+                      <b>{personInjuryAreas.size}</b>
+                      <span>zones</span>
+                    </div>
+                  </header>
 
-                  {personChoiceField(
-                    "Condition when first recorded",
-                    "condition",
-                    personObservedCondition,
-                    setPersonObservedCondition,
-                    PERSON_OBSERVED_CONDITION_OPTIONS,
-                    "Describe another observed condition...",
-                  )}
+                  <div className="fv2-person-injury-body">
+                    <div className="fv2-person-body-visual">
+                      <PersonStanding size={132} />
 
-                  <label className="fv2-field full">
-                    <span>Observed injury seriousness</span>
-                    <select
-                      value={personInjurySeriousness}
-                      onChange={(e) => setPersonInjurySeriousness(e.target.value)}
-                    >
-                      {PERSON_INJURY_SERIOUSNESS_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                    <small className="fv2-help">
-                      This records the investigation status; it is not a medical diagnosis. Use authorised medical information when available.
-                    </small>
-                  </label>
+                      <strong>
+                        {personInjuryAreas.size
+                          ? `${personInjuryAreas.size} selected`
+                          : "No zones selected"}
+                      </strong>
 
-                  <div className="fv2-field full">
-                    <span>Visible / reported injury areas</span>
-                    <div className="fv2-check-grid fv2-person-injury-grid">
+                      <small>Forensic observation map</small>
+                    </div>
+
+                    <div className="fv2-person-body-zones">
                       {PERSON_INJURY_AREA_OPTIONS.map((area) => (
                         <label
                           key={area}
-                          className={personInjuryAreas.has(area) ? "selected" : ""}
+                          className={
+                            personInjuryAreas.has(area)
+                              ? "is-selected"
+                              : ""
+                          }
                         >
                           <input
                             type="checkbox"
                             checked={personInjuryAreas.has(area)}
-                            onChange={() => togglePersonInjuryArea(area)}
+                            onChange={() =>
+                              togglePersonInjuryArea(area)
+                            }
                           />
+
+                          <CircleDot size={17} />
                           <span>{area}</span>
                         </label>
                       ))}
                     </div>
                   </div>
+                </section>
 
-                  {personChoiceField(
-                    "Protection / restraint observed",
-                    "protection",
-                    personProtectionObserved,
-                    setPersonProtectionObserved,
-                    PERSON_PROTECTION_OPTIONS,
-                    "Describe another restraint or protection finding...",
-                  )}
+                <section className="fv2-person-module fv2-person-evidence-module">
+                  <header>
+                    <ScanLine size={19} />
+                    <div>
+                      <span>Evidence linkage</span>
+                      <strong>
+                        {personEvidenceIds.size} linked record(s)
+                      </strong>
+                    </div>
+                  </header>
 
-                  {personChoiceField(
-                    "What happened next",
-                    "nextAction",
-                    personNextAction,
-                    setPersonNextAction,
-                    PERSON_NEXT_ACTION_OPTIONS,
-                    "Describe another next action / disposition...",
-                  )}
+                  {investigation.evidence.length === 0 ? (
+                    <div className="fv2-person-evidence-empty">
+                      <ScanLine size={34} />
+                      <strong>No evidence available</strong>
+                    </div>
+                  ) : (
+                    <div className="fv2-person-evidence-grid">
+                      {investigation.evidence.map((record) => (
+                        <label
+                          key={record.id}
+                          className={
+                            personEvidenceIds.has(record.id)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={personEvidenceIds.has(
+                              record.id,
+                            )}
+                            onChange={() =>
+                              togglePersonEvidence(record.id)
+                            }
+                          />
 
-                  <div className="fv2-field full">
-                    <span>Link supporting evidence</span>
-                    {investigation.evidence.length === 0 ? (
-                      <div className="fv2-empty-select">
-                        Add evidence first if physical or documentary evidence supports this person record.
-                      </div>
-                    ) : (
-                      <div className="fv2-evidence-select">
-                        {investigation.evidence.map((record) => (
-                          <label key={record.id}>
-                            <input
-                              type="checkbox"
-                              checked={personEvidenceIds.has(record.id)}
-                              onChange={() => togglePersonEvidence(record.id)}
-                            />
-                            <span>
-                              <b>{record.code}</b> {record.type} · {record.description}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          <ScanLine size={20} />
 
-                  <label className="fv2-field">
-                    <span>Provenance</span>
-                    <select
-                      value={personProvenance}
-                      onChange={(e) =>
-                        setPersonProvenance(
-                          e.target.value as ForensicProvenance,
-                        )
-                      }
-                    >
-                      {FORENSIC_PROVENANCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
+                          <div>
+                            <strong>{record.code}</strong>
+                            <span>{record.type}</span>
+                            <small>
+                              {record.description}
+                            </small>
+                          </div>
+                        </label>
                       ))}
-                    </select>
+                    </div>
+                  )}
+                </section>
+
+                <div className="fv2-person-bottomgrid">
+                  <label className="fv2-person-instrument">
+                    <ShieldCheck size={24} />
+
+                    <div>
+                      <span>Provenance</span>
+                      <select
+                        value={personProvenance}
+                        onChange={(e) =>
+                          setPersonProvenance(
+                            e.target
+                              .value as ForensicProvenance,
+                          )
+                        }
+                      >
+                        {FORENSIC_PROVENANCE_OPTIONS.map(
+                          (item) => (
+                            <option key={item}>{item}</option>
+                          ),
+                        )}
+                      </select>
+                    </div>
                   </label>
 
-                  <label className="fv2-field">
-                    <span>Confidence</span>
-                    <select
-                      value={personConfidence}
-                      onChange={(e) =>
-                        setPersonConfidence(
-                          e.target.value as ForensicConfidence,
-                        )
-                      }
-                    >
-                      {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
+                  <label className="fv2-person-instrument">
+                    <Gauge size={24} />
+
+                    <div>
+                      <span>Confidence</span>
+                      <select
+                        value={personConfidence}
+                        onChange={(e) =>
+                          setPersonConfidence(
+                            e.target
+                              .value as ForensicConfidence,
+                          )
+                        }
+                      >
+                        {FORENSIC_CONFIDENCE_OPTIONS.map(
+                          (item) => (
+                            <option key={item}>{item}</option>
+                          ),
+                        )}
+                      </select>
+                    </div>
                   </label>
 
-                  <label className="fv2-field full">
-                    <span>Officer notes</span>
+                  <details className="fv2-person-notes">
+                    <summary>
+                      <ClipboardList size={19} />
+                      <div>
+                        <strong>Officer notes</strong>
+                        <small>
+                          {personNotes.trim()
+                            ? "Notes recorded"
+                            : "Optional"}
+                        </small>
+                      </div>
+                      <ChevronDown size={18} />
+                    </summary>
+
                     <textarea
                       rows={4}
                       value={personNotes}
-                      onChange={(e) => setPersonNotes(e.target.value)}
-                      placeholder="Record only details that are not captured by the structured fields above."
+                      onChange={(e) =>
+                        setPersonNotes(e.target.value)
+                      }
+                      placeholder="Additional person-specific notes"
                     />
-                  </label>
+                  </details>
                 </div>
-
-                <footer>
-                  <button className="primary" onClick={addPerson}>
-                    Add person
-                  </button>
-                </footer>
               </section>
 
               <section className="fv2-panel">
