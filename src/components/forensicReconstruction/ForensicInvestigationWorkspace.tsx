@@ -5906,35 +5906,35 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Witnesses" && (
-            <div className="fv2-stack fv2-witnesses-console">
-              <header className="fv2-batch-commandbar fv2-witnesses-commandbar">
-                <div className="fv2-batch-commandbar__identity">
-                  <span className="fv2-batch-commandbar__icon">
-                    <Users size={30} />
+            <div className="fv2-stack fv2-witnesses-console fv2-witnesses-visual">
+              <header className="fv2-witness-visual-commandbar">
+                <div className="fv2-witness-visual-commandbar__identity">
+                  <span className="fv2-witness-visual-commandbar__icon">
+                    <Users size={34} />
                   </span>
 
                   <div>
                     <small>Witness evidence</small>
-                    <strong>Witness Statement Console</strong>
+                    <strong>Witness Evidence Workstation</strong>
                   </div>
                 </div>
 
-                <div className="fv2-batch-commandbar__status">
+                <div className="fv2-witness-visual-commandbar__status">
                   <span>
                     <Users size={15} />
                     <b>{investigation.witnesses.length}</b>
-                    witnesses
+                    records
                   </span>
 
                   <span>
-                    <PersonStanding size={15} />
-                    <b>{investigation.persons.length}</b>
-                    persons
+                    <CircleDot size={15} />
+                    <b>{witnessObservationTopics.size}</b>
+                    observations
                   </span>
 
                   <span>
                     <ScanLine size={15} />
-                    <b>{investigation.evidence.length}</b>
+                    <b>{witnessEvidenceIds.size}</b>
                     evidence
                   </span>
 
@@ -5949,278 +5949,579 @@ export default function ForensicInvestigationWorkspace({
                   </button>
                 </div>
               </header>
-              <section className="fv2-panel">
-                <header>
-                  <div>
-                    <span>Witness statements</span>
-                    <strong>Record what was reported, then test it against evidence</strong>
-                  </div>
-                </header>
+              <section className="fv2-witness-workbench">
+                <div className="fv2-witness-topgrid">
+                  <section className="fv2-witness-module fv2-witness-identity-module">
+                    <header>
+                      <Users size={19} />
+                      <div>
+                        <span>Witness identity</span>
+                        <strong>
+                          {witnessLabel.trim() ||
+                            witnessFullName.trim() ||
+                            "Unregistered witness"}
+                        </strong>
+                      </div>
+                    </header>
 
-                <div className="fv2-grid">
-                  <label className="fv2-field">
-                    <span>Witness case label</span>
-                    <input
-                      value={witnessLabel}
-                      onChange={(e) => setWitnessLabel(e.target.value)}
-                      placeholder="e.g. Witness A"
-                    />
-                  </label>
+                    <div className="fv2-witness-identity-body">
+                      <div className="fv2-witness-avatar">
+                        <Users size={92} />
 
-                  <label className="fv2-field">
-                    <span>Identity status</span>
-                    <select
-                      value={witnessIdentityStatus}
-                      onChange={(e) =>
-                        setWitnessIdentityStatus(
-                          e.target.value as WitnessIdentityStatus,
-                        )
-                      }
-                    >
-                      {WITNESS_IDENTITY_STATUS_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
+                        <strong>
+                          {witnessRelationship.trim() ||
+                            "Witness"}
+                        </strong>
 
-                  <label className="fv2-field">
-                    <span>Full name</span>
-                    <input
-                      value={witnessFullName}
-                      onChange={(e) => setWitnessFullName(e.target.value)}
-                      placeholder="Leave blank if not yet identified"
-                    />
-                  </label>
+                        <small>{witnessIdentityStatus}</small>
+                      </div>
 
-                  <label className="fv2-field">
-                    <span>Contact details</span>
-                    <input
-                      value={witnessContactDetails}
-                      onChange={(e) => setWitnessContactDetails(e.target.value)}
-                      placeholder="Phone / address / other contact reference"
-                    />
-                  </label>
-
-                  <label className="fv2-field full">
-                    <span>Link to involved person (optional)</span>
-                    <select
-                      value={witnessLinkedPersonId}
-                      onChange={(e) => setWitnessLinkedPersonId(e.target.value)}
-                    >
-                      <option value="">Independent witness / no person link</option>
-                      {investigation.persons.map((person) => (
-                        <option key={person.id} value={person.id}>
-                          {person.code} · {person.label}
-                          {person.fullName ? ` · ${person.fullName}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                    <small className="fv2-help">
-                      Use this when a driver, passenger, pedestrian or other involved person also provides a witness statement.
-                    </small>
-                  </label>
-
-                  {witnessChoiceField(
-                    "Relationship to the crash",
-                    "relationship",
-                    witnessRelationship,
-                    setWitnessRelationship,
-                    WITNESS_RELATIONSHIP_OPTIONS,
-                    "Describe another witness relationship...",
-                  )}
-
-                  <label className="fv2-field">
-                    <span>Statement date</span>
-                    <input
-                      type="date"
-                      value={witnessStatementDate}
-                      onChange={(e) => setWitnessStatementDate(e.target.value)}
-                    />
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Statement time</span>
-                    <input
-                      type="time"
-                      value={witnessStatementTime}
-                      onChange={(e) => setWitnessStatementTime(e.target.value)}
-                    />
-                  </label>
-
-                  {witnessChoiceField(
-                    "How the statement was captured",
-                    "statementMethod",
-                    witnessStatementMethod,
-                    setWitnessStatementMethod,
-                    WITNESS_STATEMENT_METHOD_OPTIONS,
-                    "Describe another statement method...",
-                  )}
-
-                  {witnessChoiceField(
-                    "What part of the event did the witness observe?",
-                    "coverage",
-                    witnessObservationCoverage,
-                    setWitnessObservationCoverage,
-                    WITNESS_OBSERVATION_COVERAGE_OPTIONS,
-                    "Describe the part of the sequence the witness says they observed...",
-                  )}
-
-                  <label className="fv2-field full">
-                    <span>Where was the witness when observing the event?</span>
-                    <input
-                      value={witnessObservationLocation}
-                      onChange={(e) => setWitnessObservationLocation(e.target.value)}
-                      placeholder="e.g. Outside shop on north-east corner facing the junction"
-                    />
-                  </label>
-
-                  <div className="fv2-field full">
-                    <span>Witness position from fixed reference (optional)</span>
-                    <div className="fv2-coordinates">
-                      <label>
-                        <span>Along road (m)</span>
-                        <input
-                          inputMode="decimal"
-                          value={witnessAlongRoad}
-                          onChange={(e) => setWitnessAlongRoad(e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        <span>Across road (m)</span>
-                        <input
-                          inputMode="decimal"
-                          value={witnessAcrossRoad}
-                          onChange={(e) => setWitnessAcrossRoad(e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        <span>Accuracy ± m</span>
-                        <input
-                          inputMode="decimal"
-                          value={witnessPositionAccuracy}
-                          onChange={(e) => setWitnessPositionAccuracy(e.target.value)}
-                        />
-                      </label>
-                    </div>
-                    <small className="fv2-help">
-                      Measured from: {investigation.scene.sceneDatumLabel || "reference point not set yet"}
-                    </small>
-                  </div>
-
-                  {witnessChoiceField(
-                    "Viewing conditions",
-                    "viewCondition",
-                    witnessViewCondition,
-                    setWitnessViewCondition,
-                    WITNESS_VIEW_CONDITION_OPTIONS,
-                    "Describe another viewing condition...",
-                  )}
-
-                  <label className="fv2-field full">
-                    <span>Approximate viewing distance (m, optional)</span>
-                    <input
-                      inputMode="decimal"
-                      value={witnessApproxDistance}
-                      onChange={(e) => setWitnessApproxDistance(e.target.value)}
-                      placeholder="e.g. 25"
-                    />
-                  </label>
-
-                  <div className="fv2-field full">
-                    <span>What did the witness report observing?</span>
-                    <div className="fv2-check-grid fv2-witness-topic-grid">
-                      {WITNESS_OBSERVATION_TOPIC_OPTIONS.map((topic) => (
-                        <label
-                          key={topic}
-                          className={witnessObservationTopics.has(topic) ? "selected" : ""}
-                        >
+                      <div className="fv2-witness-identity-fields">
+                        <label>
+                          <span>Case label</span>
                           <input
-                            type="checkbox"
-                            checked={witnessObservationTopics.has(topic)}
-                            onChange={() => toggleWitnessObservationTopic(topic)}
+                            value={witnessLabel}
+                            onChange={(e) =>
+                              setWitnessLabel(e.target.value)
+                            }
+                            placeholder="Witness A"
                           />
-                          <span>{topic}</span>
                         </label>
-                      ))}
-                    </div>
-                  </div>
 
-                  <label className="fv2-field full">
-                    <span>Witness statement summary</span>
-                    <textarea
-                      rows={7}
-                      value={witnessStatementSummary}
-                      onChange={(e) => setWitnessStatementSummary(e.target.value)}
-                      placeholder="Summarise the witness's own account without converting it into an investigator conclusion."
-                    />
+                        <label>
+                          <span>Identity status</span>
+                          <select
+                            value={witnessIdentityStatus}
+                            onChange={(e) =>
+                              setWitnessIdentityStatus(
+                                e.target
+                                  .value as WitnessIdentityStatus,
+                              )
+                            }
+                          >
+                            {WITNESS_IDENTITY_STATUS_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </label>
+
+                        <label>
+                          <span>Full name</span>
+                          <input
+                            value={witnessFullName}
+                            onChange={(e) =>
+                              setWitnessFullName(e.target.value)
+                            }
+                            placeholder="When identified"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Contact</span>
+                          <input
+                            value={witnessContactDetails}
+                            onChange={(e) =>
+                              setWitnessContactDetails(
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Phone / address / reference"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-witness-module fv2-witness-relationship-module">
+                    <header>
+                      <PersonStanding size={19} />
+                      <div>
+                        <span>Crash relationship</span>
+                        <strong>
+                          {witnessRelationship.trim() ||
+                            "Independent / unclassified"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-witness-module__body">
+                      {witnessChoiceField(
+                        "Relationship to crash",
+                        "relationship",
+                        witnessRelationship,
+                        setWitnessRelationship,
+                        WITNESS_RELATIONSHIP_OPTIONS,
+                        "Describe another witness relationship...",
+                      )}
+
+                      <label className="fv2-witness-compact-field">
+                        <span>Linked involved person</span>
+                        <select
+                          value={witnessLinkedPersonId}
+                          onChange={(e) =>
+                            setWitnessLinkedPersonId(
+                              e.target.value,
+                            )
+                          }
+                        >
+                          <option value="">
+                            Independent witness
+                          </option>
+
+                          {investigation.persons.map(
+                            (person) => (
+                              <option
+                                key={person.id}
+                                value={person.id}
+                              >
+                                {person.code} · {person.label}
+                                {person.fullName
+                                  ? ` · ${person.fullName}`
+                                  : ""}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+
+                      <div className="fv2-witness-relation-metrics">
+                        <div>
+                          <Users size={24} />
+                          <span>Role</span>
+                          <strong>
+                            {witnessRelationship.trim() || "—"}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <PersonStanding size={24} />
+                          <span>Person link</span>
+                          <strong>
+                            {witnessLinkedPersonId
+                              ? investigation.persons.find(
+                                  (person) =>
+                                    person.id ===
+                                    witnessLinkedPersonId,
+                                )?.code ?? "Linked"
+                              : "Independent"}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <section className="fv2-witness-capture-strip">
+                  <label>
+                    <CalendarClock size={23} />
+
+                    <div>
+                      <span>Date</span>
+                      <input
+                        type="date"
+                        value={witnessStatementDate}
+                        onChange={(e) =>
+                          setWitnessStatementDate(e.target.value)
+                        }
+                      />
+                    </div>
                   </label>
 
-                  <div className="fv2-field full">
-                    <span>Link supporting / conflicting physical evidence</span>
-                    {investigation.evidence.length === 0 ? (
-                      <div className="fv2-empty-select">
-                        No physical evidence records are available to link yet.
-                      </div>
-                    ) : (
-                      <div className="fv2-evidence-select">
-                        {investigation.evidence.map((record) => (
-                          <label key={record.id}>
-                            <input
-                              type="checkbox"
-                              checked={witnessEvidenceIds.has(record.id)}
-                              onChange={() => toggleWitnessEvidence(record.id)}
-                            />
-                            <span><b>{record.code}</b> {record.type} · {record.description}</span>
-                          </label>
-                        ))}
-                      </div>
+                  <label>
+                    <CalendarClock size={23} />
+
+                    <div>
+                      <span>Time</span>
+                      <input
+                        type="time"
+                        value={witnessStatementTime}
+                        onChange={(e) =>
+                          setWitnessStatementTime(e.target.value)
+                        }
+                      />
+                    </div>
+                  </label>
+
+                  <div>
+                    <ScanEye size={23} />
+                    {witnessChoiceField(
+                      "Capture method",
+                      "statementMethod",
+                      witnessStatementMethod,
+                      setWitnessStatementMethod,
+                      WITNESS_STATEMENT_METHOD_OPTIONS,
+                      "Describe another statement method...",
                     )}
                   </div>
 
-                  {witnessChoiceField(
-                    "Initial evidence-consistency assessment",
-                    "assessment",
-                    witnessAssessmentStatus,
-                    setWitnessAssessmentStatus,
-                    WITNESS_ASSESSMENT_STATUS_OPTIONS,
-                    "Describe another assessment status...",
-                  )}
+                  <div>
+                    <Gauge size={23} />
+                    {witnessChoiceField(
+                      "Event coverage",
+                      "coverage",
+                      witnessObservationCoverage,
+                      setWitnessObservationCoverage,
+                      WITNESS_OBSERVATION_COVERAGE_OPTIONS,
+                      "Describe the part of the sequence observed...",
+                    )}
+                  </div>
+                </section>
 
-                  <label className="fv2-field full">
-                    <span>Assessment / follow-up notes</span>
-                    <textarea
-                      rows={4}
-                      value={witnessAssessmentNotes}
-                      onChange={(e) => setWitnessAssessmentNotes(e.target.value)}
-                      placeholder="Record contradictions, missing details or follow-up questions. Do not label the witness truthful or untruthful here."
-                    />
-                  </label>
+                <div className="fv2-witness-scene-grid">
+                  <section className="fv2-witness-module">
+                    <header>
+                      <MapPinned size={19} />
+                      <div>
+                        <span>Observation position</span>
+                        <strong>
+                          {witnessObservationLocation.trim() ||
+                            "Location not recorded"}
+                        </strong>
+                      </div>
+                    </header>
 
-                  <label className="fv2-field full">
-                    <span>Record confidence</span>
-                    <select
-                      value={witnessConfidence}
-                      onChange={(e) =>
-                        setWitnessConfidence(
-                          e.target.value as ForensicConfidence,
-                        )
-                      }
-                    >
-                      {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                    <small className="fv2-help">
-                      This is confidence in the investigation record and its support, not a declaration that the witness is truthful.
-                    </small>
-                  </label>
+                    <div className="fv2-witness-module__body">
+                      <label className="fv2-witness-wide-field">
+                        <span>Observation location</span>
+                        <input
+                          value={witnessObservationLocation}
+                          onChange={(e) =>
+                            setWitnessObservationLocation(
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Where the witness observed the event"
+                        />
+                      </label>
+
+                      <div className="fv2-witness-coordinate-console">
+                        <div className="fv2-witness-coordinate-visual">
+                          <Crosshair size={52} />
+                          <span>
+                            {investigation.scene
+                              .sceneDatumLabel ||
+                              "Scene datum"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span>Along road</span>
+                          <strong>
+                            {witnessAlongRoad.trim() || "—"}
+                            <small>m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={witnessAlongRoad}
+                            onChange={(e) =>
+                              setWitnessAlongRoad(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Witness along road metres"
+                          />
+                        </div>
+
+                        <div>
+                          <span>Across road</span>
+                          <strong>
+                            {witnessAcrossRoad.trim() || "—"}
+                            <small>m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={witnessAcrossRoad}
+                            onChange={(e) =>
+                              setWitnessAcrossRoad(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Witness across road metres"
+                          />
+                        </div>
+
+                        <div>
+                          <span>Accuracy</span>
+                          <strong>
+                            {witnessPositionAccuracy.trim() ||
+                              "—"}
+                            <small>±m</small>
+                          </strong>
+                          <input
+                            inputMode="decimal"
+                            value={witnessPositionAccuracy}
+                            onChange={(e) =>
+                              setWitnessPositionAccuracy(
+                                e.target.value,
+                              )
+                            }
+                            aria-label="Witness position accuracy metres"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-witness-module">
+                    <header>
+                      <ScanEye size={19} />
+                      <div>
+                        <span>Viewing conditions</span>
+                        <strong>
+                          {witnessViewCondition.trim() ||
+                            "Not classified"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-witness-module__body">
+                      {witnessChoiceField(
+                        "View condition",
+                        "viewCondition",
+                        witnessViewCondition,
+                        setWitnessViewCondition,
+                        WITNESS_VIEW_CONDITION_OPTIONS,
+                        "Describe another viewing condition...",
+                      )}
+
+                      <label className="fv2-witness-distance">
+                        <span>Approx. viewing distance</span>
+
+                        <div>
+                          <input
+                            inputMode="decimal"
+                            value={witnessApproxDistance}
+                            onChange={(e) =>
+                              setWitnessApproxDistance(
+                                e.target.value,
+                              )
+                            }
+                            placeholder="0"
+                          />
+                          <strong>m</strong>
+                        </div>
+                      </label>
+
+                      <div className="fv2-witness-view-readout">
+                        <ScanEye size={44} />
+                        <div>
+                          <span>Distance</span>
+                          <strong>
+                            {witnessApproxDistance.trim() ||
+                              "—"}
+                            <small>m</small>
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
 
-                <footer>
-                  <button className="primary" onClick={addWitness}>
-                    Add witness statement
-                  </button>
-                </footer>
+                <section className="fv2-witness-module fv2-witness-observation-module">
+                  <header>
+                    <ScanEye size={19} />
+                    <div>
+                      <span>Observation matrix</span>
+                      <strong>
+                        {witnessObservationTopics.size}
+                        {" "}
+                        reported topic(s)
+                      </strong>
+                    </div>
+
+                    <div className="fv2-witness-module-count">
+                      <b>{witnessObservationTopics.size}</b>
+                      <span>selected</span>
+                    </div>
+                  </header>
+
+                  <div className="fv2-witness-observation-grid">
+                    {WITNESS_OBSERVATION_TOPIC_OPTIONS.map(
+                      (topic) => (
+                        <label
+                          key={topic}
+                          className={
+                            witnessObservationTopics.has(topic)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={witnessObservationTopics.has(
+                              topic,
+                            )}
+                            onChange={() =>
+                              toggleWitnessObservationTopic(
+                                topic,
+                              )
+                            }
+                          />
+
+                          <CircleDot size={20} />
+                          <span>{topic}</span>
+                        </label>
+                      ),
+                    )}
+                  </div>
+                </section>
+
+                <section className="fv2-witness-module fv2-witness-statement-module">
+                  <header>
+                    <ClipboardList size={19} />
+                    <div>
+                      <span>Statement</span>
+                      <strong>Witness account</strong>
+                    </div>
+                  </header>
+
+                  <div className="fv2-witness-statement-body">
+                    <textarea
+                      rows={8}
+                      value={witnessStatementSummary}
+                      onChange={(e) =>
+                        setWitnessStatementSummary(
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Record the witness's account"
+                    />
+                  </div>
+                </section>
+
+                <section className="fv2-witness-module fv2-witness-evidence-module">
+                  <header>
+                    <FileSearch size={19} />
+
+                    <div>
+                      <span>Evidence consistency</span>
+                      <strong>
+                        {witnessEvidenceIds.size}
+                        {" "}
+                        linked record(s)
+                      </strong>
+                    </div>
+                  </header>
+
+                  {investigation.evidence.length === 0 ? (
+                    <div className="fv2-witness-evidence-empty">
+                      <ScanLine size={34} />
+                      <strong>No physical evidence available</strong>
+                    </div>
+                  ) : (
+                    <div className="fv2-witness-evidence-grid">
+                      {investigation.evidence.map((record) => (
+                        <label
+                          key={record.id}
+                          className={
+                            witnessEvidenceIds.has(record.id)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={witnessEvidenceIds.has(
+                              record.id,
+                            )}
+                            onChange={() =>
+                              toggleWitnessEvidence(record.id)
+                            }
+                          />
+
+                          <ScanLine size={20} />
+
+                          <div>
+                            <strong>{record.code}</strong>
+                            <span>{record.type}</span>
+                            <small>
+                              {record.description}
+                            </small>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <div className="fv2-witness-assessment-grid">
+                  <section className="fv2-witness-module">
+                    <header>
+                      <ShieldCheck size={19} />
+                      <div>
+                        <span>Assessment</span>
+                        <strong>
+                          {witnessAssessmentStatus.trim() ||
+                            "Not assessed"}
+                        </strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-witness-module__body">
+                      {witnessChoiceField(
+                        "Evidence consistency",
+                        "assessment",
+                        witnessAssessmentStatus,
+                        setWitnessAssessmentStatus,
+                        WITNESS_ASSESSMENT_STATUS_OPTIONS,
+                        "Describe another assessment status...",
+                      )}
+
+                      <label className="fv2-witness-confidence">
+                        <Gauge size={24} />
+
+                        <div>
+                          <span>Record confidence</span>
+                          <select
+                            value={witnessConfidence}
+                            onChange={(e) =>
+                              setWitnessConfidence(
+                                e.target
+                                  .value as ForensicConfidence,
+                              )
+                            }
+                          >
+                            {FORENSIC_CONFIDENCE_OPTIONS.map(
+                              (item) => (
+                                <option key={item}>{item}</option>
+                              ),
+                            )}
+                          </select>
+                        </div>
+                      </label>
+                    </div>
+                  </section>
+
+                  <details className="fv2-witness-notes">
+                    <summary>
+                      <ClipboardList size={19} />
+
+                      <div>
+                        <strong>Assessment / follow-up</strong>
+                        <small>
+                          {witnessAssessmentNotes.trim()
+                            ? "Notes recorded"
+                            : "Optional"}
+                        </small>
+                      </div>
+
+                      <ChevronDown size={18} />
+                    </summary>
+
+                    <textarea
+                      rows={5}
+                      value={witnessAssessmentNotes}
+                      onChange={(e) =>
+                        setWitnessAssessmentNotes(
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Contradictions, missing details or follow-up questions"
+                    />
+                  </details>
+                </div>
               </section>
 
               <section className="fv2-panel">
@@ -6304,7 +6605,7 @@ export default function ForensicInvestigationWorkspace({
                               </td>
                               <td>
                                 <button
-                                  className="danger"
+                                  className="danger fv2-witness-delete" title="Remove witness" aria-label="Remove witness"
                                   onClick={() =>
                                     setInvestigation(
                                       ForensicInvestigationService.deleteWitness(
@@ -6313,9 +6614,7 @@ export default function ForensicInvestigationWorkspace({
                                       ),
                                     )
                                   }
-                                >
-                                  Remove
-                                </button>
+                                ><Trash2 size={14} /></button>
                               </td>
                             </tr>
                           );
