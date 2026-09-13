@@ -4943,7 +4943,49 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Persons" && (
-            <div className="fv2-stack">
+            <div className="fv2-stack fv2-persons-console">
+              <header className="fv2-batch-commandbar fv2-persons-commandbar">
+                <div className="fv2-batch-commandbar__identity">
+                  <span className="fv2-batch-commandbar__icon">
+                    <PersonStanding size={30} />
+                  </span>
+
+                  <div>
+                    <small>People involved</small>
+                    <strong>Person Examination Console</strong>
+                  </div>
+                </div>
+
+                <div className="fv2-batch-commandbar__status">
+                  <span>
+                    <PersonStanding size={15} />
+                    <b>{investigation.persons.length}</b>
+                    persons
+                  </span>
+
+                  <span>
+                    <CarFront size={15} />
+                    <b>{investigation.vehicles.length}</b>
+                    vehicles
+                  </span>
+
+                  <span>
+                    <ScanLine size={15} />
+                    <b>{investigation.evidence.length}</b>
+                    evidence
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={addPerson}
+                    title="Register person"
+                    aria-label="Register person"
+                  >
+                    <Plus size={16} />
+                    <span>Register</span>
+                  </button>
+                </div>
+              </header>
               <section className="fv2-panel">
                 <header>
                   <div>
@@ -4951,10 +4993,6 @@ export default function ForensicInvestigationWorkspace({
                     <strong>Record people separately from witness statements</strong>
                   </div>
                 </header>
-
-                <div className="fv2-person-note">
-                  Use this section for drivers, passengers, pedestrians, cyclists and other people physically involved in the crash. A person who only witnessed the crash belongs in Witnesses instead.
-                </div>
 
                 <div className="fv2-grid">
                   <label className="fv2-field">
@@ -5646,7 +5684,49 @@ export default function ForensicInvestigationWorkspace({
           )}
 
           {section === "Witnesses" && (
-            <div className="fv2-stack">
+            <div className="fv2-stack fv2-witnesses-console">
+              <header className="fv2-batch-commandbar fv2-witnesses-commandbar">
+                <div className="fv2-batch-commandbar__identity">
+                  <span className="fv2-batch-commandbar__icon">
+                    <Users size={30} />
+                  </span>
+
+                  <div>
+                    <small>Witness evidence</small>
+                    <strong>Witness Statement Console</strong>
+                  </div>
+                </div>
+
+                <div className="fv2-batch-commandbar__status">
+                  <span>
+                    <Users size={15} />
+                    <b>{investigation.witnesses.length}</b>
+                    witnesses
+                  </span>
+
+                  <span>
+                    <PersonStanding size={15} />
+                    <b>{investigation.persons.length}</b>
+                    persons
+                  </span>
+
+                  <span>
+                    <ScanLine size={15} />
+                    <b>{investigation.evidence.length}</b>
+                    evidence
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={addWitness}
+                    title="Register witness statement"
+                    aria-label="Register witness statement"
+                  >
+                    <Plus size={16} />
+                    <span>Register</span>
+                  </button>
+                </div>
+              </header>
               <section className="fv2-panel">
                 <header>
                   <div>
@@ -5654,10 +5734,6 @@ export default function ForensicInvestigationWorkspace({
                     <strong>Record what was reported, then test it against evidence</strong>
                   </div>
                 </header>
-
-                <div className="fv2-witness-note">
-                  A witness account is evidence, but it is not automatically established fact. Preserve what the witness reported, where they were, what they could see, and later compare the account with physical evidence and other statements.
-                </div>
 
                 <div className="fv2-grid">
                   <label className="fv2-field">
@@ -6027,18 +6103,49 @@ export default function ForensicInvestigationWorkspace({
                   </div>
                 )}
               </section>
-
-              <section className="fv2-panel fv2-notice">
-                <b>Forensic rule</b>
-                <p>
-                  Witness statements must be preserved as reported accounts and checked against scene evidence, vehicle/person findings and other statements. Agreement strengthens a hypothesis; conflict must be shown rather than hidden.
-                </p>
-              </section>
             </div>
           )}
 
           {section === "Analysis" && (
             <div className="fv2-stack fv2-analysis-workstation">
+              <header className="fv2-batch-commandbar fv2-analysis-commandbar">
+                <div className="fv2-batch-commandbar__identity">
+                  <span className="fv2-batch-commandbar__icon">
+                    <BarChart3 size={30} />
+                  </span>
+
+                  <div>
+                    <small>Evidence relationships</small>
+                    <strong>Analysis Control Board</strong>
+                  </div>
+                </div>
+
+                <div className="fv2-batch-commandbar__status">
+                  <span>
+                    <BarChart3 size={15} />
+                    <b>{investigation.analysisFindings.length}</b>
+                    findings
+                  </span>
+
+                  <span>
+                    <FileSearch size={15} />
+                    <b>{analysisLinkedSourceCount}</b>
+                    linked
+                  </span>
+
+                  <span>
+                    <CircleDot size={15} />
+                    <b>{analysisConflictCount}</b>
+                    conflicts
+                  </span>
+
+                  <span>
+                    <Gauge size={15} />
+                    <b>{analysisAttentionCount}</b>
+                    attention
+                  </span>
+                </div>
+              </header>
               <section className="fv2-panel fv2-analysis-hero">
                 <header>
                   <div>
@@ -6052,10 +6159,6 @@ export default function ForensicInvestigationWorkspace({
                     <span className="attention">{analysisAttentionCount} attention</span>
                   </div>
                 </header>
-
-                <div className="fv2-analysis-rule">
-                  Analysis is now treated as a workstation: relate scene, evidence, measurements, vehicles, persons and witness accounts visually, expose unresolved issues, and only then record a finding. RoadSafe still does not decide legal fault here.
-                </div>
 
                 <div className="fv2-analysis-metric-grid">
                   {analysisAreaCards.map((card) => (
@@ -6453,11 +6556,6 @@ export default function ForensicInvestigationWorkspace({
                     <footer>
                       <button className="primary" onClick={addAnalysisFinding}>Add analysis finding</button>
                     </footer>
-                  </section>
-
-                  <section className="fv2-panel fv2-notice">
-                    <b>Forensic rule</b>
-                    <p>Analysis must expose its source records, uncertainty and conflicts. This section can support or weaken later hypotheses, but it does not declare legal guilt and does not turn an assumption into an observed fact.</p>
                   </section>
                 </aside>
               </div>

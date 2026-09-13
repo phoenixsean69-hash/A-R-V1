@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FileText } from "../icons/materialIcons";
 import type { ForensicAccidentInvestigation } from "../../features/forensicReconstruction/forensicInvestigationTypes";
 import { ForensicFindingsService } from "../../features/forensicReconstruction/forensicFindingsService";
 import { ForensicSimulationService } from "../../features/forensicReconstruction/forensicSimulationService";
@@ -92,6 +93,7 @@ export default function ReportWorkspace({ investigation, onMessage }: Props) {
     <div className="fv2-stack fv2-report-workstation">
       <section className="fv2-panel fv2-report-hero">
         <header>
+          <span className="fv2-workspace-hero-icon"><FileText size={30} /></span>
           <div>
             <span>Formal forensic output</span>
             <strong>Build the report from reviewed findings</strong>
@@ -102,11 +104,6 @@ export default function ReportWorkspace({ investigation, onMessage }: Props) {
             <span>{readyFindings.length} finding(s) included</span>
           </div>
         </header>
-        <div className="fv2-report-rule">
-          The report is the final communication layer. Evidence remains evidence;
-          calculations remain calculated; assumptions remain assumptions; simulation
-          remains simulated. RoadSafe does not automatically assign legal guilt or liability.
-        </div>
       </section>
 
       <div className="fv2-report-layout">
@@ -254,11 +251,6 @@ export default function ReportWorkspace({ investigation, onMessage }: Props) {
                 ForensicReportService.downloadJson(investigation, current);
               }}>Export JSON audit</button>
             </div>
-          </section>
-
-          <section className="fv2-panel fv2-notice">
-            <b>Report rule</b>
-            <p>A final report is an accountable investigator product. RoadSafe can organise, calculate and visualise evidence, but the investigator remains responsible for conclusions and limitations.</p>
           </section>
         </aside>
       </div>

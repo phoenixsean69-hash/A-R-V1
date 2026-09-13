@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Play } from "../icons/materialIcons";
 import type {
   ForensicAccidentInvestigation,
   ForensicCrashHypothesis,
@@ -318,6 +319,7 @@ export default function SimulationWorkspace({
     <div className="fv2-stack fv2-sim-workstation">
       <section className="fv2-panel fv2-sim-hero">
         <header>
+          <span className="fv2-workspace-hero-icon"><Play size={30} /></span>
           <div>
             <span>Forensic scenario testing</span>
             <strong>Test a hypothesis without changing the evidence</strong>
@@ -328,21 +330,6 @@ export default function SimulationWorkspace({
           </div>
         </header>
 
-        <div className="fv2-sim-rule">
-          Simulation output is always stored as <b>Simulated</b>. It may support,
-          weaken or expose problems in a hypothesis, but it cannot rewrite an
-          observation, measurement, witness statement or analysis finding.
-        </div>
-
-        <div className="fv2-sim-flow">
-          <div>Hypothesis</div>
-          <span>→</span>
-          <div className="active">Physics test bench</div>
-          <span>→</span>
-          <div>Compare with evidence</div>
-          <span>→</span>
-          <div>2D / 3D / AR</div>
-        </div>
       </section>
 
       {simulationHypotheses.length === 0 ? (

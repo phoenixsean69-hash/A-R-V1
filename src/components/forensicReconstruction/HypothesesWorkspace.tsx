@@ -1,4 +1,5 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { Orbit } from "../icons/materialIcons";
 import {
   FORENSIC_CONFIDENCE_OPTIONS,
   HYPOTHESIS_STATUS_OPTIONS,
@@ -232,6 +233,7 @@ export default function HypothesesWorkspace({
     <div className="fv2-stack fv2-hyp-workstation">
       <section className="fv2-panel fv2-hyp-hero">
         <header>
+          <span className="fv2-workspace-hero-icon"><Orbit size={30} /></span>
           <div>
             <span>Competing crash hypotheses</span>
             <strong>Build explanations that can be challenged by the evidence</strong>
@@ -242,15 +244,6 @@ export default function HypothesesWorkspace({
             <span>{investigation.hypotheses.filter((h) => h.selectedForSimulation).length} queued</span>
           </div>
         </header>
-        <div className="fv2-hyp-rule">
-          A hypothesis is not an observed fact. RoadSafe stores it as an Investigator
-          Assumption, shows what supports and conflicts with it, and only then allows
-          it to move toward physics or simulation testing.
-        </div>
-        <div className="fv2-hyp-flow">
-          <div>Evidence</div><span>→</span><div>Analysis</div><span>→</span>
-          <div className="active">Competing hypotheses</div><span>→</span><div>Physics / simulation</div>
-        </div>
       </section>
 
       <div className="fv2-hyp-layout">

@@ -480,7 +480,7 @@
 
 .fv2-sim-run-list article.selected {
   border-color: var(--sim-orange);
-  background: #302820;
+  background: #292929;
 }
 
 .fv2-sim-run-list article > button:first-child {
@@ -542,3 +542,61 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ROADSAFE_SIMULATION_BATCH_REFINEMENT_START */
+
+.fv2-sim-hero > header {
+  min-height: 60px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 0;
+  background: linear-gradient(180deg, #303030, #292929);
+}
+
+.fv2-workspace-hero-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #4b4b4b;
+  border-radius: 3px;
+  background: #242424;
+  color: #d0d0d0;
+}
+
+.fv2-sim-rule,
+.fv2-sim-flow {
+  display: none !important;
+}
+
+.fv2-sim-hypothesis-card {
+  border-color: #444 !important;
+  background: #252525 !important;
+}
+
+.fv2-sim-hypothesis-meta span {
+  border-color: #444 !important;
+  color: #aaa !important;
+}
+
+.fv2-sim-run-list article.selected {
+  border-color: #e8872d !important;
+  background: #303030 !important;
+}
+
+.fv2-sim-gate {
+  border-color: #414141 !important;
+  background: #242424 !important;
+}
+
+.fv2-sim-participant,
+.fv2-sim-metrics article,
+.fv2-sim-contact-register article,
+.fv2-sim-audit > div,
+.fv2-sim-run-list article {
+  border-color: #414141 !important;
+  background: #252525 !important;
+}
+
+/* ROADSAFE_SIMULATION_BATCH_REFINEMENT_END */

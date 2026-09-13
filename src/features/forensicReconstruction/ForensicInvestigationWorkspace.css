@@ -80,9 +80,9 @@
 
 .fv2-panel button.primary,
 .fv2-action-button {
-  background: #352a1f;
-  border-color: rgba(221, 158, 90, 0.45);
-  color: #f0c79b;
+  background: #2b2b2b;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #e5e5e5;
 }
 
 .fv2-panel button.danger {
@@ -156,9 +156,9 @@
 }
 
 .fv2-sidebar>button.is-active {
-  background: #2a2420;
-  border-left-color: #d2914d;
-  color: #efd0ad;
+  background: #2a2a2a;
+  border-left-color: #e8872d;
+  color: #dedede;
 }
 
 .fv2-sidebar>button.is-future {
@@ -181,9 +181,9 @@
   align-items: center;
   margin-bottom: 10px;
   padding: 7px 9px;
-  border: 1px solid #70512f;
-  background: #352c22;
-  color: #e5bc8a;
+  border: 1px solid #4b4b4b;
+  background: #2b2b2b;
+  color: #d0d0d0;
   font-size: 8px;
 }
 
@@ -319,7 +319,7 @@
 
 .fv2-tags span.derived,
 .tag.derived {
-  border-color: #70512f;
+  border-color: #4b4b4b;
   background: #342b22;
   color: #e1b681;
 }
@@ -383,9 +383,9 @@
 }
 
 .fv2-panel button.primary {
-  background: #352a1f;
-  border-color: rgba(221, 158, 90, 0.45);
-  color: #f0c79b;
+  background: #2b2b2b;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #e5e5e5;
 }
 
 .fv2-panel button.danger {
@@ -1465,8 +1465,8 @@
 }
 
 .fv2-analysis-summary .attention {
-  border-color: #70512f;
-  background: #352c22;
+  border-color: #4b4b4b;
+  background: #2b2b2b;
   color: #ddb17f;
 }
 
@@ -2230,9 +2230,9 @@
   height: 31px;
   display: grid;
   place-items: center;
-  border: 1px solid #5a4635;
+  border: 1px solid #484848;
   border-radius: 3px;
-  background: #302820;
+  background: #292929;
   color: #e8872d;
 }
 
@@ -2280,7 +2280,7 @@
 
 .fv2-scene-commandbar__status > span.is-warning {
   border-color: #604933;
-  color: #c98d58;
+  color: #999999;
 }
 
 .fv2-scene-save {
@@ -2312,7 +2312,7 @@
   padding: 7px 9px;
   border: 1px solid #3f3f3f;
   background: #252525;
-  color: #9b7657;
+  color: #888888;
 }
 
 .fv2-scene-readout-strip article.is-ready {
@@ -2364,7 +2364,7 @@
   padding: 7px 9px;
   border-bottom: 1px solid #3d3d3d;
   background: #2b2b2b;
-  color: #ad7b53;
+  color: #8f8f8f;
 }
 
 .fv2-scene-module > header > div {
@@ -2531,7 +2531,7 @@
   place-items: center;
   border: 1px solid #5e4936;
   background: #2e2721;
-  color: #df8f4b;
+  color: #9f9f9f;
 }
 
 .fv2-scene-datum-title {
@@ -2556,7 +2556,7 @@
 }
 
 .fv2-scene-datum-title small {
-  color: #806d5c;
+  color: #777777;
   font-size: 9px;
 }
 
@@ -2605,7 +2605,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #a27652;
+  color: #888888;
 }
 
 .fv2-scene-axis__label span {
@@ -2632,7 +2632,7 @@
   gap: 6px;
   margin: 0 9px 9px;
   padding: 7px;
-  border-left: 2px solid #6a4b32;
+  border-left: 2px solid #474747;
   background: #29241f;
   color: #8d7968;
   font-size: 9px;
@@ -2666,7 +2666,7 @@
   place-items: center;
   border: 1px solid #4b423a;
   background: #2d2823;
-  color: #c88147;
+  color: #969696;
 }
 
 .fv2-scene-notes > summary > div {
@@ -2910,7 +2910,7 @@
   border: 1px solid #4f4f4f;
   border-radius: 3px;
   background: #262626;
-  color: #d19056;
+  color: #999999;
 }
 
 .fv2-evidence-commandbar__identity > div {
@@ -2956,10 +2956,10 @@
   align-items: center;
   gap: 5px;
   padding: 0 9px !important;
-  border: 1px solid #67503b !important;
+  border: 1px solid #4a4a4a !important;
   border-radius: 3px !important;
-  background: #332a22 !important;
-  color: #eaa05f !important;
+  background: #2a2a2a !important;
+  color: #e8872d !important;
   font-size: 10px !important;
 }
 
@@ -2986,7 +2986,7 @@
   height: 30px;
   display: grid;
   place-items: center;
-  color: #bd7d48;
+  color: #969696;
 }
 
 .fv2-evidence-instrument > div {
@@ -3197,7 +3197,7 @@
   padding: 7px 8px;
   border: 1px solid #3e3e3e;
   background: #252525;
-  color: #967151;
+  color: #858585;
 }
 
 .fv2-evidence-datum-readout span {
@@ -3242,7 +3242,7 @@
   place-items: center;
   border: 1px solid #444;
   background: #282828;
-  color: #a87750;
+  color: #8d8d8d;
 }
 
 .fv2-evidence-notes > summary > div {
@@ -3324,7 +3324,7 @@
   display: inline-flex !important;
   align-items: center;
   gap: 5px !important;
-  color: #96704f;
+  color: #858585;
 }
 
 .fv2-evidence-register__count b {
@@ -3466,7 +3466,7 @@
 
   background: #262626;
 
-  color: #d08a4e;
+  color: #9b9b9b;
 }
 
 .fv2-overview-commandbar__identity > div {
@@ -3543,7 +3543,7 @@
 
   background: linear-gradient(145deg, #282828, #242424);
 
-  color: #b97a46;
+  color: #969696;
 
   text-align: left;
 
@@ -3690,7 +3690,7 @@
 .fv2-overview-pipeline__grid > button:hover {
   background: #2b2927;
 
-  color: #d48a4b;
+  color: #9b9b9b;
 }
 
 .fv2-overview-pipeline__grid > button.is-ready {
@@ -3792,11 +3792,11 @@
 }
 
 .fv2-overview-provenance > div > span.is-derived {
-  border-color: #5b4937;
+  border-color: #454545;
 
-  background: #2e2924;
+  background: #292929;
 
-  color: #bc8b5f;
+  color: #979797;
 }
 
 /* Remove old landing-page visual identity if stale DOM/styles survive. */
@@ -3929,10 +3929,10 @@
   align-items: center;
   gap: 5px;
   padding: 0 9px !important;
-  border: 1px solid #67503b !important;
+  border: 1px solid #4a4a4a !important;
   border-radius: 3px !important;
-  background: #332a22 !important;
-  color: #eaa05f !important;
+  background: #2a2a2a !important;
+  color: #e8872d !important;
   font-size: 10px !important;
 }
 
@@ -3959,7 +3959,7 @@
   height: 34px;
   display: grid;
   place-items: center;
-  color: #be7c46;
+  color: #969696;
 }
 
 .fv2-measurement-instruments > label > div {
@@ -3992,7 +3992,7 @@
 
 .fv2-measurement-instruments select:focus {
   outline: 0;
-  color: #efa05c;
+  color: #e8872d;
 }
 
 .fv2-measurement-workgrid {
@@ -4019,7 +4019,7 @@
   padding: 7px 9px;
   border-bottom: 1px solid #3d3d3d;
   background: #2b2b2b;
-  color: #b87b49;
+  color: #969696;
 }
 
 .fv2-measurement-reading > header > div,
@@ -4107,7 +4107,7 @@
 .fv2-measurement-value strong {
   align-self: end;
   padding-bottom: 10px;
-  color: #ca874e;
+  color: #9a9a9a;
   font-size: 20px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -4181,8 +4181,8 @@
 }
 
 .fv2-measurement-evidence-grid > label.is-selected {
-  border-color: #6b5038;
-  background: #302a24;
+  border-color: #494949;
+  background: #292929;
 }
 
 .fv2-measurement-evidence-grid input {
@@ -4196,7 +4196,7 @@
   height: 27px;
   display: grid;
   place-items: center;
-  color: #8d6849;
+  color: #777777;
 }
 
 .fv2-measurement-evidence-grid > label.is-selected
@@ -4258,7 +4258,7 @@
   place-items: center;
   border: 1px solid #444;
   background: #282828;
-  color: #a87750;
+  color: #8d8d8d;
 }
 
 .fv2-measurement-notes > summary > div {
@@ -4342,7 +4342,7 @@
   display: inline-flex !important;
   align-items: center;
   gap: 5px !important;
-  color: #96704f;
+  color: #858585;
 }
 
 .fv2-measurement-register__count b {
@@ -4385,7 +4385,7 @@
 }
 
 .fv2-measurement-table__evidence {
-  color: #b08765;
+  color: #8c8c8c;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 10px;
 }
@@ -4497,7 +4497,7 @@
 
   background: #252525;
 
-  color: #d28a4d;
+  color: #9b9b9b;
 }
 
 .fv2-vehicle-commandbar__identity > div {
@@ -4558,12 +4558,12 @@
 
   padding: 0 9px !important;
 
-  border: 1px solid #67503b !important;
+  border: 1px solid #4a4a4a !important;
   border-radius: 3px !important;
 
-  background: #332a22 !important;
+  background: #2a2a2a !important;
 
-  color: #eaa05f !important;
+  color: #e8872d !important;
 
   font-size: 10px !important;
 }
@@ -4601,7 +4601,7 @@
   display: grid;
   place-items: center;
 
-  color: #bf7e48;
+  color: #969696;
 }
 
 .fv2-vehicle-instruments > label > div {
@@ -4644,7 +4644,7 @@
 .fv2-vehicle-instruments select:focus {
   outline: 0;
 
-  color: #efa05c;
+  color: #e8872d;
 }
 
 /* Vehicle identity / context */
@@ -4681,7 +4681,7 @@
 
   background: #2b2b2b;
 
-  color: #b77b49;
+  color: #969696;
 }
 
 .fv2-vehicle-module > header > div,
@@ -4836,7 +4836,7 @@
       #242424 68%
     );
 
-  color: #c78248;
+  color: #999999;
 }
 
 .fv2-vehicle-silhouette span {
@@ -4883,11 +4883,11 @@
 }
 
 .fv2-vehicle-damage-grid > label.is-selected {
-  border-color: #725135;
+  border-color: #4c4c4c;
 
-  background: #302922;
+  background: #292929;
 
-  color: #df914e;
+  color: #e8872d;
 }
 
 .fv2-vehicle-damage-grid input {
@@ -4899,11 +4899,11 @@
 }
 
 .fv2-vehicle-damage-grid > label > .roadsafe-material-icon {
-  color: #765b45;
+  color: #707070;
 }
 
 .fv2-vehicle-damage-grid > label.is-selected > .roadsafe-material-icon {
-  color: #df914e;
+  color: #e8872d;
 }
 
 .fv2-vehicle-damage-grid > label > div {
@@ -4976,7 +4976,7 @@
 }
 
 .fv2-vehicle-damage-capture__zone > header > div {
-  color: #aa7448;
+  color: #898989;
 }
 
 .fv2-vehicle-damage-capture__zone > header strong {
@@ -4986,7 +4986,7 @@
 }
 
 .fv2-vehicle-damage-capture__zone > header > span {
-  color: #82664f;
+  color: #767676;
 
   font-size: 9px;
 }
@@ -5004,9 +5004,9 @@
 
   padding: 0 8px;
 
-  border: 1px solid #51473f;
+  border: 1px solid #484848;
 
-  background: #2c2926;
+  background: #292929;
 
   color: #c98b55;
 
@@ -5129,9 +5129,9 @@
 }
 
 .fv2-vehicle-trace-grid > label.is-selected {
-  border-color: #725135;
+  border-color: #4c4c4c;
 
-  background: #302922;
+  background: #292929;
 }
 
 .fv2-vehicle-trace-grid input {
@@ -5143,11 +5143,11 @@
 }
 
 .fv2-vehicle-trace-grid > label > .roadsafe-material-icon {
-  color: #765b45;
+  color: #707070;
 }
 
 .fv2-vehicle-trace-grid > label.is-selected > .roadsafe-material-icon {
-  color: #df914e;
+  color: #e8872d;
 }
 
 .fv2-vehicle-trace-grid span {
@@ -5206,9 +5206,9 @@
 }
 
 .fv2-vehicle-evidence-grid > label.is-selected {
-  border-color: #6b5038;
+  border-color: #494949;
 
-  background: #302a24;
+  background: #292929;
 }
 
 .fv2-vehicle-evidence-grid input {
@@ -5226,7 +5226,7 @@
   display: grid;
   place-items: center;
 
-  color: #8d6849;
+  color: #777777;
 }
 
 .fv2-vehicle-evidence-grid > label.is-selected
@@ -5307,7 +5307,7 @@
 
   background: #282828;
 
-  color: #a87750;
+  color: #8d8d8d;
 }
 
 .fv2-vehicle-notes > summary > div {
@@ -5433,7 +5433,7 @@
 
   gap: 5px !important;
 
-  color: #96704f;
+  color: #858585;
 }
 
 .fv2-vehicle-register__count b {
@@ -5566,3 +5566,319 @@
 }
 
 /* ROADSAFE_VEHICLE_EXAMINATION_CONSOLE_END */
+
+/* ROADSAFE_NEUTRAL_GRAPHITE_THEME_START */
+
+/*
+ * RoadSafe visual rule:
+ * charcoal / graphite chrome by default.
+ * Brand orange is reserved for active, selected and primary interaction.
+ * No brown panel fills, no gold border frames.
+ */
+
+.fv2-sidebar > button.is-active {
+  border-left: 0 !important;
+  background: #303030 !important;
+  color: #eeeeee !important;
+}
+
+.fv2-panel button.primary,
+.fv2-action-button,
+.fv2-scene-save,
+.fv2-evidence-add,
+.fv2-measurement-register,
+.fv2-vehicle-register {
+  border-color: #505050 !important;
+  background: #303030 !important;
+  color: #e8872d !important;
+}
+
+.fv2-panel button.primary:hover,
+.fv2-action-button:hover,
+.fv2-scene-save:hover,
+.fv2-evidence-add:hover,
+.fv2-measurement-register:hover,
+.fv2-vehicle-register:hover {
+  border-color: #696969 !important;
+  background: #363636 !important;
+}
+
+.fv2-message {
+  border-color: #494949 !important;
+  background: #292929 !important;
+  color: #cfcfcf !important;
+}
+
+.fv2-evidence-instrument.is-selected,
+.fv2-measurement-evidence-grid > label.is-selected,
+.fv2-vehicle-damage-grid > label.is-selected,
+.fv2-vehicle-trace-grid > label.is-selected,
+.fv2-vehicle-evidence-grid > label.is-selected {
+  border-color: #565656 !important;
+  background: #2d2d2d !important;
+}
+
+.fv2-measurement-evidence-grid > label.is-selected
+.fv2-measurement-evidence-grid__icon,
+.fv2-vehicle-damage-grid > label.is-selected > .roadsafe-material-icon,
+.fv2-vehicle-trace-grid > label.is-selected > .roadsafe-material-icon,
+.fv2-vehicle-evidence-grid > label.is-selected
+.fv2-vehicle-evidence-grid__icon {
+  color: #e8872d !important;
+}
+
+.fv2-overview-provenance > div > span.is-derived {
+  border-color: #4c4c4c !important;
+  background: #292929 !important;
+  color: #a9a9a9 !important;
+}
+
+.fv2-scene-commandbar__icon,
+.fv2-evidence-commandbar__icon,
+.fv2-measurement-commandbar__icon,
+.fv2-vehicle-commandbar__icon,
+.fv2-overview-commandbar__icon {
+  border-color: #4b4b4b !important;
+  background: #252525 !important;
+}
+
+.fv2-scene-protocol,
+.fv2-help,
+.roadsafe-help,
+.roadsafe-helper,
+.roadsafe-hint,
+.roadsafe-callout,
+.roadsafe-guide,
+.roadsafe-advisory,
+.roadsafe-notice {
+  border-color: #444444 !important;
+  background: #262626 !important;
+}
+
+/* ROADSAFE_NEUTRAL_GRAPHITE_THEME_END */
+
+/* ROADSAFE_REMAINING_WORKFLOW_BATCH_START */
+
+.fv2-batch-commandbar {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 9px;
+  border: 1px solid #414141;
+  background: linear-gradient(180deg, #303030, #292929);
+}
+
+.fv2-batch-commandbar__identity,
+.fv2-batch-commandbar__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fv2-batch-commandbar__icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #4b4b4b;
+  border-radius: 3px;
+  background: #242424;
+  color: #d2d2d2;
+}
+
+.fv2-batch-commandbar__identity > div {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-batch-commandbar__identity small {
+  color: #777;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.fv2-batch-commandbar__identity strong {
+  color: #e4e4e4;
+  font-size: 13px;
+}
+
+.fv2-batch-commandbar__status > span {
+  min-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #414141;
+  border-radius: 3px;
+  background: #252525;
+  color: #777;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.fv2-batch-commandbar__status > span b {
+  color: #c9c9c9;
+  font-size: 10px;
+}
+
+.fv2-batch-commandbar__status > button {
+  min-height: 30px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px !important;
+  border: 1px solid #505050 !important;
+  border-radius: 3px !important;
+  background: #303030 !important;
+  color: #e8872d !important;
+  font-size: 10px !important;
+}
+
+/* Persons + Witnesses: remove page-like explanatory chrome. */
+.fv2-persons-console > .fv2-panel:first-of-type > header,
+.fv2-witnesses-console > .fv2-panel:first-of-type > header,
+.fv2-persons-console > .fv2-panel:first-of-type > footer,
+.fv2-witnesses-console > .fv2-panel:first-of-type > footer,
+.fv2-person-note,
+.fv2-witness-note {
+  display: none !important;
+}
+
+.fv2-persons-console > .fv2-panel:first-of-type,
+.fv2-witnesses-console > .fv2-panel:first-of-type {
+  border-color: #414141 !important;
+  background: #222 !important;
+}
+
+.fv2-persons-console > .fv2-panel:first-of-type > .fv2-grid,
+.fv2-witnesses-console > .fv2-panel:first-of-type > .fv2-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  padding: 10px;
+}
+
+.fv2-persons-console .fv2-field,
+.fv2-witnesses-console .fv2-field {
+  gap: 4px;
+}
+
+.fv2-persons-console .fv2-field > span,
+.fv2-witnesses-console .fv2-field > span {
+  color: #858585;
+  font-size: 9px !important;
+}
+
+.fv2-persons-console .fv2-field input,
+.fv2-persons-console .fv2-field select,
+.fv2-witnesses-console .fv2-field input,
+.fv2-witnesses-console .fv2-field select {
+  min-height: 34px;
+  border-radius: 2px;
+  border-color: #424242;
+  background: #1d1d1d;
+  font-size: 11px !important;
+}
+
+.fv2-persons-console .fv2-check-grid,
+.fv2-witnesses-console .fv2-check-grid {
+  gap: 5px;
+}
+
+.fv2-persons-console .fv2-check-grid label,
+.fv2-witnesses-console .fv2-check-grid label {
+  min-height: 42px;
+  border-color: #3f3f3f;
+  background: #252525;
+}
+
+.fv2-persons-console > .fv2-panel:nth-of-type(2) > header,
+.fv2-witnesses-console > .fv2-panel:nth-of-type(2) > header {
+  min-height: 43px;
+  background: #2a2a2a;
+}
+
+/* Driver-registry modules: keep function, reduce paragraph/card feeling. */
+.fv2-persons-console .fv2-driver-identification-card,
+.fv2-persons-console .fv2-driver-registry-result,
+.fv2-persons-console .fv2-known-driver-check {
+  border-color: #414141 !important;
+  background: #242424 !important;
+}
+
+.fv2-persons-console .fv2-driver-candidate-warning,
+.fv2-persons-console .fv2-driver-registry-empty,
+.fv2-persons-console .fv2-driver-registry-connection {
+  border-color: #444 !important;
+  background: #282828 !important;
+  color: #999 !important;
+}
+
+/* Analysis already has strong tools; remove its explanatory hero copy. */
+.fv2-analysis-workstation > .fv2-analysis-hero > header,
+.fv2-analysis-rule {
+  display: none !important;
+}
+
+.fv2-analysis-workstation > .fv2-analysis-hero {
+  border-color: #414141 !important;
+  background: #202020 !important;
+}
+
+.fv2-analysis-workstation .fv2-analysis-metric-grid {
+  padding: 8px;
+}
+
+.fv2-analysis-workstation .fv2-analysis-metric-card,
+.fv2-analysis-workstation .fv2-analysis-current-card,
+.fv2-analysis-workstation .fv2-analysis-source-group,
+.fv2-analysis-workstation .fv2-analysis-finding-card {
+  border-color: #414141 !important;
+  background: #252525 !important;
+}
+
+.fv2-analysis-workstation .fv2-analysis-composer > footer {
+  border-top-color: #3e3e3e;
+}
+
+.fv2-analysis-workstation .fv2-analysis-composer > footer .primary {
+  border-color: #505050 !important;
+  background: #303030 !important;
+  color: #e8872d !important;
+}
+
+/* Remove old rule/advisory panels for these batched screens. */
+.fv2-persons-console .fv2-notice,
+.fv2-witnesses-console .fv2-notice,
+.fv2-analysis-workstation .fv2-notice {
+  display: none !important;
+}
+
+@media(max-width:1100px) {
+  .fv2-persons-console > .fv2-panel:first-of-type > .fv2-grid,
+  .fv2-witnesses-console > .fv2-panel:first-of-type > .fv2-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width:760px) {
+  .fv2-batch-commandbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fv2-batch-commandbar__status {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .fv2-persons-console > .fv2-panel:first-of-type > .fv2-grid,
+  .fv2-witnesses-console > .fv2-panel:first-of-type > .fv2-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ROADSAFE_REMAINING_WORKFLOW_BATCH_END */
