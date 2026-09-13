@@ -3740,171 +3740,306 @@ export default function ForensicInvestigationWorkspace({
 
           {section === "Measurements" && (
             <div className="fv2-stack">
-              <section className="fv2-panel">
-                <header>
-                  <div>
-                    <span>Forensic measurements</span>
-                    <strong>Add quantitative measurement</strong>
+              <section className="fv2-measurement-console">
+                <header className="fv2-measurement-commandbar">
+                  <div className="fv2-measurement-commandbar__identity">
+                    <span className="fv2-measurement-commandbar__icon">
+                      <Ruler size={22} />
+                    </span>
+                    <div>
+                      <small>Forensic measurements</small>
+                      <strong>Measurement Console</strong>
+                    </div>
+                  </div>
+
+                  <div className="fv2-measurement-commandbar__status">
+                    <span>
+                      <ClipboardCheck size={15} />
+                      <b>{investigation.measurements.length}</b>
+                      records
+                    </span>
+                    <span>
+                      <FileSearch size={15} />
+                      <b>{linkedEvidenceIds.size}</b>
+                      linked
+                    </span>
+                    <button
+                      type="button"
+                      className="fv2-measurement-register"
+                      onClick={addMeasurement}
+                      title="Register measurement"
+                      aria-label="Register measurement"
+                    >
+                      <Plus size={16} />
+                      <span>Register</span>
+                    </button>
                   </div>
                 </header>
 
-                <div className="fv2-grid">
-                  <label className="fv2-field">
-                    <span>Category</span>
-                    <select
-                      value={measurementCategory}
-                      onChange={(e) =>
-                        setMeasurementCategory(
-                          e.target.value as MeasurementCategory,
-                        )
-                      }
-                    >
-                      {MEASUREMENT_CATEGORY_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Label</span>
-                    <input
-                      value={measurementLabel}
-                      onChange={(e) => setMeasurementLabel(e.target.value)}
-                      placeholder="e.g. Vehicle A skid mark length"
-                    />
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Value</span>
-                    <input
-                      inputMode="decimal"
-                      value={measurementValue}
-                      onChange={(e) => setMeasurementValue(e.target.value)}
-                    />
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Unit</span>
-                    <select
-                      value={measurementUnit}
-                      onChange={(e) => setMeasurementUnit(e.target.value)}
-                    >
-                      {MEASUREMENT_UNIT_OPTIONS.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  {measurementChoiceField(
-                    "Measurement method / source",
-                    "method",
-                    measurementMethod,
-                    setMeasurementMethod,
-                    MEASUREMENT_METHOD_OPTIONS,
-                    "e.g. drone photogrammetry, CAD back-calculation, officer estimate...",
-                  )}
-
-                  {measurementChoiceField(
-                    "Location / reference description",
-                    "location",
-                    measurementLocation,
-                    setMeasurementLocation,
-                    MEASUREMENT_LOCATION_OPTIONS,
-                    "e.g. skid onset to final visible tyre mark on southbound lane",
-                  )}
-
-                  <label className="fv2-field">
-                    <span>Provenance</span>
-                    <select
-                      value={measurementProvenance}
-                      onChange={(e) =>
-                        setMeasurementProvenance(
-                          e.target.value as "Measured" | "Imported" | "Calculated",
-                        )
-                      }
-                    >
-                      <option>Measured</option>
-                      <option>Imported</option>
-                      <option>Calculated</option>
-                    </select>
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Confidence</span>
-                    <select
-                      value={measurementConfidence}
-                      onChange={(e) =>
-                        setMeasurementConfidence(
-                          e.target.value as ForensicConfidence,
-                        )
-                      }
-                    >
-                      {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="fv2-field full">
-                    <span>Link supporting evidence</span>
-                    {investigation.evidence.length === 0 ? (
-                      <div className="fv2-empty-select">
-                        Add evidence first if this measurement comes from physical evidence.
-                      </div>
-                    ) : (
-                      <div className="fv2-evidence-select">
-                        {investigation.evidence.map((record) => (
-                          <label key={record.id}>
-                            <input
-                              type="checkbox"
-                              checked={linkedEvidenceIds.has(record.id)}
-                              onChange={() => toggleLinkedEvidence(record.id)}
-                            />
-                            <span><b>{record.code}</b> {record.type} · {record.description}</span>
-                          </label>
+                <div className="fv2-measurement-instruments">
+                  <label>
+                    <span className="fv2-measurement-instrument__icon">
+                      <Ruler size={22} />
+                    </span>
+                    <div>
+                      <small>Category</small>
+                      <select
+                        value={measurementCategory}
+                        onChange={(event) =>
+                          setMeasurementCategory(
+                            event.target.value as MeasurementCategory,
+                          )
+                        }
+                      >
+                        {MEASUREMENT_CATEGORY_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
                         ))}
-                      </div>
-                    )}
-                  </div>
+                      </select>
+                    </div>
+                  </label>
 
-                  <label className="fv2-field full">
-                    <span>Notes</span>
-                    <textarea
-                      rows={4}
-                      value={measurementNotes}
-                      onChange={(e) => setMeasurementNotes(e.target.value)}
-                    />
+                  <label>
+                    <span className="fv2-measurement-instrument__icon">
+                      <Boxes size={22} />
+                    </span>
+                    <div>
+                      <small>Unit</small>
+                      <select
+                        value={measurementUnit}
+                        onChange={(event) =>
+                          setMeasurementUnit(event.target.value)
+                        }
+                      >
+                        {MEASUREMENT_UNIT_OPTIONS.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </label>
+
+                  <label>
+                    <span className="fv2-measurement-instrument__icon">
+                      <ShieldCheck size={22} />
+                    </span>
+                    <div>
+                      <small>Provenance</small>
+                      <select
+                        value={measurementProvenance}
+                        onChange={(event) =>
+                          setMeasurementProvenance(
+                            event.target.value as
+                              | "Measured"
+                              | "Imported"
+                              | "Calculated",
+                          )
+                        }
+                      >
+                        <option>Measured</option>
+                        <option>Imported</option>
+                        <option>Calculated</option>
+                      </select>
+                    </div>
+                  </label>
+
+                  <label>
+                    <span className="fv2-measurement-instrument__icon">
+                      <Gauge size={22} />
+                    </span>
+                    <div>
+                      <small>Confidence</small>
+                      <select
+                        value={measurementConfidence}
+                        onChange={(event) =>
+                          setMeasurementConfidence(
+                            event.target.value as ForensicConfidence,
+                          )
+                        }
+                      >
+                        {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
                 </div>
 
-                <footer>
-                  <button className="primary" onClick={addMeasurement}>
-                    Add measurement
-                  </button>
-                </footer>
+                <div className="fv2-measurement-workgrid">
+                  <section className="fv2-measurement-reading">
+                    <header>
+                      <Gauge size={18} />
+                      <div>
+                        <span>Quantitative reading</span>
+                        <strong>{measurementCategory}</strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-measurement-reading__body">
+                      <label className="fv2-measurement-label">
+                        <span>Measurement label</span>
+                        <input
+                          value={measurementLabel}
+                          onChange={(event) =>
+                            setMeasurementLabel(event.target.value)
+                          }
+                          placeholder="e.g. Vehicle A skid mark length"
+                        />
+                      </label>
+
+                      <div className="fv2-measurement-value">
+                        <input
+                          inputMode="decimal"
+                          value={measurementValue}
+                          onChange={(event) =>
+                            setMeasurementValue(event.target.value)
+                          }
+                          placeholder="0.00"
+                          aria-label="Measurement value"
+                        />
+                        <strong>{measurementUnit}</strong>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-measurement-methods">
+                    <header>
+                      <MapPinned size={18} />
+                      <div>
+                        <span>Method & reference</span>
+                        <strong>Acquisition context</strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-measurement-methods__body">
+                      {measurementChoiceField(
+                        "Method / source",
+                        "method",
+                        measurementMethod,
+                        setMeasurementMethod,
+                        MEASUREMENT_METHOD_OPTIONS,
+                        "Enter measurement method or source",
+                        "fv2-measurement-choice",
+                      )}
+
+                      {measurementChoiceField(
+                        "Scene reference",
+                        "location",
+                        measurementLocation,
+                        setMeasurementLocation,
+                        MEASUREMENT_LOCATION_OPTIONS,
+                        "Enter scene reference",
+                        "fv2-measurement-choice",
+                      )}
+                    </div>
+                  </section>
+                </div>
+
+                <section className="fv2-measurement-linkage">
+                  <header>
+                    <FileSearch size={17} />
+                    <div>
+                      <span>Evidence linkage</span>
+                      <strong>{linkedEvidenceIds.size} selected</strong>
+                    </div>
+                  </header>
+
+                  {investigation.evidence.length === 0 ? (
+                    <div className="fv2-measurement-linkage__empty">
+                      <ScanLine size={26} />
+                      <span>No evidence available</span>
+                    </div>
+                  ) : (
+                    <div className="fv2-measurement-evidence-grid">
+                      {investigation.evidence.map((record) => (
+                        <label
+                          key={record.id}
+                          className={
+                            linkedEvidenceIds.has(record.id)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={linkedEvidenceIds.has(record.id)}
+                            onChange={() =>
+                              toggleLinkedEvidence(record.id)
+                            }
+                          />
+                          <span className="fv2-measurement-evidence-grid__icon">
+                            <ScanLine size={18} />
+                          </span>
+                          <div>
+                            <strong>{record.code}</strong>
+                            <span>{record.type}</span>
+                            <small>{record.description}</small>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <details className="fv2-measurement-notes">
+                  <summary>
+                    <span className="fv2-measurement-notes__icon">
+                      <ClipboardList size={17} />
+                    </span>
+                    <div>
+                      <strong>Measurement notes</strong>
+                      <small>
+                        {measurementNotes.trim() ? "Notes recorded" : "Optional"}
+                      </small>
+                    </div>
+                    <ChevronDown size={18} />
+                  </summary>
+
+                  <div className="fv2-measurement-notes__body">
+                    <textarea
+                      rows={4}
+                      value={measurementNotes}
+                      onChange={(event) =>
+                        setMeasurementNotes(event.target.value)
+                      }
+                      placeholder="Additional measurement-specific notes"
+                    />
+                  </div>
+                </details>
               </section>
 
-              <section className="fv2-panel">
+              <section className="fv2-measurement-register">
                 <header>
-                  <span>Measurement register</span>
-                  <strong>{investigation.measurements.length} record(s)</strong>
+                  <div>
+                    <span>Measurement register</span>
+                    <strong>Recorded quantitative evidence</strong>
+                  </div>
+
+                  <div className="fv2-measurement-register__count">
+                    <Ruler size={15} />
+                    <b>{investigation.measurements.length}</b>
+                    <span>records</span>
+                  </div>
                 </header>
 
                 {investigation.measurements.length === 0 ? (
-                  <div className="fv2-empty">No measurements registered yet.</div>
+                  <div className="fv2-measurement-empty">
+                    <Ruler size={34} />
+                    <strong>No measurements registered</strong>
+                  </div>
                 ) : (
-                  <div className="fv2-tablewrap">
+                  <div className="fv2-tablewrap fv2-measurement-tablewrap">
                     <table>
                       <thead>
                         <tr>
                           <th>ID</th>
                           <th>Category</th>
-                          <th>Measurement</th>
-                          <th>Method</th>
+                          <th>Reading</th>
+                          <th>Method / reference</th>
                           <th>Evidence</th>
                           <th>Provenance</th>
                           <th>Confidence</th>
-                          <th />
+                          <th aria-label="Actions" />
                         </tr>
                       </thead>
                       <tbody>
@@ -3912,24 +4047,46 @@ export default function ForensicInvestigationWorkspace({
                           <tr key={record.id}>
                             <td><b>{record.code}</b></td>
                             <td>{record.category}</td>
-                            <td><b>{record.value} {record.unit}</b><small>{record.label}</small></td>
-                            <td>{record.method}<small>{record.locationDescription}</small></td>
-                            <td>
-                              {record.sourceEvidenceIds.length
-                                ? record.sourceEvidenceIds
-                                    .map((id) =>
-                                      investigation.evidence.find(
-                                        (evidence) => evidence.id === id,
-                                      )?.code ?? id,
-                                    )
-                                    .join(", ")
-                                : "—"}
+                            <td className="fv2-measurement-table__reading">
+                              <strong>{record.value} {record.unit}</strong>
+                              <small>{record.label}</small>
                             </td>
-                            <td><span className={`tag ${record.provenance === "Calculated" ? "derived" : ""}`}>{record.provenance}</span></td>
+                            <td>
+                              <strong>{record.method}</strong>
+                              <small>{record.locationDescription}</small>
+                            </td>
+                            <td>
+                              {record.sourceEvidenceIds.length ? (
+                                <span className="fv2-measurement-table__evidence">
+                                  {record.sourceEvidenceIds
+                                    .map(
+                                      (id) =>
+                                        investigation.evidence.find(
+                                          (evidence) => evidence.id === id,
+                                        )?.code ?? id,
+                                    )
+                                    .join(", ")}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td>
+                              <span
+                                className={`tag ${
+                                  record.provenance === "Calculated"
+                                    ? "derived"
+                                    : ""
+                                }`}
+                              >
+                                {record.provenance}
+                              </span>
+                            </td>
                             <td>{record.confidence}</td>
                             <td>
                               <button
-                                className="danger"
+                                type="button"
+                                className="fv2-measurement-delete"
                                 onClick={() =>
                                   setInvestigation(
                                     ForensicInvestigationService.deleteMeasurement(
@@ -3938,8 +4095,10 @@ export default function ForensicInvestigationWorkspace({
                                     ),
                                   )
                                 }
+                                title={`Remove ${record.code}`}
+                                aria-label={`Remove ${record.code}`}
                               >
-                                Remove
+                                <Trash2 size={14} />
                               </button>
                             </td>
                           </tr>
