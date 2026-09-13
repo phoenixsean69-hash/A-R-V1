@@ -6796,7 +6796,7 @@ export default function ForensicInvestigationWorkspace({
                         </div>
                       </header>
 
-                      <div className="fv2-analysis-matrix-grid">
+                      <div className="fv2-analysis-matrix-grid roadsafe-dotted-scroll-x">
                         {analysisAreaCards.map((card) => (
                           <article key={card.area}>
                             <div>
@@ -6849,7 +6849,7 @@ export default function ForensicInvestigationWorkspace({
                         </div>
                       </header>
 
-                      <div className="fv2-analysis-timeline-visual">
+                      <div className="fv2-analysis-timeline-visual roadsafe-dotted-scroll-x">
                         {analysisTimelineEvents.length === 0 ? (
                           <div className="fv2-analysis-timeline-empty">
                             <Activity size={30} />

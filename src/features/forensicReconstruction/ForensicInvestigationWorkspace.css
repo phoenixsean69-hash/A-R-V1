@@ -8502,3 +8502,113 @@ details.fv2-analysis-inspector-module > textarea {
 }
 
 /* ROADSAFE_ANALYSIS_VISUAL_WORKSTATION_END */
+
+/* ROADSAFE_ANALYSIS_DOTTED_SLIDERS_START */
+
+/*
+ * Horizontal overflow for dense forensic panels.
+ * The WebKit thumb itself uses a dotted grip pattern.
+ */
+.fv2-analysis-diagnostic-module {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.roadsafe-dotted-scroll-x {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #666666 #202020;
+}
+
+/* Consistency rows remain complete and slide horizontally when needed. */
+.fv2-analysis-matrix-grid.roadsafe-dotted-scroll-x {
+  padding-bottom: 12px;
+}
+
+.fv2-analysis-matrix-grid.roadsafe-dotted-scroll-x > article {
+  width: max-content;
+  min-width: 650px;
+  grid-template-columns:
+    minmax(170px, 1.25fr)
+    repeat(4, minmax(86px, .75fr));
+}
+
+/* Timeline keeps vertical scrolling but can also slide horizontally. */
+.fv2-analysis-timeline-visual.roadsafe-dotted-scroll-x {
+  overflow-y: auto !important;
+  padding-bottom: 12px;
+}
+
+.fv2-analysis-timeline-visual.roadsafe-dotted-scroll-x > article,
+.fv2-analysis-timeline-visual.roadsafe-dotted-scroll-x
+  > .fv2-analysis-timeline-empty {
+  min-width: 420px;
+}
+
+/* Chromium / Edge dotted slider. */
+.roadsafe-dotted-scroll-x::-webkit-scrollbar {
+  width: 10px;
+  height: 12px;
+}
+
+.roadsafe-dotted-scroll-x::-webkit-scrollbar-track {
+  border: 1px solid #343434;
+  border-radius: 999px;
+  background: #202020;
+}
+
+.roadsafe-dotted-scroll-x::-webkit-scrollbar-thumb {
+  min-width: 54px;
+  border: 2px solid #202020;
+  border-radius: 999px;
+  background-color: #4d4d4d;
+  background-image:
+    radial-gradient(
+      circle,
+      #b5b5b5 1.25px,
+      transparent 1.45px
+    );
+  background-repeat: repeat-x;
+  background-position: center;
+  background-size: 9px 9px;
+}
+
+.roadsafe-dotted-scroll-x::-webkit-scrollbar-thumb:hover {
+  background-color: #595959;
+  background-image:
+    radial-gradient(
+      circle,
+      #e8872d 1.25px,
+      transparent 1.45px
+    );
+}
+
+/* Avoid old mobile rule hiding the last Matrix metrics.
+ * Slider should expose them instead.
+ */
+@media (max-width: 760px) {
+  .fv2-analysis-matrix-grid.roadsafe-dotted-scroll-x
+    > article
+    > span:nth-of-type(3),
+  .fv2-analysis-matrix-grid.roadsafe-dotted-scroll-x
+    > article
+    > span:nth-of-type(4) {
+    display: grid !important;
+  }
+
+  .fv2-analysis-matrix-grid.roadsafe-dotted-scroll-x > article {
+    min-width: 610px;
+  }
+
+  .fv2-analysis-timeline-visual.roadsafe-dotted-scroll-x > article,
+  .fv2-analysis-timeline-visual.roadsafe-dotted-scroll-x
+    > .fv2-analysis-timeline-empty {
+    min-width: 360px;
+  }
+}
+
+/* ROADSAFE_ANALYSIS_DOTTED_SLIDERS_END */
