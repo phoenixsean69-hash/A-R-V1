@@ -16,6 +16,11 @@ import {
   PersonStanding,
   Play,
   Users,
+  Camera,
+  Car,
+  CircleDot,
+  LoaderCircle,
+  Upload,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -4195,88 +4200,263 @@ export default function ForensicInvestigationWorkspace({
 
           {section === "Vehicles" && (
             <div className="fv2-stack">
-              <section className="fv2-panel">
-                <header>
-                  <div>
-                    <span>Vehicle examination</span>
-                    <strong>Record the vehicle before reconstruction assumptions</strong>
+              <section className="fv2-vehicle-console">
+                <header className="fv2-vehicle-commandbar">
+                  <div className="fv2-vehicle-commandbar__identity">
+                    <span className="fv2-vehicle-commandbar__icon">
+                      <CarFront size={28} />
+                    </span>
+
+                    <div>
+                      <small>Vehicle examination</small>
+                      <strong>Vehicle Examination Console</strong>
+                    </div>
+                  </div>
+
+                  <div className="fv2-vehicle-commandbar__status">
+                    <span>
+                      <CarFront size={15} />
+                      <b>{investigation.vehicles.length}</b>
+                      vehicles
+                    </span>
+
+                    <span>
+                      <CircleDot size={15} />
+                      <b>{vehicleDamageAreas.size}</b>
+                      damage zones
+                    </span>
+
+                    <span>
+                      <Camera size={15} />
+                      <b>{vehicleDamagePhotos.length}</b>
+                      photos
+                    </span>
+
+                    <button
+                      type="button"
+                      className="fv2-vehicle-register"
+                      onClick={addVehicle}
+                      title="Register vehicle examination"
+                      aria-label="Register vehicle examination"
+                    >
+                      <Plus size={16} />
+                      <span>Register</span>
+                    </button>
                   </div>
                 </header>
 
-                <div className="fv2-grid">
-                  <label className="fv2-field">
-                    <span>Case vehicle label</span>
-                    <input
-                      value={vehicleLabel}
-                      onChange={(e) => setVehicleLabel(e.target.value)}
-                      placeholder="e.g. Vehicle A"
-                    />
+                <div className="fv2-vehicle-instruments">
+                  <label>
+                    <span className="fv2-vehicle-instrument__icon">
+                      <ScanEye size={22} />
+                    </span>
+
+                    <div>
+                      <small>Inspection</small>
+                      <select
+                        value={vehicleInspectionStatus}
+                        onChange={(event) =>
+                          setVehicleInspectionStatus(
+                            event.target.value as VehicleInspectionStatus,
+                          )
+                        }
+                      >
+                        {VEHICLE_INSPECTION_STATUS_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
 
-                  <label className="fv2-field">
-                    <span>Registration number</span>
-                    <input
-                      value={vehicleRegistration}
-                      onChange={(e) => setVehicleRegistration(e.target.value)}
-                      placeholder="e.g. ABC 1234"
-                    />
+                  <label>
+                    <span className="fv2-vehicle-instrument__icon">
+                      <CircleDot size={22} />
+                    </span>
+
+                    <div>
+                      <small>Damage severity</small>
+                      <select
+                        value={vehicleDamageSeverity}
+                        onChange={(event) =>
+                          setVehicleDamageSeverity(event.target.value)
+                        }
+                      >
+                        {VEHICLE_DAMAGE_SEVERITY_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
 
-                  <label className="fv2-field full">
-                    <span>Make / model</span>
-                    <input
-                      value={vehicleMakeModel}
-                      onChange={(e) => setVehicleMakeModel(e.target.value)}
-                      placeholder="e.g. Toyota Corolla"
-                    />
+                  <label>
+                    <span className="fv2-vehicle-instrument__icon">
+                      <ShieldCheck size={22} />
+                    </span>
+
+                    <div>
+                      <small>Provenance</small>
+                      <select
+                        value={vehicleProvenance}
+                        onChange={(event) =>
+                          setVehicleProvenance(
+                            event.target.value as ForensicProvenance,
+                          )
+                        }
+                      >
+                        {FORENSIC_PROVENANCE_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
 
-                  {vehicleChoiceField(
-                    "Vehicle type",
-                    "type",
-                    vehicleType,
-                    setVehicleType,
-                    VEHICLE_TYPE_OPTIONS,
-                    "Enter another vehicle type...",
-                  )}
+                  <label>
+                    <span className="fv2-vehicle-instrument__icon">
+                      <Gauge size={22} />
+                    </span>
 
-                  <label className="fv2-field full">
-                    <span>Inspection stage</span>
-                    <select
-                      value={vehicleInspectionStatus}
-                      onChange={(e) =>
-                        setVehicleInspectionStatus(
-                          e.target.value as VehicleInspectionStatus,
-                        )
-                      }
-                    >
-                      {VEHICLE_INSPECTION_STATUS_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <small>Confidence</small>
+                      <select
+                        value={vehicleConfidence}
+                        onChange={(event) =>
+                          setVehicleConfidence(
+                            event.target.value as ForensicConfidence,
+                          )
+                        }
+                      >
+                        {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
+                          <option key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
+                </div>
 
-                  {vehicleChoiceField(
-                    "Where the vehicle was found / resting",
-                    "scenePosition",
-                    vehicleScenePosition,
-                    setVehicleScenePosition,
-                    VEHICLE_SCENE_POSITION_OPTIONS,
-                    "Describe where the vehicle was found...",
-                  )}
+                <div className="fv2-vehicle-workgrid">
+                  <section className="fv2-vehicle-module fv2-vehicle-identity">
+                    <header>
+                      <CarFront size={19} />
+                      <div>
+                        <span>Vehicle identity</span>
+                        <strong>
+                          {vehicleLabel.trim() ||
+                            vehicleRegistration.trim() ||
+                            "Unregistered draft"}
+                        </strong>
+                      </div>
+                    </header>
 
-                  {vehicleChoiceField(
-                    "Main mechanical finding",
-                    "mechanicalFinding",
-                    vehicleMechanicalFinding,
-                    setVehicleMechanicalFinding,
-                    VEHICLE_MECHANICAL_FINDING_OPTIONS,
-                    "Describe another mechanical finding...",
-                  )}
+                    <div className="fv2-vehicle-module__body">
+                      <div className="fv2-vehicle-id-grid">
+                        <label>
+                          <span>Case label</span>
+                          <input
+                            value={vehicleLabel}
+                            onChange={(event) =>
+                              setVehicleLabel(event.target.value)
+                            }
+                            placeholder="Vehicle A"
+                          />
+                        </label>
 
-                  <div className="fv2-field full">
-                    <span>Visible damage areas</span>
-                    <div className="fv2-check-grid fv2-damage-area-grid">
+                        <label>
+                          <span>Registration</span>
+                          <input
+                            value={vehicleRegistration}
+                            onChange={(event) =>
+                              setVehicleRegistration(event.target.value)
+                            }
+                            placeholder="ABC 1234"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="fv2-vehicle-wide-field">
+                        <span>Make / model</span>
+                        <input
+                          value={vehicleMakeModel}
+                          onChange={(event) =>
+                            setVehicleMakeModel(event.target.value)
+                          }
+                          placeholder="Toyota Corolla"
+                        />
+                      </label>
+
+                      <div className="fv2-vehicle-choice-wrap">
+                        {vehicleChoiceField(
+                          "Vehicle type",
+                          "type",
+                          vehicleType,
+                          setVehicleType,
+                          VEHICLE_TYPE_OPTIONS,
+                          "Enter another vehicle type...",
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="fv2-vehicle-module fv2-vehicle-context">
+                    <header>
+                      <MapPinned size={19} />
+                      <div>
+                        <span>Examination context</span>
+                        <strong>Scene & mechanical state</strong>
+                      </div>
+                    </header>
+
+                    <div className="fv2-vehicle-module__body">
+                      <div className="fv2-vehicle-choice-wrap">
+                        {vehicleChoiceField(
+                          "Vehicle resting position",
+                          "scenePosition",
+                          vehicleScenePosition,
+                          setVehicleScenePosition,
+                          VEHICLE_SCENE_POSITION_OPTIONS,
+                          "Describe where the vehicle was found...",
+                        )}
+                      </div>
+
+                      <div className="fv2-vehicle-choice-wrap">
+                        {vehicleChoiceField(
+                          "Mechanical finding",
+                          "mechanicalFinding",
+                          vehicleMechanicalFinding,
+                          setVehicleMechanicalFinding,
+                          VEHICLE_MECHANICAL_FINDING_OPTIONS,
+                          "Describe another mechanical finding...",
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <section className="fv2-vehicle-damage">
+                  <header>
+                    <CarFront size={19} />
+
+                    <div>
+                      <span>Damage mapping</span>
+                      <strong>Visible damage zones</strong>
+                    </div>
+
+                    <div className="fv2-vehicle-damage__meta">
+                      <b>{vehicleDamageAreas.size}</b>
+                      <span>selected</span>
+                    </div>
+                  </header>
+
+                  <div className="fv2-vehicle-damage__body">
+                    <div className="fv2-vehicle-silhouette">
+                      <Car size={70} />
+                      <span>
+                        {vehicleMakeModel.trim() ||
+                          vehicleType.trim() ||
+                          "Vehicle"}
+                      </span>
+                    </div>
+
+                    <div className="fv2-vehicle-damage-grid">
                       {VEHICLE_DAMAGE_AREA_OPTIONS.map((area) => {
                         const photoCount =
                           getDamagePhotosForArea(area).length;
@@ -4287,18 +4467,23 @@ export default function ForensicInvestigationWorkspace({
                         return (
                           <label
                             key={area}
-                            className={selected ? "selected" : ""}
+                            className={selected ? "is-selected" : ""}
                           >
                             <input
                               type="checkbox"
                               checked={selected}
-                              onChange={() => toggleVehicleDamageArea(area)}
+                              onChange={() =>
+                                toggleVehicleDamageArea(area)
+                              }
                             />
 
-                            <div className="fv2-damage-area-text">
-                              <span>{area}</span>
+                            <CircleDot size={22} />
+
+                            <div>
+                              <strong>{area}</strong>
                               <small>
-                                {photoCount} photo{photoCount === 1 ? "" : "s"}
+                                {photoCount}
+                                <Camera size={11} />
                               </small>
                             </div>
                           </label>
@@ -4308,108 +4493,104 @@ export default function ForensicInvestigationWorkspace({
                   </div>
 
                   {selectedVehicleDamageAreas.length > 0 && (
-                    <div className="fv2-field full fv2-damage-area-panel-wrap">
-                      <span>Damage-area photographs</span>
+                    <div className="fv2-vehicle-damage-capture">
+                      {selectedVehicleDamageAreas.map((area) => {
+                        const areaPhotos =
+                          getDamagePhotosForArea(area);
 
-                      <div className="fv2-damage-area-panel-grid">
-                        {selectedVehicleDamageAreas.map((area) => {
-                          const areaPhotos =
-                            getDamagePhotosForArea(area);
-
-                          return (
-                            <section
-                              key={area}
-                              className="fv2-damage-area-panel"
-                            >
-                              <div className="fv2-damage-area-panel-header">
-                                <div>
-                                  <strong>{area}</strong>
-                                  <small>
-                                    {areaPhotos.length > 0
-                                      ? `${areaPhotos.length} attached photo${areaPhotos.length === 1 ? "" : "s"}`
-                                      : "Attach at least one photo for this damage area."}
-                                  </small>
-                                </div>
-
-                                <label className="fv2-action-button fv2-photo-action-button">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    disabled={vehicleDamagePhotoBusy}
-                                    onChange={(event) => {
-                                      void addVehicleDamagePhotos(
-                                        event.target.files,
-                                        area,
-                                      );
-
-                                      event.currentTarget.value = "";
-                                    }}
-                                  />
-
-                                  <span>
-                                    {vehicleDamagePhotoBusy
-                                      ? "Saving photos..."
-                                      : areaPhotos.length > 0
-                                        ? `Add more ${area} photos`
-                                        : `Add ${area} photo`}
-                                  </span>
-                                </label>
+                        return (
+                          <section
+                            key={area}
+                            className="fv2-vehicle-damage-capture__zone"
+                          >
+                            <header>
+                              <div>
+                                <CircleDot size={17} />
+                                <strong>{area}</strong>
                               </div>
 
-                              {areaPhotos.length > 0 ? (
-                                <div className="fv2-damage-photo-grid fv2-damage-photo-grid-single">
-                                  {areaPhotos.map((photo) => (
-                                    <article
-                                      key={photo.id}
-                                      className="fv2-damage-photo-card"
-                                    >
-                                      <DamagePhotoThumbnail
-                                        photo={photo}
-                                      />
+                              <span>
+                                {areaPhotos.length}
+                                <Camera size={12} />
+                              </span>
+                            </header>
 
-                                      <div>
-                                        <strong title={photo.fileName}>
-                                          {photo.fileName}
-                                        </strong>
+                            <label className="fv2-vehicle-photo-button">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                disabled={vehicleDamagePhotoBusy}
+                                onChange={(event) => {
+                                  void addVehicleDamagePhotos(
+                                    event.target.files,
+                                    area,
+                                  );
 
-                                        <small>
-                                          {(photo.sizeBytes / 1024 / 1024).toFixed(2)} MB
-                                        </small>
-                                      </div>
+                                  event.currentTarget.value = "";
+                                }}
+                              />
 
-                                      <button
-                                        type="button"
-                                        className="danger"
-                                        disabled={vehicleDamagePhotoBusy}
-                                        onClick={() => {
-                                          void removeDraftVehicleDamagePhoto(
-                                            photo.id,
-                                          );
-                                        }}
-                                      >
-                                        Remove
-                                      </button>
-                                    </article>
-                                  ))}
-                                </div>
+                              {vehicleDamagePhotoBusy ? (
+                                <LoaderCircle
+                                  className="animate-spin"
+                                  size={16}
+                                />
                               ) : (
-                                <div className="fv2-inline-hint">
-                                  No photo attached yet.
-                                </div>
+                                <Camera size={16} />
                               )}
-                            </section>
-                          );
-                        })}
-                      </div>
+
+                              <span>
+                                {areaPhotos.length > 0
+                                  ? "Add"
+                                  : "Capture"}
+                              </span>
+                            </label>
+
+                            {areaPhotos.length > 0 && (
+                              <div className="fv2-vehicle-photo-grid">
+                                {areaPhotos.map((photo) => (
+                                  <article key={photo.id}>
+                                    <DamagePhotoThumbnail
+                                      photo={photo}
+                                    />
+
+                                    <button
+                                      type="button"
+                                      disabled={vehicleDamagePhotoBusy}
+                                      onClick={() => {
+                                        void removeDraftVehicleDamagePhoto(
+                                          photo.id,
+                                        );
+                                      }}
+                                      title={`Remove ${photo.fileName}`}
+                                      aria-label={`Remove ${photo.fileName}`}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </article>
+                                ))}
+                              </div>
+                            )}
+                          </section>
+                        );
+                      })}
                     </div>
                   )}
+                </section>
 
-                  <div className="fv2-field full fv2-damage-photo-section">
-                    <span>General / overview damage photographs (optional)</span>
+                <section className="fv2-vehicle-secondary-grid">
+                  <div className="fv2-vehicle-photo-module">
+                    <header>
+                      <Camera size={18} />
+                      <div>
+                        <span>Overview photos</span>
+                        <strong>
+                          {generalVehicleDamagePhotos.length} captured
+                        </strong>
+                      </div>
 
-                    <div className="fv2-damage-photo-upload">
-                      <label className="fv2-action-button fv2-photo-action-button">
+                      <label className="fv2-vehicle-photo-button">
                         <input
                           type="file"
                           accept="image/*"
@@ -4424,50 +4605,39 @@ export default function ForensicInvestigationWorkspace({
                           }}
                         />
 
-                        <span>
-                          {vehicleDamagePhotoBusy
-                            ? "Saving photos..."
-                            : "Choose photos"}
-                        </span>
-                      </label>
+                        {vehicleDamagePhotoBusy ? (
+                          <LoaderCircle
+                            className="animate-spin"
+                            size={16}
+                          />
+                        ) : (
+                          <Upload size={16} />
+                        )}
 
-                      <small>
-                        Use this for wide shots or overall damage views that are not tied to just one damage area. Up to 12 photos total per vehicle, 15 MB each.
-                      </small>
-                    </div>
+                        <span>Add</span>
+                      </label>
+                    </header>
 
                     {generalVehicleDamagePhotos.length > 0 && (
-                      <div className="fv2-damage-photo-grid">
+                      <div className="fv2-vehicle-overview-photos">
                         {generalVehicleDamagePhotos.map((photo) => (
-                          <article
-                            key={photo.id}
-                            className="fv2-damage-photo-card"
-                          >
+                          <article key={photo.id}>
                             <DamagePhotoThumbnail
                               photo={photo}
                             />
 
-                            <div>
-                              <strong title={photo.fileName}>
-                                {photo.fileName}
-                              </strong>
-
-                              <small>
-                                {(photo.sizeBytes / 1024 / 1024).toFixed(2)} MB
-                              </small>
-                            </div>
-
                             <button
                               type="button"
-                              className="danger"
                               disabled={vehicleDamagePhotoBusy}
                               onClick={() => {
                                 void removeDraftVehicleDamagePhoto(
                                   photo.id,
                                 );
                               }}
+                              title={`Remove ${photo.fileName}`}
+                              aria-label={`Remove ${photo.fileName}`}
                             >
-                              Remove
+                              <Trash2 size={13} />
                             </button>
                           </article>
                         ))}
@@ -4475,118 +4645,166 @@ export default function ForensicInvestigationWorkspace({
                     )}
                   </div>
 
-                  <label className="fv2-field full">
-                    <span>Damage severity</span>
-                    <select
-                      value={vehicleDamageSeverity}
-                      onChange={(e) => setVehicleDamageSeverity(e.target.value)}
-                    >
-                      {VEHICLE_DAMAGE_SEVERITY_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="fv2-vehicle-trace-module">
+                    <header>
+                      <ScanLine size={18} />
+                      <div>
+                        <span>Trace material</span>
+                        <strong>
+                          {vehicleTraceTypes.size} selected
+                        </strong>
+                      </div>
+                    </header>
 
-                  <label className="fv2-field full">
-                    <span>Damage notes</span>
-                    <textarea
-                      rows={4}
-                      value={vehicleDamageDescription}
-                      onChange={(e) => setVehicleDamageDescription(e.target.value)}
-                      placeholder="Record shape, direction, height or unusual damage that photographs alone may not explain."
-                    />
-                  </label>
+                    <div className="fv2-vehicle-trace-grid">
+                      {VEHICLE_TRACE_TYPE_OPTIONS.map((trace) => {
+                        const selected =
+                          vehicleTraceTypes.has(trace);
 
-                  <div className="fv2-field full">
-                    <span>Transferred / trace material found on vehicle</span>
-                    <div className="fv2-check-grid">
-                      {VEHICLE_TRACE_TYPE_OPTIONS.map((trace) => (
-                        <label key={trace}>
+                        return (
+                          <label
+                            key={trace}
+                            className={selected ? "is-selected" : ""}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() =>
+                                toggleVehicleTraceType(trace)
+                              }
+                            />
+
+                            <ScanLine size={18} />
+                            <span>{trace}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="fv2-vehicle-evidence">
+                  <header>
+                    <FileSearch size={18} />
+
+                    <div>
+                      <span>Supporting evidence</span>
+                      <strong>
+                        {vehicleEvidenceIds.size} linked
+                      </strong>
+                    </div>
+                  </header>
+
+                  {investigation.evidence.length === 0 ? (
+                    <div className="fv2-vehicle-evidence__empty">
+                      <ScanLine size={28} />
+                    </div>
+                  ) : (
+                    <div className="fv2-vehicle-evidence-grid">
+                      {investigation.evidence.map((record) => (
+                        <label
+                          key={record.id}
+                          className={
+                            vehicleEvidenceIds.has(record.id)
+                              ? "is-selected"
+                              : ""
+                          }
+                        >
                           <input
                             type="checkbox"
-                            checked={vehicleTraceTypes.has(trace)}
-                            onChange={() => toggleVehicleTraceType(trace)}
+                            checked={vehicleEvidenceIds.has(record.id)}
+                            onChange={() =>
+                              toggleVehicleEvidence(record.id)
+                            }
                           />
-                          <span>{trace}</span>
+
+                          <span className="fv2-vehicle-evidence-grid__icon">
+                            <ScanLine size={18} />
+                          </span>
+
+                          <div>
+                            <strong>{record.code}</strong>
+                            <span>{record.type}</span>
+                            <small>{record.description}</small>
+                          </div>
                         </label>
                       ))}
                     </div>
+                  )}
+                </section>
+
+                <details className="fv2-vehicle-notes">
+                  <summary>
+                    <span className="fv2-vehicle-notes__icon">
+                      <ClipboardList size={17} />
+                    </span>
+
+                    <div>
+                      <strong>Examination notes</strong>
+                      <small>
+                        {vehicleDamageDescription.trim() ||
+                        vehicleTraceNotes.trim()
+                          ? "Notes recorded"
+                          : "Optional"}
+                      </small>
+                    </div>
+
+                    <ChevronDown size={18} />
+                  </summary>
+
+                  <div className="fv2-vehicle-notes__body">
+                    <label>
+                      <span>Damage notes</span>
+                      <textarea
+                        rows={4}
+                        value={vehicleDamageDescription}
+                        onChange={(event) =>
+                          setVehicleDamageDescription(
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Damage shape, direction, height or unusual features"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Trace notes</span>
+                      <textarea
+                        rows={3}
+                        value={vehicleTraceNotes}
+                        onChange={(event) =>
+                          setVehicleTraceNotes(
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Additional trace-evidence details"
+                      />
+                    </label>
                   </div>
-
-                  <label className="fv2-field full">
-                    <span>Trace evidence notes</span>
-                    <textarea
-                      rows={3}
-                      value={vehicleTraceNotes}
-                      onChange={(e) => setVehicleTraceNotes(e.target.value)}
-                      placeholder="Only add details that cannot be captured by the selections above."
-                    />
-                  </label>
-
-                  <div className="fv2-field full">
-                    <span>Link supporting evidence</span>
-                    {investigation.evidence.length === 0 ? (
-                      <div className="fv2-empty-select">
-                        Add evidence records first if photographs, fragments, paint, glass or other evidence support this examination.
-                      </div>
-                    ) : (
-                      <div className="fv2-evidence-select">
-                        {investigation.evidence.map((record) => (
-                          <label key={record.id}>
-                            <input
-                              type="checkbox"
-                              checked={vehicleEvidenceIds.has(record.id)}
-                              onChange={() => toggleVehicleEvidence(record.id)}
-                            />
-                            <span><b>{record.code}</b> {record.type} · {record.description}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <label className="fv2-field">
-                    <span>Provenance</span>
-                    <select
-                      value={vehicleProvenance}
-                      onChange={(e) => setVehicleProvenance(e.target.value as ForensicProvenance)}
-                    >
-                      {FORENSIC_PROVENANCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="fv2-field">
-                    <span>Confidence</span>
-                    <select
-                      value={vehicleConfidence}
-                      onChange={(e) => setVehicleConfidence(e.target.value as ForensicConfidence)}
-                    >
-                      {FORENSIC_CONFIDENCE_OPTIONS.map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <footer>
-                  <button className="primary" onClick={addVehicle}>
-                    Add vehicle examination
-                  </button>
-                </footer>
+                </details>
               </section>
 
-              <section className="fv2-panel">
+              <section className="fv2-vehicle-register">
                 <header>
-                  <span>Vehicle examination register</span>
-                  <strong>{investigation.vehicles.length} vehicle(s)</strong>
+                  <div>
+                    <span>Vehicle examination register</span>
+                    <strong>Examined vehicles</strong>
+                  </div>
+
+                  <div className="fv2-vehicle-register__count">
+                    <CarFront size={15} />
+                    <b>{investigation.vehicles.length}</b>
+                    <span>vehicles</span>
+                  </div>
                 </header>
 
                 {investigation.vehicles.length === 0 ? (
-                  <div className="fv2-empty">No vehicles examined yet.</div>
+                  <div className="fv2-vehicle-empty">
+                    <CarFront size={38} />
+                    <strong>No vehicles examined</strong>
+                  </div>
                 ) : (
-                  <div className="fv2-tablewrap">
+                  <div className="fv2-tablewrap fv2-vehicle-tablewrap">
                     <table>
                       <thead>
                         <tr>
@@ -4594,78 +4812,98 @@ export default function ForensicInvestigationWorkspace({
                           <th>Vehicle</th>
                           <th>Inspection</th>
                           <th>Damage</th>
-                          <th>Trace evidence</th>
-                          <th>Evidence links</th>
+                          <th>Trace</th>
+                          <th>Evidence</th>
                           <th>Confidence</th>
-                          <th />
+                          <th aria-label="Actions" />
                         </tr>
                       </thead>
+
                       <tbody>
                         {investigation.vehicles.map((record) => (
                           <tr key={record.id}>
-                            <td><b>{record.code}</b></td>
                             <td>
-                              <b>{record.label}</b>
-                              <small>{record.vehicleType}</small>
-                              <small>{record.registration || "No registration recorded"}</small>
-                              <small>{record.makeModel || "Make/model not recorded"}</small>
+                              <b>{record.code}</b>
                             </td>
-                            <td>
-                              {record.inspectionStatus}
-                              <small>{record.scenePositionSummary || "Position not recorded"}</small>
-                              <small>{record.mechanicalFinding || "Mechanical finding not recorded"}</small>
-                            </td>
-                            <td>
-                              {record.damageSeverity}
-                              <small>
-                                {record.damageAreas.length
-                                  ? record.damageAreas
-                                      .map((area) => {
-                                        const count =
-                                          (record.damagePhotos ?? []).filter(
-                                            (photo) => photo.damageArea === area,
-                                          ).length;
 
-                                        return count > 0
-                                          ? `${area} (${count} photo${count === 1 ? "" : "s"})`
-                                          : `${area} (no photo)`;
-                                      })
-                                      .join(", ")
-                                  : "No areas selected"}
+                            <td>
+                              <strong>{record.label}</strong>
+                              <small>{record.vehicleType}</small>
+                              <small>
+                                {record.registration ||
+                                  "No registration"}
                               </small>
                               <small>
-                                {record.damagePhotos?.length
-                                  ? `${record.damagePhotos.length} damage photo${record.damagePhotos.length === 1 ? "" : "s"}`
-                                  : "No damage photos"}
+                                {record.makeModel ||
+                                  "Make/model not recorded"}
+                              </small>
+                            </td>
+
+                            <td>
+                              <strong>
+                                {record.inspectionStatus}
+                              </strong>
+                              <small>
+                                {record.scenePositionSummary ||
+                                  "Position not recorded"}
+                              </small>
+                              <small>
+                                {record.mechanicalFinding ||
+                                  "Mechanical finding not recorded"}
+                              </small>
+                            </td>
+
+                            <td>
+                              <strong>
+                                {record.damageSeverity}
+                              </strong>
+
+                              <small>
+                                {record.damageAreas.length
+                                  ? record.damageAreas.join(", ")
+                                  : "No areas selected"}
                               </small>
 
                               {record.damagePhotos?.length > 0 && (
                                 <div className="fv2-damage-photo-mini-grid">
-                                  {record.damagePhotos.slice(0, 3).map((photo) => (
-                                    <DamagePhotoThumbnail
-                                      key={photo.id}
-                                      photo={photo}
-                                    />
-                                  ))}
+                                  {record.damagePhotos
+                                    .slice(0, 3)
+                                    .map((photo) => (
+                                      <DamagePhotoThumbnail
+                                        key={photo.id}
+                                        photo={photo}
+                                      />
+                                    ))}
                                 </div>
                               )}
                             </td>
+
                             <td>
-                              {record.traceTypes.length ? record.traceTypes.join(", ") : "—"}
+                              {record.traceTypes.length
+                                ? record.traceTypes.join(", ")
+                                : "—"}
                             </td>
+
                             <td>
                               {record.sourceEvidenceIds.length
                                 ? record.sourceEvidenceIds
-                                    .map((id) =>
-                                      investigation.evidence.find((e) => e.id === id)?.code ?? id,
+                                    .map(
+                                      (id) =>
+                                        investigation.evidence.find(
+                                          (evidence) =>
+                                            evidence.id === id,
+                                        )?.code ?? id,
                                     )
                                     .join(", ")
                                 : "—"}
                             </td>
+
                             <td>{record.confidence}</td>
+
                             <td>
                               <button
-                                className="danger"
+                                type="button"
+                                className="fv2-vehicle-delete"
                                 onClick={() => {
                                   void Promise.all(
                                     (record.damagePhotos ?? []).map(
@@ -4688,8 +4926,10 @@ export default function ForensicInvestigationWorkspace({
                                     ),
                                   );
                                 }}
+                                title={`Remove ${record.code}`}
+                                aria-label={`Remove ${record.code}`}
                               >
-                                Remove
+                                <Trash2 size={14} />
                               </button>
                             </td>
                           </tr>
@@ -4698,13 +4938,6 @@ export default function ForensicInvestigationWorkspace({
                     </table>
                   </div>
                 )}
-              </section>
-
-              <section className="fv2-panel fv2-notice">
-                <b>Forensic rule</b>
-                <p>
-                  A vehicle examination record describes what was found on the real vehicle. It does not yet create a 2D/3D participant, assign a crash speed or decide who was at fault.
-                </p>
               </section>
             </div>
           )}
