@@ -1,5 +1,20 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { Orbit } from "../icons/materialIcons";
+import {
+  CircleDot,
+  ChevronDown,
+  ClipboardList,
+  Crosshair,
+  FileSearch,
+  Gauge,
+  MapPinned,
+  Orbit,
+  Play,
+  Plus,
+  ScanLine,
+  ShieldCheck,
+  Trash2,
+  Waypoints,
+} from "../icons/materialIcons";
 import {
   FORENSIC_CONFIDENCE_OPTIONS,
   HYPOTHESIS_STATUS_OPTIONS,
@@ -218,215 +233,1086 @@ export default function HypothesesWorkspace({
     tell(`${h.code} removed.`);
   };
 
-  const code = (kind: string, id: string) => {
-    const list =
-      kind === "finding" ? investigation.analysisFindings :
-      kind === "evidence" ? investigation.evidence :
-      kind === "measurement" ? investigation.measurements :
-      kind === "vehicle" ? investigation.vehicles :
-      kind === "person" ? investigation.persons :
-      investigation.witnesses;
-    return list.find((item) => item.id === id)?.code ?? id;
-  };
-
   return (
-    <div className="fv2-stack fv2-hyp-workstation">
-      <section className="fv2-panel fv2-hyp-hero">
-        <header>
-          <span className="fv2-workspace-hero-icon"><Orbit size={30} /></span>
-          <div>
-            <span>Competing crash hypotheses</span>
-            <strong>Build explanations that can be challenged by the evidence</strong>
-          </div>
-          <div className="fv2-hyp-summary">
-            <span>{investigation.hypotheses.length} hypothesis(es)</span>
-            <span>{compareIds.size}/2 comparison</span>
-            <span>{investigation.hypotheses.filter((h) => h.selectedForSimulation).length} queued</span>
-          </div>
-        </header>
-      </section>
+    <div className="fv2-stack fv2-hyp-viz">
+      <header className="fv2-hyp-viz-commandbar">
+        <div className="fv2-hyp-viz-commandbar__identity">
+          <span className="fv2-hyp-viz-commandbar__icon">
+            <Orbit size={36} />
+          </span>
 
-      <div className="fv2-hyp-layout">
-        <div className="fv2-hyp-main">
-          <section className="fv2-panel">
-            <header><div><span>Hypothesis register</span><strong>Current competing explanations</strong></div></header>
+          <div>
+            <small>Competing crash hypotheses</small>
+            <strong>Hypothesis Testing Workstation</strong>
+          </div>
+        </div>
+
+        <div className="fv2-hyp-viz-commandbar__status">
+          <span>
+            <Orbit size={15} />
+            <b>{investigation.hypotheses.length}</b>
+            hypotheses
+          </span>
+
+          <span>
+            <Waypoints size={15} />
+            <b>{compareIds.size}/2</b>
+            compare
+          </span>
+
+          <span>
+            <Play size={15} />
+            <b>
+              {
+                investigation.hypotheses.filter(
+                  (h) => h.selectedForSimulation,
+                ).length
+              }
+            </b>
+            queued
+          </span>
+
+          <span>
+            <MapPinned size={15} />
+            <b>
+              {
+                investigation.hypotheses.filter(
+                  (h) => h.impactRegion,
+                ).length
+              }
+            </b>
+            regions
+          </span>
+        </div>
+      </header>
+
+      <div className="fv2-hyp-viz-layout">
+        <main className="fv2-hyp-viz-canvas">
+          <section className="fv2-hyp-viz-map-module">
+            <header>
+              <MapPinned size={20} />
+
+              <div>
+                <span>Hypothesis geometry</span>
+                <strong>Proposed impact regions</strong>
+              </div>
+
+              <div className="fv2-hyp-viz-map-stats">
+                <span>
+                  <b>
+                    {
+                      investigation.hypotheses.filter(
+                        (h) => h.impactRegion,
+                      ).length
+                    }
+                  </b>
+                  plotted
+                </span>
+
+                <span>
+                  <b>{investigation.hypotheses.length}</b>
+                  total
+                </span>
+              </div>
+            </header>
+
+            <div className="fv2-hyp-viz-map">
+              <div className="fv2-hyp-viz-axis x-axis" />
+              <div className="fv2-hyp-viz-axis y-axis" />
+
+              {investigation.hypotheses
+                .filter((h) => h.impactRegion)
+                .map((h) => {
+                  const positioned =
+                    investigation.hypotheses
+                      .filter((x) => x.impactRegion)
+                      .map((x) => x.impactRegion!);
+
+                  const maxAbs = Math.max(
+                    10,
+                    ...positioned.flatMap((p) => [
+                      Math.abs(p.xMetres) + p.radiusMetres,
+                      Math.abs(p.yMetres) + p.radiusMetres,
+                    ]),
+                  );
+
+                  const p = h.impactRegion!;
+                  const left =
+                    50 +
+                    (p.xMetres / (maxAbs * 2)) * 86;
+                  const top =
+                    50 -
+                    (p.yMetres / (maxAbs * 2)) * 86;
+                  const size = Math.max(
+                    22,
+                    Math.min(
+                      130,
+                      (p.radiusMetres / maxAbs) * 190,
+                    ),
+                  );
+
+                  return (
+                    <div
+                      key={h.id}
+                      className={`fv2-hyp-viz-region ${
+                        h.selectedForSimulation
+                          ? "is-queued"
+                          : ""
+                      }`}
+                      style={{
+                        left: `${left}%`,
+                        top: `${top}%`,
+                        width: `${size}px`,
+                        height: `${size}px`,
+                      }}
+                      title={`${h.code} · ${h.title}`}
+                    >
+                      <span>{h.code}</span>
+                    </div>
+                  );
+                })}
+
+              {!investigation.hypotheses.some(
+                (h) => h.impactRegion,
+              ) && (
+                <div className="fv2-hyp-viz-map-empty">
+                  <MapPinned size={52} />
+                  <strong>No impact regions plotted</strong>
+                  <small>
+                    X / Y / radius geometry appears here
+                  </small>
+                </div>
+              )}
+
+              <div className="fv2-hyp-viz-map-origin">
+                <Crosshair size={18} />
+                <span>Scene datum</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="fv2-hyp-viz-register">
+            <header>
+              <Orbit size={20} />
+
+              <div>
+                <span>Hypothesis register</span>
+                <strong>Competing explanations</strong>
+              </div>
+
+              <div className="fv2-hyp-viz-module-count">
+                <b>{investigation.hypotheses.length}</b>
+                <span>active records</span>
+              </div>
+            </header>
+
             {investigation.hypotheses.length === 0 ? (
-              <div className="fv2-hyp-empty">
-                <strong>No crash hypotheses yet.</strong>
-                <span>Create plausible alternatives where the current evidence allows more than one explanation.</span>
+              <div className="fv2-hyp-viz-empty">
+                <Orbit size={50} />
+                <strong>No hypotheses registered</strong>
+                <small>
+                  Build the first testable explanation in the inspector
+                </small>
               </div>
             ) : (
-              <div className="fv2-hyp-card-grid">
-                {investigation.hypotheses.map((h) => (
-                  <article key={h.id} className={`fv2-hyp-card ${h.selectedForSimulation ? "is-queued" : ""}`}>
-                    <div className="fv2-hyp-card-head">
-                      <div><span>{h.code}</span><strong>{h.title}</strong></div>
-                      <div className="fv2-hyp-badges"><span>{h.status}</span><span>{h.confidence}</span></div>
-                    </div>
-                    <p>{h.summary}</p>
-                    <div className="fv2-hyp-metrics">
-                      <div><span>Support</span><strong>{h.supportingFindingIds.length + h.supportingEvidenceIds.length}</strong></div>
-                      <div className={(h.conflictingFindingIds.length + h.conflictingEvidenceIds.length) ? "conflict" : ""}>
-                        <span>Conflict</span><strong>{h.conflictingFindingIds.length + h.conflictingEvidenceIds.length}</strong>
+              <div className="fv2-hyp-viz-card-grid">
+                {investigation.hypotheses.map((h) => {
+                  const supportCount =
+                    h.supportingFindingIds.length +
+                    h.supportingEvidenceIds.length;
+
+                  const conflictCount =
+                    h.conflictingFindingIds.length +
+                    h.conflictingEvidenceIds.length;
+
+                  const ready = readiness(h);
+
+                  return (
+                    <article
+                      key={h.id}
+                      className={`fv2-hyp-viz-card ${
+                        h.selectedForSimulation
+                          ? "is-queued"
+                          : ""
+                      }`}
+                    >
+                      <header>
+                        <div className="fv2-hyp-viz-card__identity">
+                          <span className="fv2-hyp-viz-card__icon">
+                            <Orbit size={27} />
+                          </span>
+
+                          <div>
+                            <small>{h.code}</small>
+                            <strong>{h.title}</strong>
+                          </div>
+                        </div>
+
+                        <span className="fv2-hyp-viz-card__status">
+                          {h.status}
+                        </span>
+                      </header>
+
+                      <p>{h.summary}</p>
+
+                      <div className="fv2-hyp-viz-readiness-row">
+                        <div
+                          className="fv2-hyp-viz-readiness-ring"
+                          style={{
+                            background: `conic-gradient(#e8872d ${ready}%, #333 ${ready}% 100%)`,
+                          }}
+                        >
+                          <span>{ready}%</span>
+                        </div>
+
+                        <div className="fv2-hyp-viz-metric">
+                          <ShieldCheck size={20} />
+                          <span>Support</span>
+                          <strong>{supportCount}</strong>
+                        </div>
+
+                        <div
+                          className={`fv2-hyp-viz-metric ${
+                            conflictCount > 0
+                              ? "is-conflict"
+                              : ""
+                          }`}
+                        >
+                          <CircleDot size={20} />
+                          <span>Conflict</span>
+                          <strong>{conflictCount}</strong>
+                        </div>
+
+                        <div
+                          className={`fv2-hyp-viz-metric ${
+                            h.missingEvidence.length > 0
+                              ? "is-attention"
+                              : ""
+                          }`}
+                        >
+                          <FileSearch size={20} />
+                          <span>Missing</span>
+                          <strong>
+                            {h.missingEvidence.length}
+                          </strong>
+                        </div>
                       </div>
-                      <div><span>Assumptions</span><strong>{h.assumptions.length}</strong></div>
-                      <div className={h.missingEvidence.length ? "attention" : ""}><span>Missing</span><strong>{h.missingEvidence.length}</strong></div>
-                    </div>
-                    <div className="fv2-hyp-readiness">
-                      <div><span>Test readiness</span><strong>{readiness(h)}%</strong></div>
-                      <div className="fv2-hyp-readiness-track"><i style={{ width: `${readiness(h)}%` }} /></div>
-                    </div>
-                    {h.impactRegion && (
-                      <div className="fv2-hyp-impact">
-                        <span>Proposed impact region</span>
-                        <strong>X {h.impactRegion.xMetres.toFixed(2)} m · Y {h.impactRegion.yMetres.toFixed(2)} m · R {h.impactRegion.radiusMetres.toFixed(2)} m</strong>
-                        {h.impactRegion.description && <small>{h.impactRegion.description}</small>}
+
+                      <div className="fv2-hyp-viz-card__meta">
+                        <span>
+                          <Gauge size={14} />
+                          {h.confidence}
+                        </span>
+
+                        <span>
+                          <Waypoints size={14} />
+                          {h.eventSequence.length}
+                          {" "}
+                          events
+                        </span>
+
+                        <span>
+                          <ClipboardList size={14} />
+                          {h.assumptions.length}
+                          {" "}
+                          assumptions
+                        </span>
                       </div>
-                    )}
-                    {h.eventSequence.length > 0 && (
-                      <ol className="fv2-hyp-sequence">
-                        {h.eventSequence.map((event) => (
-                          <li key={event.id}><span>{event.order}</span><p>{event.description}</p></li>
-                        ))}
-                      </ol>
-                    )}
-                    <div className="fv2-hyp-card-actions">
-                      <button type="button" className={compareIds.has(h.id) ? "is-active" : ""} onClick={() => toggleCompare(h.id)}>
-                        {compareIds.has(h.id) ? "Remove comparison" : "Compare"}
-                      </button>
-                      <button type="button" className={h.selectedForSimulation ? "simulation-selected" : ""} onClick={() => queue(h)}>
-                        {h.selectedForSimulation ? "Queued for simulation" : "Send to simulation"}
-                      </button>
-                      <button type="button" className="danger" onClick={() => remove(h)}>Remove</button>
-                    </div>
-                  </article>
-                ))}
+
+                      {h.impactRegion && (
+                        <div className="fv2-hyp-viz-card__geometry">
+                          <MapPinned size={18} />
+
+                          <span>
+                            X {h.impactRegion.xMetres.toFixed(2)}
+                            {"  ·  "}
+                            Y {h.impactRegion.yMetres.toFixed(2)}
+                            {"  ·  "}
+                            R {h.impactRegion.radiusMetres.toFixed(2)}
+                            {" m"}
+                          </span>
+                        </div>
+                      )}
+
+                      <footer>
+                        <button
+                          type="button"
+                          className={
+                            compareIds.has(h.id)
+                              ? "is-active"
+                              : ""
+                          }
+                          onClick={() => toggleCompare(h.id)}
+                          title={
+                            compareIds.has(h.id)
+                              ? "Remove from comparison"
+                              : "Compare hypothesis"
+                          }
+                          aria-label={
+                            compareIds.has(h.id)
+                              ? "Remove from comparison"
+                              : "Compare hypothesis"
+                          }
+                        >
+                          <Waypoints size={16} />
+                          <span>Compare</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className={
+                            h.selectedForSimulation
+                              ? "is-active"
+                              : ""
+                          }
+                          onClick={() => queue(h)}
+                          title={
+                            h.selectedForSimulation
+                              ? "Remove from simulation queue"
+                              : "Queue for simulation"
+                          }
+                          aria-label={
+                            h.selectedForSimulation
+                              ? "Remove from simulation queue"
+                              : "Queue for simulation"
+                          }
+                        >
+                          <Play size={16} />
+                          <span>
+                            {h.selectedForSimulation
+                              ? "Queued"
+                              : "Simulate"}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => remove(h)}
+                          title={`Remove ${h.code}`}
+                          aria-label={`Remove ${h.code}`}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </footer>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
 
           {compared.length > 0 && (
-            <section className="fv2-panel">
-              <header><div><span>Side-by-side hypothesis comparison</span><strong>{compared.length === 2 ? "Compare competing explanations" : "Select one more hypothesis"}</strong></div></header>
-              <div className="fv2-hyp-compare-grid">
+            <section className="fv2-hyp-viz-compare">
+              <header>
+                <Waypoints size={20} />
+
+                <div>
+                  <span>Comparison</span>
+                  <strong>
+                    {compared.length === 2
+                      ? "Competing hypothesis comparison"
+                      : "Select one more hypothesis"}
+                  </strong>
+                </div>
+
+                <div className="fv2-hyp-viz-module-count">
+                  <b>{compared.length}/2</b>
+                  <span>selected</span>
+                </div>
+              </header>
+
+              <div className="fv2-hyp-viz-compare-grid">
                 {compared.map((h) => (
-                  <article key={h.id} className="fv2-hyp-compare-card">
-                    <div className="fv2-hyp-compare-title"><span>{h.code}</span><strong>{h.title}</strong></div>
-                    <dl>
-                      <div><dt>Status</dt><dd>{h.status}</dd></div>
-                      <div><dt>Confidence</dt><dd>{h.confidence}</dd></div>
-                      <div><dt>Supporting findings</dt><dd>{h.supportingFindingIds.map((id) => code("finding", id)).join(", ") || "None"}</dd></div>
-                      <div><dt>Conflicting findings</dt><dd>{h.conflictingFindingIds.map((id) => code("finding", id)).join(", ") || "None"}</dd></div>
-                      <div><dt>Supporting evidence</dt><dd>{h.supportingEvidenceIds.map((id) => code("evidence", id)).join(", ") || "None"}</dd></div>
-                      <div><dt>Conflicting evidence</dt><dd>{h.conflictingEvidenceIds.map((id) => code("evidence", id)).join(", ") || "None"}</dd></div>
-                      <div><dt>Assumptions</dt><dd>{h.assumptions.join("; ") || "None recorded"}</dd></div>
-                      <div><dt>Missing evidence</dt><dd>{h.missingEvidence.join("; ") || "None recorded"}</dd></div>
-                      <div><dt>Test readiness</dt><dd>{readiness(h)}%</dd></div>
-                    </dl>
+                  <article key={h.id}>
+                    <div className="fv2-hyp-viz-compare-title">
+                      <span>{h.code}</span>
+                      <strong>{h.title}</strong>
+                    </div>
+
+                    <div className="fv2-hyp-viz-compare-metrics">
+                      <span>
+                        <b>{readiness(h)}%</b>
+                        readiness
+                      </span>
+
+                      <span>
+                        <b>
+                          {
+                            h.supportingFindingIds.length +
+                            h.supportingEvidenceIds.length
+                          }
+                        </b>
+                        support
+                      </span>
+
+                      <span>
+                        <b>
+                          {
+                            h.conflictingFindingIds.length +
+                            h.conflictingEvidenceIds.length
+                          }
+                        </b>
+                        conflicts
+                      </span>
+
+                      <span>
+                        <b>{h.missingEvidence.length}</b>
+                        missing
+                      </span>
+                    </div>
+
+                    <div className="fv2-hyp-viz-compare-details">
+                      <div>
+                        <span>Status</span>
+                        <strong>{h.status}</strong>
+                      </div>
+
+                      <div>
+                        <span>Confidence</span>
+                        <strong>{h.confidence}</strong>
+                      </div>
+
+                      <div>
+                        <span>Assumptions</span>
+                        <strong>
+                          {h.assumptions.length
+                            ? h.assumptions.join("; ")
+                            : "None"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Missing evidence</span>
+                        <strong>
+                          {h.missingEvidence.length
+                            ? h.missingEvidence.join("; ")
+                            : "None"}
+                        </strong>
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>
             </section>
           )}
+        </main>
 
-          <section className="fv2-panel">
-            <header><div><span>Proposed impact regions</span><strong>Scene-relative hypothesis geometry</strong></div></header>
-            <div className="fv2-hyp-impact-map">
-              <div className="fv2-hyp-axis x-axis" /><div className="fv2-hyp-axis y-axis" />
-              {investigation.hypotheses.filter((h) => h.impactRegion).map((h) => {
-                const positioned = investigation.hypotheses.filter((x) => x.impactRegion).map((x) => x.impactRegion!);
-                const maxAbs = Math.max(10, ...positioned.flatMap((p) => [Math.abs(p.xMetres) + p.radiusMetres, Math.abs(p.yMetres) + p.radiusMetres]));
-                const p = h.impactRegion!;
-                const left = 50 + (p.xMetres / (maxAbs * 2)) * 86;
-                const top = 50 - (p.yMetres / (maxAbs * 2)) * 86;
-                const size = Math.max(18, Math.min(120, (p.radiusMetres / maxAbs) * 180));
-                return <div key={h.id} className="fv2-hyp-impact-region" style={{ left: `${left}%`, top: `${top}%`, width: `${size}px`, height: `${size}px` }}><span>{h.code}</span></div>;
-              })}
-              {!investigation.hypotheses.some((h) => h.impactRegion) && (
-                <div className="fv2-hyp-map-empty">Proposed impact regions will appear here after X/Y/radius values are recorded.</div>
-              )}
-            </div>
-            <div className="fv2-hyp-map-note">
-              Coordinates use the scene datum/reference. These are proposed regions for hypothesis testing, not confirmed points of impact.
+        <aside className="fv2-hyp-viz-inspector">
+          <section className="fv2-hyp-viz-inspector-module">
+            <header>
+              <Orbit size={19} />
+
+              <div>
+                <span>Hypothesis composer</span>
+                <strong>Testable explanation</strong>
+              </div>
+            </header>
+
+            <div className="fv2-hyp-viz-inspector-body">
+              <label className="fv2-hyp-viz-field">
+                <span>Title</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="H1 · Vehicle A entered first"
+                />
+              </label>
+
+              <label className="fv2-hyp-viz-field">
+                <span>Proposed explanation</span>
+                <textarea
+                  rows={5}
+                  value={summary}
+                  onChange={(e) =>
+                    setSummary(e.target.value)
+                  }
+                  placeholder="Describe the proposed sequence"
+                />
+              </label>
+
+              <div className="fv2-hyp-viz-two">
+                <label>
+                  <span>Status</span>
+                  <select
+                    value={status}
+                    onChange={(e) =>
+                      setStatus(
+                        e.target.value as HypothesisStatus,
+                      )
+                    }
+                  >
+                    {HYPOTHESIS_STATUS_OPTIONS.map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Confidence</span>
+                  <select
+                    value={confidence}
+                    onChange={(e) =>
+                      setConfidence(
+                        e.target
+                          .value as ForensicConfidence,
+                      )
+                    }
+                  >
+                    {FORENSIC_CONFIDENCE_OPTIONS.map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="fv2-hyp-viz-provenance">
+                <ShieldCheck size={23} />
+
+                <div>
+                  <span>Provenance</span>
+                  <strong>Investigator Assumption</strong>
+                </div>
+              </div>
             </div>
           </section>
-        </div>
 
-        <aside className="fv2-hyp-composer">
-          <section className="fv2-panel">
-            <header><div><span>Hypothesis composer</span><strong>Create a testable crash explanation</strong></div></header>
-            <div className="fv2-hyp-form">
-              <label className="fv2-field full"><span>Hypothesis title</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. H1 — Vehicle A entered the junction before Vehicle B" /></label>
-              <label className="fv2-field full"><span>Proposed crash explanation</span><textarea rows={5} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Describe the proposed sequence without presenting it as established fact." /></label>
-              <div className="fv2-hyp-two-col">
-                <label className="fv2-field"><span>Status</span><select value={status} onChange={(e) => setStatus(e.target.value as HypothesisStatus)}>{HYPOTHESIS_STATUS_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-                <label className="fv2-field"><span>Confidence</span><select value={confidence} onChange={(e) => setConfidence(e.target.value as ForensicConfidence)}>{FORENSIC_CONFIDENCE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
+          <section className="fv2-hyp-viz-inspector-module">
+            <header>
+              <MapPinned size={19} />
+
+              <div>
+                <span>Impact geometry</span>
+                <strong>Scene-relative region</strong>
               </div>
-              <div className="fv2-hyp-fixed-provenance"><span>Provenance</span><strong>Investigator Assumption</strong><small>Fixed by design. A hypothesis cannot be stored as Observed or Measured.</small></div>
+            </header>
 
-              <div className="fv2-hyp-link-section">
-                <div className="fv2-hyp-section-title"><span>Analysis findings</span><small>Supporting or conflicting</small></div>
-                {investigation.analysisFindings.length === 0 ? <div className="fv2-empty-select">No analysis findings available.</div> : (
-                  <div className="fv2-hyp-link-list">
-                    {investigation.analysisFindings.map((f) => (
-                      <article key={f.id}>
-                        <div><strong>{f.code} · {f.category}</strong><span>{f.finding}</span></div>
-                        <div className="fv2-hyp-link-actions">
-                          <button type="button" className={`support ${supportingFindingIds.has(f.id) ? "active" : ""}`} onClick={() => toggleExclusive(f.id, true, setSupportingFindingIds, setConflictingFindingIds)}>Supports</button>
-                          <button type="button" className={`conflict ${conflictingFindingIds.has(f.id) ? "active" : ""}`} onClick={() => toggleExclusive(f.id, false, setSupportingFindingIds, setConflictingFindingIds)}>Conflicts</button>
-                        </div>
-                      </article>
-                    ))}
+            <div className="fv2-hyp-viz-geometry-console">
+              <label>
+                <span>X</span>
+                <strong>
+                  {impactX.trim() || "—"}
+                  <small>m</small>
+                </strong>
+                <input
+                  inputMode="decimal"
+                  value={impactX}
+                  onChange={(e) =>
+                    setImpactX(e.target.value)
+                  }
+                  aria-label="Impact X metres"
+                />
+              </label>
+
+              <label>
+                <span>Y</span>
+                <strong>
+                  {impactY.trim() || "—"}
+                  <small>m</small>
+                </strong>
+                <input
+                  inputMode="decimal"
+                  value={impactY}
+                  onChange={(e) =>
+                    setImpactY(e.target.value)
+                  }
+                  aria-label="Impact Y metres"
+                />
+              </label>
+
+              <label>
+                <span>Radius</span>
+                <strong>
+                  {impactRadius.trim() || "—"}
+                  <small>m</small>
+                </strong>
+                <input
+                  inputMode="decimal"
+                  value={impactRadius}
+                  onChange={(e) =>
+                    setImpactRadius(e.target.value)
+                  }
+                  aria-label="Impact radius metres"
+                />
+              </label>
+            </div>
+
+            <label className="fv2-hyp-viz-field fv2-hyp-viz-field--padded">
+              <span>Region description</span>
+              <input
+                value={impactDescription}
+                onChange={(e) =>
+                  setImpactDescription(e.target.value)
+                }
+                placeholder="Optional impact-region description"
+              />
+            </label>
+          </section>
+
+          <details
+            className="fv2-hyp-viz-inspector-module"
+            open
+          >
+            <summary>
+              <FileSearch size={19} />
+
+              <div>
+                <span>Evidence relationships</span>
+                <strong>
+                  {
+                    supportingFindingIds.size +
+                    conflictingFindingIds.size +
+                    supportingEvidenceIds.size +
+                    conflictingEvidenceIds.size
+                  }
+                  {" "}
+                  classified
+                </strong>
+              </div>
+
+              <ChevronDown size={18} />
+            </summary>
+
+            <div className="fv2-hyp-viz-relation-groups">
+              <div>
+                <header>
+                  <span>Analysis findings</span>
+                  <small>
+                    {investigation.analysisFindings.length}
+                  </small>
+                </header>
+
+                {investigation.analysisFindings.length === 0 ? (
+                  <div className="fv2-hyp-viz-drawer-empty">
+                    No analysis findings
+                  </div>
+                ) : (
+                  <div className="fv2-hyp-viz-relation-list">
+                    {investigation.analysisFindings.map(
+                      (finding) => (
+                        <article key={finding.id}>
+                          <div>
+                            <strong>
+                              {finding.code}
+                              {" · "}
+                              {finding.category}
+                            </strong>
+                            <span>{finding.finding}</span>
+                          </div>
+
+                          <div>
+                            <button
+                              type="button"
+                              className={
+                                supportingFindingIds.has(
+                                  finding.id,
+                                )
+                                  ? "support is-active"
+                                  : "support"
+                              }
+                              onClick={() =>
+                                toggleExclusive(
+                                  finding.id,
+                                  true,
+                                  setSupportingFindingIds,
+                                  setConflictingFindingIds,
+                                )
+                              }
+                              title="Supports hypothesis"
+                            >
+                              <ShieldCheck size={15} />
+                              <span>Support</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={
+                                conflictingFindingIds.has(
+                                  finding.id,
+                                )
+                                  ? "conflict is-active"
+                                  : "conflict"
+                              }
+                              onClick={() =>
+                                toggleExclusive(
+                                  finding.id,
+                                  false,
+                                  setSupportingFindingIds,
+                                  setConflictingFindingIds,
+                                )
+                              }
+                              title="Conflicts with hypothesis"
+                            >
+                              <CircleDot size={15} />
+                              <span>Conflict</span>
+                            </button>
+                          </div>
+                        </article>
+                      ),
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="fv2-hyp-link-section">
-                <div className="fv2-hyp-section-title"><span>Physical evidence</span><small>Direct relationship</small></div>
-                {investigation.evidence.length === 0 ? <div className="fv2-empty-select">No physical evidence available.</div> : (
-                  <div className="fv2-hyp-link-list">
-                    {investigation.evidence.map((evidence) => (
-                      <article key={evidence.id}>
-                        <div><strong>{evidence.code} · {evidence.type}</strong><span>{evidence.description}</span></div>
-                        <div className="fv2-hyp-link-actions">
-                          <button type="button" className={`support ${supportingEvidenceIds.has(evidence.id) ? "active" : ""}`} onClick={() => toggleExclusive(evidence.id, true, setSupportingEvidenceIds, setConflictingEvidenceIds)}>Supports</button>
-                          <button type="button" className={`conflict ${conflictingEvidenceIds.has(evidence.id) ? "active" : ""}`} onClick={() => toggleExclusive(evidence.id, false, setSupportingEvidenceIds, setConflictingEvidenceIds)}>Conflicts</button>
-                        </div>
-                      </article>
-                    ))}
+              <div>
+                <header>
+                  <span>Physical evidence</span>
+                  <small>{investigation.evidence.length}</small>
+                </header>
+
+                {investigation.evidence.length === 0 ? (
+                  <div className="fv2-hyp-viz-drawer-empty">
+                    No physical evidence
+                  </div>
+                ) : (
+                  <div className="fv2-hyp-viz-relation-list">
+                    {investigation.evidence.map(
+                      (evidence) => (
+                        <article key={evidence.id}>
+                          <div>
+                            <strong>
+                              {evidence.code}
+                              {" · "}
+                              {evidence.type}
+                            </strong>
+                            <span>{evidence.description}</span>
+                          </div>
+
+                          <div>
+                            <button
+                              type="button"
+                              className={
+                                supportingEvidenceIds.has(
+                                  evidence.id,
+                                )
+                                  ? "support is-active"
+                                  : "support"
+                              }
+                              onClick={() =>
+                                toggleExclusive(
+                                  evidence.id,
+                                  true,
+                                  setSupportingEvidenceIds,
+                                  setConflictingEvidenceIds,
+                                )
+                              }
+                              title="Supports hypothesis"
+                            >
+                              <ShieldCheck size={15} />
+                              <span>Support</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={
+                                conflictingEvidenceIds.has(
+                                  evidence.id,
+                                )
+                                  ? "conflict is-active"
+                                  : "conflict"
+                              }
+                              onClick={() =>
+                                toggleExclusive(
+                                  evidence.id,
+                                  false,
+                                  setSupportingEvidenceIds,
+                                  setConflictingEvidenceIds,
+                                )
+                              }
+                              title="Conflicts with hypothesis"
+                            >
+                              <CircleDot size={15} />
+                              <span>Conflict</span>
+                            </button>
+                          </div>
+                        </article>
+                      ),
+                    )}
                   </div>
                 )}
               </div>
-
-              <div className="fv2-hyp-context-grid">
-                <div><span>Measurements used</span><div className="fv2-evidence-select">{investigation.measurements.map((r) => <label key={r.id}><input type="checkbox" checked={sourceMeasurementIds.has(r.id)} onChange={() => toggle(setSourceMeasurementIds, r.id)} /><span><b>{r.code}</b> {r.label}</span></label>)}</div></div>
-                <div><span>Vehicles used</span><div className="fv2-evidence-select">{investigation.vehicles.map((r) => <label key={r.id}><input type="checkbox" checked={sourceVehicleIds.has(r.id)} onChange={() => toggle(setSourceVehicleIds, r.id)} /><span><b>{r.code}</b> {r.label}</span></label>)}</div></div>
-                <div><span>Persons / drivers used</span><div className="fv2-evidence-select">{investigation.persons.map((r) => <label key={r.id}><input type="checkbox" checked={sourcePersonIds.has(r.id)} onChange={() => toggle(setSourcePersonIds, r.id)} /><span><b>{r.code}</b> {r.label}</span></label>)}</div></div>
-                <div><span>Witnesses used</span><div className="fv2-evidence-select">{investigation.witnesses.map((r) => <label key={r.id}><input type="checkbox" checked={sourceWitnessIds.has(r.id)} onChange={() => toggle(setSourceWitnessIds, r.id)} /><span><b>{r.code}</b> {r.label}</span></label>)}</div></div>
-              </div>
-
-              <label className="fv2-field full"><span>Assumptions — one per line</span><textarea rows={4} value={assumptions} onChange={(e) => setAssumptions(e.target.value)} /></label>
-              <label className="fv2-field full"><span>Missing evidence / unresolved needs — one per line</span><textarea rows={4} value={missingEvidence} onChange={(e) => setMissingEvidence(e.target.value)} /></label>
-
-              <div className="fv2-hyp-section-title"><span>Proposed impact region</span><small>Relative to scene datum; not confirmed POI</small></div>
-              <div className="fv2-hyp-three-col">
-                <label className="fv2-field"><span>X (m)</span><input inputMode="decimal" value={impactX} onChange={(e) => setImpactX(e.target.value)} /></label>
-                <label className="fv2-field"><span>Y (m)</span><input inputMode="decimal" value={impactY} onChange={(e) => setImpactY(e.target.value)} /></label>
-                <label className="fv2-field"><span>Radius (m)</span><input inputMode="decimal" value={impactRadius} onChange={(e) => setImpactRadius(e.target.value)} /></label>
-              </div>
-              <label className="fv2-field full"><span>Impact-region description</span><input value={impactDescription} onChange={(e) => setImpactDescription(e.target.value)} /></label>
-              <label className="fv2-field full"><span>Proposed event sequence — one event per line</span><textarea rows={6} value={eventSequence} onChange={(e) => setEventSequence(e.target.value)} placeholder={"Vehicle A approaches\nBraking begins\nVehicles make contact\nPost-impact movement"} /></label>
-              <label className="fv2-field full"><span>Hypothesis notes</span><textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
             </div>
-            <footer><button type="button" className="primary" onClick={addHypothesis}>Save hypothesis</button></footer>
+          </details>
+
+          <details className="fv2-hyp-viz-inspector-module">
+            <summary>
+              <ScanLine size={19} />
+
+              <div>
+                <span>Context records</span>
+                <strong>
+                  {
+                    sourceMeasurementIds.size +
+                    sourceVehicleIds.size +
+                    sourcePersonIds.size +
+                    sourceWitnessIds.size
+                  }
+                  {" "}
+                  linked
+                </strong>
+              </div>
+
+              <ChevronDown size={18} />
+            </summary>
+
+            <div className="fv2-hyp-viz-context-grid">
+              <details>
+                <summary>
+                  <span>Measurements</span>
+                  <b>
+                    {sourceMeasurementIds.size}/
+                    {investigation.measurements.length}
+                  </b>
+                </summary>
+
+                <div>
+                  {investigation.measurements.map((r) => (
+                    <label key={r.id}>
+                      <input
+                        type="checkbox"
+                        checked={sourceMeasurementIds.has(
+                          r.id,
+                        )}
+                        onChange={() =>
+                          toggle(
+                            setSourceMeasurementIds,
+                            r.id,
+                          )
+                        }
+                      />
+
+                      <span>
+                        <b>{r.code}</b>
+                        {" "}
+                        {r.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              <details>
+                <summary>
+                  <span>Vehicles</span>
+                  <b>
+                    {sourceVehicleIds.size}/
+                    {investigation.vehicles.length}
+                  </b>
+                </summary>
+
+                <div>
+                  {investigation.vehicles.map((r) => (
+                    <label key={r.id}>
+                      <input
+                        type="checkbox"
+                        checked={sourceVehicleIds.has(r.id)}
+                        onChange={() =>
+                          toggle(
+                            setSourceVehicleIds,
+                            r.id,
+                          )
+                        }
+                      />
+
+                      <span>
+                        <b>{r.code}</b>
+                        {" "}
+                        {r.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              <details>
+                <summary>
+                  <span>Persons / drivers</span>
+                  <b>
+                    {sourcePersonIds.size}/
+                    {investigation.persons.length}
+                  </b>
+                </summary>
+
+                <div>
+                  {investigation.persons.map((r) => (
+                    <label key={r.id}>
+                      <input
+                        type="checkbox"
+                        checked={sourcePersonIds.has(r.id)}
+                        onChange={() =>
+                          toggle(
+                            setSourcePersonIds,
+                            r.id,
+                          )
+                        }
+                      />
+
+                      <span>
+                        <b>{r.code}</b>
+                        {" "}
+                        {r.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              <details>
+                <summary>
+                  <span>Witnesses</span>
+                  <b>
+                    {sourceWitnessIds.size}/
+                    {investigation.witnesses.length}
+                  </b>
+                </summary>
+
+                <div>
+                  {investigation.witnesses.map((r) => (
+                    <label key={r.id}>
+                      <input
+                        type="checkbox"
+                        checked={sourceWitnessIds.has(r.id)}
+                        onChange={() =>
+                          toggle(
+                            setSourceWitnessIds,
+                            r.id,
+                          )
+                        }
+                      />
+
+                      <span>
+                        <b>{r.code}</b>
+                        {" "}
+                        {r.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <section className="fv2-hyp-viz-inspector-module">
+            <header>
+              <Waypoints size={19} />
+
+              <div>
+                <span>Event sequence</span>
+                <strong>
+                  {lines(eventSequence).length}
+                  {" "}
+                  event(s)
+                </strong>
+              </div>
+            </header>
+
+            {lines(eventSequence).length > 0 && (
+              <ol className="fv2-hyp-viz-sequence-preview">
+                {lines(eventSequence).map(
+                  (description, index) => (
+                    <li key={`${index}-${description}`}>
+                      <span>{index + 1}</span>
+                      <p>{description}</p>
+                    </li>
+                  ),
+                )}
+              </ol>
+            )}
+
+            <textarea
+              className="fv2-hyp-viz-sequence-input"
+              rows={5}
+              value={eventSequence}
+              onChange={(e) =>
+                setEventSequence(e.target.value)
+              }
+              placeholder={"Approach\nBraking\nContact\nPost-impact movement"}
+            />
           </section>
 
-          <section className="fv2-panel fv2-notice">
-            <b>Forensic rule</b>
-            <p>Multiple hypotheses may remain active. RoadSafe should prefer the explanation that survives evidence and physics testing—not the explanation entered first.</p>
-          </section>
+          <details className="fv2-hyp-viz-inspector-module">
+            <summary>
+              <ClipboardList size={19} />
+
+              <div>
+                <span>Assumptions / gaps</span>
+                <strong>
+                  {lines(assumptions).length}
+                  {" "}
+                  assumptions ·
+                  {" "}
+                  {lines(missingEvidence).length}
+                  {" "}
+                  missing
+                </strong>
+              </div>
+
+              <ChevronDown size={18} />
+            </summary>
+
+            <div className="fv2-hyp-viz-text-pair">
+              <label>
+                <span>Assumptions</span>
+                <textarea
+                  rows={4}
+                  value={assumptions}
+                  onChange={(e) =>
+                    setAssumptions(e.target.value)
+                  }
+                  placeholder="One assumption per line"
+                />
+              </label>
+
+              <label>
+                <span>Missing evidence</span>
+                <textarea
+                  rows={4}
+                  value={missingEvidence}
+                  onChange={(e) =>
+                    setMissingEvidence(e.target.value)
+                  }
+                  placeholder="One unresolved need per line"
+                />
+              </label>
+            </div>
+          </details>
+
+          <details className="fv2-hyp-viz-inspector-module">
+            <summary>
+              <ClipboardList size={19} />
+
+              <div>
+                <span>Hypothesis notes</span>
+                <strong>
+                  {notes.trim()
+                    ? "Notes recorded"
+                    : "Optional"}
+                </strong>
+              </div>
+
+              <ChevronDown size={18} />
+            </summary>
+
+            <textarea
+              className="fv2-hyp-viz-notes"
+              rows={4}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Additional investigator notes"
+            />
+          </details>
+
+          <button
+            type="button"
+            className="fv2-hyp-viz-save"
+            onClick={addHypothesis}
+          >
+            <Plus size={17} />
+            <span>Save hypothesis</span>
+          </button>
         </aside>
       </div>
     </div>
   );
+
 }
