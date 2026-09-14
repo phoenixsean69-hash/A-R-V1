@@ -600,3 +600,554 @@
 }
 
 /* ROADSAFE_SIMULATION_BATCH_REFINEMENT_END */
+
+/* ROADSAFE_SIMULATION_EMPTY_WORKSTATION_START */
+
+.fv2-sim-hero > header {
+  min-height: 64px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: 1px solid #414141 !important;
+  background: linear-gradient(180deg, #303030, #292929) !important;
+}
+
+.fv2-sim-hero > header > div:first-of-type {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-sim-hero > header > div:first-of-type > span {
+  color: #757575;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.fv2-sim-hero > header > div:first-of-type > strong {
+  color: #e4e4e4;
+  font-size: 13px;
+}
+
+.fv2-sim-summary {
+  margin-left: auto;
+}
+
+.fv2-sim-summary span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border-color: #414141 !important;
+  border-radius: 3px !important;
+  background: #252525 !important;
+  padding: 0 7px !important;
+  color: #777 !important;
+  font-size: 9px !important;
+  text-transform: uppercase;
+}
+
+.fv2-sim-empty-workbench {
+  display: grid;
+  gap: 0;
+  border: 1px solid #414141;
+  background: #202020;
+}
+
+.fv2-sim-empty-command {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  border-bottom: 1px solid #3d3d3d;
+  background: #2a2a2a;
+}
+
+.fv2-sim-empty-command > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fv2-sim-empty-command__icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #484848;
+  background: #222;
+  color: #999;
+}
+
+.fv2-sim-empty-command > div > div {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-sim-empty-command small,
+.fv2-sim-empty-arena header span,
+.fv2-sim-empty-physics header span,
+.fv2-sim-empty-runs header span {
+  color: #717171;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.fv2-sim-empty-command strong,
+.fv2-sim-empty-arena header strong,
+.fv2-sim-empty-physics header strong,
+.fv2-sim-empty-runs header strong {
+  color: #cfcfcf;
+  font-size: 10px;
+}
+
+.fv2-sim-empty-lock {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #574242;
+  background: #2c2525;
+  color: #b47f7f;
+}
+
+.fv2-sim-empty-lock b {
+  font-size: 8px;
+}
+
+.fv2-sim-empty-meters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 7px;
+  border-bottom: 1px solid #383838;
+}
+
+.fv2-sim-empty-meters > article {
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 1px 6px;
+  padding: 7px;
+  border: 1px solid #3f3f3f;
+  background: #252525;
+  color: #888;
+}
+
+.fv2-sim-empty-meters
+  > article
+  > .roadsafe-material-icon {
+  grid-row: 1 / 3;
+}
+
+.fv2-sim-empty-meters span {
+  color: #6f6f6f;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.fv2-sim-empty-meters strong {
+  color: #d0d0d0;
+  font-size: 16px;
+}
+
+.fv2-sim-empty-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .75fr);
+  gap: 7px;
+  padding: 7px;
+}
+
+.fv2-sim-empty-arena,
+.fv2-sim-empty-physics,
+.fv2-sim-empty-runs {
+  min-width: 0;
+  border: 1px solid #414141;
+  background: #222;
+}
+
+.fv2-sim-empty-arena > header,
+.fv2-sim-empty-physics > header,
+.fv2-sim-empty-runs > header {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-bottom: 1px solid #3d3d3d;
+  background: #2a2a2a;
+  color: #999;
+}
+
+.fv2-sim-empty-arena > header > div,
+.fv2-sim-empty-physics > header > div,
+.fv2-sim-empty-runs > header > div {
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-sim-empty-grid {
+  position: relative;
+  min-height: 390px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+    #1d1d1d;
+  background-size: 28px 28px;
+}
+
+.fv2-sim-empty-axis {
+  position: absolute;
+  background: #4b4b4b;
+  opacity: .7;
+}
+
+.fv2-sim-empty-axis.x {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+}
+
+.fv2-sim-empty-axis.y {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+
+.fv2-sim-empty-participant {
+  position: absolute;
+  min-width: 72px;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  transform: translate(-50%, -50%);
+  padding: 7px;
+  border: 1px solid #505050;
+  background: #292929;
+  color: #aaa;
+}
+
+.fv2-sim-empty-participant span {
+  color: #d0d0d0;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.fv2-sim-empty-participant small {
+  color: #747474;
+  font-size: 8px;
+}
+
+.fv2-sim-empty-origin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  transform: translate(-50%, -50%);
+  color: #777;
+}
+
+.fv2-sim-empty-origin small {
+  padding: 2px 4px;
+  background: #1d1d1d;
+  color: #696969;
+  font-size: 7px;
+}
+
+.fv2-sim-empty-arena > footer {
+  display: flex;
+  gap: 5px;
+  padding: 6px;
+  border-top: 1px solid #383838;
+}
+
+.fv2-sim-empty-arena > footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  border: 1px solid #3e3e3e;
+  color: #737373;
+  font-size: 8px;
+}
+
+.fv2-sim-empty-side {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.fv2-sim-empty-physics > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 6px;
+}
+
+.fv2-sim-empty-physics label,
+.fv2-sim-empty-physics article {
+  min-height: 90px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid #3d3d3d;
+  background: #252525;
+}
+
+.fv2-sim-empty-physics label > span,
+.fv2-sim-empty-physics article > span {
+  color: #6e6e6e;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.fv2-sim-empty-physics strong {
+  color: #d0d0d0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 17px;
+}
+
+.fv2-sim-empty-physics strong small,
+.fv2-sim-empty-physics article > small {
+  color: #707070;
+  font-size: 8px;
+}
+
+.fv2-sim-empty-physics input {
+  width: 100%;
+  min-height: 25px;
+  margin-top: 3px;
+  padding: 3px 5px;
+  border: 1px solid #3a3a3a;
+  background: #1d1d1d;
+  color: #999;
+  font-size: 9px;
+}
+
+.fv2-sim-empty-runs__none {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  color: #555;
+}
+
+.fv2-sim-empty-runs__none span {
+  color: #707070;
+  font-size: 9px;
+}
+
+.fv2-sim-empty-run-list {
+  display: grid;
+  gap: 4px;
+  max-height: 205px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.fv2-sim-empty-run-list > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #3e3e3e;
+  background: #252525;
+}
+
+.fv2-sim-empty-run-list > article.is-selected {
+  border-color: #595959;
+  background: #2d2d2d;
+}
+
+.fv2-sim-empty-run-list
+  > article
+  > button:first-child {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: #888;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fv2-sim-empty-run-list
+  > article
+  > button:first-child
+  > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.fv2-sim-empty-run-list small {
+  color: #6d6d6d;
+  font-size: 7px;
+}
+
+.fv2-sim-empty-run-list strong {
+  color: #c6c6c6;
+  font-size: 9px;
+}
+
+.fv2-sim-empty-run-list button.danger {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  padding: 0;
+  border: 1px solid #513b3f;
+  background: #2d2426;
+  color: #c57e89;
+  cursor: pointer;
+}
+
+.fv2-sim-empty-footer {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px;
+  border-top: 1px solid #383838;
+  background: #222;
+}
+
+.fv2-sim-empty-footer > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8b7777;
+}
+
+.fv2-sim-empty-footer > div span {
+  color: #777;
+  font-size: 9px;
+}
+
+.fv2-sim-empty-footer > button {
+  min-width: 136px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #444;
+  background: #292929;
+  color: #666;
+  font: inherit;
+  font-size: 9px;
+}
+
+.fv2-sim-empty-footer > button:disabled {
+  opacity: .65;
+}
+
+/* Existing queued/run workspace polish */
+.fv2-sim-layout {
+  gap: 10px !important;
+}
+
+.fv2-sim-config,
+.fv2-sim-participant-grid,
+.fv2-sim-metrics,
+.fv2-sim-audit {
+  padding: 7px !important;
+  gap: 6px !important;
+}
+
+.fv2-sim-hypothesis-card,
+.fv2-sim-participant,
+.fv2-sim-metrics article,
+.fv2-sim-contact-register article,
+.fv2-sim-audit > div,
+.fv2-sim-run-list article {
+  border-radius: 0 !important;
+  border-color: #414141 !important;
+  background: #252525 !important;
+}
+
+.fv2-sim-hypothesis-card {
+  border-color: #484848 !important;
+}
+
+.fv2-sim-hypothesis-meta span {
+  border-color: #444 !important;
+  border-radius: 0 !important;
+  color: #999 !important;
+}
+
+.fv2-sim-gravity {
+  border-radius: 0 !important;
+  background: #252525 !important;
+}
+
+.fv2-sim-add,
+.fv2-sim-vehicle-shortcuts button,
+.fv2-sim-hypothesis-card button {
+  border-radius: 0 !important;
+}
+
+.fv2-sim-run-list article.selected {
+  border-color: #5a5a5a !important;
+  background: #2d2d2d !important;
+}
+
+.fv2-sim-runs .fv2-notice {
+  display: none !important;
+}
+
+@media(max-width:1050px) {
+  .fv2-sim-empty-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-sim-empty-side {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media(max-width:760px) {
+  .fv2-sim-empty-meters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fv2-sim-empty-side {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-sim-empty-grid {
+    min-height: 320px;
+  }
+}
+
+@media(max-width:520px) {
+  .fv2-sim-empty-meters,
+  .fv2-sim-empty-physics > div {
+    grid-template-columns: 1fr;
+  }
+
+  .fv2-sim-empty-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* ROADSAFE_SIMULATION_EMPTY_WORKSTATION_END */

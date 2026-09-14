@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Play } from "../icons/materialIcons";
+import {
+  Activity,
+  AlertTriangle,
+  CarFront,
+  Crosshair,
+  Database,
+  Gauge,
+  Orbit,
+  Play,
+  Trash2,
+} from "../icons/materialIcons";
 import type {
   ForensicAccidentInvestigation,
   ForensicCrashHypothesis,
@@ -322,7 +332,7 @@ export default function SimulationWorkspace({
           <span className="fv2-workspace-hero-icon"><Play size={30} /></span>
           <div>
             <span>Forensic scenario testing</span>
-            <strong>Test a hypothesis without changing the evidence</strong>
+            <strong>Simulation Testing Workstation</strong>
           </div>
           <div className="fv2-sim-summary">
             <span>{simulationHypotheses.length} queued hypothesis(es)</span>
@@ -333,13 +343,242 @@ export default function SimulationWorkspace({
       </section>
 
       {simulationHypotheses.length === 0 ? (
-        <section className="fv2-panel fv2-sim-gate">
-          <strong>No hypothesis is queued for simulation.</strong>
-          <p>
-            Go back to Hypotheses and use <b>Send to simulation</b> on a
-            non-rejected hypothesis. Simulation is deliberately gated so an
-            unrecorded scenario cannot bypass the forensic workflow.
-          </p>
+        <section className="fv2-sim-empty-workbench">
+          <header className="fv2-sim-empty-command">
+            <div>
+              <span className="fv2-sim-empty-command__icon">
+                <Orbit size={34} />
+              </span>
+
+              <div>
+                <small>Scenario gate</small>
+                <strong>No hypothesis queued</strong>
+              </div>
+            </div>
+
+            <span className="fv2-sim-empty-lock">
+              <AlertTriangle size={15} />
+              <b>GATED</b>
+            </span>
+          </header>
+
+          <div className="fv2-sim-empty-meters">
+            <article>
+              <Play size={26} />
+              <span>Engine</span>
+              <strong>Ready</strong>
+            </article>
+
+            <article>
+              <Orbit size={26} />
+              <span>Queue</span>
+              <strong>{simulationHypotheses.length}</strong>
+            </article>
+
+            <article>
+              <CarFront size={26} />
+              <span>Participants</span>
+              <strong>{participants.length}</strong>
+            </article>
+
+            <article>
+              <Database size={26} />
+              <span>Saved runs</span>
+              <strong>{runs.length}</strong>
+            </article>
+          </div>
+
+          <div className="fv2-sim-empty-layout">
+            <section className="fv2-sim-empty-arena">
+              <header>
+                <Crosshair size={19} />
+
+                <div>
+                  <span>Staging arena</span>
+                  <strong>Scenario preview</strong>
+                </div>
+              </header>
+
+              <div className="fv2-sim-empty-grid">
+                <div className="fv2-sim-empty-axis x" />
+                <div className="fv2-sim-empty-axis y" />
+
+                {participants.map((participant, index) => (
+                  <div
+                    key={participant.id}
+                    className="fv2-sim-empty-participant"
+                    style={{
+                      left: `${28 + (index % 3) * 22}%`,
+                      top: `${34 + (index % 2) * 28}%`,
+                    }}
+                  >
+                    <CarFront size={25} />
+                    <span>P{index + 1}</span>
+                    <small>
+                      {participant.speedKmh || "0"} km/h
+                    </small>
+                  </div>
+                ))}
+
+                <div className="fv2-sim-empty-origin">
+                  <Crosshair size={19} />
+                  <small>0,0</small>
+                </div>
+              </div>
+
+              <footer>
+                <span>
+                  <CarFront size={14} />
+                  Draft participant
+                </span>
+
+                <span>
+                  <Crosshair size={14} />
+                  Scene origin
+                </span>
+              </footer>
+            </section>
+
+            <div className="fv2-sim-empty-side">
+              <section className="fv2-sim-empty-physics">
+                <header>
+                  <Gauge size={19} />
+
+                  <div>
+                    <span>Global physics</span>
+                    <strong>Run defaults</strong>
+                  </div>
+                </header>
+
+                <div>
+                  <label>
+                    <span>Duration</span>
+                    <strong>
+                      {durationSeconds || "-"} <small>s</small>
+                    </strong>
+                    <input
+                      inputMode="decimal"
+                      value={durationSeconds}
+                      onChange={(event) =>
+                        setDurationSeconds(event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    <span>Time step</span>
+                    <strong>
+                      {timestepSeconds || "-"} <small>s</small>
+                    </strong>
+                    <input
+                      inputMode="decimal"
+                      value={timestepSeconds}
+                      onChange={(event) =>
+                        setTimestepSeconds(event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    <span>Restitution</span>
+                    <strong>
+                      {restitutionCoefficient || "-"}
+                    </strong>
+                    <input
+                      inputMode="decimal"
+                      value={restitutionCoefficient}
+                      onChange={(event) =>
+                        setRestitutionCoefficient(
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </label>
+
+                  <article>
+                    <Activity size={22} />
+                    <span>Gravity</span>
+                    <strong>9.80665</strong>
+                    <small>m/s2</small>
+                  </article>
+                </div>
+              </section>
+
+              <section className="fv2-sim-empty-runs">
+                <header>
+                  <Database size={19} />
+
+                  <div>
+                    <span>Run register</span>
+                    <strong>{runs.length} saved</strong>
+                  </div>
+                </header>
+
+                {runs.length === 0 ? (
+                  <div className="fv2-sim-empty-runs__none">
+                    <Database size={32} />
+                    <span>No saved runs</span>
+                  </div>
+                ) : (
+                  <div className="fv2-sim-empty-run-list">
+                    {runs.map((run) => (
+                      <article
+                        key={run.id}
+                        className={
+                          selectedRun?.id === run.id
+                            ? "is-selected"
+                            : ""
+                        }
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedRunId(run.id)
+                          }
+                        >
+                          <Play size={18} />
+
+                          <div>
+                            <small>{run.code}</small>
+                            <strong>
+                              {run.hypothesisCode}
+                            </strong>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() =>
+                            deleteRun(run.id)
+                          }
+                          title={`Remove ${run.code}`}
+                          aria-label={`Remove ${run.code}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+
+          <footer className="fv2-sim-empty-footer">
+            <div>
+              <AlertTriangle size={18} />
+
+              <span>
+                Queue a non-rejected hypothesis in Step 9
+              </span>
+            </div>
+
+            <button type="button" disabled>
+              <Play size={18} />
+              <span>Run locked</span>
+            </button>
+          </footer>
         </section>
       ) : (
         <div className="fv2-sim-layout">
@@ -1042,15 +1281,7 @@ export default function SimulationWorkspace({
               )}
             </section>
 
-            <section className="fv2-panel fv2-notice">
-              <b>Forensic rule</b>
-              <p>
-                The test bench is deliberately transparent. Every run preserves
-                its inputs, units, formulas, warnings and hypothesis reference.
-                A visually plausible result is not automatically a supported
-                reconstruction.
-              </p>
-            </section>
+            
           </aside>
         </div>
       )}
