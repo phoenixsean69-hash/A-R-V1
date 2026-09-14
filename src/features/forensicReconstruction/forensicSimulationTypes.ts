@@ -1,5 +1,16 @@
 import type { ForensicConfidence } from "./forensicInvestigationTypes";
 
+export interface ForensicSimulationEngineMetadata {
+  name: string;
+  packageName: string;
+  packageVersion: string;
+  profile: string;
+  deterministic: boolean;
+  planar: boolean;
+  colliderModel: string;
+  continuousCollisionDetection: boolean;
+}
+
 export type SimulationRunStatus =
   | "Completed"
   | "Completed with warnings"
@@ -86,6 +97,7 @@ export interface ForensicSimulationRun {
   provenance: "Simulated";
   confidence: ForensicConfidence;
   status: SimulationRunStatus;
+  engine?: ForensicSimulationEngineMetadata;
   input: ForensicSimulationInput;
   participantMetrics: ForensicSimulationParticipantMetric[];
   frames: ForensicSimulationFrame[];

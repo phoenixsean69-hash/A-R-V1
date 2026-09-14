@@ -177,7 +177,7 @@ export default function SimulationWorkspace({
     frictionCoefficient: num(participant.frictionCoefficient, NaN),
   });
 
-  const runSimulation = () => {
+  const runSimulation = async () => {
     if (!selectedHypothesis) {
       setMessage(
         "Select a hypothesis that was marked 'Send to simulation' in the Hypotheses module.",
@@ -186,7 +186,7 @@ export default function SimulationWorkspace({
     }
 
     try {
-      const run = ForensicSimulationService.run(
+      const run = await ForensicSimulationService.run(
         {
           caseId: investigation.caseId,
           caseNumber: investigation.caseNumber,
