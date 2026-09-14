@@ -8618,16 +8618,19 @@ details.fv2-analysis-inspector-module > textarea {
 .fv2-topbar-brand-logo {
   grid-row: 1 / 3;
   display: block;
-  width: 34px;
-  height: 34px;
-  padding-right: 9px;
+  width: 104px;
+  height: 24px;
+  max-width: none;
+  padding-right: 10px;
   border-right: 1px solid #404040;
   object-fit: contain;
   object-position: left center;
+  transform: scale(1.2);
+  transform-origin: left center;
 }
 
 .fv2-topbar > div:first-child {
-  grid-template-columns: 44px minmax(0, auto);
+  grid-template-columns: 118px minmax(0, auto);
   column-gap: 8px;
 }
 
