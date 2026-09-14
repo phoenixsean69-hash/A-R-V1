@@ -8612,3 +8612,35 @@ details.fv2-analysis-inspector-module > textarea {
 }
 
 /* ROADSAFE_ANALYSIS_DOTTED_SLIDERS_END */
+
+/* ROADSAFE_FORENSIC_TOPBAR_BRAND_ICON_START */
+
+.fv2-topbar-brand-logo {
+  grid-row: 1 / 3;
+  display: block;
+  width: 34px;
+  height: 34px;
+  padding-right: 9px;
+  border-right: 1px solid #404040;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.fv2-topbar > div:first-child {
+  grid-template-columns: 44px minmax(0, auto);
+  column-gap: 8px;
+}
+
+.fv2-topbar > div:first-child > span {
+  align-self: end;
+}
+
+.fv2-topbar > div:first-child > small {
+  align-self: start;
+}
+
+.fv2-topbar > div:first-child > b {
+  display: none !important;
+}
+
+/* ROADSAFE_FORENSIC_TOPBAR_BRAND_ICON_END */

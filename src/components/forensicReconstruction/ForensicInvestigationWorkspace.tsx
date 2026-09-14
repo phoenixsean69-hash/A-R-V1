@@ -2619,7 +2619,11 @@ export default function ForensicInvestigationWorkspace({
       )}
       <header className="fv2-topbar">
         <div>
-          <b>ROADSAFE</b>
+          <img
+            className="fv2-topbar-brand-logo"
+            src="/assets/RoadSafe%20Icon.svg"
+            alt="RoadSafe AR"
+          />
           <span>Forensic Accident Workspace</span>
           <small>{accidentCase.caseNumber} · {accidentCase.title}</small>
         </div>

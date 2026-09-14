@@ -397,3 +397,119 @@
 }
 
 /* ROADSAFE_NO_INSTRUCTIONAL_CHROME_END */
+
+/* ROADSAFE_BRAND_ICON_CLEANUP_START */
+
+.roadsafe-global-dock-navigation .roadsafe-navigation-brand {
+  min-height: 52px;
+  height: 52px;
+  padding: 6px 8px 6px 10px;
+  gap: 6px;
+  background: #202020 !important;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-brand-link {
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-brand-logo {
+  display: block;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  object-position: left center;
+  flex: 0 0 auto;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-brand-mark,
+.roadsafe-global-dock-navigation .roadsafe-brand-copy {
+  display: none !important;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-navigation-station {
+  min-height: 43px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  padding: 7px 11px 8px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #343434 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-station-symbol {
+  display: none !important;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-station-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-station-copy strong {
+  overflow: hidden;
+  color: #bdbdbd !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-station-copy small {
+  margin: 0 !important;
+  color: #686868 !important;
+  font-size: 8px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase;
+}
+
+.roadsafe-global-dock-navigation .roadsafe-navigation-collapse-logo {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex: 0 0 18px;
+}
+
+@media (min-width: 1024px) {
+  .roadsafe-workstation.is-navigation-collapsed
+  .roadsafe-global-dock-navigation
+  .roadsafe-navigation-station {
+    min-height: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    border-bottom: 1px solid #343434 !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+  .roadsafe-global-dock-navigation
+  .roadsafe-station-copy {
+    display: none !important;
+  }
+
+  .roadsafe-workstation.is-navigation-collapsed
+  .roadsafe-global-dock-navigation
+  .roadsafe-navigation-collapse {
+    gap: 3px !important;
+  }
+}
+
+/* ROADSAFE_BRAND_ICON_CLEANUP_END */

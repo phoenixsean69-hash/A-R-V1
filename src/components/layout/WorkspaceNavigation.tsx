@@ -14,7 +14,6 @@ import {
   Map,
   RadioTower,
   Settings,
-  ShieldCheck,
   Video,
   X,
 } from "../icons/materialIcons";
@@ -170,22 +169,14 @@ export default function WorkspaceNavigation({
         <Link
           to={homePath}
           className="roadsafe-brand-link"
+          aria-label="RoadSafe AR home"
+          title="RoadSafe AR"
         >
-          <span className="roadsafe-brand-mark">
-            <ShieldCheck
-              size={22}
-              strokeWidth={1.6}
-            />
-          </span>
-
-          <span className="roadsafe-brand-copy">
-            <strong>RoadSafe AR</strong>
-            <small>
-              {stationClient
-                ? "Station Client"
-                : "Field Client"}
-            </small>
-          </span>
+          <img
+            className="roadsafe-brand-logo"
+            src="/assets/RoadSafe%20Icon.svg"
+            alt="RoadSafe AR"
+          />
         </Link>
 
         <button
@@ -209,10 +200,11 @@ export default function WorkspaceNavigation({
         >
           {desktopCollapsed ? (
             <>
-              <ShieldCheck
-                className="roadsafe-navigation-collapse-mark"
-                size={16}
-                strokeWidth={1.6}
+              <img
+                className="roadsafe-navigation-collapse-logo"
+                src="/assets/RoadSafe%20Icon.svg"
+                alt=""
+                aria-hidden="true"
               />
               <ChevronRight
                 size={12}
@@ -226,10 +218,6 @@ export default function WorkspaceNavigation({
       </div>
 
       <div className="roadsafe-navigation-station">
-        <span className="roadsafe-station-symbol">
-          <Building2 size={15} />
-        </span>
-
         <span className="roadsafe-station-copy">
           <strong>
             {identity?.stationTeam?.name ??
