@@ -27,7 +27,7 @@
   --js-red-bg: #50383b;
   --js-amber-muted: #9a825c;
   --js-amber-bg: #51483a;
-  --js-green-muted: #62806f;
+  --js-orange-muted: #62806f;
   --js-green-bg: #3b4f47;
   --js-info-muted: #657f91;
 
@@ -367,7 +367,7 @@ a {
   flex: 0 0 8px;
   border: 2px solid var(--js-sidebar);
   border-radius: 999px;
-  background: var(--js-green-muted);
+  background: var(--js-orange-muted);
   outline: 1px solid var(--js-border-default);
 }
 
@@ -1055,7 +1055,7 @@ textarea:focus {
 }
 
 .ui-badge.is-success {
-  border-color: var(--js-green-muted) !important;
+  border-color: var(--js-orange-muted) !important;
   background: var(--js-green-bg) !important;
 }
 

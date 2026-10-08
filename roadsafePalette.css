@@ -79,7 +79,7 @@
   --js-text-muted: var(--rs-text-light);
   --js-text-disabled: var(--rs-viewport);
 
-  --js-green-muted: var(--rs-mint);
+  --js-orange-muted: var(--rs-mint);
   --js-green-bg: var(--rs-mint);
   --js-info-muted: var(--rs-blue);
   --js-amber-muted: var(--rs-gold);
