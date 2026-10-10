@@ -131,3 +131,98 @@
     margin-left: 0 !important;
   }
 }
+
+/* ROADSAFE_STATION_CLIPPING_FIX_V1
+   Keep the Dashboard viewport-bound and give its own content pane ownership
+   of scrolling. Do not hide data, tabs, inspector, or bottom actions. */
+.roadsafe-global-dock-workspace:not(.is-editor)
+  .roadsafe-workspace-main:has(.dashboard-station-page) {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  scrollbar-gutter: auto !important;
+}
+.roadsafe-global-dock-workspace:not(.is-editor)
+  .roadsafe-page-stage.is-dashboard:has(> .dashboard-station-page) {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.dashboard-station-page,
+.dashboard-station-page__scroll {
+  min-width: 0;
+  min-height: 0;
+}
+.dashboard-station-page__scroll {
+  /* Responsive by Dockview pane width, not browser window width. */
+  container-type: inline-size;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable;
+}
+.dashboard-station-page__insights {
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dashboard-station-page__insights > *,
+.dashboard-station-page__insights .ui-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+.dashboard-station-page__insights .ui-panel-header,
+.dashboard-station-page__insights .ui-panel > .flex.items-start.justify-between {
+  min-width: 0;
+  gap: 8px;
+}
+.dashboard-station-page__insights .ui-panel-header > div,
+.dashboard-station-page__insights .ui-panel > .flex.items-start.justify-between > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.dashboard-station-page__insights .ui-panel-title {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px !important;
+  letter-spacing: 0.015em !important;
+}
+.dashboard-station-page__insights .ui-badge {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.dashboard-station-page__insights svg {
+  max-width: 100%;
+}
+.dashboard-station-page__insights .mt-4.flex.min-h-0.flex-1.items-end {
+  min-width: 0;
+  overflow: hidden;
+}
+.dashboard-station-page__insights .mt-4.flex.min-h-0.flex-1.items-end > div {
+  min-width: 0;
+}
+@container (max-width: 1199px) {
+  .dashboard-station-page__insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .dashboard-station-page__insights > .grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: auto !important;
+  }
+}
+@container (max-width: 720px) {
+  .dashboard-station-page__insights {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .dashboard-station-page__insights > .grid {
+    grid-column: 1;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+  }
+  .dashboard-station-page__insights .ui-panel-title {
+    font-size: 13px !important;
+  }
+}
+/* END ROADSAFE_STATION_CLIPPING_FIX_V1 */

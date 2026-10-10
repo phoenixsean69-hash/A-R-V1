@@ -24,6 +24,7 @@ import "dockview-react/dist/styles/dockview.css";
 import WorkspaceHeader from "../WorkspaceHeader";
 import WorkspaceInspector from "./WorkspaceInspector";
 import WorkspaceNavigation from "./WorkspaceNavigation";
+import WorkspaceModuleNavigation from "./WorkspaceModuleNavigation";
 import WorkspaceRecentTabs from "./WorkspaceRecentTabs";
 
 import {
@@ -100,7 +101,7 @@ const GlobalDockContext =
   );
 
 const LAYOUT_VERSION =
-  "roadsafe:global-dock:v2";
+  "roadsafe:global-dock:v3";
 
 function useGlobalDock():
   GlobalDockModel {
@@ -210,6 +211,32 @@ function addNavigation(
   panel.group.header.hidden =
     true;
 
+  return panel;
+}
+
+function addModuleNavigation(
+  api: GlobalDockApi,
+) {
+  const existing = api.getPanel("roadsafe-modules");
+  if (existing) {
+    existing.group.header.hidden = true;
+    return existing;
+  }
+  const workspace = addWorkspace(api, "Workspace");
+  const panel = api.addPanel({
+    id: "roadsafe-modules",
+    component: "modules",
+    title: "Workspace tools",
+    renderer: "always",
+    initialWidth: 230,
+    minimumWidth: 185,
+    maximumWidth: 330,
+    position: {
+      referencePanel: workspace.id,
+      direction: "left",
+    },
+  });
+  panel.group.header.hidden = true;
   return panel;
 }
 
@@ -325,6 +352,22 @@ function NavigationPanel(
   );
 }
 
+function ModuleNavigationPanel(
+  _props: IDockviewPanelProps,
+) {
+  const model = useGlobalDock();
+  return (
+    <div className="roadsafe-global-dock-modules">
+      <WorkspaceModuleNavigation
+        stationClient={model.stationClient}
+        stationAdmin={model.stationAdmin}
+        homePath={model.homePath}
+        activeCase={model.activeCase}
+      />
+    </div>
+  );
+}
+
 function WorkspacePanel(
   _props:
     IDockviewPanelProps,
@@ -374,6 +417,7 @@ function WorkspacePanel(
           }
         />
       )}
+
 
       {!model.isReconstructionWorkspace && (
         <WorkspaceRecentTabs
@@ -460,6 +504,8 @@ function InspectorPanel(
 const GLOBAL_DOCK_COMPONENTS = {
   navigation:
     NavigationPanel,
+  modules:
+    ModuleNavigationPanel,
   workspace:
     WorkspacePanel,
   inspector:
@@ -536,6 +582,11 @@ export default function RoadSafeGlobalDock(
 
         removePanel(
           api,
+          "roadsafe-modules",
+        );
+
+        removePanel(
+          api,
           "roadsafe-inspector",
         );
 
@@ -552,6 +603,10 @@ export default function RoadSafeGlobalDock(
       addNavigation(
         api,
         current.desktopCollapsed,
+      );
+
+      addModuleNavigation(
+        api,
       );
 
       removePanel(

@@ -508,7 +508,7 @@ const previewTimeSeconds = useMemo(() => {
         </article>
       </section>
 
-      <section className="grid items-stretch gap-3 lg:grid-cols-3">
+      <section className="dashboard-station-page__insights grid items-stretch gap-3 lg:grid-cols-3">
         <div className="grid min-h-[350px] gap-3 lg:grid-rows-[0.9fr_1.1fr]">
           <article className="ui-panel flex min-h-[145px] flex-col p-4">
             <div className="flex items-start justify-between gap-3">

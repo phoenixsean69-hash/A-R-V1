@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
@@ -29,6 +30,7 @@ import {
 } from "../../types/heatmap";
 
 import "./SceneMapPage.css";
+import "./SceneIntelligenceScreens.css";
 
 interface MetricCardProps {
   label: string;
@@ -279,14 +281,38 @@ function getSeverityClass(
   return "is-minor";
 }
 
+type SceneIntelligenceScreen = "map" | "heatmap" | "risk" | "incidents";
+
 export default function SceneMapPage() {
-  const [
-    mode,
-    setMode,
-  ] =
-    useState<VisualizationMode>(
-      "markers",
-    );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedScreen = searchParams.get("view");
+  const screen: SceneIntelligenceScreen =
+    requestedScreen === "heatmap" || requestedScreen === "risk" || requestedScreen === "incidents"
+      ? requestedScreen
+      : "map";
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const pageRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const stage = pageRef.current?.querySelector<HTMLElement>(".scene-map-stage");
+    if (!stage || typeof ResizeObserver === "undefined") return;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+    });
+    observer.observe(stage);
+    return () => { observer.disconnect(); window.cancelAnimationFrame(frame); };
+  }, []);
+
+  const setScreen = (next: SceneIntelligenceScreen): void => {
+    setSearchParams((current) => {
+      const updated = new URLSearchParams(current);
+      updated.set("view", next);
+      return updated;
+    }, { replace: true });
+  };
+  const setMode = (next: VisualizationMode): void => setScreen(next === "heatmap" ? "heatmap" : "map");
+  const mode: VisualizationMode = screen === "heatmap" ? "heatmap" : "markers";
 
   const [
     filters,
@@ -434,11 +460,8 @@ export default function SceneMapPage() {
                 `${first.date}T${first.time}`,
               ),
           )
-          .slice(
-            0,
-            6,
-          ),
-      [filteredAccidents],
+          .slice(0, screen === "incidents" ? 100 : 6),
+      [filteredAccidents, screen],
     );
 
   const activeFilterCount =
@@ -550,7 +573,27 @@ export default function SceneMapPage() {
     };
 
   return (
-    <div className="scene-map-page">
+    <div ref={pageRef} className={`scene-map-page scene-map-page--fixed scene-map-page--${screen} ${filtersOpen ? "is-filters-open" : ""}`}>
+      <header className="scene-screen-toolbar">
+        <div className="scene-screen-title"><strong>Scene Intelligence</strong><small>Spatial investigation workspace</small></div>
+        <nav className="scene-screen-modes" aria-label="Scene Intelligence screens">
+          {([
+            ["map", "Intelligent Map"],
+            ["heatmap", "Heatmap"],
+            ["risk", "Risk Junctions"],
+            ["incidents", "Recent Incidents"],
+          ] as const).map(([key, label]) => (
+            <button key={key} type="button" className={`scene-screen-mode ${screen === key ? "is-current" : ""}`}
+              aria-current={screen === key ? "page" : undefined} onClick={() => setScreen(key)}>{label}</button>
+          ))}
+        </nav>
+        {(screen === "map" || screen === "heatmap") && (
+          <button type="button" className="scene-screen-filter-toggle"
+            aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+            Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+          </button>
+        )}
+      </header>
       <section
         className="scene-map-metrics"
         aria-label="Scene map summary"
@@ -990,10 +1033,7 @@ export default function SceneMapPage() {
 
             <div className="scene-map-risk-list">
               {allJunctionsWithRisk
-                .slice(
-                  0,
-                  5,
-                )
+                .slice(0, screen === "risk" ? undefined : 5)
                 .map(
                   (
                     item,
@@ -1239,6 +1279,11 @@ export default function SceneMapPage() {
           </div>
         </aside>
       </div>
+      <footer className="scene-screen-footer" aria-label="Scene Intelligence status">
+        <span><strong>MODE</strong> · {screen === "map" ? "Intelligent Map" : screen === "heatmap" ? "Heatmap" : screen === "risk" ? "Risk Junctions" : "Recent Incidents"}</span>
+        <span><strong>INCIDENTS</strong> · {filteredAccidents.length} / {allAccidents.length}</span>
+        <span><strong>FILTERS</strong> · {activeFilterCount || "None"}</span>
+      </footer>
     </div>
   );
 }

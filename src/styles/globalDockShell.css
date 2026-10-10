@@ -517,3 +517,284 @@
 }
 
 /* ROADSAFE_BRAND_ICON_CLEANUP_END */
+
+/* ROADSAFE_DASHBOARD_INSPECTOR_TYPE_POLISH_V1_START */
+/*
+ * One intentional hierarchy for the Station dashboard and Dockview Inspector.
+ * This block lives in the last global shell stylesheet so older 7-11px rules
+ * cannot fight the current typography system.
+ */
+
+/* -------------------------
+   Inspector typography
+   ------------------------- */
+.roadsafe-global-dock-inspector .roadsafe-inspector {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-section h3 {
+  margin-top: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  font-weight: 760 !important;
+  letter-spacing: 0.015em !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-section:first-child h3 {
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.025em !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-case-title {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  font-weight: 550 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-row dt {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  font-weight: 680 !important;
+  letter-spacing: 0.025em !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-row dd {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-status-line,
+.roadsafe-global-dock-inspector .roadsafe-status-line > span:first-child {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-status-line strong {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-metrics strong {
+  font-family: "Saira", sans-serif !important;
+  font-size: 16px !important;
+  line-height: 1.1 !important;
+  font-weight: 760 !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-metrics span {
+  margin-top: 4px !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.025em !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-footer span {
+  font-size: 9px !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.035em !important;
+}
+
+.roadsafe-global-dock-inspector .roadsafe-inspector-footer strong {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+}
+
+/* Status values are labels, not buttons. No outlined treatment. */
+.roadsafe-global-dock-inspector .ui-badge {
+  min-height: 20px !important;
+  padding: 3px 7px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  font-weight: 720 !important;
+  letter-spacing: 0.045em !important;
+}
+
+.roadsafe-global-dock-inspector .ui-badge.is-info {
+  border: 0 !important;
+  background: #303a42 !important;
+  color: #d0d7dc !important;
+}
+
+.roadsafe-global-dock-inspector .ui-badge.is-success {
+  border: 0 !important;
+  background: #293a33 !important;
+  color: #c2d7cc !important;
+}
+
+.roadsafe-global-dock-inspector .ui-badge.is-warning {
+  border: 0 !important;
+  background: #3c3327 !important;
+  color: #d9c7a9 !important;
+}
+
+.roadsafe-global-dock-inspector .ui-badge.is-neutral {
+  border: 0 !important;
+  background: #343434 !important;
+  color: #c8c8c8 !important;
+}
+
+.roadsafe-global-dock-inspector .ui-badge.is-danger {
+  border: 0 !important;
+  background: #432d31 !important;
+  color: #e0c0c5 !important;
+}
+
+/* -------------------------
+   Station dashboard typography
+   ------------------------- */
+.dashboard-station-page .dashboard-material-stat-content > p:first-child {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+  font-weight: 720 !important;
+  letter-spacing: 0.065em !important;
+}
+
+.dashboard-station-page .dashboard-material-stat-content > p:nth-child(2) {
+  margin-top: 4px !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  font-weight: 760 !important;
+}
+
+.dashboard-station-page .station-overview-quick-actions__header strong {
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  font-weight: 720 !important;
+}
+
+.dashboard-station-page .station-overview-quick-actions__header > span {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+.dashboard-station-page .station-overview-quick-action__copy strong {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+  font-weight: 680 !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__heading p {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  font-weight: 720 !important;
+  letter-spacing: 0.075em !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__heading strong {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__link {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__legend {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__y-label,
+.dashboard-station-page .station-overview-combined-chart__x-label {
+  font-size: 10px !important;
+  font-weight: 650 !important;
+}
+
+.dashboard-station-page .station-overview-combined-chart__axis-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.075em !important;
+}
+
+.dashboard-station-page .ui-panel-title {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  font-weight: 740 !important;
+  letter-spacing: 0.055em !important;
+}
+
+.dashboard-station-page .ui-panel-header p,
+.dashboard-station-page .ui-panel-header a,
+.dashboard-station-page .dashboard-station-page__scroll .text-\[9px\],
+.dashboard-station-page .dashboard-station-page__scroll .text-\[10px\] {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+/* Keep data visualization labels compact; they are tertiary information. */
+.dashboard-station-page .station-overview-combined-chart svg text {
+  font-family: "Saira", sans-serif !important;
+}
+
+@media (max-width: 620px) {
+  .roadsafe-global-dock-inspector .roadsafe-inspector-section h3 {
+    font-size: 13px !important;
+  }
+
+  .roadsafe-global-dock-inspector .roadsafe-inspector-section:first-child h3 {
+    font-size: 15px !important;
+  }
+
+  .dashboard-station-page .dashboard-material-stat-content > p:first-child {
+    font-size: 11px !important;
+  }
+
+  .dashboard-station-page .dashboard-material-stat-content > p:nth-child(2) {
+    font-size: 22px !important;
+  }
+}
+/* ROADSAFE_DASHBOARD_INSPECTOR_TYPE_POLISH_V1_END */
+
+/* ROADSAFE_FIXED_WORKSTATION_PHASE1 */
+.roadsafe-global-dock-workspace:not(.is-editor){
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+}
+.roadsafe-workstation.is-global-dock{overflow:hidden!important}
+/* ROADSAFE_FIXED_WORKSTATION_PHASE1_END */
+/* ROADSAFE_INTERNAL_SCROLL_FIX_V1 */
+/*
+ * Phase 1 shell stays fixed, but legacy pages must scroll INSIDE the workspace.
+ * This prevents vertical clipping while we progressively convert each page into
+ * true fixed-screen workstations.
+ */
+.roadsafe-global-dock-workspace,
+.roadsafe-workspace-main,
+.roadsafe-page-stage {
+  min-height: 0 !important;
+}
+
+.roadsafe-global-dock-workspace:not(.is-editor) .roadsafe-workspace-main {
+  overflow: hidden !important;
+}
+
+.roadsafe-global-dock-workspace:not(.is-editor) .roadsafe-page-stage {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Dashboards currently remain document-like; let them breathe inside the fixed shell. */
+.roadsafe-global-dock-workspace:not(.is-editor) .roadsafe-page-stage.is-dashboard {
+  padding-bottom: 18px !important;
+}
+
+/* Keep header and tabbar visible while content scrolls below them. */
+.roadsafe-global-dock-workspace:not(.is-editor) .roadsafe-tabbar {
+  position: sticky;
+  top: 0;
+  z-index: 18;
+}
+/* ROADSAFE_INTERNAL_SCROLL_FIX_V1_END */
